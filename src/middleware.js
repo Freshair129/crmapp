@@ -16,12 +16,13 @@ import { getToken } from 'next-auth/jwt';
 
 /** Route prefix → minimum role required */
 const ROUTE_ROLES = [
-  { prefix: '/api/webhooks',  role: null },          // skip — handler does own auth
-  { prefix: '/api/employees', role: 'MANAGER' },
-  { prefix: '/api/marketing', role: 'SUPERVISOR' },
-  { prefix: '/api/analytics', role: 'SUPERVISOR' },
-  { prefix: '/api/customers', role: 'AGENT' },
-  { prefix: '/api',           role: 'AGENT' },       // catch-all: any authenticated user
+  { prefix: '/api/webhooks',         role: null },   // skip — handler does own auth
+  { prefix: '/api/members/register', role: null },   // public — customer self-registration
+  { prefix: '/api/employees',        role: 'MANAGER' },
+  { prefix: '/api/marketing',        role: 'SUPERVISOR' },
+  { prefix: '/api/analytics',        role: 'SUPERVISOR' },
+  { prefix: '/api/customers',        role: 'AGENT' },
+  { prefix: '/api',                  role: 'AGENT' }, // catch-all: any authenticated user
 ];
 
 const ROLE_LEVEL = {
