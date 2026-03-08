@@ -77,7 +77,7 @@ async function syncInsightsOnly() {
             body.set('access_token', ACCESS_TOKEN);
             body.set('batch', JSON.stringify(batch));
             body.set('include_headers', 'false');
-            const res = await fetch('https://graph.facebook.com/', { method: 'POST', body });
+            const res = await fetch(`${GRAPH_API}/`, { method: 'POST', body });
             const results = await res.json();
             if (!Array.isArray(results)) { insightErrors += chunk.length; continue; }
             for (let j = 0; j < chunk.length; j++) {
