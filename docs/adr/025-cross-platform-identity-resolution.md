@@ -1,7 +1,7 @@
 # ADR 025: Cross-Platform Identity Resolution & Phone Normalization
 
 ## Status
-Planned (2026-03-08)
+Implemented (2026-03-09)
 
 ## Context
 ลูกค้า V School ติดต่อผ่านหลายช่องทาง (Facebook Messenger, LINE, Walk-in) ปัญหาที่เกิดขึ้น:

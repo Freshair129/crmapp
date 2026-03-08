@@ -1,7 +1,7 @@
 # ADR 024: Marketing Intelligence Pipeline — Bottom-Up Aggregation, Checksum & Hourly Ledger
 
 ## Status
-Planned (2026-03-08)
+Implemented (2026-03-09)
 
 ## Context
 ระบบ Marketing Analytics ปัจจุบันซิงค์ข้อมูลจาก Meta API ในระดับ Ad แต่ยังขาด:

@@ -97,16 +97,19 @@ try { ... } catch (error) {
 
 ---
 
-## Architecture (7 Phases)
+## Architecture (10 Phases)
 
 ```
-Phase 1: Foundation     — db repositories, async I/O, error handling
-Phase 2: LINE Attribution — แก้ ROAS gap
-Phase 3: Creative Fatigue — alerts
-Phase 4: Structured Logging
-Phase 5: Marketing Intelligence — Bottom-Up Aggregation, Checksum, Ledger
-Phase 6: Identity Resolution — Phone E.164, Merge, LINE attribution
-Phase 7: RBAC — 6-tier roles
+Phase 1:  Foundation          — db repositories, async I/O, error handling
+Phase 2:  LINE Attribution    — แก้ ROAS gap
+Phase 3:  Creative Fatigue    — alerts
+Phase 4:  Structured Logging
+Phase 5:  Marketing Intel     — Bottom-Up Aggregation, Checksum, Ledger
+Phase 6:  Identity Resolution — Phone E.164, Merge, LINE attribution
+Phase 7:  RBAC               — 6-tier roles, middleware guard
+Phase 8:  FB Messaging        — webhook, 90-day poll, agent attribution
+Phase 9:  Employee Registry   — CRUD API, UI, facebookName, JSONB identities
+Phase 10: Member Self-Reg     — public /register page + MemberId generation
 ```
 
 ---
@@ -136,4 +139,7 @@ src/
     marketingMetrics.js            ← Phase 5
   workers/
     eventProcessor.mjs             ← BullMQ consumer
+scripts/
+  sync-meta-ads.mjs                ← Meta Ads sync (Batch API, --insights-only flag)
+  sync-fb-messages.mjs             ← FB Graph API 90-day historical poll
 ```

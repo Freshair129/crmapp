@@ -5,6 +5,45 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [0.4.0] — 2026-03-09
+
+### Facebook Messaging Integration (ADR-028)
+
+- **`src/app/api/webhooks/facebook/route.js`**: GET verify-token + POST webhook — ตอบ 200ms ทันที, fire-and-forget `processEvent()`. Upsert Customer by PSID, Upsert Conversation (increment `unreadCount`), Upsert Message with `attachments` + `adReferral` metadata — ทุก op ใน `prisma.$transaction` (NFR1 + NFR5 compliant)
+- **`scripts/sync-fb-messages.mjs`**: Graph API polling script — ดึงประวัติสนทนาย้อนหลัง 90 วัน. Paginated conversations + messages, `ON CONFLICT (message_id) DO NOTHING` (idempotent)
+- **`src/app/api/marketing/chat/message-sender/route.js`**: Attribution endpoint สำหรับ sync_agents_v2.js — match ชื่อ "ส่งโดย" → Employee ด้วย priority: `identities.facebook.name` (JSONB) > nickName > firstName/lastName. อัปเดต `messages.responder_id`
+
+### Employee Registry (ADR-029)
+
+- **`src/app/api/employees/route.js`** (updated): POST สร้าง employee ใหม่ — auto-generate `TVS-[DEPT]-[SERIAL]`, bcrypt password (salt=12), บันทึก `facebookName` ใน `identities.facebook.name` JSONB. GET รองรับ `?status=` filter + ส่ง `identities` กลับ
+- **`src/app/api/employees/[id]/route.js`** (new): PATCH update fields + password + facebookName (deep merge JSONB). DELETE soft-delete (status → INACTIVE)
+- **`src/app/settings/employees/page.js`** (new): Employee management UI — table + modal form. Fields: firstName, lastName, nickName, facebookName, email, phone, department, role, password. Role badge, activate/deactivate
+- **`prisma/schema.prisma`**: เพิ่ม `creativeId String? @unique @map("creative_id")` ใน `AdCreative` model
+
+### Member Self-Registration
+
+- **`src/app/api/members/register/route.js`** (new): Public POST endpoint (ไม่ต้อง auth). Generate `MEM-[YY]TVS[INTENT]-[SERIAL]`, duplicate check by `phonePrimary` (409 ถ้าซ้ำ), เก็บ interest + source ใน `intelligence` JSONB
+- **`src/app/register/page.js`** (new): Branded public registration form — gradient red→orange. Fields: ชื่อ, นามสกุล, ชื่อเล่น, เบอร์โทร, อีเมล, LINE ID, interest (radio cards: Pro/Business/Hobby). Success state แสดง memberId
+- **`src/middleware.js`**: เพิ่ม `{ prefix: '/api/members/register', role: null }` — whitelist เป็น public route
+
+### Meta Ads Sync — Batch Optimization & Bug Fixes
+
+- **`scripts/sync-meta-ads.mjs`**: Rewrote insights fetching ให้ใช้ **Meta Batch API** (50 ads/request) — ลด API calls จาก 1726 sequential เหลือ ~35 batch calls. Pre-loaded `adsetMap` + `creativeMap` เป็น `Map` เพื่อกำจัด per-ad DB round trips
+- เพิ่ม **Ad Creatives sync** (Section 3) — `ON CONFLICT (creative_id) DO UPDATE`
+- เพิ่ม `--insights-only` flag + `syncInsightsOnly()` — อัปเดต spend/impressions/clicks/revenue บน existing ads
+- เพิ่ม `BATCH_SIZE = 50` + `BATCH_DELAY = 2000ms` (module-level constants)
+- Fix: Meta Batch API body ต้องเป็น `URLSearchParams` (form-urlencoded) ไม่ใช่ JSON
+- Fix: URL ต้องมี version `${GRAPH_API}/` = `https://graph.facebook.com/v19.0/` ไม่ใช่ unversioned
+- Fix: Rate limit retry — exponential backoff 60s/120s/180s ใน `graphGet()`
+- Result: 213 campaigns / 788 adsets / 6718 creatives / 1726 ads synced ✅
+
+### Initial GitHub Commit
+
+- Git repository initialized at `E:\crm`
+- Initial commit pushed to `https://github.com/Freshair129/crmapp`
+
+---
+
 ## [Unreleased]
 
 ### Phase 7 — RBAC (2026-03-08)

@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-08 (Phase 1–7 ✅ ALL DONE)
+> Last updated: 2026-03-09 (Phase 1–7 ✅ + Phase 8–10 ✅)
 
 ---
 
@@ -28,6 +28,9 @@
 | Phase 5 | Marketing Intelligence Pipeline | ✅ Done | 5/5 |
 | Phase 6 | Identity Resolution | ✅ Done | 3/3 |
 | Phase 7 | RBAC | ✅ Done | 3/3 |
+| Phase 8 | Facebook Messaging Integration | ✅ Done | 3/3 |
+| Phase 9 | Employee Registry | ✅ Done | 4/4 |
+| Phase 10 | Member Self-Registration | ✅ Done | 3/3 |
 
 ---
 
@@ -112,6 +115,44 @@
 | 7.1 | Delegate: `rbac.js` — role hierarchy + hasPermission() | 🛠️ Gemini | ✅ |
 | 7.2 | Delegate: `authGuard.js` — requireRole() middleware | 🧠 Claude | ✅ |
 | 7.3 | Retrofit: wrap sensitive API routes | 🧠 Claude | ✅ |
+
+---
+
+---
+
+## ✅ Phase 8: Facebook Messaging Integration
+> **ADR:** 028-facebook-messaging-integration.md
+> **Goal:** Real-time webhook + 90-day historical backfill + agent attribution
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 8.1 | FB Webhook handler (NFR1 < 200ms, NFR5 transaction) | 🧠 Claude | ✅ |
+| 8.2 | `scripts/sync-fb-messages.mjs` — 90-day Graph API poll | 🧠 Claude | ✅ |
+| 8.3 | `/api/marketing/chat/message-sender` — sync_agents_v2 attribution | 🧠 Claude | ✅ |
+
+---
+
+## ✅ Phase 9: Employee Registry
+> **ADR:** 029-employee-registry.md
+> **Goal:** Employee CRUD API + Management UI + Facebook identity for attribution
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 9.1 | POST `/api/employees` — create with auto ID + bcrypt + facebookName | 🧠 Claude | ✅ |
+| 9.2 | PATCH/DELETE `/api/employees/[id]` — update + soft delete | 🧠 Claude | ✅ |
+| 9.3 | `/settings/employees` — management UI with modal form | 🧠 Claude | ✅ |
+| 9.4 | `prisma/schema.prisma` — เพิ่ม `creativeId` unique field | 🧠 Claude | ✅ |
+
+---
+
+## ✅ Phase 10: Member Self-Registration
+> **Goal:** Public landing page + API สำหรับลูกค้าลงทะเบียนเองโดยไม่ต้อง login
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 10.1 | `POST /api/members/register` — public API, MemberId gen, duplicate check | 🧠 Claude | ✅ |
+| 10.2 | `/register` page — branded form (interest radio cards) | 🧠 Claude | ✅ |
+| 10.3 | Middleware whitelist `/api/members/register` | 🧠 Claude | ✅ |
 
 ---
 

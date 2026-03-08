@@ -1,7 +1,7 @@
 # ADR 026: Role-Based Access Control (RBAC)
 
 ## Status
-Planned (2026-03-08)
+Implemented (2026-03-09)
 
 ## Context
 ระบบ CRM ปัจจุบันไม่มี Authorization layer — ทุก authenticated user เห็นทุกหน้า:
