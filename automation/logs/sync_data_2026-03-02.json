@@ -1,0 +1,661 @@
+[
+  {
+    "threadID": "61561772272539",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizInboxDetailSectionWrapper",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "143332006018971",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:57:37"
+  },
+  {
+    "threadID": "100000182537459",
+    "senders": [
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "23283458984691",
+        "msgText": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23283458984691",
+        "msgText": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:30:42"
+  },
+  {
+    "threadID": "100093567511555",
+    "senders": [
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "233043649645571",
+        "msgText": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "233043649645571",
+        "msgText": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:31:11"
+  },
+  {
+    "threadID": "100007968738782",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232843950218718",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:14:51"
+  },
+  {
+    "threadID": "100016441969349",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232863833514693",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:15:27"
+  },
+  {
+    "threadID": "100000323949002",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23283600396234",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:16:03"
+  },
+  {
+    "threadID": "100008041143588",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizWebInbox",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:16:36"
+  },
+  {
+    "threadID": "100000188794414",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23283465241646",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:55:14"
+  },
+  {
+    "threadID": "1035464896",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizInboxDetailSectionWrapper",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:55:42"
+  },
+  {
+    "threadID": "100023420088549",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizInboxDetailSectionWrapper",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:56:11"
+  },
+  {
+    "threadID": "100092535715659",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizInboxDetailSectionWrapper",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:56:39"
+  },
+  {
+    "threadID": "100001492181818",
+    "senders": [
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "232831768629050",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "232831768629050",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 00:57:08"
+  },
+  {
+    "threadID": "100003894258123",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232834170705355",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "232834170705355",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:18:20"
+  },
+  {
+    "threadID": "565342838",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "0565342838",
+        "msgText": "Season 1 16-20/3\nเรียน9.00-16.00น. ค่ะ\n\nSeason 2 23-27/3\nเรียน9.00-16.00น. ค่ะ เดือนมีนา \nแคมป์ 1 วันที่ 16-20/3\nแคมป์ 2 วันที่ 23-27/3",
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "0565342838",
+        "msgText": "Season 1 16-20/3\nเรียน9.00-16.00น. ค่ะ\n\nSeason 2 23-27/3\nเรียน9.00-16.00น. ค่ะ เดือนมีนา \nแคมป์ 1 วันที่ 16-20/3\nแคมป์ 2 วันที่ 23-27/3",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:21:31"
+  },
+  {
+    "threadID": "100000892066490",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232831168513722",
+        "msgText": "ได้คะ   Season 1 16-20/3\nเรียน9.00-16.00น. ค่ะ\n\nSeason 2 23-27/3\nเรียน9.00-16.00น. ค่ะ มี2รอบคะคุณแม่ น้องอ่ยุเท่าไรคะ",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:22:35"
+  },
+  {
+    "threadID": "100006632796012",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizWebInbox",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:23:12"
+  },
+  {
+    "threadID": "1802782298",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "01802782298",
+        "msgText": "ได้คะ   Season 1 16-20/3\nเรียน9.00-16.00น. ค่ะ\n\nSeason 2 23-27/3\nเรียน9.00-16.00น. ค่ะ",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:23:24"
+  },
+  {
+    "threadID": "340282366841710301244260165133776137687",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "BizP13NInboxIGDirectDetailView",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:29:08"
+  },
+  {
+    "threadID": "100005321712056",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232841303191992",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "232841303191992",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 05:29:52"
+  },
+  {
+    "threadID": "100004005058059",
+    "senders": [
+      {
+        "name": "Satabongkot",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "232834281505291",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:11:42"
+  },
+  {
+    "threadID": "100000263013170",
+    "senders": [
+      {
+        "name": "Satabongkot",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "23283539460402",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23283539460402",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:12:16"
+  },
+  {
+    "threadID": "100000133841509",
+    "senders": [
+      {
+        "name": "Panxeiศ.",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Panxei",
+        "msgId": "23283410288741",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23283410288741",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:12:51"
+  },
+  {
+    "threadID": "100004500042392",
+    "senders": [
+      {
+        "name": "Preeyaporn",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "23284481522328",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Panxei",
+        "msgId": "23284481522328",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "23284481522328",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "23284481522328",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:13:23"
+  },
+  {
+    "threadID": "1279071468",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "01279071468",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "01279071468",
+        "msgText": "ข้อที่22 คะ ซาลาเปา 1 ไส้จะใช้กล่อง ประมาณ 2 กล่อง ถ้ามีดกล่องไซด์ใหญ่ใช้ 1 กล่องได้ค่ะ 4 ไส้ใช้ 8 กล่องพอดีค่ะ",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:18:09"
+  },
+  {
+    "threadID": "100000860126970",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:18:28"
+  },
+  {
+    "threadID": "100019959874661",
+    "senders": [
+      {
+        "name": "Fafah Fasai",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:18:33"
+  },
+  {
+    "threadID": "100001143577380",
+    "senders": [
+      {
+        "name": "Satabongkot",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Satabongkot Noinin",
+        "msgId": "232831420024612",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:22:36"
+  },
+  {
+    "threadID": "100027052025479",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "232891558668935",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:23:10"
+  },
+  {
+    "threadID": "61583382466970",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "143382141376922",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:24:40"
+  },
+  {
+    "threadID": "731061489",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "0731061489",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:25:17"
+  },
+  {
+    "threadID": "1225353795",
+    "senders": [
+      {
+        "name": "Panxeiพ.",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Panxei",
+        "msgId": "01225353795",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "01225353795",
+        "msgText": null,
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:25:50"
+  },
+  {
+    "threadID": "100003161960744",
+    "senders": [
+      {
+        "name": "Preeyaporn",
+        "msgId": "232833438407976",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "232833438407976",
+        "msgText": "https://www.facebook.com/reel/1811607646220456 ซูชิสร้างอาชีพ ราคาเพียง 4,900 บาท  จากราคาปกติ 8900 บาท\n\n รอบเรียน: 28/2/69  | 09:00 – 16:00 น.\n\nสะดวกลงรอบนี้เลยไหมคะ  รับจำนวนจำกัดคะ",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:26:23"
+  },
+  {
+    "threadID": "1049569161",
+    "senders": [
+      {
+        "name": "Fafah",
+        "msgId": null,
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Fafah Fasai",
+        "msgId": "01049569161",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Preeyaporn",
+        "msgId": "01049569161",
+        "msgText": null,
+        "participantId": null
+      },
+      {
+        "name": "Preeyaporn NuPhung Kornvathin",
+        "msgId": "01049569161",
+        "msgText": "ถ้าน้องไม่มีพื้นฐานแนะนำเรียน แคมป์1 คะ ปูพื้นฐาน  จัดจาน เรียนครัวร้อน ครัวเย็น ของว่าง ไปซื้อของ Supermarket รวมทั้ง การคิดคำนวณต้นทุนคะ\n\nคุณแม่สะดวกให้น้องลงรอบ Season 1 วันที่ 16-20/3 นี้ไหมคะ ตอนนี้มี Promotion นะคะ ถ้ามา 2 คน จากปกติ 15,000 บาท",
+        "participantId": null
+      }
+    ],
+    "source": "v4_unified",
+    "lastSeen": "3/3/2569 06:26:58"
+  }
+]

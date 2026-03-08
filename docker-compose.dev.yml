@@ -1,0 +1,16 @@
+version: '3.9'
+
+# Dev override — รัน DB + Redis อย่างเดียว, Next.js รันด้วย npm run dev บน host
+# ใช้: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  app:
+    profiles: ['skip']   # ข้าม app container ใน dev
+
+  postgres:
+    ports:
+      - '5432:5432'
+
+  redis:
+    ports:
+      - '6379:6379'

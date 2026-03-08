@@ -1,0 +1,28 @@
+# Environment
+.env
+.env.local
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Generated
+src/generated/
+
+# Misc
+*.log
+.DS_Store
+
+# Claude local settings & session files
+.claude/
+*session-is-being-continued*.txt
+
+# HTML exports / browser saves
+*.html
+
+# Ad mapping (local data)
+data/ad-mapping.json

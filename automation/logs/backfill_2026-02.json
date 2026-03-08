@@ -1,0 +1,51 @@
+[
+  {
+    "participantId": "25547467374953248",
+    "participantName": "A-Bang Bae",
+    "agents": [
+      "Preeyaporn NuPhung Kornvathin",
+      "Fafah Fasai"
+    ],
+    "msgCount": 2,
+    "timestamp": "2026-03-02T19:16:49.250Z"
+  },
+  {
+    "participantId": "8455824261121638",
+    "participantName": "Ackarachodheran Thunpawat",
+    "agents": [
+      "Fafah Fasai"
+    ],
+    "msgCount": 1,
+    "timestamp": "2026-03-02T19:17:06.685Z"
+  },
+  {
+    "participantId": "25773940805591210",
+    "participantName": "Ameta Daw",
+    "agents": [
+      "Fafah",
+      "Fafah Fasai"
+    ],
+    "msgCount": 2,
+    "timestamp": "2026-03-02T19:17:20.999Z"
+  },
+  {
+    "participantId": "34066329809649595",
+    "participantName": "Anchalee Piyamateeburana",
+    "agents": [
+      "Preeyaporn NuPhung Kornvathin",
+      "Fafah Fasai"
+    ],
+    "msgCount": 2,
+    "timestamp": "2026-03-02T19:17:49.876Z"
+  },
+  {
+    "participantId": "33847103698238620",
+    "participantName": "何昌漢",
+    "agents": [
+      "Preeyaporn NuPhung Kornvathin",
+      "Fafah Fasai"
+    ],
+    "msgCount": 2,
+    "timestamp": "2026-03-02T19:18:08.482Z"
+  }
+]

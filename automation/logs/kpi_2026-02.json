@@ -1,0 +1,127 @@
+{
+  "month": "2026-02",
+  "totalMessages": 3845,
+  "mappedMessages": 297,
+  "coveragePercent": "7.7",
+  "perAdmin": [
+    {
+      "employeeId": "e004",
+      "name": "Jutamat Sangprakai",
+      "messageCount": 161,
+      "conversationCount": 13
+    },
+    {
+      "employeeId": "em_sls_01",
+      "name": "Satabongkot Noinin",
+      "messageCount": 78,
+      "conversationCount": 5
+    },
+    {
+      "employeeId": "TVS-EMP-011",
+      "name": "Pim Somsiri",
+      "messageCount": 41,
+      "conversationCount": 3
+    },
+    {
+      "employeeId": "em_mgr_01",
+      "name": "Preeyaporn Kornvathin",
+      "messageCount": 9,
+      "conversationCount": 1
+    },
+    {
+      "employeeId": "em_agt_01",
+      "name": "Nuwat Chalerm-adirek",
+      "messageCount": 5,
+      "conversationCount": 1
+    },
+    {
+      "employeeId": "TVS-EMP-008",
+      "name": "Panxei Agent",
+      "messageCount": 3,
+      "conversationCount": 3
+    }
+  ],
+  "unmappedNames": [
+    {
+      "name": "Napassawan Naka",
+      "count": 59
+    },
+    {
+      "name": "Thiwa Pachana",
+      "count": 43
+    },
+    {
+      "name": "Nawa Jaja",
+      "count": 26
+    },
+    {
+      "name": "มีนนี่ มีนนี่",
+      "count": 21
+    },
+    {
+      "name": "Madamejoy SK",
+      "count": 20
+    },
+    {
+      "name": "Suchada Nualhing",
+      "count": 20
+    },
+    {
+      "name": "Sophitha Panyalue",
+      "count": 19
+    },
+    {
+      "name": "Jet Leo",
+      "count": 18
+    },
+    {
+      "name": "Ped Kasem",
+      "count": 18
+    },
+    {
+      "name": "เสก'ก สุรเชษฐ์",
+      "count": 18
+    },
+    {
+      "name": "Melinda Ja",
+      "count": 18
+    },
+    {
+      "name": "Ameta Daw",
+      "count": 17
+    },
+    {
+      "name": "Awika Beam Lertcharoensuk",
+      "count": 16
+    },
+    {
+      "name": "ธนาวุฒิ สีหาวัตร",
+      "count": 13
+    },
+    {
+      "name": "FujiFilm Phakkanatcha",
+      "count": 13
+    },
+    {
+      "name": "Phae Khamphilanouvong",
+      "count": 13
+    },
+    {
+      "name": "ชัช อรรถวิทย์กุล",
+      "count": 13
+    },
+    {
+      "name": "Julrapakorn Tara",
+      "count": 13
+    },
+    {
+      "name": "อย่าแอดมานะ มิจฉาชีพ",
+      "count": 12
+    },
+    {
+      "name": "Tiw Sirinapa",
+      "count": 12
+    }
+  ],
+  "generatedAt": "2026-03-02T18:15:58.273Z"
+}

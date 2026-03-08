@@ -1,0 +1,764 @@
+# ============================================================================
+# V School CRM — ID Mapping & Relationship Reference
+# ============================================================================
+# ไฟล์นี้ใช้เป็น Single Source of Truth สำหรับ ID ทุกตัวในระบบ
+# อัปเดตล่าสุด: 2026-03-01
+#
+# สถานะ:
+#   ✅ linked      = ผูก FK / index แล้ว ใช้งานได้
+#   ⚠️ string      = ผูกด้วยชื่อ (string match) ไม่มี FK จริง
+#   ❌ missing     = ยังไม่มี ต้องสร้างใหม่
+#   🔲 proposed    = เสนอเพิ่ม (ยังไม่ตัดสินใจ)
+#   🗑️ deprecated  = ลบออก — ระบุเหตุผล
+#
+# ─── ARCHITECTURE DECISION (2026-03-01) ───────────────────────────────────
+# Agent = Employee (ตัดสินใจแล้ว)
+#
+# Admin ที่ตอบแชท Facebook คือ Employee คนเดียวกัน
+# ดังนั้น FK ทุกตัวในระบบที่เกี่ยวกับ "ใครทำอะไร" ชี้ไป Employee.id โดยตรง
+#
+#   Message.responderId      → Employee.id  (ใครตอบข้อความนี้)
+#   Conversation.assignedAgentId → Employee.id  (ใครรับผิดชอบแชทนี้)
+#   Order.closedById         → Employee.id  (ใครปิดการขาย)
+#   Task.assigneeId          → Employee.id  ✅ มีแล้ว
+#
+# Employee.agentId → 🗑️ DEPRECATED — dead field, ไม่มี FK ใดอ้างอิง
+#                    ใช้ Employee.id แทนโดยตรง
+#
+# ─── AI CHAT BAR (per page) ────────────────────────────────────────────────
+# แต่ละหน้าใน CRM มี AI chat bar ที่โหลด context เฉพาะของหน้านั้น
+# โดยผูกกับ Employee.id ของ admin ที่ login อยู่
+# ดูรายละเอียดใน Section 9 (AI_CONTEXT)
+# ============================================================================
+
+# ────────────────────────────────────────────────────────────────────────────
+# 1. IDENTITY — ตัวตนของคนในระบบ
+# ────────────────────────────────────────────────────────────────────────────
+
+identity:
+
+  customer:
+    table: customers
+    primary_id:
+      field: customerId
+      format: "TVS-CUS-[CH]-[YY]-[XXXX]"
+      example: "TVS-CUS-FB-26-0123"
+      status: ✅ linked
+      note: "unique, ใช้ทั่วระบบ"
+
+    psid:
+      field: facebookId / participantId
+      format: "numeric string (Page-Scoped ID)"
+      example: "24978506515137967"
+      status: ✅ linked
+      verified_example:
+        customer_name: "Verin Keng"
+        psid: "24978506515137967"
+        cuid: "cmlxrx1v200p3xfm6kglexrs2"
+      note: >
+        ID ลูกค้า "เฉพาะเพจนี้" — ถ้าคนเดิมทักเพจอื่น เลขจะเปลี่ยน
+        ในระบบเราใช้ตัวนี้เป็น Primary Key สำหรับผูก Customer Profile 
+        (เก็บใน Customer.facebookId และ Conversation.participantId)
+
+    business_scoped_id:
+      field: "(ยังไม่ได้เก็บ)"
+      format: "numeric string"
+      status: 🔲 proposed
+      note: >
+        ID ลูกค้าที่ "คงที่" สำหรับทุกเพจภายใต้ Business Manager เดียวกัน
+        คือตัวที่บอสจำได้ว่าไปที่ไหนก็ใช้อันเดิม — ต้องขอผ่าน Graph API 
+        (endpoint: ids_for_business) เพื่อใช้เชื่อมโยงลูกค้าข้ามเพจ
+
+    linked_to:
+      - { target: conversations, via: "customerId FK", status: "✅ linked" }
+      - { target: orders,        via: "customerId FK", status: "✅ linked" }
+      - { target: tasks,         via: "customerId FK", status: "✅ linked" }
+      - { target: timeline,      via: "customerId FK", status: "✅ linked" }
+      - { target: inventory,     via: "customerId FK", status: "✅ linked" }
+      - { target: cart,          via: "customerId FK", status: "✅ linked" }
+
+  employee:
+    table: employees
+    primary_id:
+      field: employeeId
+      format: "TVS-EMP-[XXX]"
+      example: "TVS-EMP-001"
+      status: ✅ linked
+      note: "unique"
+
+    agent_id:
+      field: agentId
+      status: 🗑️ deprecated
+      decision_date: "2026-03-01"
+      reason: >
+        Dead field — ไม่มี business logic ใช้เลย ไม่มี model FK มาหา
+        Agent = Employee (ตัดสินใจแล้ว) ใช้ Employee.id โดยตรงแทน
+        ลบออกจาก schema ใน migration ถัดไป
+
+    facebook_name:
+      field: facebookName
+      format: "string"
+      example: "Satabongkot Noinin"
+      status: ⚠️ string
+      verified_mappings:
+        - { name: "Satabongkot Noinin", id: "em_sls_01", nickname: "พี่อ้อย" }
+        - { name: "Preeyaporn NuPhung Kornvathin", id: "em_mgr_01", nickname: "พี่ผึ้ง", psid: "100000182537459" }
+        - { name: "Jutamat Fah N'Finn Sangprakai", id: "e004", nickname: "ฟ้า / Fafah" }
+      note: "ใช้ fuzzy match ใน TeamKPI — ชื่อจาก FB Business Suite"
+
+    linked_to:
+      - { target: tasks, via: "assigneeId FK", status: "✅ linked" }
+      - { target: messages, via: "responderId FK", status: "✅ linked" }
+      - { target: conversations, via: "assignedEmployeeId FK", status: "✅ linked" }
+
+# ────────────────────────────────────────────────────────────────────────────
+# 2. CONVERSATION — แชทและข้อความ
+# ────────────────────────────────────────────────────────────────────────────
+
+conversation:
+
+  conversation:
+    table: conversations
+    primary_id:
+      field: conversationId
+      format: "t_XXXXXXXX"
+      example: "t_7891011121314"
+      source: "Facebook Graph API"
+      status: ✅ linked
+
+    assigned_agent:
+      field: assignedAgent
+      format: "string (ชื่อเต็ม FB)"
+      example: "Jutamat Fah N'Finn Sangprakai"
+      status: ✅ linked
+      note: >
+        คนที่ FB มอบหมายให้ดูแลแชท (auto-assign หรือ manual claim)
+        ตอนนี้ผูกกับ Employee.id ผ่าน assignedEmployeeId FK แล้ว
+
+    linked_to:
+      - { target: customers, via: "customerId FK",  status: "✅ linked" }
+      - { target: messages,  via: "conversationId",  status: "✅ linked" }
+      - { target: episodes,  via: "conversationId",  status: "✅ linked" }
+      - { target: employees, via: "assignedEmployeeId FK", status: "✅ linked" }
+      # ❌ ไม่มี FK ไปยัง Order (ไม่รู้ว่าแชทนี้นำไปสู่คำสั่งซื้อไหน)
+      # ❌ ไม่มี FK ไปยัง Campaign/Ad (ไม่รู้ว่าลูกค้ามาจากโฆษณาไหน)
+
+  message:
+    table: messages
+    primary_id:
+      field: messageId
+      format: "msg_{customer_id}{timestamp}-{seq}"
+      example: "msg_255708850559451731740821200000-1"
+      source: "Generated during Business Suite Sync (REQ-06)"
+      status: ✅ linked
+      note: >
+        ID ข้อความที่ระบบสร้างขึ้นเองเพื่อผูกความสัมพันธ์
+        ใช้ PSID + Timestamp + Sequence เพื่อให้ unique และสืบค้นย้อนกลับได้ง่าย
+
+    from_name:
+      field: fromName
+      format: "string"
+      example: "Satabongkot Noinin"
+      status: ✅ linked
+      note: >
+        ชื่อคนที่ส่งข้อความจริง — ผูกกับ Employee.id ผ่าน responderId FK
+        ดึงจาก "ส่งโดย" ใน Business Suite ด้วย Playwright scraper
+
+    from_id:
+      field: fromId
+      format: "string"
+      example: "170707786504"
+      status: ⚠️ string
+      note: "Graph API ให้แค่ Page ID — ไม่ช่วย identify admin"
+
+    fiber_msg_id:
+      field: "(ไม่ได้เก็บ)"
+      format: "mid.$cAABa1..."
+      source: "Business Suite React Fiber"
+      status: ❌ missing
+      note: >
+        Messenger internal format (Short ID) — **ไม่ match** กับ Graph API format (m_AQJb...)
+        ผลการทดสอบ (2026-03-01): ID คนละชุดกันโดยสิ้นเชิง (App vs API) 
+        ทำให้ Direct Match ใน Phase A ทำไม่ได้ — ต้องใช้ Text Matching ต่อไป
+
+    linked_to:
+      - { target: conversations, via: "conversationId FK", status: "✅ linked" }
+      - { target: employees,    via: "responderId FK",    status: "✅ linked" }
+
+  chat_episode:
+    table: chat_episodes
+    primary_id:
+      field: episodicId
+      status: ✅ linked
+      note: "session boundary ตาม timeout 30 นาที หรือ ad ID เปลี่ยน"
+
+    linked_to:
+      - { target: conversations, via: "conversationId FK", status: "✅ linked" }
+
+# ────────────────────────────────────────────────────────────────────────────
+# 3. SALES — การขาย, คำสั่งซื้อ, ธุรกรรม
+# ────────────────────────────────────────────────────────────────────────────
+
+sales:
+
+  order:
+    table: orders
+    primary_id:
+      field: orderId
+      format: "string"
+      status: ✅ linked
+
+    linked_to:
+      - { target: customers,    via: "customerId FK",    status: "✅ linked" }
+      - { target: transactions, via: "orderId FK",       status: "✅ linked" }
+      # ❌ ไม่มี FK ไปยัง Employee (ไม่รู้ว่าใครปิดการขาย)
+      # ❌ ไม่มี FK ไปยัง Conversation (ไม่รู้ว่าคำสั่งซื้อมาจากแชทไหน)
+
+  transaction:
+    table: transactions
+    primary_id:
+      field: transactionId
+      status: ✅ linked
+
+    chat_message_id:
+      field: chatMessageId
+      status: ⚠️ string
+      note: "อ้างถึงข้อความที่ส่งสลิป — แต่ไม่ใช่ FK จริง"
+
+    linked_to:
+      - { target: orders, via: "orderId FK", status: "✅ linked" }
+
+# ────────────────────────────────────────────────────────────────────────────
+# 4. MARKETING — แคมเปญโฆษณา
+# ────────────────────────────────────────────────────────────────────────────
+
+marketing:
+
+  campaign:
+    table: campaigns
+    primary_id:
+      field: campaignId
+      source: "Facebook Ads API"
+      status: ✅ linked
+
+    linked_to:
+      - { target: ad_sets,    via: "campaignId FK", status: "✅ linked" }
+      - { target: ad_account, via: "adAccountId FK", status: "✅ linked" }
+      # ❌ ไม่มี FK ไปยัง Conversation (ไม่รู้ว่า campaign ไหนนำลูกค้ามาคุย)
+
+  ad:
+    table: ads
+    primary_id:
+      field: adId
+      source: "Facebook Ads API"
+      status: ✅ linked
+
+    linked_to:
+      - { target: ad_sets,        via: "adSetId FK",      status: "✅ linked" }
+      - { target: daily_metrics,  via: "adId FK",         status: "✅ linked" }
+      - { target: hourly_metrics, via: "adId FK",         status: "✅ linked" }
+      - { target: live_status,    via: "adId FK",         status: "✅ linked" }
+      - { target: creative,       via: "creativeId FK",   status: "✅ linked" }
+      - { target: experiment,     via: "experimentId FK", status: "✅ linked" }
+
+# ────────────────────────────────────────────────────────────────────────────
+# 5. SUPPORT — งาน, ปัญหา, ติดตาม
+# ────────────────────────────────────────────────────────────────────────────
+
+support:
+
+  task:
+    table: tasks
+    primary_id:
+      field: taskId
+      status: ✅ linked
+
+    linked_to:
+      - { target: customers, via: "customerId FK",  status: "✅ linked" }
+      - { target: employees, via: "assigneeId FK",  status: "✅ linked" }
+      # ⚠️ generic — ไม่มี structured ticket fields (resolution time, category, SLA)
+
+  timeline_event:
+    table: timeline_events
+    primary_id:
+      field: eventId
+      status: ✅ linked
+      note: "audit trail ของลูกค้า"
+
+    linked_to:
+      - { target: customers, via: "customerId FK", status: "✅ linked" }
+
+# ────────────────────────────────────────────────────────────────────────────
+# 6. SYNC — ข้อมูลจาก Facebook Business Suite Scraper
+# ────────────────────────────────────────────────────────────────────────────
+
+sync:
+
+  synced_threads:
+    storage: "cache/synced_threads.json (local file, ไม่อยู่ใน DB)"
+    primary_id:
+      field: "threadID (PSID)"
+      format: "numeric string"
+      example: "100002428547834"
+      status: ✅ linked
+      note: "Persistence cache — ป้องกัน sync ซ้ำ"
+
+    data_stored:
+      - syncedAt: "ISO timestamp"
+      - status: "success | failed"
+      - agents: "string[] — ชื่อ admin ที่พบ"
+
+    linked_to:
+      - { target: "conversation.participantId", via: "text match (PSID)", status: "⚠️ string" }
+      # ❌ ไม่อยู่ใน DB — อยู่ใน JSON file เท่านั้น
+
+# ============================================================================
+# 7. ❌ สิ่งที่ต้องเพิ่ม — เรียงตามความสำคัญ
+# ============================================================================
+
+required_additions:
+
+  # ─── Priority 1: Agent Attribution (KPI & ค่าคอม) ────────────────────────
+
+  - id: "REQ-01"
+    name: "Message → Employee FK"
+    priority: "🔴 Critical"
+    status: "✅ linked"
+    reason: >
+      ตอนนี้ Message.fromName เป็นแค่ string "Satabongkot Noinin"
+      ต้อง fuzzy match ทุกครั้งที่คำนวณ KPI — ช้าและอาจพลาด
+    current: "Message.responderId (FK)"
+    impact:
+      - "TeamKPI query เปลี่ยนจาก fuzzy match → direct JOIN"
+      - "Commission คำนวณได้แม่นยำ 100%"
+
+  - id: "REQ-02"
+    name: "Conversation → Employee FK (assignedAgentId)"
+    priority: "🔴 Critical"
+    status: "✅ linked"
+    reason: >
+      assignedAgent เป็น string — ใช้แยก "คนที่ FB มอบหมาย" vs "คนที่ตอบจริง"
+    current: "Conversation.assignedEmployeeId (FK)"
+
+  # ─── Priority 2: Sales Attribution (ใครปิดการขาย) ─────────────────────────
+
+  - id: "REQ-03"
+    name: "Order → Employee FK (closedById)"
+    priority: "🔴 Critical"
+    reason: >
+      ตอนนี้ไม่รู้เลยว่าใครปิดการขาย — แบ่งค่าคอมไม่ได้
+    current: "ไม่มี field"
+    proposed:
+      add_field: "Order.closedById → Employee.id (FK, nullable)"
+      migration: >
+        1. เพิ่ม closedById ใน Order model
+        2. Backfill: ดูข้อความสุดท้ายก่อน order date ที่ admin ส่ง → resolve Employee
+    impact:
+      - "รู้ว่าใครปิดดีล → แบ่งค่าคอมได้"
+      - "วัด conversion rate per agent ได้จริง"
+
+  - id: "REQ-04"
+    name: "Order → Conversation FK"
+    priority: "🟡 High"
+    reason: >
+      ไม่รู้ว่าคำสั่งซื้อมาจากแชทไหน — วัด attribution chain ไม่ได้
+    current: "ไม่มี field"
+    proposed:
+      add_field: "Order.conversationId → Conversation.id (FK, nullable)"
+      note: "ผูก order กับแชทที่นำไปสู่การซื้อ"
+
+  # ─── Priority 3: Funnel Tracking (ลูกค้าหายตรงไหน) ──────────────────────
+
+  - id: "REQ-05"
+    name: "FunnelStageLog (model ใหม่)"
+    priority: "🟡 High"
+    reason: >
+      Customer.lifecycleStage มีแค่สถานะปัจจุบัน ไม่มีประวัติ
+      ต้องรู้ว่าลูกค้าหายไปขั้นตอนไหนมากที่สุด
+    current: "Customer.lifecycleStage = string (ค่าปัจจุบันอย่างเดียว)"
+    proposed:
+      new_model: "FunnelStageLog"
+      fields:
+        - "id: cuid"
+        - "customerId → Customer.id (FK)"
+        - "fromStage: string (Lead, Prospect, Negotiation, Won, Lost)"
+        - "toStage: string"
+        - "changedById → Employee.id (FK, nullable) — ใครเปลี่ยนสถานะ"
+        - "reason: string? (เช่น 'ราคาแพง', 'ไม่ตอบ 7 วัน')"
+        - "changedAt: DateTime"
+      stages:
+        - "Lead → เข้ามาครั้งแรก (จาก ad หรือ organic)"
+        - "Engaged → ตอบแชท / ถามรายละเอียด"
+        - "Prospect → สนใจจริง / ขอราคา"
+        - "Negotiation → ต่อรอง / เลือก package"
+        - "Payment → รอจ่ายเงิน / ส่งสลิป"
+        - "Won → ปิดการขาย สำเร็จ"
+        - "Lost → หายไป / ปฏิเสธ"
+      impact:
+        - "วิเคราะห์ drop-off: ลูกค้าหายมากสุดตรง Payment → อาจแปลว่าจ่ายยาก"
+        - "วัด conversion rate per stage per agent"
+        - "ดู average time per stage"
+
+  # ─── Priority 4: Ticket / Support ────────────────────────────────────────
+
+  - id: "REQ-06"
+    name: "Ticket fields บน Task (หรือ model ใหม่)"
+    priority: "🟡 High"
+    reason: >
+      Task มีอยู่แล้วแต่เป็น generic — ไม่มี category, resolution time, SLA
+      ต้องวัดว่า admin ไหนแก้ปัญหาลูกค้าเร็ว/ช้า
+    current: "Task model — generic fields เท่านั้น"
+    proposed:
+      option_a: "เพิ่ม fields บน Task model เดิม"
+      option_b: "สร้าง Ticket model ใหม่แยกจาก Task"
+      recommended: "option_a (เพิ่มบน Task)"
+      add_fields:
+        - "category: string (inquiry, complaint, discount_request, schedule_change, refund)"
+        - "resolvedAt: DateTime?"
+        - "resolvedById → Employee.id (FK, nullable)"
+        - "resolutionTimeMinutes: Int? (คำนวณอัตโนมัติ)"
+        - "satisfaction: Int? (1-5 rating)"
+        - "slaDeadline: DateTime?"
+        - "slaMet: Boolean?"
+      impact:
+        - "วัด avg resolution time per agent"
+        - "รู้ว่าปัญหาประเภทไหนเกิดบ่อย"
+        - "SLA tracking — ตอบลูกค้าทันเวลาไหม"
+
+  # ─── Priority 5: Marketing → Conversation Attribution ─────────────────────
+
+  - id: "REQ-07"
+    name: "Conversation → Ad FK (firstTouchAdId)"
+    priority: "🟢 Medium"
+    reason: >
+      รู้ว่าลูกค้ามาจากโฆษณาไหน → วัด ROAS จริง per agent
+    current: "มีแค่ session boundary logic (ad ID เปลี่ยน = session ใหม่) แต่ไม่ persist"
+    proposed:
+      add_field: "Conversation.firstTouchAdId → Ad.id (FK, nullable)"
+      note: "ดึงจาก referral data ตอน webhook รับ first message"
+    impact:
+      - "Full attribution chain: Ad → Conversation → Agent → Order → Revenue"
+      - "วัด ROAS per agent per campaign"
+
+  # ─── Priority 6: Agent Performance Metrics ────────────────────────────────
+
+  - id: "REQ-08"
+    name: "First Response Time tracking"
+    priority: "🟢 Medium"
+    reason: >
+      วัดว่า agent ตอบลูกค้าครั้งแรกเร็วแค่ไหน (SLA)
+    current: "มี Message.createdAt แต่ไม่มี logic คำนวณ"
+    proposed:
+      add_fields:
+        - "Conversation.firstResponseAt: DateTime?"
+        - "Conversation.firstResponseTimeSeconds: Int?"
+      note: "คำนวณจาก first customer message → first admin message"
+
+  - id: "REQ-09"
+    name: "Handoff Log"
+    priority: "🟢 Medium"
+    reason: >
+      ลูกค้าถูกส่งต่อกี่ครั้ง ระหว่าง agent ไหนบ้าง
+    current: "ไม่มี — assignedAgent เขียนทับค่าเดิม"
+    proposed:
+      new_model: "AgentHandoff"
+      fields:
+        - "id: cuid"
+        - "conversationId → Conversation.id (FK)"
+        - "fromAgentId → Employee.id (FK, nullable)"
+        - "toAgentId → Employee.id (FK)"
+        - "reason: string?"
+        - "handoffAt: DateTime"
+
+  - id: "REQ-10"
+    name: "Commission Rule Engine"
+    priority: "🟢 Medium"
+    reason: >
+      กฏแบ่งค่าคอม เช่น 100% ถ้าคนเดียวปิด, split ถ้าหลายคนดูแล
+    current: "ไม่มี"
+    proposed:
+      new_model: "CommissionRule"
+      fields:
+        - "id: cuid"
+        - "name: string (เช่น 'Solo Close 100%', 'Assist 30/70')"
+        - "type: string (solo, split, assist)"
+        - "closerPercent: Float"
+        - "assisterPercent: Float"
+        - "isDefault: Boolean"
+
+      new_model_2: "CommissionEntry"
+      fields:
+        - "id: cuid"
+        - "orderId → Order.id (FK)"
+        - "employeeId → Employee.id (FK)"
+        - "role: string (closer, assister, assigned)"
+        - "percent: Float"
+        - "amount: Float"
+        - "ruleId → CommissionRule.id (FK)"
+        - "createdAt: DateTime"
+
+  # ─── Priority 7: Customer Satisfaction ────────────────────────────────────
+
+  - id: "REQ-11"
+    name: "Customer Satisfaction / Feedback"
+    priority: "🔲 Proposed"
+    reason: "วัดความพึงพอใจลูกค้าหลังจบแชทหรือหลังเรียน"
+    proposed:
+      new_model: "Feedback"
+      fields:
+        - "id: cuid"
+        - "customerId → Customer.id (FK)"
+        - "conversationId → Conversation.id (FK, nullable)"
+        - "orderId → Order.id (FK, nullable)"
+        - "rating: Int (1-5)"
+        - "comment: String?"
+        - "type: string (chat, course, general)"
+        - "createdAt: DateTime"
+
+# ============================================================================
+# 8. RELATIONSHIP DIAGRAM (text-based)
+# ============================================================================
+#
+#  ┌──────────┐       ┌──────────────┐       ┌─────────┐
+#  │ Campaign │──────>│    AdSet      │──────>│   Ad    │
+#  └──────────┘       └──────────────┘       └────┬────┘
+#                                                  │ ❌ firstTouchAdId (REQ-07)
+#                                                  ▼
+#  ┌──────────┐  customerId FK  ┌──────────────┐  convId FK  ┌─────────┐
+#  │ Customer │<───────────────│ Conversation  │<───────────│ Message │
+#  └────┬─────┘                └──────┬───────┘             └────┬────┘
+#       │                             │                          │
+#       │                    ⚠️ assignedAgent (string)    ⚠️ fromName (string)
+#       │                    ❌ assignedAgentId (REQ-02)  ❌ responderId (REQ-01)
+#       │                             │                          │
+#       │                             ▼                          ▼
+#       │                      ┌──────────┐              ┌──────────┐
+#       │                      │ Employee │<─────────────│ Employee │
+#       │                      └──────────┘              └──────────┘
+#       │
+#       │  customerId FK  ┌─────────┐  orderId FK  ┌─────────────┐
+#       └────────────────>│  Order  │─────────────>│ Transaction │
+#                         └────┬────┘              └─────────────┘
+#                              │
+#                     ❌ closedById (REQ-03)
+#                     ❌ conversationId (REQ-04)
+#                              │
+#                              ▼
+#                       ┌──────────┐
+#                       │ Employee │
+#                       └──────────┘
+#
+#  ❌ New Models Needed:
+#  ┌─────────────────┐  ┌──────────────┐  ┌─────────────────┐
+#  │ FunnelStageLog  │  │ AgentHandoff │  │ CommissionEntry │
+#  │ (REQ-05)        │  │ (REQ-09)     │  │ (REQ-10)        │
+#  └─────────────────┘  └──────────────┘  └─────────────────┘
+#
+# ============================================================================
+
+# ============================================================================
+# 9. AI_CONTEXT — AI Chat Bar per Page
+# ============================================================================
+# แต่ละหน้าใน CRM มี AI chat bar (BusinessAnalyst.js / Gemini)
+# โหลด context เฉพาะของหน้านั้น + ผูกกับ Employee.id ของ admin ที่ login เสมอ
+#
+# ─── 2 แนวคิดที่ต้องแยกกัน ────────────────────────────────────────────────
+#
+# 1. page_data_filtered_by_employee
+#    Data ที่แสดงในหน้าถูก filter เพื่อแสดงของ agent คนนั้นหรือไม่
+#    false = แสดงภาพรวม (Dashboard, Analytics, FacebookAds)
+#    true  = แสดงข้อมูลของ agent หรือ customer คนนั้น (TeamKPI, Chat, CustomerCard)
+#
+# 2. ai_chat_uses_employee_identity
+#    AI Chat Bar รู้ว่ากำลังคุยกับใครหรือไม่ — ตอบ YES เสมอ (ทุกหน้า)
+#    เหตุผล: AI ต้องรู้ Role (เจ้าของ vs admin), Memory ส่วนตัว, Tone ที่เหมาะสม
+#
+# Rule: page_data_filtered_by_employee อาจเป็น false
+#       แต่ ai_chat_uses_employee_identity = true เสมอ ทุกหน้า
+#
+# Identity anchor:
+#   currentEmployee.id → FK ทุกตัว: responderId, assignedAgentId, closedById
+# ============================================================================
+
+ai_context:
+
+  shared:
+    session_identity:
+      field: "currentEmployee.id"
+      type: "Employee.id (FK)"
+      note: >
+        Admin ที่ login อยู่ = Employee record
+        ใช้เป็น anchor โหลด memory และ context ส่วนตัวของ agent คนนั้น
+        ทุกหน้าส่ง employeeId เข้า AI เพื่อ filter ข้อมูลให้ตรง
+
+    memory_store:
+      location: "Customer.intelligence (Json) — per customer"
+      agent_memory: "Employee.performance (Json) — per agent"
+      note: "AI สามารถอ่านและเขียน memory กลับมาเพื่อ persistent context ข้าม session"
+
+  pages:
+
+    # ── Dashboard ──────────────────────────────────────────────────────────
+    - page: "Dashboard"
+      component: "Dashboard.js"
+      ai_function: "generateExecutiveReport() + chat()"
+      context_loaded:
+        - "totalRevenue, totalAdSpend, ROAS (ภาพรวมทั้งบริษัท)"
+        - "bestSellers, activeCampaigns"
+        - "customerCount, churnRate"
+
+      # ── 2 แนวคิดที่ต่างกัน ────────────────────────────────────────────
+      page_data_filtered_by_employee: false
+      note_data: >
+        Data ที่แสดงในหน้า = ภาพรวมธุรกิจทั้งหมด ไม่ filter per agent
+        เพราะ Dashboard = business overview (revenue รวม, ROAS รวม)
+        ไม่ใช่ view ของ agent คนเดียว — ถูกต้องแล้ว
+
+      ai_chat_uses_employee_identity: true
+      employee_id_field: "currentEmployee.id"
+      note_ai: >
+        AI Chat Bar ต้องรู้ว่ากำลังคุยกับใคร แม้ว่า data จะเป็นภาพรวม
+        เหตุผล:
+          1. Tone — เจ้าของ (Boss) เห็น strategic detail + budget recommendations
+                    Admin ทั่วไป เห็น operational summary เท่านั้น
+          2. Memory — AI จำ context ข้าม session ผ่าน Employee.performance Json
+          3. Role-based answer — "ควรหยุด ad ไหน?" → Boss = แนะนำกลยุทธ์,
+                                                        Admin = แค่บอก data
+      # ──────────────────────────────────────────────────────────────────
+
+      ai_questions_example:
+        - "แคมเปญไหน ROAS ต่ำสุดตอนนี้"
+        - "ลูกค้ากลุ่มไหนควร follow-up ก่อน"
+        - "สรุปภาพรวมธุรกิจสัปดาห์นี้ให้หน่อย"
+
+    # ── Analytics ──────────────────────────────────────────────────────────
+    - page: "Analytics"
+      component: "Analytics.js"
+      ai_function: "chat() with campaign + funnel context"
+      context_loaded:
+        - "Campaign → AdSet → Ad metrics"
+        - "FunnelStageLog (drop-off per stage)"
+        - "Lead source breakdown"
+        - "Conversion rate per stage"
+      page_data_filtered_by_employee: false
+      note_data: "Marketing analytics — ข้อมูลรวมทั้งระบบ ไม่ filter per agent แต่ควรมี breakdown"
+      ai_chat_uses_employee_identity: true
+      employee_id_field: "currentEmployee.id"
+      note_ai: "AI รู้ว่าเป็นเจ้าของหรือ admin → ปรับ depth ของ recommendation"
+      missing_context:
+        - "❌ FunnelStageLog ยังไม่มีใน DB (REQ-05)"
+        - "❌ Ad → Conversation FK ยังไม่มี (REQ-07)"
+      ai_questions_example:
+        - "ลูกค้าหายไปขั้นตอนไหนมากสุด"
+        - "แคมเปญ Ramen ปิดการขายได้กี่เปอร์เซนต์"
+
+    # ── Team KPI ────────────────────────────────────────────────────────────
+    - page: "TeamKPI"
+      component: "TeamKPI.js"
+      ai_function: "chat() with per-agent stats context"
+      context_loaded:
+        - "Employee[] — ทุก agent ที่ active"
+        - "revenue per agent (จาก Order.closedById)"
+        - "leads per agent (จาก Message.responderId)"
+        - "conversion rate per agent"
+        - "avg response time per agent"
+        - "commission breakdown"
+      employee_id_used: true
+      employee_id_field: "Employee.id"
+      current_gap: >
+        ตอนนี้ใช้ fuzzy string match ชื่อ → revenue/leads นับไม่ครบ
+        เมื่อ REQ-01, 02, 03 เสร็จ: JOIN ตรงผ่าน Employee.id ได้เลย
+      ai_questions_example:
+        - "ใครปิดการขายได้มากสุดเดือนนี้"
+        - "Fah ดูแลลูกค้าอยู่กี่คนที่ยังไม่ปิด"
+        - "แบ่งค่าคอมเดือนนี้ได้เท่าไหร่"
+
+    # ── Facebook Chat (Inbox) ───────────────────────────────────────────────
+    - page: "FacebookChat"
+      component: "FacebookChat.js"
+      ai_function: >
+        detectAgentFromChat() + suggestProactiveTasks() +
+        suggestLabels() + generateSmartReply() + extractProductsFromChat()
+      context_loaded:
+        - "Conversation.messages[] — ประวัติแชทปัจจุบัน"
+        - "Customer profile + lifecycleStage"
+        - "Customer.intelligence (AI memory จากแชทก่อน)"
+        - "Employee list (staffList สำหรับ agent detection)"
+        - "Product catalog (สำหรับ product extraction)"
+      employee_id_used: true
+      employee_id_field: "Message.responderId → Employee.id"
+      note: >
+        หน้านี้ใช้ AI มากที่สุด — real-time per message
+        Smart reply ส่งในนาม Persona ของ agent ที่ login
+      ai_questions_example:
+        - "สรุปแชทนี้ให้หน่อย"
+        - "ลูกค้าคนนี้สนใจคอร์สไหน"
+        - "ร่างข้อความตอบเรื่องราคาให้หน่อย"
+
+    # ── Facebook Ads ────────────────────────────────────────────────────────
+    - page: "FacebookAds"
+      component: "FacebookAds.js"
+      ai_function: "chat() with ads performance context"
+      context_loaded:
+        - "Campaign/AdSet/Ad metrics (spend, ROAS, CTR, CPC)"
+        - "Health score per ad"
+        - "Creative fatigue detection (>30 days)"
+        - "Daily/Hourly metrics"
+      page_data_filtered_by_employee: false
+      note_data: "Pure marketing data — ad performance ไม่เกี่ยวกับ agent คนไหน"
+      ai_chat_uses_employee_identity: true
+      employee_id_field: "currentEmployee.id"
+      note_ai: "AI รู้ตัวตน เพื่อ persist memory และปรับ tone (เจ้าของ vs admin)"
+      ai_questions_example:
+        - "Ad ไหนควรปิดก่อนเพราะ ROAS ต่ำ"
+        - "Budget ควรย้ายไป campaign ไหน"
+
+    # ── Customer List / Profile ─────────────────────────────────────────────
+    - page: "CustomerList / CustomerCard"
+      component: "CustomerList.js"
+      ai_function: "chat() with individual customer context"
+      context_loaded:
+        - "Customer profile, tier, lifecycle stage"
+        - "Order history + revenue"
+        - "Conversation history (via Message.responderId)"
+        - "Agent ที่ดูแล (Conversation.assignedAgentId → Employee)"
+        - "Tasks ที่ค้างอยู่"
+        - "Customer.intelligence (AI memory)"
+      employee_id_used: true
+      employee_id_field: "Conversation.assignedAgentId → Employee.id"
+      ai_questions_example:
+        - "ลูกค้าคนนี้น่าจะซื้ออะไรต่อ"
+        - "ใครดูแลลูกค้าคนนี้อยู่"
+        - "สรุป interaction ทั้งหมดของลูกค้าคนนี้"
+
+    # ── Employee Management ─────────────────────────────────────────────────
+    - page: "EmployeeManagement"
+      component: "EmployeeManagement.js"
+      ai_function: "chat() with HR + performance context"
+      context_loaded:
+        - "Employee list + roles + status"
+        - "performance Json per employee"
+        - "Task completion rate per employee"
+        - "Revenue / leads per employee (จาก REQ-01,02,03)"
+      employee_id_used: true
+      employee_id_field: "Employee.id (primary)"
+      ai_questions_example:
+        - "ใครมี workload เยอะสุดตอนนี้"
+        - "พนักงานคนไหน response time ช้าสุด"
+
+# ─── Context Loading Pattern ──────────────────────────────────────────────
+# แต่ละหน้าส่ง context เข้า BusinessAnalyst.chat() ในรูปแบบ:
+#
+#  {
+#    page: "TeamKPI",
+#    currentEmployeeId: "emp_xxx",          ← admin ที่ login
+#    viewingEmployeeId: "emp_yyy",           ← agent ที่กำลังดูอยู่ (ถ้ามี)
+#    data: { ...page-specific stats },
+#    memory: employee.performance,           ← persistent memory ข้าม session
+#  }
+#
+# AI ใช้ employeeId เพื่อ:
+#  1. Filter ข้อมูลให้ตรงกับ agent คนนั้น
+#  2. โหลด/บันทึก memory ส่วนตัวของ agent
+#  3. ปรับ tone การตอบ (คุยกับเจ้าของ vs คุยกับ admin ทั่วไป)
+# ─────────────────────────────────────────────────────────────────────────

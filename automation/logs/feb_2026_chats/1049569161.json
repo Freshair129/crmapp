@@ -1,0 +1,32 @@
+{
+  "threadID": "1049569161",
+  "customerPSID": "1049569161",
+  "senders": [
+    {
+      "name": "Fafah",
+      "msgId": null,
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Fafah Fasai",
+      "msgId": "01049569161",
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Preeyaporn",
+      "msgId": "01049569161",
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Preeyaporn NuPhung Kornvathin",
+      "msgId": "01049569161",
+      "msgText": "ถ้าน้องไม่มีพื้นฐานแนะนำเรียน แคมป์1 คะ ปูพื้นฐาน  จัดจาน เรียนครัวร้อน ครัวเย็น ของว่าง ไปซื้อของ Supermarket รวมทั้ง การคิดคำนวณต้นทุนคะ\n\nคุณแม่สะดวกให้น้องลงรอบ Season 1 วันที่ 16-20/3 นี้ไหมคะ ตอนนี้มี Promotion นะคะ ถ้ามา 2 คน จากปกติ 15,000 บาท",
+      "participantId": null
+    }
+  ],
+  "source": "v4_unified",
+  "syncedAt": "2026-03-02T23:26:58.270Z"
+}

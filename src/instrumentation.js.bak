@@ -1,0 +1,89 @@
+/**
+ * Next.js Instrumentation File
+ * Runs once on server startup (Node.js runtime only).
+ * Registers all cron jobs for background processing.
+ *
+ * Docs: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
+ */
+
+export const runtime = 'nodejs';
+
+export async function register() {
+  // Only run cron jobs in Node.js runtime (not Edge)
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+
+  const { default: cron } = await import('node-cron');
+  const { detectCreativeFatigue } = await import('./services/fatigueDetector.js');
+  const { logger } = await import('./lib/logger.js');
+
+  // ─── Creative Fatigue Alert — daily at 09:00 ──────────────────────────────
+  // Checks all ACTIVE ads older than 30 days with spend > 1,000 THB
+  // Sends LINE alert if any fatigued ads found
+  cron.schedule('0 9 * * *', async () => {
+    logger.info('cron', 'Running creative fatigue check...');
+    try {
+      const fatigued = await detectCreativeFatigue(30, 1000);
+
+      if (fatigued.length === 0) {
+        logger.info('cron', 'No creative fatigue detected.');
+        return;
+      }
+
+      logger.warn('cron', `${fatigued.length} fatigued ad(s) detected.`, { count: fatigued.length });
+      await sendFatigueAlert(fatigued);
+    } catch (err) {
+      logger.error('cron', 'Creative fatigue check failed', err);
+    }
+  }, { timezone: 'Asia/Bangkok' });
+
+  logger.info('instrumentation', 'Cron jobs registered.');
+}
+
+// ─── LINE Alert Sender ────────────────────────────────────────────────────────
+
+/**
+ * Sends a LINE push message to the ops group listing fatigued ads.
+ * Requires: LINE_CHANNEL_ACCESS_TOKEN, LINE_GROUP_ID env vars.
+ *
+ * @param {Array<{ adId, adName, campaignName, ageDays, totalSpend, roas }>} ads
+ */
+async function sendFatigueAlert(ads) {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const groupId = process.env.LINE_GROUP_ID;
+
+  if (!token || !groupId) {
+    logger.warn('cron', 'LINE_CHANNEL_ACCESS_TOKEN or LINE_GROUP_ID not set — skipping alert.');
+    return;
+  }
+
+  const lines = ads.map(
+    (ad) =>
+      `⚠️ ${ad.adName}\n` +
+      `   Campaign: ${ad.campaignName}\n` +
+      `   Age: ${ad.ageDays} วัน | Spend: ฿${ad.totalSpend.toLocaleString()} | ROAS: ${ad.roas.toFixed(2)}x`
+  );
+
+  const text =
+    `🔴 Creative Fatigue Alert (${ads.length} ads)\n` +
+    `${new Date().toLocaleDateString('th-TH')}\n\n` +
+    lines.join('\n\n');
+
+  const res = await fetch('https://api.line.me/v2/bot/message/push', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      to: groupId,
+      messages: [{ type: 'text', text }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    logger.error('cron', 'LINE push failed', null, { status: res.status, body: errBody });
+  } else {
+    logger.info('cron', 'LINE fatigue alert sent', { count: ads.length });
+  }
+}

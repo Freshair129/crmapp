@@ -1,0 +1,26 @@
+{
+  "threadID": "1225353795",
+  "customerPSID": "1225353795",
+  "senders": [
+    {
+      "name": "Panxeiพ.",
+      "msgId": null,
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Panxei",
+      "msgId": "01225353795",
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Preeyaporn NuPhung Kornvathin",
+      "msgId": "01225353795",
+      "msgText": null,
+      "participantId": null
+    }
+  ],
+  "source": "v4_unified",
+  "syncedAt": "2026-03-02T23:25:50.479Z"
+}

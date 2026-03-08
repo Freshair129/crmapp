@@ -1,0 +1,20 @@
+{
+  "threadID": "100003161960744",
+  "customerPSID": "100003161960744",
+  "senders": [
+    {
+      "name": "Preeyaporn",
+      "msgId": "232833438407976",
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Preeyaporn NuPhung Kornvathin",
+      "msgId": "232833438407976",
+      "msgText": "https://www.facebook.com/reel/1811607646220456 ซูชิสร้างอาชีพ ราคาเพียง 4,900 บาท  จากราคาปกติ 8900 บาท\n\n รอบเรียน: 28/2/69  | 09:00 – 16:00 น.\n\nสะดวกลงรอบนี้เลยไหมคะ  รับจำนวนจำกัดคะ",
+      "participantId": null
+    }
+  ],
+  "source": "v4_unified",
+  "syncedAt": "2026-03-02T23:26:23.933Z"
+}

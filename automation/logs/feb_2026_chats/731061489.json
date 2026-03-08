@@ -1,0 +1,20 @@
+{
+  "threadID": "731061489",
+  "customerPSID": "731061489",
+  "senders": [
+    {
+      "name": "Fafah",
+      "msgId": null,
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Fafah Fasai",
+      "msgId": "0731061489",
+      "msgText": null,
+      "participantId": null
+    }
+  ],
+  "source": "v4_unified",
+  "syncedAt": "2026-03-02T23:25:17.327Z"
+}

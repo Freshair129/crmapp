@@ -1,0 +1,19 @@
+{
+  "threadID": "100027052025479",
+  "senders": [
+    {
+      "name": "Fafah",
+      "msgId": null,
+      "msgText": null,
+      "participantId": null
+    },
+    {
+      "name": "Fafah Fasai",
+      "msgId": "232891558668935",
+      "msgText": null,
+      "participantId": null
+    }
+  ],
+  "source": "v4_unified",
+  "syncedAt": "2026-03-02T23:23:10.640Z"
+}
