@@ -63,83 +63,134 @@ Trace ID    : SYNC-[TYPE]-[YYYYMMDD]-[RND]  e.g. SYNC-ADS-20260308-A92B
 
 ## Code Patterns ที่ต้องใช้
 
-### Database Access (Prisma)
+### API Route Pattern (Next.js 14 App Router)
 ```js
-// ผ่าน getPrisma() เสมอ — lazy-loaded singleton
-import { getPrisma } from '../db/index.js'
-const prisma = getPrisma()
+import { logger } from '@/lib/logger';
+import { NextResponse } from 'next/server';
+import { getPrisma } from '@/lib/db';
 
-// Identity operations ต้องอยู่ใน transaction
-await prisma.$transaction(async (tx) => { ... })
-```
-
-### File I/O
-```js
-// ใช้ fs.promises เสมอ ห้าม readFileSync/writeFileSync
-import { promises as fs } from 'fs'
-await fs.readFile(path, 'utf8')
-```
-
-### Error Handling
-```js
-// ห้าม catch เงียบ
-try { ... } catch (error) {
-  console.error('[ModuleName] message', error)
-  throw error  // ใน worker
-  // หรือ return null  // ใน helper
+export async function GET(request) {
+    try {
+        const prisma = await getPrisma();
+        // ... logic
+        return NextResponse.json(result);
+    } catch (error) {
+        logger.error('[ModuleName]', 'GET error', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
 }
 ```
 
-### NFR ที่ต้องไม่ละเมิด
-- Webhook ต้องตอบ < 200ms (enqueue แล้วตอบทันที)
-- BullMQ: retry ≥ 5, exponential backoff
-- Identity upsert: ต้องใน `prisma.$transaction`
+### Database Access
+```js
+import { getPrisma } from '@/lib/db';
+const prisma = await getPrisma();
+// Identity upserts → ต้องใน prisma.$transaction
+```
+
+### Error Handling (ห้าม catch เงียบ)
+```js
+try { ... } catch (error) {
+  logger.error('[ModuleName]', 'action failed', error);
+  return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+}
+```
+
+### NFR
+- Webhook ตอบ < 200ms
+- BullMQ retry ≥ 5, exponential backoff
+- Identity upsert ต้องใน `prisma.$transaction`
 
 ---
 
-## Architecture (10 Phases)
+## Architecture Phases
 
 ```
-Phase 1:  Foundation          — db repositories, async I/O, error handling
-Phase 2:  LINE Attribution    — แก้ ROAS gap
-Phase 3:  Creative Fatigue    — alerts
-Phase 4:  Structured Logging
-Phase 5:  Marketing Intel     — Bottom-Up Aggregation, Checksum, Ledger
-Phase 6:  Identity Resolution — Phone E.164, Merge, LINE attribution
-Phase 7:  RBAC               — 6-tier roles, middleware guard
-Phase 8:  FB Messaging        — webhook, 90-day poll, agent attribution
-Phase 9:  Employee Registry   — CRUD API, UI, facebookName, JSONB identities
-Phase 10: Member Self-Reg     — public /register page + MemberId generation
+Phase 1-10: [DONE] Foundation → Identity → RBAC → FB Messaging → Member Self-Reg
+Phase 11:   [CURRENT] UI Component Wiring — connect 7 new UI modules to real APIs
+Phase 12:   [PLANNED] NotificationRules API + LINE Messaging integration
 ```
 
 ---
 
-## Directory Structure (crm-app)
+## Phase 11 — Task Map
+
+### APIs ที่ต้องสร้างใหม่
+
+| Task | File | Exports |
+|---|---|---|
+| B1 | `src/app/api/products/route.js` | เพิ่ม `POST` (create product) |
+| B1 | `src/app/api/products/[id]/route.js` | `PUT` (update), `DELETE` (soft-delete: isActive=false) |
+| B2 | `src/app/api/analytics/executive/route.js` | `GET` → { totalRevenue, ordersCount, avgTicket, activeSessions, conversionRate, revenueChange } |
+
+### Components ที่ต้อง wire
+
+| Task | File | ลบ mock | ต่อ API |
+|---|---|---|---|
+| A1 | `src/components/AuditHistory.js` | MOCK_ORDERS | GET /api/orders |
+| A2 | `src/components/InventoryManager.js` | INITIAL_PRODUCTS | GET/POST/PUT/DELETE /api/products |
+| A3 | `src/components/PremiumPOS.js` | MOCK_PRODUCTS | GET /api/products + customer lookup + POST /api/orders |
+| A4 | `src/components/ExecutiveAnalytics.js` | hardcoded stats | GET /api/analytics/executive |
+
+---
+
+## DB Schema — Phase 11 Key Models
+
+```prisma
+model Product {
+  id          String   @id @default(uuid())
+  productId   String   @unique @map("product_id")   // e.g. TVS-PKG01-BUFFET-30H
+  name        String
+  description String?
+  price       Float
+  image       String?
+  category    String   @default("course")
+  duration    Int?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  orderId     String   @unique @map("order_id")      // crypto.randomUUID()
+  customerId  String   @map("customer_id")
+  date        DateTime
+  status      String   @default("PENDING")            // PENDING | CLOSED | CANCELLED
+  totalAmount Float    @map("total_amount")
+  paidAmount  Float    @default(0) @map("paid_amount")
+  items       Json     @default("[]")                 // [{productId,name,price,qty}]
+  customer    Customer @relation(...)
+}
+
+model Customer {
+  id         String  @id @default(uuid())
+  customerId String  @unique @map("customer_id")     // TVS-CUS-[CH]-[YY]-[XXXX]
+  firstName  String  @map("first_name")
+  lastName   String? @map("last_name")
+  phone      String?
+  channel    String  @default("WALK_IN")
+}
+```
+
+---
+
+## Directory (src/)
 
 ```
-src/
-  app/
-    api/[resource]/route.js        ← GET list, POST create
-    api/[resource]/[id]/route.js   ← GET, PUT, DELETE
-  lib/
-    db/
-      index.js                     ← Prisma singleton facade
-      repositories/                ← customerRepo, orderRepo, etc.
-    cache/cacheSync.js
-    identityService.js             ← Phase 6
-    rbac.js + authGuard.js         ← Phase 7
-  services/
-    marketingService.js
-    marketingAggregator.js         ← Phase 5
-    checksumVerifier.js            ← Phase 5
-    hourlyLedger.js                ← Phase 5
-  utils/
-    BusinessAnalyst.js             ← Gemini AI wrapper
-    phoneUtils.js                  ← Phase 6
-    marketingMetrics.js            ← Phase 5
-  workers/
-    eventProcessor.mjs             ← BullMQ consumer
-scripts/
-  sync-meta-ads.mjs                ← Meta Ads sync (Batch API, --insights-only flag)
-  sync-fb-messages.mjs             ← FB Graph API 90-day historical poll
+app/api/
+  products/route.js           GET ✅  POST ❌→Task B1
+  products/[id]/route.js      PUT ❌  DELETE ❌→Task B1
+  orders/route.js             GET ✅  POST ✅
+  orders/[id]/route.js        GET ✅
+  analytics/executive/route.js ❌→Task B2
+  customers/route.js          GET ✅ (?search=phone supported)
+components/
+  AuditHistory.js             🔴→Task A1
+  InventoryManager.js         🔴→Task A2
+  PremiumPOS.js               🔴→Task A3
+  ExecutiveAnalytics.js       🔴→Task A4
+lib/
+  db/index.js                 getPrisma() singleton
+  logger.js                   logger.error/info/warn
 ```

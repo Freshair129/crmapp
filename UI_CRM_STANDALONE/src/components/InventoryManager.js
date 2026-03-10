@@ -1,15 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-
-const INITIAL_PRODUCTS = [
-    { id: '1', name: 'Thai Iced Tea', category: 'Drinks', price: 65, image: 'https://images.unsplash.com/photo-1558857563-b371f31ca706?w=200&h=200&fit=crop' },
-    { id: '2', name: 'Green Tea Latte', category: 'Drinks', price: 75, image: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=200&h=200&fit=crop' },
-    { id: '3', name: 'Pad Thai', category: 'Food', price: 120, image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=200&h=200&fit=crop' },
-];
+import React, { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 
 export default function InventoryManager({ language = 'TH' }) {
-    const [products, setProducts] = useState(INITIAL_PRODUCTS);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -17,6 +13,16 @@ export default function InventoryManager({ language = 'TH' }) {
     const [deletingId, setDeletingId] = useState(null);
 
     const [formData, setFormData] = useState({ name: '', price: '', category: 'Drinks', image: '' });
+
+    useEffect(() => {
+        fetch('/api/products')
+            .then(r => r.json())
+            .then(data => {
+                setProducts(Array.isArray(data) ? data : []);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -36,18 +42,55 @@ export default function InventoryManager({ language = 'TH' }) {
 
     const handleSave = (e) => {
         e.preventDefault();
-        if (editingProduct) {
-            setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...formData, price: Number(formData.price) } : p));
-        } else {
-            setProducts([...products, { ...formData, id: Date.now().toString(), price: Number(formData.price) }]);
-        }
-        setIsModalOpen(false);
+        const method = editingProduct ? 'PUT' : 'POST';
+        const url = editingProduct ? `/api/products/${editingProduct.id}` : '/api/products';
+        const body = { 
+            name: formData.name, 
+            price: Number(formData.price), 
+            category: formData.category, 
+            image: formData.image 
+        };
+
+        fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(() => {
+            fetch('/api/products')
+                .then(r => r.json())
+                .then(data => {
+                    setProducts(Array.isArray(data) ? data : []);
+                    setIsModalOpen(false);
+                });
+        });
+    };
+
+    const handleDelete = () => {
+        if (!deletingId) return;
+        fetch(`/api/products/${deletingId}`, {
+            method: 'DELETE'
+        })
+        .then(() => {
+            setProducts(prev => prev.filter(p => p.id !== deletingId));
+            setIsDeleteModalOpen(false);
+        });
     };
 
     const labels = {
         EN: { title: 'Product Inventory', add: 'Add Product', name: 'Name', price: 'Price', category: 'Category', actions: 'Actions' },
         TH: { title: 'คลังสินค้าแนวใหม่', add: 'เพิ่มสินค้า', name: 'ชื่อสินค้า', price: 'ราคา', category: 'หมวดหมู่', actions: 'จัดการ' }
     }[language];
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-[#C9A34E] font-black uppercase tracking-widest animate-pulse text-xl">
+                    กำลังโหลด...
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto animate-fade-in bg-[#0A1A2F]/30 rounded-[3rem] border border-white/10 shadow-3xl">
@@ -190,3 +233,4 @@ export default function InventoryManager({ language = 'TH' }) {
         </div>
     );
 }
+

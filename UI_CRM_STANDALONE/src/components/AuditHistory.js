@@ -1,22 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
-
-const MOCK_ORDERS = [
-    { id: 'ORD-1234', date: '2026-03-10 14:20', items: 3, total: 250, status: 'Completed' },
-    { id: 'ORD-1235', date: '2026-03-10 15:10', items: 1, total: 65, status: 'Completed' },
-    { id: 'ORD-1236', date: '2026-03-10 16:45', items: 5, total: 840, status: 'Completed' },
-    { id: 'ORD-1237', date: '2026-03-11 09:30', items: 2, total: 195, status: 'Completed' },
-];
+import React, { useState, useEffect } from 'react';
 
 export default function AuditHistory({ language = 'TH' }) {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const filteredOrders = MOCK_ORDERS.filter(o => o.id.toLowerCase().includes(search.toLowerCase()));
+
+    useEffect(() => {
+        fetch('/api/orders?limit=50')
+            .then(r => r.json())
+            .then(data => {
+                setOrders(Array.isArray(data) ? data : []);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const filteredOrders = orders.filter(o => 
+        o.orderId.toLowerCase().includes(search.toLowerCase()) ||
+        (o.customer?.firstName && o.customer.firstName.toLowerCase().includes(search.toLowerCase()))
+    );
 
     const labels = {
-        EN: { title: 'Transaction Logs', id: 'Order ID', date: 'Timestamp', total: 'Revenue', details: 'Audit' },
-        TH: { title: 'ประวัติการทำรายการ', id: 'รหัสออร์เดอร์', date: 'วันเวลา', total: 'ยอดรวม', details: 'ตรวจสอบ' }
+        EN: { title: 'Transaction Logs', id: 'Order ID', date: 'Timestamp', total: 'Revenue', details: 'Audit', loading: 'Loading...' },
+        TH: { title: 'ประวัติการทำรายการ', id: 'รหัสออร์เดอร์', date: 'วันเวลา', total: 'ยอดรวม', details: 'ตรวจสอบ', loading: 'กำลังโหลด...' }
     }[language];
+
+    if (loading) {
+        return (
+            <div className="p-10 max-w-7xl mx-auto animate-pulse flex flex-col items-center justify-center min-h-[400px]">
+                <div className="text-[#C9A34E] font-black uppercase tracking-[0.3em]">{labels.loading}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-10 max-w-7xl mx-auto animate-fade-in">
@@ -49,22 +66,31 @@ export default function AuditHistory({ language = 'TH' }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {filteredOrders.map(o => (
-                            <tr key={o.id} className="hover:bg-white/5 transition-all group">
+                        {filteredOrders.map(order => (
+                            <tr key={order.id} className="hover:bg-white/5 transition-all group">
                                 <td className="px-8 py-6 flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/20 shadow-inner">
                                         <i className="fas fa-receipt"></i>
                                     </div>
-                                    <span className="font-bold text-[#F8F8F6] tracking-tight">{o.id}</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-[#F8F8F6] tracking-tight">{order.orderId}</span>
+                                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">
+                                            {order.customer?.firstName} {order.customer?.lastName || ''}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td className="px-8 py-6">
-                                    <span className="text-white/40 text-xs font-bold leading-none">{o.date}</span>
+                                    <span className="text-white/40 text-xs font-bold leading-none">
+                                        {new Date(order.date).toLocaleString('th-TH')}
+                                    </span>
                                 </td>
                                 <td className="px-8 py-6">
-                                    <span className="text-white/60 font-black text-[10px] uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">{o.items} Units</span>
+                                    <span className="text-white/60 font-black text-[10px] uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
+                                        {(Array.isArray(order.items) ? order.items.length : 0)} Units
+                                    </span>
                                 </td>
                                 <td className="px-8 py-6">
-                                    <span className="font-black text-white text-lg italic tracking-tighter">฿{o.total}</span>
+                                    <span className="font-black text-white text-lg italic tracking-tighter">฿{order.totalAmount.toLocaleString()}</span>
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <button className="w-10 h-10 bg-white/5 hover:bg-[#C9A34E] hover:text-[#0A1A2F] text-white/20 rounded-xl transition-all flex items-center justify-center group-hover:scale-110">
@@ -75,13 +101,17 @@ export default function AuditHistory({ language = 'TH' }) {
                         ))}
                     </tbody>
                 </table>
+                {filteredOrders.length === 0 && (
+                    <div className="p-20 text-center text-white/20 font-bold uppercase tracking-widest">
+                        No transactions found
+                    </div>
+                )}
             </div>
 
             <div className="mt-12 flex justify-center gap-4">
                 <button className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#C9A34E] font-black shadow-lg">1</button>
-                <button className="w-12 h-12 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center text-white/20 font-bold hover:bg-white/10 transition-all">2</button>
-                <button className="w-12 h-12 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center text-white/20 font-bold hover:bg-white/10 transition-all">3</button>
             </div>
         </div>
     );
 }
+

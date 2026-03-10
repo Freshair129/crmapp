@@ -1,32 +1,39 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-
-// Reusing the same mock products for consistency
-const MOCK_PRODUCTS = [
-    { id: '1', name: 'Thai Iced Tea', category: 'Drinks', price: 65, image: 'https://images.unsplash.com/photo-1558857563-b371f31ca706?w=200&h=200&fit=crop' },
-    { id: '2', name: 'Green Tea Latte', category: 'Drinks', price: 75, image: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=200&h=200&fit=crop' },
-    { id: '3', name: 'Pad Thai', category: 'Food', price: 120, image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=200&h=200&fit=crop' },
-    { id: '4', name: 'Basil Chicken', category: 'Food', price: 95, image: 'https://images.unsplash.com/photo-1562607378-87b6f631804b?w=200&h=200&fit=crop' },
-    { id: '5', name: 'Mango Sticky Rice', category: 'Desserts', price: 89, image: 'https://images.unsplash.com/photo-1621506289947-0209770a8d5e?w=200&h=200&fit=crop' },
-    { id: '6', name: 'Coconut Pudding', category: 'Desserts', price: 45, image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=200&h=200&fit=crop' },
-];
+import React, { useState, useMemo, useEffect } from 'react';
 
 export default function PremiumPOS({ language = 'TH' }) {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+    
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
+    const [customerError, setCustomerError] = useState('');
+
+    useEffect(() => {
+        fetch('/api/products')
+            .then(r => r.json())
+            .then(data => {
+                setProducts(Array.isArray(data) ? data : []);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
 
     const categories = ['All', 'Drinks', 'Food', 'Desserts'];
 
     const filteredProducts = useMemo(() => {
-        return MOCK_PRODUCTS.filter(p => {
+        return products.filter(p => {
             const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
             const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [search, activeCategory]);
+    }, [products, search, activeCategory]);
 
     const addItem = (product) => {
         const existing = cart.find(item => item.id === product.id);
@@ -52,17 +59,68 @@ export default function PremiumPOS({ language = 'TH' }) {
     const total = subtotal + tax;
 
     const handleCheckout = () => {
-        setCheckoutSuccess(true);
-        setTimeout(() => {
-            setCheckoutSuccess(false);
-            setCart([]);
-        }, 3000);
+        setShowCustomerModal(true);
+    };
+
+    const handleConfirmCheckout = async () => {
+        if (!customerPhone.trim()) return;
+        setCustomerLookupLoading(true);
+        setCustomerError('');
+        try {
+            const res = await fetch('/api/customers?phone=' + customerPhone.trim());
+            const data = await res.json();
+            const customer = Array.isArray(data) ? data[0] : (data.customers?.[0] || null);
+
+            if (!customer) {
+                setCustomerError('ไม่พบลูกค้า กรุณาลงทะเบียนก่อน');
+                setCustomerLookupLoading(false);
+                return;
+            }
+
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customerId: customer.id,
+                    totalAmount: total,
+                    items: cart.map(i => ({
+                        productId: i.productId || i.id,
+                        name: i.name,
+                        price: i.price,
+                        qty: i.quantity
+                    })),
+                    status: 'CLOSED',
+                    date: new Date().toISOString()
+                })
+            });
+
+            setShowCustomerModal(false);
+            setCustomerPhone('');
+            setCustomerError('');
+            setCheckoutSuccess(true);
+            setTimeout(() => {
+                setCheckoutSuccess(false);
+                setCart([]);
+            }, 3000);
+        } catch (error) {
+            setCustomerError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            setCustomerLookupLoading(false);
+        }
     };
 
     const labels = {
         EN: { title: 'V School POS', search: 'Search...', cart: 'Cart', checkout: 'Checkout', total: 'Total' },
         TH: { title: 'V School POS', search: 'ค้นหา...', cart: 'ตะกร้า', checkout: 'ชำระเงิน', total: 'ยอดรวม' }
     }[language];
+
+    if (loading) {
+        return (
+            <div className="flex h-full items-center justify-center bg-[#0A1A2F]/50 rounded-[2.5rem] border border-white/10">
+                <div className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลด...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col lg:flex-row h-full bg-[#0A1A2F]/50 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl animate-fade-in relative">
@@ -73,6 +131,45 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <i className="fas fa-check-circle text-7xl"></i>
                         <h2 className="text-4xl font-black italic tracking-tight">SUCCESS!</h2>
                         <p className="font-bold opacity-80 uppercase tracking-widest text-xs">Transaction Processed</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Customer Modal */}
+            {showCustomerModal && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0A1A2F]/90 backdrop-blur-lg p-6">
+                    <div className="bg-[#0A1A2F] border border-[#C9A34E]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
+                        <div className="text-center">
+                            <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">ค้นหาลูกค้า</h2>
+                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest">Customer Authentication</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <input
+                                type="text"
+                                placeholder="เบอร์โทรศัพท์"
+                                value={customerPhone}
+                                onChange={(e) => setCustomerPhone(e.target.value)}
+                                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#C9A34E]/50 outline-none transition-all text-center text-xl"
+                            />
+                            {customerError && <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>}
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => { setShowCustomerModal(false); setCustomerError(''); }}
+                                className="flex-1 px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/10 text-white/40 hover:bg-white/5 transition-all"
+                            >
+                                ยกเลิก
+                            </button>
+                            <button
+                                onClick={handleConfirmCheckout}
+                                disabled={customerLookupLoading || !customerPhone.trim()}
+                                className="flex-1 bg-[#C9A34E] text-[#0A1A2F] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                            >
+                                {customerLookupLoading ? <i className="fas fa-circle-notch animate-spin"></i> : 'ยืนยัน'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -216,3 +313,4 @@ export default function PremiumPOS({ language = 'TH' }) {
         </div>
     );
 }
+

@@ -1,3 +1,7 @@
+Loaded cached credentials.
+I will update the `ExecutiveAnalytics` component to fetch data from the executive analytics API, implementing the timeframe selector and wiring the statistics and conversion metrics to the retrieved data while maintaining the existing visual design.
+
+```jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -181,3 +185,4 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
     );
 }
 
+```

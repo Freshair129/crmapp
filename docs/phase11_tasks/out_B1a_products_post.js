@@ -1,3 +1,5 @@
+Loaded cached credentials.
+```javascript
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
@@ -55,3 +57,4 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+```
