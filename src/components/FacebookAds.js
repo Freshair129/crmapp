@@ -653,7 +653,7 @@ export default function FacebookAds({ customers }) {
                                             <i className={`fas ${kpi.icon} text-xs`}></i>
                                         </div>
                                     </div>
-                                    <p className="text-2xl font-black text-white tracking-tight">
+                                    <div className="text-2xl font-black text-white tracking-tight">
                                         {kpi.label === 'CTR' ? (
                                             <AuditedMetric
                                                 value={`${fmt(displayMetrics.ctr, 2)}%`}
@@ -665,7 +665,7 @@ export default function FacebookAds({ customers }) {
                                             kpi.label === 'Active Campaigns' ? activeCampaigns :
                                                 `฿${fmt(displayMetrics.spend / (displayMetrics.results || 1), 2)}`
                                         )}
-                                    </p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
