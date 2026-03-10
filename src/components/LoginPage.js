@@ -127,7 +127,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
 
                     <div className="mt-8 pt-6 border-t border-white/5 text-center">
                         <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest">Demo Credentials</p>
-                        <p className="text-white/40 text-xs mt-2">admin@vschool.co.th / admin123</p>
+                        <p className="text-white/40 text-xs mt-2">suanranger129@gmail.com</p>
                     </div>
                 </div>
 
