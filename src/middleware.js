@@ -30,7 +30,7 @@ const ROLE_LEVEL = {
   DEVELOPER:  5,
   MANAGER:    4,
   SUPERVISOR: 3,
-  ADMIN:      2,
+  ADMIN:      4, // school owner/director — same access as MANAGER
   AGENT:      1,
   GUEST:      0,
 };

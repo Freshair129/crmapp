@@ -17,7 +17,12 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
         fetch(`/api/analytics/executive?timeframe=${timeframe}`)
             .then(r => r.json())
             .then(d => {
-                setData(d);
+                // Guard: only accept valid payload (not error objects)
+                if (d && typeof d.ordersCount === 'number') {
+                    setData(d);
+                } else {
+                    setData(null);
+                }
                 setLoading(false);
             })
             .catch(() => setLoading(false));
