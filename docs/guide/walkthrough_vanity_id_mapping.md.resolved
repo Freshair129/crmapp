@@ -1,0 +1,49 @@
+# Walkthrough: Future-Proof Vanity ID Mapping
+
+We have pivoted the identity mapping strategy to use **Facebook profile vanity slugs** (`fbVanity`) as the primary persistent identifier, providing a reliable bridge to Facebook even if numeric Admin IDs remain hidden.
+
+## Key Changes
+
+### 1. Vanity-First Matching in API
+The [resolveEmployeeId](file:///Users/ideab/Desktop/data_hub/crm-app/src/app/api/marketing/chat/message-sender/route.js#15-131) function in [route.js](file:///Users/ideab/Desktop/data_hub/crm-app/src/app/api/marketing/chat/message-sender/route.js) now prioritized matching by `fbVanity`.
+
+```mermaid
+flowchart TD
+    Start[Incoming Sync Message] --> Extraction[Scraper extracts 'Sent by' Name & Vanity URL]
+    Extraction --> API[API resolves Employee]
+    API --> Priority1{Match by Vanity?}
+    Priority1 -- Yes --> Result[Return Employee ID]
+    Priority1 -- No --> Priority2{Match by Name?}
+    Priority2 -- Yes --> Backfill[Backfill Vanity to Employee Identities]
+    Backfill --> Result
+    Priority2 -- No --> Unknown[Return Null]
+```
+
+### 2. Auto-Backfill Mechanism
+When an admin is successfully matched by name (e.g., "Fafah"), the system automatically captures their profile URL slug and saves it to `Employee.identities.facebook.vanity`.
+
+## Verification Results
+
+We verified the logic using a synthetic test script [test_vanity_mapping.js](file:///Users/ideab/Desktop/data_hub/crm-app/scripts/test_vanity_mapping.js).
+
+### Case 1: Initial Discovery (Name -> Vanity)
+- **Input**: Name="Fafah", Vanity="test.vanity.123"
+- **Internal Action**: Matched "Fafah" in database.
+- **Result**: `identities.facebook.vanity` updated to "test.vanity.123".
+- **Evidence**:
+  ```json
+  "identities": {
+    "facebook": {
+      "name": "Fafah Fasai",
+      "vanity": "test.vanity.1773164999847"
+    }
+  }
+  ```
+
+### Case 2: Priority Matching (Vanity -> ID)
+- **Input**: Name="Wrong Name", Vanity="test.vanity.123"
+- **Internal Action**: Matched by `vanity` even though the name was incorrect.
+- **Result**: Successfully resolved to the correct Employee ID.
+
+## Conclusion
+This strategy ensures that as long as an admin responds once, their "Digital Fingerprint" (Vanity Slug) is captured. This makes the system resilient to name changes and prepares us for future alignment with Facebook's numeric IDs.

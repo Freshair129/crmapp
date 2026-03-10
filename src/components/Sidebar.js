@@ -2,35 +2,51 @@
 
 const menuGroups = [
     {
-        label: null,
+        label: 'OVERVIEW',
         items: [
-            { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' }
+            { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
+            { id: 'executive-analytics', icon: 'fa-analytics', label: 'Executive AI' }
         ]
     },
     {
-        label: 'OPERATIONS',
+        label: 'SALES',
         items: [
-            { id: 'customers', icon: 'fa-users', label: 'Customers' },
-            { id: 'employees', icon: 'fa-user-tie', label: 'Employees' },
-            { id: 'store', icon: 'fa-store', label: 'Store' },
-            { id: 'orders', icon: 'fa-receipt', label: 'Orders' }
+            { id: 'pos-system', icon: 'fa-cash-register', label: 'Premium POS' },
+            { id: 'inventory-manager', icon: 'fa-boxes', label: 'Catalog Manager' },
+            { id: 'audit-trail', icon: 'fa-history', label: 'Audit Trail' },
+            { id: 'verification', icon: 'fa-robot', label: 'Slip Verification' }
         ]
     },
     {
-        label: 'GROWTH',
+        label: 'CRM',
         items: [
-            { id: 'analytics', icon: 'fa-chart-line', label: 'Analytics' },
-            { id: 'team-kpi', icon: 'fa-chart-network', label: 'Team KPI' },
-            { id: 'admin-performance', icon: 'fa-stopwatch', label: 'Admin Perf.' },
+            { id: 'customers', icon: 'fa-users', label: 'Customers 360' },
+            { id: 'facebook-chat', icon: 'fa-comments', label: 'Facebook Inbox' },
+            { id: 'line-connect', icon: 'fa-comment-dots', label: 'LINE Connect' }
+        ]
+    },
+    {
+        label: 'MARKETING',
+        items: [
             { id: 'facebook-ads', icon: 'fa-bullhorn', label: 'Facebook Ads' },
-            { id: 'facebook-chat', icon: 'fa-comments', label: 'Inbox' },
-            { id: 'campaign-tracking', icon: 'fa-crosshairs', label: 'Campaign Tracking' }
+            { id: 'campaign-tracking', icon: 'fa-crosshairs', label: 'Campaign Tracking' },
+            { id: 'analytics', icon: 'fa-chart-line', label: 'Analytics' },
+            { id: 'notification-rules', icon: 'fa-bell-on', label: 'Notification Rules' }
+        ]
+    },
+    {
+        label: 'HR',
+        items: [
+            { id: 'employees', icon: 'fa-user-tie', label: 'Employees' },
+            { id: 'team-kpi', icon: 'fa-chart-network', label: 'Team KPI' },
+            { id: 'admin-performance', icon: 'fa-stopwatch', label: 'Admin Perf.' }
         ]
     },
     {
         label: 'SYSTEM',
         items: [
-            { id: 'settings', icon: 'fa-cog', label: 'Settings' }
+            { id: 'system-config', icon: 'fa-sliders-h', label: 'System Config' },
+            { id: 'settings', icon: 'fa-cog', label: 'Legacy Settings' }
         ]
     }
 ];
@@ -78,17 +94,17 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                         <li key={item.id}>
                                             <button
                                                 onClick={() => onViewChange(item.id)}
-                                                className={`w-full flex items-center gap-4 px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-300 relative group ${isActive
-                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 translate-x-1'
-                                                    : 'text-white/60 hover:text-[#F8F8F6] hover:bg-white/5'
-                                                    }`}
+                                                className={`w - full flex items - center gap - 4 px - 5 py - 3 rounded - 2xl text - sm font - bold transition - all duration - 300 relative group ${isActive
+                                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 translate-x-1'
+                                                        : 'text-white/60 hover:text-[#F8F8F6] hover:bg-white/5'
+                                                    } `}
                                             >
                                                 {/* Active Indicator Light */}
                                                 {isActive && (
                                                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full"></span>
                                                 )}
 
-                                                <i className={`fas ${item.icon} w-6 text-center text-lg ${isActive ? 'text-white' : 'group-hover:text-red-500 transition-colors'}`}></i>
+                                                <i className={`fas ${item.icon} w - 6 text - center text - lg ${isActive ? 'text-white' : 'group-hover:text-red-500 transition-colors'} `}></i>
                                                 <span className="tracking-tight">{item.label}</span>
 
                                                 {/* Task Notification Badge */}
@@ -100,8 +116,8 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
 
                                                 {/* Cart badge - Japan Red Accent */}
                                                 {item.id === 'store' && cartCount > 0 && (
-                                                    <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-black ${isActive ? 'bg-white text-red-500' : 'bg-red-500 text-white'
-                                                        }`}>
+                                                    <span className={`ml - auto px - 2 py - 0.5 rounded - full text - [10px] font - black ${isActive ? 'bg-white text-red-500' : 'bg-red-500 text-white'
+                                                        } `}>
                                                         {cartCount}
                                                     </span>
                                                 )}

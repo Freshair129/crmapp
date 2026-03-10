@@ -287,6 +287,7 @@ model AdAccount {
 }
 
 // ADR-024 D2: Campaign stores NO aggregated metrics — all figures computed Bottom-Up in app layer
+// fb_* fields = Facebook API-reported snapshot, stored for audit only (compare vs. bottom-up)
 model Campaign {
   id              String    @id @default(uuid())
   campaignId      String    @unique @map("campaign_id")
@@ -299,6 +300,12 @@ model Campaign {
   startDate       DateTime? @map("start_date")
   endDate         DateTime? @map("end_date")
   rawData         Json?     @map("raw_data")
+  // Audit snapshot — values pulled directly from Facebook Campaign Insights API
+  fbSpend         Float?    @map("fb_spend")
+  fbClicks        Int?      @map("fb_clicks")
+  fbLeads         Int?      @map("fb_leads")
+  fbRevenue       Float?    @map("fb_revenue")
+  fbSnapshotAt    DateTime? @map("fb_snapshot_at")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

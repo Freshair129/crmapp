@@ -1,32 +1,37 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 
-export default function LoginPage({ onLogin, employees, error }) {
+export default function LoginPage({ onLogin, error: externalError }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState(externalError || '');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');
 
         try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+            const result = await signIn('credentials', {
+                email,
+                password,
+                redirect: false
             });
-            const result = await res.json();
 
-            if (result.success) {
-                onLogin(result.user);
-            } else {
-                onLogin(null); // Triggers error handling in parent
+            if (result?.error) {
+                setError('Invalid email or password');
+                if (onLogin) onLogin(null);
+            } else if (result?.ok) {
+                // NextAuth SessionProvider will update the session status automatically,
+                // which will trigger the guard in Home component.
             }
         } catch (err) {
             console.error('Login error:', err);
-            onLogin(null);
+            setError('Something went wrong. Please try again.');
+            if (onLogin) onLogin(null);
         } finally {
             setIsLoading(false);
         }

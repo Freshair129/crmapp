@@ -37,7 +37,7 @@ export async function GET(request) {
                               messages: {
                                   orderBy: { createdAt: 'asc' },
                                   take: 2,
-                                  select: { fromId: true, createdAt: true, respondedById: true },
+                                  select: { fromId: true, createdAt: true, responderId: true },
                               },
                           },
                       }
@@ -46,7 +46,7 @@ export async function GET(request) {
                               messages: {
                                   orderBy: { createdAt: 'asc' },
                                   take: 2,
-                                  select: { fromId: true, createdAt: true, respondedById: true },
+                                  select: { fromId: true, createdAt: true, responderId: true },
                               },
                           },
                       },
@@ -63,8 +63,8 @@ export async function GET(request) {
             let responseCount = 0;
             for (const conv of emp.assignedConversations) {
                 const msgs = conv.messages || [];
-                const firstCustomer = msgs.find((m) => !m.respondedById);
-                const firstReply = msgs.find((m) => m.respondedById === emp.id);
+                const firstCustomer = msgs.find((m) => !m.responderId);
+                const firstReply = msgs.find((m) => m.responderId === emp.id);
                 if (firstCustomer && firstReply) {
                     const diff = new Date(firstReply.createdAt) - new Date(firstCustomer.createdAt);
                     if (diff > 0) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
@@ -20,6 +20,16 @@ import FacebookChat from "@/components/FacebookChat";
 import CampaignTracking from "@/components/CampaignTracking";
 import Settings from "@/components/Settings";
 
+// New Standalone Modules
+import PremiumPOS from "@/components/PremiumPOS";
+import LineConnect from "@/components/LineConnect";
+import NotificationRules from "@/components/NotificationRules";
+import ExecutiveAnalytics from "@/components/ExecutiveAnalytics";
+import InventoryManager from "@/components/InventoryManager";
+import AuditHistory from "@/components/AuditHistory";
+import SystemConfig from "@/components/SystemConfig";
+import LoginPage from "@/components/LoginPage";
+
 const fadeVariant = {
     initial: { opacity: 0, y: 16 },
     animate: { opacity: 1, y: 0 },
@@ -27,8 +37,23 @@ const fadeVariant = {
 };
 
 export default function Home() {
-    const { data: session } = useSession();
-    const currentUser = session?.user || null;
+    const { data: session, status } = useSession();
+    const [currentUser, setCurrentUser] = useState(null);
+    const [authInited, setAuthInited] = useState(false);
+
+    useEffect(() => {
+        if (status === "authenticated" && session?.user) {
+            setCurrentUser(session.user);
+        } else if (status === "unauthenticated") {
+            setCurrentUser(null);
+        }
+        setAuthInited(status !== "loading");
+    }, [session, status]);
+
+    const handleLogout = () => {
+        signOut({ redirect: false });
+        setCurrentUser(null);
+    };
 
     const [activeView, setActiveView] = useState("dashboard");
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -41,6 +66,7 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
+        if (!currentUser) return;
         setLoading(true);
         try {
             const [custRes, prodRes, empRes, ordRes] = await Promise.all([
@@ -67,8 +93,8 @@ export default function Home() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (currentUser) fetchData();
+    }, [currentUser]);
 
     const handleAddToCart = (product) => {
         setCart(prev => {
@@ -89,9 +115,7 @@ export default function Home() {
             alert("Please select a customer first.");
             return;
         }
-        // Logic for checkout...
         console.log("Checking out for:", selectedCustomer.id, payload);
-        // Simulation of success:
         setCart([]);
         setIsCartOpen(false);
         fetchData();
@@ -105,16 +129,38 @@ export default function Home() {
 
     const wrap = (key, children) => (
         <motion.div key={key} variants={fadeVariant} initial="initial" animate="animate" exit="exit"
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="h-full">
             {children}
         </motion.div>
     );
 
+    // Guard: Loading State
+    if (!authInited) {
+        return (
+            <div className="h-screen w-screen bg-[#0A1A2F] flex items-center justify-center">
+                <Loader2 className="animate-spin text-[#C9A34E]" size={40} />
+            </div>
+        );
+    }
+
+    // Guard: Protected View
+    // We only show content if authenticated. 
+    // If explicitly unauthenticated OR no currentUser, show Login.
+    if (status === "unauthenticated" || (!currentUser && status === "authenticated")) {
+        return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
+    }
+
     return (
         <div className="flex h-screen overflow-hidden bg-[#0A1A2F] text-white">
-            <Sidebar activeView={activeView} onViewChange={handleViewChange} currentUser={currentUser} />
+            <Sidebar
+                activeView={activeView}
+                onViewChange={handleViewChange}
+                currentUser={currentUser}
+                cartCount={cart.reduce((s, i) => s + i.qty, 0)}
+                onLogout={handleLogout}
+            />
 
-            <main className="flex-1 overflow-y-auto relative">
+            <main className="flex-1 overflow-y-auto relative p-8">
                 {/* Ambient glows */}
                 <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#C9A34E]/5 blur-[120px] -z-10 pointer-events-none" />
                 <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] -z-10 pointer-events-none" />
@@ -123,6 +169,22 @@ export default function Home() {
 
                     {activeView === "dashboard" && wrap("dashboard",
                         <Dashboard customers={customers} products={products} employees={employees} currentUser={currentUser} />
+                    )}
+
+                    {activeView === "executive-analytics" && wrap("executive-analytics",
+                        <ExecutiveAnalytics language="TH" />
+                    )}
+
+                    {activeView === "pos-system" && wrap("pos-system",
+                        <PremiumPOS language="TH" />
+                    )}
+
+                    {activeView === "inventory-manager" && wrap("inventory-manager",
+                        <InventoryManager />
+                    )}
+
+                    {activeView === "audit-trail" && wrap("audit-trail",
+                        <AuditHistory />
                     )}
 
                     {activeView === "customers" && wrap("customers",
@@ -154,32 +216,32 @@ export default function Home() {
                         )
                     )}
 
-                    {activeView === "employees" && wrap("employees",
-                        <EmployeeManagement employees={employees} customers={customers} onRefresh={fetchData} currentUser={currentUser} />
+                    {activeView === "facebook-chat" && wrap("facebook-chat",
+                        <FacebookChat customers={customers} />
                     )}
 
-                    {activeView === "store" && wrap("store",
-                        <StoreGrid
-                            products={products}
-                            allProducts={products}
-                            activeCustomer={selectedCustomer}
-                            onSelectProduct={(p) => console.log("Selected:", p)}
-                            onAddToCart={handleAddToCart}
-                            cart={cart}
-                            setCart={setCart}
-                            onCheckout={handleCheckout}
-                            isCartOpen={isCartOpen}
-                            setIsCartOpen={setIsCartOpen}
-                        />
+                    {activeView === "line-connect" && wrap("line-connect",
+                        <LineConnect language="TH" />
                     )}
 
-                    {activeView === "orders" && wrap("orders",
-                        <Orders customers={customers} products={products} orders={orders} onRefresh={fetchData} />
+                    {activeView === "facebook-ads" && wrap("facebook-ads",
+                        <FacebookAds customers={customers} />
                     )}
 
+                    {activeView === "campaign-tracking" && wrap("campaign-tracking",
+                        <CampaignTracking customers={customers} />
+                    )}
 
                     {activeView === "analytics" && wrap("analytics",
                         <Analytics customers={customers} products={products} employees={employees} />
+                    )}
+
+                    {activeView === "notification-rules" && wrap("notification-rules",
+                        <NotificationRules language="TH" />
+                    )}
+
+                    {activeView === "employees" && wrap("employees",
+                        <EmployeeManagement employees={employees} customers={customers} onRefresh={fetchData} currentUser={currentUser} />
                     )}
 
                     {activeView === "team-kpi" && wrap("team-kpi",
@@ -190,16 +252,8 @@ export default function Home() {
                         <AdminPerformance employees={employees} customers={customers} />
                     )}
 
-                    {activeView === "facebook-ads" && wrap("facebook-ads",
-                        <FacebookAds customers={customers} />
-                    )}
-
-                    {activeView === "facebook-chat" && wrap("facebook-chat",
-                        <FacebookChat customers={customers} />
-                    )}
-
-                    {activeView === "campaign-tracking" && wrap("campaign-tracking",
-                        <CampaignTracking customers={customers} />
+                    {activeView === "system-config" && wrap("system-config",
+                        <SystemConfig language="TH" setLanguage={() => { }} />
                     )}
 
                     {activeView === "settings" && wrap("settings",

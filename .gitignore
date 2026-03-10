@@ -26,3 +26,6 @@ src/generated/
 
 # Ad mapping (local data)
 data/ad-mapping.json
+
+# Chat backup files (sensitive customer data — never commit)
+backup/
