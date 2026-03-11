@@ -20,6 +20,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
     const [discoveredProducts, setDiscoveredProducts] = useState([]);
     const [activeAd, setActiveAd] = useState(null);
     const [loadingAd, setLoadingAd] = useState(false);
+    const [readMode, setReadMode] = useState('stealth'); // 'stealth' | 'normal'
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const initialSelectionRef = useRef(false);
@@ -476,6 +477,19 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             <h2 className="font-black text-xl tracking-tight text-white">Inbox</h2>
                             <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mt-1">{conversations.length} Active Chats</p>
                         </div>
+                        {/* Read Mode Toggle */}
+                        <button
+                            onClick={() => setReadMode(m => m === 'stealth' ? 'normal' : 'stealth')}
+                            title={readMode === 'stealth' ? 'Stealth Mode: ลูกค้าไม่รู้ว่าอ่านแล้ว' : 'Normal Mode: ส่ง read receipt ไป Facebook'}
+                            className={`p-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                                readMode === 'stealth'
+                                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            }`}
+                        >
+                            <i className={`fas ${readMode === 'stealth' ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                            <span className="text-[9px] uppercase tracking-widest">{readMode}</span>
+                        </button>
                         <button
                             onClick={handleManualSync}
                             disabled={isSyncing}
@@ -529,7 +543,26 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         filteredConversations.map(conv => (
                             <button
                                 key={conv.id}
-                                onClick={() => setSelectedConv(conv)}
+                                onClick={() => {
+                                    setSelectedConv(conv);
+                                    // Mark as read — reset unreadCount; stealth = ไม่ส่ง read receipt ไป FB
+                                    if (conv.unread_count > 0) {
+                                        fetch('/api/marketing/chat/read', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                conversationId: conv.id,
+                                                recipientId: conv.participant_id || conv.participantId,
+                                                mode: readMode,
+                                            }),
+                                        }).then(() => {
+                                            // อัพเดท UI ทันทีโดยไม่ต้อง refetch
+                                            setConversations(prev =>
+                                                prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
+                                            );
+                                        }).catch(err => console.error('[ChatRead] failed', err));
+                                    }
+                                }}
                                 className={`w-full p-5 text-left border-b border-white/5 hover:bg-white/5 transition-all group relative ${selectedConv?.id === conv.id ? 'bg-blue-600/10' : ''}`}
                             >
                                 {selectedConv?.id === conv.id && (
@@ -733,164 +766,202 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                 </div>
             )}
 
-            {/* Right Sidebar: Customer Context */}
+            {/* Right Sidebar: Customer Card */}
             {selectedConv && (
-                <div className="w-80 border-l border-white/5 bg-[#0A1A2F] flex flex-col p-6 space-y-8 overflow-y-auto custom-scrollbar">
-                    <div className="border-b border-white/5 pb-6">
-                        <button
-                            onClick={() => {
-                                if (onViewCustomer) {
-                                    if (selectedConv.customer) {
-                                        onViewCustomer(selectedConv.customer);
-                                    } else {
-                                        // Pass a fallback profile using Facebook Data
-                                        const fbData = selectedConv.participants?.data?.[0] || {};
-                                        onViewCustomer({
-                                            customer_id: 'NEW_LEAD_' + (fbData.id || Date.now()),
-                                            profile: {
-                                                first_name: fbData.name || 'Unknown',
-                                                last_name: '',
-                                                status: 'Lead',
-                                                membership_tier: 'GUEST',
-                                                lifecycle_stage: 'Lead',
-                                            },
-                                            contact_info: {
-                                                facebook_id: fbData.id
-                                            },
-                                            isTemporary: true
-                                        });
-                                    }
-                                }
-                            }}
-                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all"
-                        >
-                            <i className="fas fa-id-card"></i> View Full Profile
-                        </button>
+                <div className="w-72 border-l border-white/5 bg-[#060f1e] flex flex-col overflow-y-auto custom-scrollbar shrink-0">
+
+                    {/* ── Profile Header ── */}
+                    <div className="px-5 pt-6 pb-5 border-b border-white/5 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20 text-2xl font-black text-white select-none">
+                            {getParticipantName(selectedConv).charAt(0)}
+                        </div>
+                        <h3 className="font-black text-white text-sm leading-tight">{getParticipantName(selectedConv)}</h3>
+                        <p className="text-[9px] text-white/25 font-mono mt-1 truncate px-2">
+                            {selectedConv.customer?.customer_id || selectedConv.participant_id || '—'}
+                        </p>
+                        <div className="flex justify-center gap-1.5 mt-3 flex-wrap">
+                            {selectedConv.customer?.profile?.membership_tier && (
+                                <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${
+                                    selectedConv.customer.profile.membership_tier === 'GOLD'
+                                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                        : selectedConv.customer.profile.membership_tier === 'SILVER'
+                                        ? 'bg-slate-400/20 text-slate-300 border-slate-400/30'
+                                        : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                }`}>{selectedConv.customer.profile.membership_tier}</span>
+                            )}
+                            {selectedConv.customer?.profile?.lifecycle_stage && (
+                                <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${
+                                    selectedConv.customer.profile.lifecycle_stage === 'Customer'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : selectedConv.customer.profile.lifecycle_stage === 'Lead'
+                                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                                        : 'bg-white/5 text-white/40 border-white/10'
+                                }`}>{selectedConv.customer.profile.lifecycle_stage}</span>
+                            )}
+                            {!selectedConv.customer && (
+                                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border bg-orange-500/20 text-orange-400 border-orange-500/30">New Lead</span>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Ad Context Section */}
+                    {/* ── Contact Info ── */}
+                    <div className="px-5 py-4 border-b border-white/5 space-y-2">
+                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2">Contact</p>
+                        {selectedConv.customer?.contact_info?.phone && (
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                    <i className="fas fa-phone text-[9px] text-white/40"></i>
+                                </div>
+                                <span className="text-[11px] text-white/70 font-bold">{selectedConv.customer.contact_info.phone}</span>
+                            </div>
+                        )}
+                        {selectedConv.customer?.contact_info?.email && (
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                    <i className="fas fa-envelope text-[9px] text-white/40"></i>
+                                </div>
+                                <span className="text-[11px] text-white/60 truncate">{selectedConv.customer.contact_info.email}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-lg bg-[#1877F2]/10 flex items-center justify-center shrink-0">
+                                <i className="fab fa-facebook text-[9px] text-[#1877F2]"></i>
+                            </div>
+                            <span className="text-[10px] text-white/35 font-mono truncate">
+                                {selectedConv.customer?.contact_info?.facebook_id || selectedConv.participant_id || '—'}
+                            </span>
+                        </div>
+                        {(selectedConv.intelligence?.senders?.length > 0 || selectedConv.customer?.intelligence?.senders?.length > 0) && (
+                            <div className="flex items-start gap-2.5 mt-1">
+                                <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i className="fas fa-users-cog text-[8px] text-blue-400"></i>
+                                </div>
+                                <span className="text-[9px] text-blue-400 font-black leading-tight">
+                                    {(selectedConv.intelligence?.senders || selectedConv.customer?.intelligence?.senders).join(', ')}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Labels / Tags ── */}
+                    {getCustomerTags(selectedConv).length > 0 && (
+                        <div className="px-5 py-4 border-b border-white/5">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
+                                <i className="fas fa-tags text-blue-500 text-[9px]"></i> Labels
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {getCustomerTags(selectedConv).map((tag, idx) => {
+                                    const isPaid = tag.toLowerCase().includes('paid') || tag.includes('ชำระ') || tag.includes('โอน');
+                                    return (
+                                        <span key={idx} className={`px-2 py-0.5 rounded-md text-[8px] font-black border uppercase tracking-wider flex items-center gap-1 ${isPaid ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-white/35 border-white/10'}`}>
+                                            {isPaid && <i className="fas fa-check-circle text-[7px]"></i>}{tag}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Ad Attribution ── */}
                     {(loadingAd || activeAd) && (
-                        <div className="animate-fade-in">
-                            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <i className="fas fa-ad text-indigo-500"></i> Ad Attribution
-                            </h3>
+                        <div className="px-5 py-4 border-b border-white/5">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
+                                <i className="fas fa-ad text-indigo-400 text-[9px]"></i> Ad Attribution
+                            </p>
                             {loadingAd ? (
-                                <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center">
+                                <div className="h-14 bg-white/5 rounded-xl flex items-center justify-center">
                                     <i className="fas fa-circle-notch animate-spin text-indigo-500/50"></i>
                                 </div>
                             ) : (
-                                <div className="bg-[#162A47]/40 backdrop-blur-md rounded-2xl border border-indigo-500/20 overflow-hidden group hover:bg-[#162A47]/60 transition-all shadow-lg shadow-indigo-500/5">
-                                    <div className="aspect-[1.91/1] w-full bg-black/40 relative overflow-hidden">
-                                        {activeAd.thumbnail ? (
-                                            <img src={activeAd.thumbnail} alt={activeAd.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                                        ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-white/10 italic">
-                                                <i className="fas fa-image text-2xl mb-2"></i>
-                                                <span className="text-[8px] uppercase font-black">Ad Visual Hidden</span>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md border border-white/10">
-                                            <span className={`text-[7px] font-black uppercase tracking-widest ${activeAd.status === 'ACTIVE' ? 'text-emerald-400' : 'text-white/40'}`}>
-                                                {activeAd.status}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 space-y-2">
-                                        <div>
-                                            <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">Campaign Context</p>
-                                            <h4 className="text-xs font-black text-white leading-tight line-clamp-2">{activeAd.campaign_name || 'Direct Message'}</h4>
-                                        </div>
-                                        <div className="pt-2 border-t border-white/5">
-                                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Ad Name</p>
-                                            <p className="text-[10px] font-bold text-slate-300 truncate">{activeAd.name}</p>
-                                        </div>
+                                <div className="bg-[#0d1e36] rounded-xl border border-indigo-500/20 overflow-hidden">
+                                    {activeAd.thumbnail && (
+                                        <img src={activeAd.thumbnail} alt={activeAd.name} className="w-full h-20 object-cover" />
+                                    )}
+                                    <div className="p-3 space-y-1">
+                                        <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Campaign</p>
+                                        <p className="text-[10px] font-black text-white line-clamp-2 leading-tight">{activeAd.campaign_name || 'Direct Message'}</p>
+                                        <p className="text-[9px] text-slate-400 truncate">{activeAd.name}</p>
+                                        <span className={`inline-block mt-1 text-[7px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest ${activeAd.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
+                                            {activeAd.status}
+                                        </span>
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    <div>
-                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-                            <i className="fas fa-tags text-blue-500"></i> Labels & Segmentation
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {getCustomerTags(selectedConv).map((tag, idx) => {
-                                const isPaid = tag.toLowerCase().includes('paid') || tag.includes('ชำระ') || tag.includes('โอน');
-                                return (
-                                    <div key={idx} className={`px-2.5 py-1 rounded-lg text-[9px] font-black border uppercase tracking-widest flex items-center gap-1.5 ${isPaid
-                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                                        : 'bg-white/5 text-white/40 border-white/10'}`}>
-                                        {isPaid && <i className="fas fa-check-circle"></i>}
-                                        {tag}
+                    {/* ── Courses Owned ── */}
+                    {selectedConv.customer?.inventory?.learning_courses?.length > 0 && (
+                        <div className="px-5 py-4 border-b border-white/5">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
+                                <i className="fas fa-graduation-cap text-amber-500 text-[9px]"></i> Courses Owned
+                            </p>
+                            <div className="space-y-1.5">
+                                {selectedConv.customer.inventory.learning_courses.map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl border border-white/10">
+                                        <p className="text-[10px] font-black text-white flex-1 mr-2 truncate">{item.name}</p>
+                                        <span className="text-[7px] font-black px-1.5 py-0.5 rounded border bg-blue-500/20 text-blue-400 border-blue-500/30 shrink-0 uppercase">{item.status || 'Active'}</span>
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    <div>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <i className="fas fa-search-dollar text-purple-500"></i> Smart Explore
-                            </h3>
-                            <button
-                                onClick={handleDiscoverProducts}
-                                disabled={isAnalyzing}
-                                className="text-[9px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-all flex items-center gap-1.5"
-                            >
+                    {/* ── AI Product Detect ── */}
+                    <div className="px-5 py-4 border-b border-white/5">
+                        <div className="flex justify-between items-center mb-2.5">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                                <i className="fas fa-search-dollar text-purple-400 text-[9px]"></i> AI Detect
+                            </p>
+                            <button onClick={handleDiscoverProducts} disabled={isAnalyzing}
+                                className="text-[8px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-all flex items-center gap-1 disabled:opacity-50">
                                 {isAnalyzing ? <i className="fas fa-circle-notch animate-spin"></i> : <i className="fas fa-magic"></i>}
-                                {isAnalyzing ? 'Detecting...' : 'Detect Products'}
+                                {isAnalyzing ? 'Scanning...' : 'Scan'}
                             </button>
                         </div>
-
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             {discoveredProducts.length === 0 && !isAnalyzing && (
-                                <p className="text-[9px] text-white/20 italic text-center py-4 border border-dashed border-white/5 rounded-xl">
-                                    Click detect to scan chat for products.
-                                </p>
+                                <p className="text-[9px] text-white/15 italic text-center py-3 border border-dashed border-white/5 rounded-xl">Scan to detect interests</p>
                             )}
-
                             {discoveredProducts.map((p, i) => (
-                                <div key={i} className="p-3 bg-purple-500/5 rounded-xl border border-purple-500/20 space-y-2">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-white leading-tight">{p.product_name}</p>
-                                            <p className="text-[9px] text-purple-400 font-bold mt-0.5">{Number(p.price).toLocaleString()} THB</p>
-                                        </div>
-                                        {p.exists ? (
-                                            <span className="text-[7px] font-black text-emerald-400 uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">In Store</span>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleAddToStore(p)}
-                                                className="text-[7px] font-black text-purple-400 uppercase border border-purple-500/30 px-1.5 py-0.5 rounded hover:bg-purple-500/20 active:scale-95 transition-all"
-                                            >
-                                                + Add to Store
-                                            </button>
-                                        )}
+                                <div key={i} className="p-2.5 bg-purple-500/5 rounded-xl border border-purple-500/15">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                        <p className="text-[10px] font-black text-white leading-tight flex-1">{p.product_name}</p>
+                                        {p.exists
+                                            ? <span className="text-[7px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">In Store</span>
+                                            : <button onClick={() => handleAddToStore(p)} className="text-[7px] font-black text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded hover:bg-purple-500/20 shrink-0">+ Add</button>
+                                        }
                                     </div>
-                                    <p className="text-[8px] text-white/40 italic leading-relaxed border-t border-white/5 pt-1">
-                                        &quot;{p.justification}&quot;
-                                    </p>
+                                    <p className="text-[9px] text-purple-400 font-bold">{Number(p.price).toLocaleString()} THB</p>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div>
-                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                            <i className="fas fa-box-open text-[#C9A34E]"></i> Active Inventory
-                        </h3>
-                        <div className="space-y-3">
-                            {selectedConv.customer?.inventory?.learning_courses?.map((item, i) => (
-                                <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/10">
-                                    <p className="text-[10px] font-black text-white leading-tight mb-0.5">{item.name}</p>
-                                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded border uppercase bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                        {item.status || 'Active'}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+                    {/* ── Actions ── */}
+                    <div className="px-5 py-4 space-y-2 mt-auto">
+                        <button
+                            onClick={() => {
+                                if (onViewCustomer) {
+                                    if (selectedConv.customer) {
+                                        onViewCustomer(selectedConv.customer);
+                                    } else {
+                                        const fbData = selectedConv.participants?.data?.[0] || {};
+                                        onViewCustomer({ customer_id: 'NEW_LEAD_' + (fbData.id || Date.now()), profile: { first_name: fbData.name || 'Unknown', last_name: '', status: 'Lead', membership_tier: 'GUEST', lifecycle_stage: 'Lead' }, contact_info: { facebook_id: fbData.id }, isTemporary: true });
+                                    }
+                                }
+                            }}
+                            className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                        >
+                            <i className="fas fa-id-card"></i> View Full Profile
+                        </button>
+                        <a
+                            href={`https://business.facebook.com/latest/inbox/all?selected_item_id=${(selectedConv.id || '').replace('t_', '')}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="w-full py-2.5 bg-[#1877F2]/10 hover:bg-[#1877F2]/20 text-[#1877F2] border border-[#1877F2]/20 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                        >
+                            <i className="fab fa-facebook"></i> Open in Meta Suite
+                        </a>
                     </div>
                 </div>
             )}

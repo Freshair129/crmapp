@@ -9,6 +9,7 @@ export default function Analytics({ customers, products }) {
     const [marketingData, setMarketingData] = useState(null);
     const [adMapping, setAdMapping] = useState({ campaign_mappings: [], ad_mappings: [] });
     const [isLoadingMapping, setIsLoadingMapping] = useState(false);
+    const [mappingFilter, setMappingFilter] = useState('');
     const [campaigns, setCampaigns] = useState([]);
     const [insights, setInsights] = useState({});
     const [teamAnalytics, setTeamAnalytics] = useState(null);
@@ -1785,7 +1786,7 @@ export default function Analytics({ customers, products }) {
             {activeTab === 'mapping' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     <div className="lg:col-span-12 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
-                        <div className="flex justify-between items-center mb-8">
+                        <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="font-black text-white text-xl tracking-tight leading-none mb-2">Ad-to-Course Mapping Matrix</h3>
                                 <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest">DEFINITIVE PRODUCT ATTRIBUTION</p>
@@ -1803,12 +1804,40 @@ export default function Analytics({ customers, products }) {
                             </div>
                         </div>
 
+                        {/* Mapping keyword filter */}
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="relative flex-1 max-w-xs">
+                                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs"></i>
+                                <input
+                                    type="text"
+                                    value={mappingFilter}
+                                    onChange={e => setMappingFilter(e.target.value)}
+                                    placeholder="กรอง... เช่น ญี่ปุ่น, Sushi, Thai"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                                />
+                                {mappingFilter && (
+                                    <button onClick={() => setMappingFilter('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                                        <i className="fas fa-times text-xs"></i>
+                                    </button>
+                                )}
+                            </div>
+                            {['ญี่ปุ่น', 'Sushi', 'Thai', 'อาหาร'].map(kw => (
+                                <button
+                                    key={kw}
+                                    onClick={() => setMappingFilter(mappingFilter === kw ? '' : kw)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${mappingFilter === kw ? 'bg-[#C9A34E] text-[#0A1A2F] border-[#C9A34E]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
+                                >
+                                    {kw}
+                                </button>
+                            ))}
+                        </div>
+
                         <div className="space-y-8">
                             {/* Campaign Mappings Row */}
                             <div>
                                 <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-4 border-l-4 border-[#C9A34E] pl-3">Campaign Mappings</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {(adMapping.campaign_mappings || []).map((m, i) => (
+                                    {(adMapping.campaign_mappings || []).filter(m => !mappingFilter || (m.campaign_name + ' ' + m.product_name).toLowerCase().includes(mappingFilter.toLowerCase())).map((m, i) => (
                                         <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl relative group overflow-hidden">
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button className="text-white/40 hover:text-white mr-2"><i className="fas fa-edit"></i></button>
@@ -1829,7 +1858,7 @@ export default function Analytics({ customers, products }) {
                             <div>
                                 <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-4 border-l-4 border-blue-500 pl-3">Specific Ad Mappings</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {(adMapping.ad_mappings || []).map((m, i) => (
+                                    {(adMapping.ad_mappings || []).filter(m => !mappingFilter || (m.ad_name + ' ' + m.product_name).toLowerCase().includes(mappingFilter.toLowerCase())).map((m, i) => (
                                         <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl relative group">
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button className="text-white/40 hover:text-white mr-2"><i className="fas fa-edit"></i></button>

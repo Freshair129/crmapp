@@ -107,7 +107,7 @@ export async function GET(request) {
 
         // 3. Sync Ads with insights
         const fbAds = await paginate(`/${AD_ACCOUNT_ID}/ads`, {
-            fields: `id,name,status,delivery_status,adset_id,creative{id}`,
+            fields: `id,name,status,adset_id,creative{id}`,
             limit: '100',
         });
 
@@ -141,7 +141,7 @@ export async function GET(request) {
                 update: {
                     name: ad.name,
                     status: ad.status,
-                    deliveryStatus: ad.delivery_status,
+                    deliveryStatus: ad.delivery_status ?? null,
                     spend,
                     impressions,
                     clicks,
@@ -153,7 +153,7 @@ export async function GET(request) {
                     adId: ad.id,
                     name: ad.name,
                     status: ad.status,
-                    deliveryStatus: ad.delivery_status,
+                    deliveryStatus: ad.delivery_status ?? null,
                     adSetId: adSet.id,
                     spend,
                     impressions,

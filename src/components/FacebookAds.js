@@ -26,6 +26,7 @@ export default function FacebookAds({ customers }) {
     const [chartMetric, setChartMetric] = useState('spend');
     const [auditResults, setAuditResults] = useState({ verified: 0, anomalies: [], healthScore: 100 });
     const [expandedNodes, setExpandedNodes] = useState(new Set());
+    const [filterKeyword, setFilterKeyword] = useState('');
 
     const toggleNode = (id) => {
         const newSet = new Set(expandedNodes);
@@ -195,18 +196,27 @@ export default function FacebookAds({ customers }) {
         return counts.reduce((a, b) => a + b, 0);
     };
 
-    // KPI Totals
-    const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
-    const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
-    const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
-    const totalReach = campaigns.reduce((s, c) => s + c.reach, 0);
+    // ── Category Filter (keyword → กรอง campaign ก่อนคำนวณ KPI ทั้งหมด) ─────────
+    const filteredCampaigns = useMemo(() => {
+        if (!filterKeyword.trim()) return campaigns;
+        const kw = filterKeyword.trim().toLowerCase();
+        return campaigns.filter(c =>
+            (c.name || '').toLowerCase().includes(kw)
+        );
+    }, [campaigns, filterKeyword]);
+
+    // KPI Totals — คำนวณจาก filteredCampaigns เสมอ
+    const totalSpend = filteredCampaigns.reduce((s, c) => s + c.spend, 0);
+    const totalImpressions = filteredCampaigns.reduce((s, c) => s + c.impressions, 0);
+    const totalClicks = filteredCampaigns.reduce((s, c) => s + c.clicks, 0);
+    const totalReach = filteredCampaigns.reduce((s, c) => s + c.reach, 0);
 
     // Advanced KPIs
-    const totalPurchaseValue = campaigns.reduce((s, c) => s + getBestActionValue(c, PURCHASE_TYPES), 0);
-    const totalPurchases = campaigns.reduce((s, c) => s + getBestActionCount(c, PURCHASE_TYPES), 0);
-    const totalMessages = campaigns.reduce((s, c) => s + getBestActionCount(c, MESSAGE_TYPES), 0);
-    const totalResults = campaigns.reduce((s, c) => s + (c.actions ? c.actions.reduce((a, x) => a + parseInt(x.value), 0) : 0), 0);
-    const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE').length;
+    const totalPurchaseValue = filteredCampaigns.reduce((s, c) => s + getBestActionValue(c, PURCHASE_TYPES), 0);
+    const totalPurchases = filteredCampaigns.reduce((s, c) => s + getBestActionCount(c, PURCHASE_TYPES), 0);
+    const totalMessages = filteredCampaigns.reduce((s, c) => s + getBestActionCount(c, MESSAGE_TYPES), 0);
+    const totalResults = filteredCampaigns.reduce((s, c) => s + (c.actions ? c.actions.reduce((a, x) => a + parseInt(x.value), 0) : 0), 0);
+    const activeCampaigns = filteredCampaigns.filter(c => c.status === 'ACTIVE').length;
 
     const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions * 100) : 0;
     const avgCPC = totalClicks > 0 ? (totalSpend / totalClicks) : 0;
@@ -542,6 +552,40 @@ export default function FacebookAds({ customers }) {
                     >
                         <i className="fas fa-layer-group mr-2"></i> Yearly Report
                     </button>
+                </div>
+
+                {/* Campaign Keyword Filter */}
+                <div className="flex items-center gap-3 mb-8 px-2">
+                    <div className="relative flex-1 max-w-sm">
+                        <i className="fas fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-xs"></i>
+                        <input
+                            type="text"
+                            value={filterKeyword}
+                            onChange={e => setFilterKeyword(e.target.value)}
+                            placeholder="กรอง campaign... เช่น ญี่ปุ่น, Sushi, Thai"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/25 focus:outline-none focus:border-[#C9A34E]/50"
+                        />
+                        {filterKeyword && (
+                            <button onClick={() => setFilterKeyword('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        )}
+                    </div>
+                    {/* Quick-pick chips */}
+                    {['ญี่ปุ่น', 'สูตร', 'Sushi', 'Thai'].map(kw => (
+                        <button
+                            key={kw}
+                            onClick={() => setFilterKeyword(filterKeyword === kw ? '' : kw)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${filterKeyword === kw ? 'bg-[#C9A34E] text-[#0A1A2F] border-[#C9A34E]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
+                        >
+                            {kw}
+                        </button>
+                    ))}
+                    {filterKeyword && (
+                        <span className="text-[10px] text-white/40 font-black">
+                            {filteredCampaigns.length}/{campaigns.length} campaigns
+                        </span>
+                    )}
                 </div>
 
                 {dashboardMode === 'yearly' ? (
@@ -1040,7 +1084,7 @@ export default function FacebookAds({ customers }) {
                         <div className="flex-1 overflow-hidden p-6">
                             {/* Reconciliation Scorecard */}
                             {(() => {
-                                const sourceCampaigns = (dashboardMode === 'daily' && latestDay?.campaigns) ? latestDay.campaigns : campaigns;
+                                const sourceCampaigns = (dashboardMode === 'daily' && latestDay?.campaigns) ? latestDay.campaigns : filteredCampaigns;
                                 const fbTotalPurchases = sourceCampaigns.reduce((sum, c) => {
                                     const p = c.actions?.find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))?.value || 0;
                                     return sum + parseInt(p);
@@ -1109,7 +1153,7 @@ export default function FacebookAds({ customers }) {
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-2">
                                         {(() => {
-                                            const sourceCampaigns = (dashboardMode === 'daily' && latestDay?.campaigns) ? latestDay.campaigns : campaigns;
+                                            const sourceCampaigns = (dashboardMode === 'daily' && latestDay?.campaigns) ? latestDay.campaigns : filteredCampaigns;
                                             const activeCampaigns = sourceCampaigns.filter(c => {
                                                 const p = c.actions?.find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
                                                 return p && parseInt(p.value) > 0;

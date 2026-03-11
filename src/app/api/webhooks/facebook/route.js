@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
+import { eventBus } from '@/lib/eventBus';
 
 const PAGE_ID = process.env.FB_PAGE_ID;
 
@@ -121,4 +122,8 @@ async function processEvent(event) {
             });
         }
     });
+
+    // 3. Broadcast real-time update to all connected SSE clients
+    eventBus.emit('chat-update', { conversationId: threadId, customerPsid, isFromPage });
+    logger.info('FacebookWebhook', `chat-update emitted for ${threadId}`);
 }
