@@ -35,16 +35,27 @@ COPY --from=builder /app/public        ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static     ./.next/static
 
-# Prisma: migrations + generated client
-COPY --from=builder /app/prisma        ./prisma
+# Prisma: config + migrations + generated client
+# prisma.config.ts MUST be in runner stage — Prisma v7 requires it for DATABASE_URL
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/prisma           ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/src/generated ./src/generated
+
+# Prisma CLI binary (devDep — not in standalone node_modules, must copy explicitly)
+# NOTE: Do NOT copy node_modules/.bin/prisma — it's a symlink on macOS and Docker
+#       COPY resolves symlinks to plain files, breaking __dirname-based WASM lookup.
+#       Create the symlink ourselves instead.
+COPY --from=builder /app/node_modules/prisma              ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma             ./node_modules/@prisma
 
 # data/ directory for runtime JSON files (ad-mapping, etc.)
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 # entrypoint: migrate then start
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh && \
+    mkdir -p ./node_modules/.bin && \
+    ln -sf /app/node_modules/prisma/build/index.js ./node_modules/.bin/prisma
 
 USER nextjs
 
