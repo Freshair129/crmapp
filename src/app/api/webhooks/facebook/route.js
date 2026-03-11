@@ -49,7 +49,24 @@ export async function POST(request) {
 // ── Event processor ──────────────────────────────────────────────────────────
 async function processEvent(event) {
     const { sender, recipient, timestamp, message, delivery, read, referral } = event;
-    if (!message || message.is_echo === true && !message.text && !message.attachments) return;
+
+    // Handle FB read-receipt: admin read in Business Suite → reset unreadCount in DB
+    if (read && !message) {
+        const isFromPage    = sender.id === PAGE_ID;
+        const customerPsid  = isFromPage ? recipient.id : sender.id;
+        const threadId      = `t_${customerPsid}`;
+        const prisma = await getPrisma();
+        await prisma.$transaction(async (tx) => {
+            await tx.conversation.updateMany({
+                where: { conversationId: threadId },
+                data:  { unreadCount: 0 },
+            });
+        });
+        logger.info('FacebookWebhook', `FB read-receipt: unreadCount reset for ${threadId}`);
+        return;
+    }
+
+    if (!message || (message.is_echo === true && !message.text && !message.attachments)) return;
 
     const isFromPage  = sender.id === PAGE_ID;
     const customerPsid = isFromPage ? recipient.id : sender.id;

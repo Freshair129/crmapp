@@ -16,6 +16,8 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
     const [catalog, setCatalog] = useState({ packages: [], products: [] });
     const [employees, setEmployees] = useState([]);
     const [filterAgent, setFilterAgent] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');          // '' | 'open' | 'pending' | 'closed'
+    const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [discoveredProducts, setDiscoveredProducts] = useState([]);
     const [activeAd, setActiveAd] = useState(null);
@@ -448,13 +450,38 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
             });
         }
 
+        if (filterStatus) {
+            result = result.filter(c => (c.status || 'open') === filterStatus);
+        }
+
+        if (filterUnreadOnly) {
+            result = result.filter(c => (c.unread_count || 0) > 0);
+        }
+
         // Sort: Starred items first, then by updated_time
         return result.sort((a, b) => {
             if (a.isStarred && !b.isStarred) return -1;
             if (!a.isStarred && b.isStarred) return 1;
             return new Date(b.updated_time || 0) - new Date(a.updated_time || 0);
         });
-    }, [conversations, filterAgent]);
+    }, [conversations, filterAgent, filterStatus, filterUnreadOnly]);
+
+    // Update conversation status (open / pending / closed)
+    const handleStatusChange = async (convId, newStatus, e) => {
+        e.stopPropagation();
+        try {
+            await fetch(`/api/marketing/chat/conversations/${convId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            setConversations(prev =>
+                prev.map(c => c.conversation_id === convId ? { ...c, status: newStatus } : c)
+            );
+        } catch (err) {
+            console.error('[StatusChange] failed', err);
+        }
+    };
 
     if (loading && conversations.length === 0) {
         return (
@@ -519,19 +546,56 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
 
                     {/* Inbox Filters */}
                     <div className="space-y-2 pt-2 border-t border-white/5">
-                        <select
-                            value={filterAgent}
-                            onChange={(e) => setFilterAgent(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-bold px-3 py-2.5 rounded-xl outline-none focus:border-[#C9A34E]/50 transition-colors uppercase tracking-widest appearance-none cursor-pointer"
-                        >
-                            <option value="" className="bg-[#0A1A2F] text-white">All Agents</option>
-                            <option value="Unassigned" className="bg-[#0A1A2F] text-white">Unassigned</option>
-                            {employees.map(emp => (
-                                <option key={emp.employeeCode || emp.id} value={emp.nickName || emp.firstName} className="bg-[#0A1A2F] text-white">
-                                    {emp.nickName || emp.firstName}
-                                </option>
+                        {/* Status tabs: All / Open / Pending / Closed */}
+                        <div className="flex gap-1">
+                            {[
+                                { v: '',        l: 'All',     dot: 'bg-white/30' },
+                                { v: 'open',    l: 'Open',    dot: 'bg-emerald-500' },
+                                { v: 'pending', l: 'Pending', dot: 'bg-amber-500' },
+                                { v: 'closed',  l: 'Closed',  dot: 'bg-red-500/70' },
+                            ].map(({ v, l, dot }) => (
+                                <button
+                                    key={v}
+                                    onClick={() => setFilterStatus(v)}
+                                    className={`flex-1 py-1.5 flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                        filterStatus === v
+                                            ? 'bg-blue-600/30 text-blue-400 border border-blue-500/40'
+                                            : 'bg-white/5 text-white/30 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
+                                    {l}
+                                </button>
                             ))}
-                        </select>
+                        </div>
+
+                        {/* Agent filter + Unread-only toggle */}
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={filterAgent}
+                                onChange={(e) => setFilterAgent(e.target.value)}
+                                className="flex-1 bg-white/5 border border-white/10 text-white/70 text-[10px] font-bold px-3 py-2.5 rounded-xl outline-none focus:border-[#C9A34E]/50 transition-colors uppercase tracking-widest appearance-none cursor-pointer"
+                            >
+                                <option value="" className="bg-[#0A1A2F] text-white">All Agents</option>
+                                <option value="Unassigned" className="bg-[#0A1A2F] text-white">Unassigned</option>
+                                {employees.map(emp => (
+                                    <option key={emp.employeeCode || emp.id} value={emp.nickName || emp.firstName} className="bg-[#0A1A2F] text-white">
+                                        {emp.nickName || emp.firstName}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={() => setFilterUnreadOnly(v => !v)}
+                                title={filterUnreadOnly ? 'Show all chats' : 'Show unread only'}
+                                className={`p-2.5 rounded-xl text-xs transition-all border flex-shrink-0 ${
+                                    filterUnreadOnly
+                                        ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                                        : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
+                                }`}
+                            >
+                                <i className="fas fa-envelope text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -587,8 +651,21 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                     {conv.snippet}
                                 </p>
                                 <div className="flex items-center justify-between mt-1">
-                                    <p className="text-[9px] text-white/30 truncate font-bold">
-                                        <i className="fas fa-headset mr-1 text-blue-500/50"></i> {conv.agent || 'Unassigned'}
+                                    <p className="text-[9px] text-white/30 truncate font-bold flex items-center gap-1.5">
+                                        {/* Status dot — click to cycle: open → pending → closed → open */}
+                                        {(() => {
+                                            const s = conv.status || 'open';
+                                            const next = { open: 'pending', pending: 'closed', closed: 'open' }[s];
+                                            const color = { open: 'bg-emerald-500', pending: 'bg-amber-500', closed: 'bg-red-500/60' }[s];
+                                            return (
+                                                <button
+                                                    onClick={(e) => handleStatusChange(conv.conversation_id, next, e)}
+                                                    title={`Status: ${s} — click to set ${next}`}
+                                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${color} hover:ring-2 ring-white/30 transition-all`}
+                                                />
+                                            );
+                                        })()}
+                                        <i className="fas fa-headset text-blue-500/50"></i> {conv.agent || 'Unassigned'}
                                     </p>
                                     {conv.unread_count > 0 && (
                                         <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-md">
