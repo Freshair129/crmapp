@@ -36,6 +36,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # ─── Prisma Migrations (one-shot, exits 0 on success) ────────────────────
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: crm_migrator
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:password123@postgres:5432/vschool_crm
+
   # ─── Next.js App (production) ─────────────────────────────────────────────
   app:
     build:
@@ -48,6 +63,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     env_file: .env
     environment:
       DATABASE_URL: postgresql://postgres:password123@postgres:5432/vschool_crm

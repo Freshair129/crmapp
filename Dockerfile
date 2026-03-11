@@ -20,7 +20,21 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# ─── Stage 3: Runner (production) ────────────────────────────────────────────
+# ─── Stage 3: Migrator ───────────────────────────────────────────────────────
+# Runs `prisma migrate deploy` once at startup, then exits.
+# Needs full node_modules because Prisma v7 CLI loads @prisma/dev eagerly
+# (which requires valibot, hono, @electric-sql/pglite, etc. — all devDeps).
+# Keeping this in a separate stage preserves the slim runner image.
+FROM node:20-alpine AS migrator
+WORKDIR /app
+
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/prisma           ./prisma
+COPY --from=builder /app/node_modules     ./node_modules
+
+CMD ["node", "./node_modules/prisma/build/index.js", "migrate", "deploy"]
+
+# ─── Stage 4: Runner (production) ────────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 
@@ -41,21 +55,16 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/prisma           ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/src/generated ./src/generated
 
-# Prisma CLI binary (devDep — not in standalone node_modules, must copy explicitly)
-# NOTE: Do NOT copy node_modules/.bin/prisma — it's a symlink on macOS and Docker
-#       COPY resolves symlinks to plain files, breaking __dirname-based WASM lookup.
-#       Create the symlink ourselves instead.
-COPY --from=builder /app/node_modules/prisma              ./node_modules/prisma
+# @prisma/adapter-pg + generated client dependencies (runtime, NOT the CLI)
+# The `prisma` CLI is only in the `migrator` stage — not needed here.
 COPY --from=builder /app/node_modules/@prisma             ./node_modules/@prisma
 
 # data/ directory for runtime JSON files (ad-mapping, etc.)
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-# entrypoint: migrate then start
+# entrypoint: just start Next.js (migrations handled by migrator service)
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh && \
-    mkdir -p ./node_modules/.bin && \
-    ln -sf /app/node_modules/prisma/build/index.js ./node_modules/.bin/prisma
+RUN chmod +x ./docker-entrypoint.sh
 
 USER nextjs
 
