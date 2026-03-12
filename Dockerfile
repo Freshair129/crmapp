@@ -1,5 +1,5 @@
 # ─── Stage 1: Dependencies ────────────────────────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY prisma.config.ts ./
 RUN npm ci
 
 # ─── Stage 2: Builder ────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -25,7 +25,7 @@ RUN npm run build
 # Needs full node_modules because Prisma v7 CLI loads @prisma/dev eagerly
 # (which requires valibot, hono, @electric-sql/pglite, etc. — all devDeps).
 # Keeping this in a separate stage preserves the slim runner image.
-FROM node:20-alpine AS migrator
+FROM node:22-alpine AS migrator
 WORKDIR /app
 
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
@@ -35,7 +35,7 @@ COPY --from=builder /app/node_modules     ./node_modules
 CMD ["node", "./node_modules/prisma/build/index.js", "migrate", "deploy"]
 
 # ─── Stage 4: Runner (production) ────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
