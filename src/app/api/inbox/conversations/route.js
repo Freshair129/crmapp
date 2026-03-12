@@ -32,7 +32,13 @@ export async function GET(request) {
                     select: {
                         customerId: true,
                         firstName: true,
-                        lastName: true
+                        lastName: true,
+                        phonePrimary: true,
+                        facebookId: true,
+                        originId: true,
+                        membershipTier: true,
+                        lifecycleStage: true,
+                        intelligence: true
                     }
                 },
                 messages: {
@@ -60,12 +66,24 @@ export async function GET(request) {
                 customerId: c.customer.customerId,
                 firstName: c.customer.firstName,
                 lastName: c.customer.lastName,
-                channel: c.channel.toUpperCase()
+                channel: c.channel.toUpperCase(),
+                phonePrimary: c.customer.phonePrimary,
+                facebookId: c.customer.facebookId,
+                originId: c.customer.originId,
+                membershipTier: c.customer.membershipTier,
+                lifecycleStage: c.customer.lifecycleStage,
+                intelligence: c.customer.intelligence
             } : {
                 customerId: null,
                 firstName: c.participantName || 'Unknown',
                 lastName: '',
-                channel: c.channel.toUpperCase()
+                channel: c.channel.toUpperCase(),
+                phonePrimary: null,
+                facebookId: c.participantId,
+                originId: null,
+                membershipTier: null,
+                lifecycleStage: null,
+                intelligence: null
             },
             lastMessage: c.messages[0] ? {
                 text: c.messages[0].content,

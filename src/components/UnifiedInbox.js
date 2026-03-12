@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, Send, Facebook, MessageSquare } from 'lucide-react';
+import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
     const [conversations, setConversations] = useState([]);
@@ -392,6 +392,167 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     </div>
                 )}
             </div>
+
+            {/* ── Right Panel: Customer Card ── */}
+            {selectedConv ? (
+                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex flex-col overflow-y-auto custom-scrollbar">
+
+                    {/* Profile Header */}
+                    <div className="px-5 pt-6 pb-5 border-b border-white/5 text-center">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg text-2xl font-black text-white select-none ${
+                            selectedConv.channel === 'FACEBOOK' ? 'bg-gradient-to-br from-[#1877F2] to-[#0062E0]' : 'bg-gradient-to-br from-[#06C755] to-[#05b34b]'
+                        }`}>
+                            {(selectedConv.customer.firstName || '?').charAt(0)}
+                        </div>
+                        <h3 className="font-black text-white text-sm leading-tight">
+                            {selectedConv.customer.firstName} {selectedConv.customer.lastName}
+                        </h3>
+                        <p className="text-[9px] text-white/25 font-mono mt-1 truncate px-2">
+                            {selectedConv.customer.customerId || '—'}
+                        </p>
+                        <div className="flex justify-center gap-1.5 mt-3 flex-wrap">
+                            {selectedConv.customer.membershipTier && (
+                                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border bg-[#C9A34E]/20 text-[#C9A34E] border-[#C9A34E]/30">
+                                    {selectedConv.customer.membershipTier}
+                                </span>
+                            )}
+                            {selectedConv.customer.lifecycleStage && (
+                                <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${
+                                    selectedConv.customer.lifecycleStage === 'Customer'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                                }`}>
+                                    {selectedConv.customer.lifecycleStage}
+                                </span>
+                            )}
+                            {!selectedConv.customer.customerId && (
+                                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border bg-orange-500/20 text-orange-400 border-orange-500/30">New Lead</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="px-5 py-4 border-b border-white/5 space-y-2.5">
+                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Contact</p>
+                        {selectedConv.customer.phonePrimary && (
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                    <Phone size={9} className="text-white/40" />
+                                </div>
+                                <span className="text-[11px] text-white/70 font-bold">{selectedConv.customer.phonePrimary}</span>
+                            </div>
+                        )}
+                        {selectedConv.customer.facebookId && (
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-6 h-6 rounded-lg bg-[#1877F2]/10 flex items-center justify-center shrink-0">
+                                    <Facebook size={9} className="text-[#1877F2]" />
+                                </div>
+                                <span className="text-[10px] text-white/35 font-mono truncate">{selectedConv.customer.facebookId}</span>
+                            </div>
+                        )}
+                        {!selectedConv.customer.phonePrimary && !selectedConv.customer.facebookId && (
+                            <p className="text-[10px] text-white/20 font-bold">—</p>
+                        )}
+                    </div>
+
+                    {/* Ad Attribution (originId = source ad_id for ROAS — ADR-025) */}
+                    {selectedConv.customer.originId && (
+                        <div className="px-5 py-4 border-b border-white/5">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
+                                <Megaphone size={9} className="text-indigo-400" /> Ad Attribution
+                            </p>
+                            <div className="bg-[#0d1e36] rounded-xl border border-indigo-500/20 p-3 space-y-1.5">
+                                <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Source Ad</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[9px] font-mono text-indigo-300/60 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 truncate flex-1" title="Ad ID (originId)">
+                                        {selectedConv.customer.originId}
+                                    </span>
+                                    <ExternalLink size={10} className="text-indigo-400/50 shrink-0" />
+                                </div>
+                                {selectedConv.customer.intelligence?.source_campaign && (
+                                    <p className="text-[10px] font-black text-white/60 line-clamp-2 leading-tight">
+                                        {selectedConv.customer.intelligence.source_campaign}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Intelligence Summary */}
+                    {selectedConv.customer.intelligence && (
+                        (() => {
+                            const intel = selectedConv.customer.intelligence;
+                            const totalSpend = intel.metrics?.total_spend || intel.total_spend;
+                            const courses = intel.courses_owned || intel.learning_courses || [];
+                            if (!totalSpend && courses.length === 0) return null;
+                            return (
+                                <div className="px-5 py-4 border-b border-white/5 space-y-3">
+                                    {totalSpend > 0 && (
+                                        <div>
+                                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
+                                                <Tag size={9} className="text-[#C9A34E]" /> Total Spend
+                                            </p>
+                                            <p className="text-base font-black text-[#C9A34E] italic">฿{Number(totalSpend).toLocaleString()}</p>
+                                        </div>
+                                    )}
+                                    {courses.length > 0 && (
+                                        <div>
+                                            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
+                                                <BookOpen size={9} className="text-amber-400" /> Courses ({courses.length})
+                                            </p>
+                                            <div className="space-y-1">
+                                                {courses.slice(0, 3).map((c, i) => (
+                                                    <div key={i} className="flex items-center justify-between px-2 py-1.5 bg-white/5 rounded-lg border border-white/5">
+                                                        <p className="text-[9px] font-black text-white/70 truncate mr-2">{c.name || c}</p>
+                                                        <span className="text-[7px] font-black px-1 py-0.5 rounded bg-blue-500/20 text-blue-400 shrink-0">{c.status || 'Active'}</span>
+                                                    </div>
+                                                ))}
+                                                {courses.length > 3 && (
+                                                    <p className="text-[8px] text-white/20 font-bold text-center">+{courses.length - 3} more</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()
+                    )}
+
+                    {/* Conversation Meta */}
+                    <div className="px-5 py-4 mt-auto">
+                        <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2">Conversation</p>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Status</span>
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-widest ${
+                                    selectedConv.status === 'open'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : selectedConv.status === 'pending'
+                                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                        : 'bg-white/5 text-white/30 border-white/10'
+                                }`}>{selectedConv.status}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Channel</span>
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-widest ${
+                                    selectedConv.channel === 'FACEBOOK'
+                                        ? 'bg-[#1877F2]/10 text-[#1877F2] border-[#1877F2]/20'
+                                        : 'bg-[#06C755]/10 text-[#06C755] border-[#06C755]/20'
+                                }`}>{selectedConv.channel}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Conv ID</span>
+                                <span className="text-[8px] font-mono text-white/20 truncate max-w-[100px]">{selectedConv.conversationId}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            ) : (
+                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex items-center justify-center">
+                    <p className="text-[9px] font-black text-white/5 uppercase tracking-widest rotate-90 whitespace-nowrap">Customer Details</p>
+                </div>
+            )}
 
         </div>
     );
