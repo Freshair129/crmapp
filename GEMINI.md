@@ -1,7 +1,23 @@
 # GEMINI.md — V School CRM v2
 
-คุณคือ **Sub-agent** ในทีม V School CRM v2
+คุณคือ **Agent** ในทีม V School CRM v2
 Lead Architect คือ Claude — คุณรับ function signature แล้ว implement เท่านั้น
+
+---
+
+## 🏷️ Version Status (อ่านก่อนเริ่มงานทุกครั้ง)
+
+| Version | Milestone | สถานะ |
+|---|---|---|
+| `v0.9.0` | Auth Stable | ✅ released |
+| `v0.10.0` | API Connected | ✅ released |
+| `v0.11.0` | Revenue Split | ✅ released |
+| `v0.12.0` | UI Enhanced | ✅ **stable / current** ← ตอนนี้อยู่ที่นี่ |
+| `v0.13.0` | Unified Inbox | 🔲 **งานถัดไป** (Phase 12) |
+| `v1.0.0` | Production Ready | 🔲 planned |
+
+**branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
+เมื่อ Phase 12 เสร็จ → Claude จะ tag `v0.13.0` และเลื่อน stable
 
 ---
 
@@ -23,7 +39,7 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 **V School CRM v2** — ระบบ CRM สำหรับโรงเรียนสอนทำอาหารญี่ปุ่น (The V School, กรุงเทพฯ)
 Greenfield rewrite — สะอาด, ไม่ carry tech debt จากของเดิม
 
-**Stack:** Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Redis/BullMQ · Gemini AI · TailwindCSS
+**Stack:** Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Redis/BullMQ · Gemini AI · TailwindCSS · Node.js v22 LTS
 
 ---
 
@@ -106,31 +122,59 @@ try { ... } catch (error) {
 ## Architecture Phases
 
 ```
-Phase 1-10: [DONE] Foundation → Identity → RBAC → FB Messaging → Member Self-Reg
-Phase 11:   [CURRENT] UI Component Wiring — connect 7 new UI modules to real APIs
-Phase 12:   [PLANNED] NotificationRules API + LINE Messaging integration
+Phase 1-10: [DONE]    Foundation → Identity → RBAC → FB Messaging → Member Self-Reg
+Phase 11:   [DONE]    UI Component Wiring — APIs + components connected to real data
+                      → tagged v0.12.0 (includes Sidebar, TopBar, Charts, Animations)
+Phase 12:   [CURRENT] Unified Inbox — รวม FB + LINE inbox (→ v0.13.0 เมื่อเสร็จ)
+Phase 13:   [PLANNED] NotificationRules API + LINE Messaging integration (→ v0.14.0)
 ```
 
 ---
 
-## Phase 11 — Task Map
+## Phase 11 — COMPLETED ✅
 
-### APIs ที่ต้องสร้างใหม่
-
-| Task | File | Exports |
+| Task | Status | Notes |
 |---|---|---|
-| B1 | `src/app/api/products/route.js` | เพิ่ม `POST` (create product) |
-| B1 | `src/app/api/products/[id]/route.js` | `PUT` (update), `DELETE` (soft-delete: isActive=false) |
-| B2 | `src/app/api/analytics/executive/route.js` | `GET` → { totalRevenue, ordersCount, avgTicket, activeSessions, conversionRate, revenueChange } |
+| B1 `api/products` POST/PUT/DELETE | ✅ DONE | soft-delete via isActive=false |
+| B2 `api/analytics/executive` GET | ✅ DONE | แยก adsRevenue / storeRevenue ด้วย conversationId |
+| A1 AuditHistory | ✅ DONE | ต่อ GET /api/orders |
+| A2 InventoryManager | ✅ DONE | ต่อ CRUD /api/products |
+| A3 PremiumPOS | ✅ DONE | ต่อ /api/products + customer lookup + POST /api/orders |
+| A4 ExecutiveAnalytics | ✅ DONE | แสดง Total / Ads / Store Revenue + % change |
 
-### Components ที่ต้อง wire
+### Revenue Classification Logic (สำคัญ)
+- Order มี `conversationId` → **Ads Revenue** (ออนไลน์/Facebook)
+- Order ไม่มี `conversationId` → **Store Revenue** (Walk-in/หน้าร้าน)
 
-| Task | File | ลบ mock | ต่อ API |
-|---|---|---|---|
-| A1 | `src/components/AuditHistory.js` | MOCK_ORDERS | GET /api/orders |
-| A2 | `src/components/InventoryManager.js` | INITIAL_PRODUCTS | GET/POST/PUT/DELETE /api/products |
-| A3 | `src/components/PremiumPOS.js` | MOCK_PRODUCTS | GET /api/products + customer lookup + POST /api/orders |
-| A4 | `src/components/ExecutiveAnalytics.js` | hardcoded stats | GET /api/analytics/executive |
+---
+
+## Phase 12 — CURRENT
+
+### v0.12.0 — เสร็จแล้วทั้งหมด ✅ (tagged 2026-03-13)
+- `Sidebar.js` — icon-only `w-20`, Lucide React, tooltip on hover (ADR-031)
+- `TopBar.js` — Global Search, Language, Theme toggle (Lucide icons)
+- `ExecutiveAnalytics.js` — Recharts AreaChart + BarChart (ADR-032 A1)
+- `Dashboard.js` — Framer Motion AnimatedNumber (ADR-032 A2)
+- `EmployeeManagement.js` — stacked card deck UI + swipe gesture
+- Node.js ยกระดับจาก 20 → 22 LTS, Dockerfile อัพเดทครบ 4 stages
+
+### Next Task: Unified Inbox
+รวม Facebook Chat + LINE Connect เป็น inbox เดียว พร้อม filter tab
+
+**Interface ที่ต้อง implement:**
+```
+GET /api/inbox/conversations?channel=ALL|FACEBOOK|LINE&status=open|closed&search=
+GET /api/inbox/conversations/[id]/messages
+POST /api/inbox/conversations/[id]/messages  { text }
+```
+
+**Component:**
+```
+src/components/UnifiedInbox.js
+  ├ ConversationList  (แสดง channel badge: 🔵FB / 🟢LINE)
+  ├ FilterBar         ([ทั้งหมด] [Facebook] [LINE])
+  └ MessageThread     (bubble UI เหมือนเดิม)
+```
 
 ---
 
@@ -179,18 +223,24 @@ model Customer {
 
 ```
 app/api/
-  products/route.js           GET ✅  POST ❌→Task B1
-  products/[id]/route.js      PUT ❌  DELETE ❌→Task B1
-  orders/route.js             GET ✅  POST ✅
-  orders/[id]/route.js        GET ✅
-  analytics/executive/route.js ❌→Task B2
-  customers/route.js          GET ✅ (?search=phone supported)
+  products/route.js            GET ✅  POST ✅
+  products/[id]/route.js       PUT ✅  DELETE ✅ (soft)
+  orders/route.js              GET ✅  POST ✅
+  orders/[id]/route.js         GET ✅
+  analytics/executive/route.js GET ✅  (adsRevenue + storeRevenue)
+  customers/route.js           GET ✅ (?search=phone supported)
+  inbox/conversations/route.js ❌ → Phase 12
+  inbox/conversations/[id]/messages/route.js ❌ → Phase 12
 components/
-  AuditHistory.js             🔴→Task A1
-  InventoryManager.js         🔴→Task A2
-  PremiumPOS.js               🔴→Task A3
-  ExecutiveAnalytics.js       🔴→Task A4
+  Sidebar.js                   ✅ icon-only w-20, Lucide (v0.12.0)
+  TopBar.js                    ✅ Search + Theme + Lang toggle (v0.12.0)
+  EmployeeManagement.js        ✅ stacked card deck + swipe (v0.12.0)
+  AuditHistory.js              ✅ connected
+  InventoryManager.js          ✅ connected
+  PremiumPOS.js                ✅ connected
+  ExecutiveAnalytics.js        ✅ connected (Total/Ads/Store tabs)
+  UnifiedInbox.js              ❌ → Phase 12
 lib/
-  db/index.js                 getPrisma() singleton
-  logger.js                   logger.error/info/warn
+  db/index.js                  getPrisma() singleton
+  logger.js                    logger.error/info/warn
 ```

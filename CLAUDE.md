@@ -12,6 +12,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Version Status (อัพเดท: 2026-03-13)
+
+| Version | Milestone | สถานะ |
+|---|---|---|
+| `v0.9.0` | Auth Stable | ✅ released |
+| `v0.10.0` | API Connected | ✅ released |
+| `v0.11.0` | Revenue Split | ✅ released |
+| `v0.12.0` | UI Enhanced | ✅ **stable / current** ← HEAD |
+| `v0.13.0` | Unified Inbox | 🔲 planned (Phase 12 ค้างอยู่) |
+| `v1.0.0` | Production Ready | 🔲 planned |
+
+**Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
+**รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
+
+---
+
 ## Source of Truth (ยึดสองไฟล์นี้เหนือสิ่งอื่นใด)
 
 | ไฟล์ | หน้าที่ |
@@ -37,6 +53,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-024 | Marketing Intelligence: Bottom-Up Aggregation, Checksum, Hourly Ledger |
 | ADR-025 | Identity Resolution: Phone E.164, Cross-platform Merge, LINE Attribution |
 | ADR-026 | RBAC: 6-tier role hierarchy, server-side guard |
+| ADR-027 | DB Schema Init: 23 models, UUID PKs, named relations |
+| ADR-028 | Facebook Messaging: Webhook < 200ms, fire-and-forget, prisma.$transaction |
+| ADR-029 | Employee Registry: Auto-generate TVS-EMP ID, JSONB identities, bcrypt |
+| ADR-030 | Revenue Channel Split: conversationId → Ads vs Store classification |
+| ADR-031 | Icon-Only Sidebar: w-20, Lucide migration ออกจาก FontAwesome CDN |
+| ADR-032 | UI Enhancement (A): Recharts charts, Framer Motion animations |
 
 ---
 
@@ -111,8 +133,8 @@ Trace/Sync  : SYNC-[TYPE]-[YYYYMMDD]-[RND] e.g. SYNC-ADS-20260308-A92B
 ## Sub-agent Protocol (Gemini CLI)
 
 ```bash
-# รันจาก E:\crm เสมอ เพื่อให้ GEMINI.md โหลด context อัตโนมัติ
-cd /e/crm
+# รันจาก /Users/ideab/Desktop/crm เสมอ เพื่อให้ GEMINI.md โหลด context อัตโนมัติ
+cd /Users/ideab/Desktop/crm
 echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 ```
 
@@ -125,14 +147,15 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 ## Development Commands
 
 ```bash
-cd crm-app
-npm install
-docker compose up -d       # PostgreSQL + Redis
+cd /Users/ideab/Desktop/crm
+docker compose up -d       # PostgreSQL (port 5433) + Redis
 npx prisma generate
 npx prisma migrate dev
 npm run dev                 # http://localhost:3000
 npm run worker              # BullMQ worker (terminal แยก)
 ```
+
+**Node.js:** v22 LTS (Iron) — ดู `.nvmrc`
 
 ---
 
