@@ -19,6 +19,8 @@ import FacebookAds from "@/components/FacebookAds";
 import FacebookChat from "@/components/FacebookChat";
 import CampaignTracking from "@/components/CampaignTracking";
 import Settings from "@/components/Settings";
+import UnifiedInbox from "@/components/UnifiedInbox";
+
 
 // New Standalone Modules
 import PremiumPOS from "@/components/PremiumPOS";
@@ -29,17 +31,22 @@ import InventoryManager from "@/components/InventoryManager";
 import AuditHistory from "@/components/AuditHistory";
 import SystemConfig from "@/components/SystemConfig";
 import LoginPage from "@/components/LoginPage";
+import TopBar from "@/components/TopBar";
 
-const fadeVariant = {
-    initial: { opacity: 0, y: 16 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -16 },
+const pageVariants = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+    exit: { opacity: 0, y: -8, transition: { duration: 0.15 } }
 };
 
 export default function Home() {
     const { data: session, status } = useSession();
     const [currentUser, setCurrentUser] = useState(null);
     const [authInited, setAuthInited] = useState(false);
+
+    // Global Settings State
+    const [language, setLanguage] = useState('TH');
+    const [theme, setTheme] = useState('dark');
 
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
@@ -69,18 +76,29 @@ export default function Home() {
         if (!currentUser) return;
         setLoading(true);
         try {
-            const [custRes, prodRes, empRes, ordRes] = await Promise.all([
+            const hasManagerAccess = ['SUPERVISOR', 'MANAGER', 'ADMIN', 'DEVELOPER'].includes(currentUser.role);
+
+            const fetchPromises = [
                 fetch("/api/customers"),
                 fetch("/api/products"),
-                fetch("/api/employees"),
                 fetch("/api/orders"),
-            ]);
-            const [custData, prodData, empData, ordData] = await Promise.all([
-                custRes.json(),
-                prodRes.json(),
-                empRes.json(),
-                ordRes.json(),
-            ]);
+            ];
+
+            if (hasManagerAccess) {
+                fetchPromises.push(fetch("/api/employees"));
+            }
+
+            const results = await Promise.all(fetchPromises);
+            const [custRes, prodRes, ordRes, empRes] = results;
+
+            const custData = await custRes.json();
+            const prodData = await prodRes.json();
+            const ordData = await ordRes.json();
+            let empData = { success: true, data: [] };
+
+            if (hasManagerAccess && empRes) {
+                empData = await empRes.json();
+            }
             setCustomers(Array.isArray(custData) ? custData : custData.data ?? []);
             setProducts(prodData.success ? prodData.data : Array.isArray(prodData) ? prodData : []);
             setEmployees(Array.isArray(empData) ? empData : empData.data ?? []);
@@ -128,8 +146,7 @@ export default function Home() {
     };
 
     const wrap = (key, children) => (
-        <motion.div key={key} variants={fadeVariant} initial="initial" animate="animate" exit="exit"
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="h-full">
+        <motion.div key={key} variants={pageVariants} initial="initial" animate="animate" exit="exit" className="h-full min-h-0 flex flex-col">
             {children}
         </motion.div>
     );
@@ -144,8 +161,6 @@ export default function Home() {
     }
 
     // Guard: Protected View
-    // We only show content if authenticated. 
-    // If explicitly unauthenticated OR no currentUser, show Login.
     if (status === "unauthenticated" || (!currentUser && status === "authenticated")) {
         return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
     }
@@ -160,107 +175,117 @@ export default function Home() {
                 onLogout={handleLogout}
             />
 
-            <main className="flex-1 overflow-y-auto relative p-8">
-                {/* Ambient glows */}
-                <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#C9A34E]/5 blur-[120px] -z-10 pointer-events-none" />
-                <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] -z-10 pointer-events-none" />
+            <main className={`flex-1 relative flex flex-col ${activeView === 'facebook-chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+                <TopBar
+                    language={language}
+                    setLanguage={setLanguage}
+                    theme={theme}
+                    setTheme={setTheme}
+                    userName={currentUser?.firstName || 'User'}
+                />
 
-                <AnimatePresence mode="wait">
+                <div className={`flex-1 relative min-h-0 ${activeView === 'facebook-chat' ? 'flex flex-col overflow-hidden' : 'p-8'}`}>
+                    <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#C9A34E]/5 blur-[120px] -z-10 pointer-events-none" />
+                    <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] -z-10 pointer-events-none" />
 
-                    {activeView === "dashboard" && wrap("dashboard",
-                        <Dashboard customers={customers} products={products} employees={employees} currentUser={currentUser} />
-                    )}
+                    <AnimatePresence mode="wait">
 
-                    {activeView === "executive-analytics" && wrap("executive-analytics",
-                        <ExecutiveAnalytics language="TH" />
-                    )}
+                        {activeView === "dashboard" && wrap("dashboard",
+                            <Dashboard customers={customers} products={products} employees={employees} currentUser={currentUser} onRefresh={fetchData} />
+                        )}
 
-                    {activeView === "pos-system" && wrap("pos-system",
-                        <PremiumPOS language="TH" />
-                    )}
+                        {activeView === "executive-analytics" && wrap("executive-analytics",
+                            <ExecutiveAnalytics language={language} />
+                        )}
 
-                    {activeView === "inventory-manager" && wrap("inventory-manager",
-                        <InventoryManager />
-                    )}
+                        {activeView === "pos-system" && wrap("pos-system",
+                            <PremiumPOS language={language} />
+                        )}
 
-                    {activeView === "audit-trail" && wrap("audit-trail",
-                        <AuditHistory />
-                    )}
+                        {activeView === "inventory-manager" && wrap("inventory-manager",
+                            <InventoryManager />
+                        )}
 
-                    {activeView === "customers" && wrap("customers",
-                        selectedCustomer ? (
-                            <div className="p-6">
-                                <button
-                                    onClick={() => setSelectedCustomer(null)}
-                                    className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-                                >
-                                    ← Back to Customers
-                                </button>
-                                <CustomerCard
-                                    customer={selectedCustomer}
+                        {activeView === "audit-trail" && wrap("audit-trail",
+                            <AuditHistory />
+                        )}
+
+                        {activeView === "customers" && wrap("customers",
+                            selectedCustomer ? (
+                                <div className="p-6">
+                                    <button
+                                        onClick={() => setSelectedCustomer(null)}
+                                        className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                    >
+                                        ← Back to Customers
+                                    </button>
+                                    <CustomerCard
+                                        customer={selectedCustomer}
+                                        customers={customers}
+                                        onSelectCustomer={setSelectedCustomer}
+                                        products={products}
+                                    />
+                                </div>
+                            ) : loading ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <Loader2 className="animate-spin text-[#C9A34E]" size={28} />
+                                </div>
+                            ) : (
+                                <CustomerList
                                     customers={customers}
-                                    onSelectCustomer={setSelectedCustomer}
                                     products={products}
+                                    onSelectCustomer={setSelectedCustomer}
                                 />
-                            </div>
-                        ) : loading ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Loader2 className="animate-spin text-[#C9A34E]" size={28} />
-                            </div>
-                        ) : (
-                            <CustomerList
-                                customers={customers}
-                                products={products}
-                                onSelectCustomer={setSelectedCustomer}
-                            />
-                        )
-                    )}
+                            )
+                        )}
 
-                    {activeView === "facebook-chat" && wrap("facebook-chat",
-                        <FacebookChat customers={customers} />
-                    )}
+                        {activeView === "facebook-chat" && wrap("facebook-chat",
+                            <UnifiedInbox language={language} />
+                        )}
 
-                    {activeView === "line-connect" && wrap("line-connect",
-                        <LineConnect language="TH" />
-                    )}
 
-                    {activeView === "facebook-ads" && wrap("facebook-ads",
-                        <FacebookAds customers={customers} />
-                    )}
+                        {activeView === "line-connect" && wrap("line-connect",
+                            <LineConnect language={language} />
+                        )}
 
-                    {activeView === "campaign-tracking" && wrap("campaign-tracking",
-                        <CampaignTracking customers={customers} />
-                    )}
+                        {activeView === "facebook-ads" && wrap("facebook-ads",
+                            <FacebookAds customers={customers} />
+                        )}
 
-                    {activeView === "analytics" && wrap("analytics",
-                        <Analytics customers={customers} products={products} employees={employees} />
-                    )}
+                        {activeView === "campaign-tracking" && wrap("campaign-tracking",
+                            <CampaignTracking customers={customers} />
+                        )}
 
-                    {activeView === "notification-rules" && wrap("notification-rules",
-                        <NotificationRules language="TH" />
-                    )}
+                        {activeView === "analytics" && wrap("analytics",
+                            <Analytics customers={customers} products={products} employees={employees} />
+                        )}
 
-                    {activeView === "employees" && wrap("employees",
-                        <EmployeeManagement employees={employees} customers={customers} onRefresh={fetchData} currentUser={currentUser} />
-                    )}
+                        {activeView === "notification-rules" && wrap("notification-rules",
+                            <NotificationRules language={language} />
+                        )}
 
-                    {activeView === "team-kpi" && wrap("team-kpi",
-                        <TeamKPI employees={employees} customers={customers} />
-                    )}
+                        {activeView === "employees" && wrap("employees",
+                            <EmployeeManagement employees={employees} customers={customers} onRefresh={fetchData} currentUser={currentUser} />
+                        )}
 
-                    {activeView === "admin-performance" && wrap("admin-performance",
-                        <AdminPerformance employees={employees} customers={customers} />
-                    )}
+                        {activeView === "team-kpi" && wrap("team-kpi",
+                            <TeamKPI employees={employees} customers={customers} />
+                        )}
 
-                    {activeView === "system-config" && wrap("system-config",
-                        <SystemConfig language="TH" setLanguage={() => { }} />
-                    )}
+                        {activeView === "admin-performance" && wrap("admin-performance",
+                            <AdminPerformance employees={employees} customers={customers} />
+                        )}
 
-                    {activeView === "settings" && wrap("settings",
-                        <Settings />
-                    )}
+                        {activeView === "system-config" && wrap("system-config",
+                            <SystemConfig language={language} setLanguage={setLanguage} />
+                        )}
 
-                </AnimatePresence>
+                        {activeView === "settings" && wrap("settings",
+                            <Settings />
+                        )}
+
+                    </AnimatePresence>
+                </div>
             </main>
         </div>
     );

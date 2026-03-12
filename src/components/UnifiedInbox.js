@@ -151,7 +151,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const selectedConv = conversations.find(c => c.id === selectedId);
 
     return (
-        <div className="flex w-full h-full max-h-full bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
+        <div className="flex w-full flex-1 min-h-0 bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
             {/* Conversation List */}
             <div className="w-80 border-r border-white/5 flex flex-col bg-[#0A1A2F] overflow-hidden relative z-10 shrink-0">
                 <div className="flex-shrink-0 p-6 space-y-4 border-b border-white/5 bg-[#0A1A2F]/95 backdrop-blur-md sticky top-0 z-30">
