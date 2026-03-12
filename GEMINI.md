@@ -12,12 +12,12 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.9.0` | Auth Stable | ✅ released |
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
-| `v0.12.0` | UI Enhanced | ✅ **stable / current** ← ตอนนี้อยู่ที่นี่ |
-| `v0.13.0` | Unified Inbox | 🔲 **งานถัดไป** (Phase 12) |
+| `v0.12.0` | UI Enhanced | ✅ released (tagged) |
+| `v0.13.0` | Unified Inbox | 🚧 **in-progress** ← HEAD ตอนนี้อยู่ที่นี่ |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-เมื่อ Phase 12 เสร็จ → Claude จะ tag `v0.13.0` และเลื่อน stable
+Phase 12 ไฟล์ implement แล้ว → รอ QA + tag `v0.13.0`
 
 ---
 
@@ -148,33 +148,27 @@ Phase 13:   [PLANNED] NotificationRules API + LINE Messaging integration (→ v0
 
 ---
 
-## Phase 12 — CURRENT
+## Phase 12 — IN PROGRESS 🚧
 
 ### v0.12.0 — เสร็จแล้วทั้งหมด ✅ (tagged 2026-03-13)
 - `Sidebar.js` — icon-only `w-20`, Lucide React, tooltip on hover (ADR-031)
-- `TopBar.js` — Global Search, Language, Theme toggle (Lucide icons)
-- `ExecutiveAnalytics.js` — Recharts AreaChart + BarChart (ADR-032 A1)
+- `TopBar.js` — Global Search, Language, Theme toggle (Lucide icons ครบ)
+- `ExecutiveAnalytics.js` — Recharts AreaChart + BarChart + **Lucide icons ครบ** (ADR-032 A1)
 - `Dashboard.js` — Framer Motion AnimatedNumber (ADR-032 A2)
 - `EmployeeManagement.js` — stacked card deck UI + swipe gesture
 - Node.js ยกระดับจาก 20 → 22 LTS, Dockerfile อัพเดทครบ 4 stages
 
-### Next Task: Unified Inbox
-รวม Facebook Chat + LINE Connect เป็น inbox เดียว พร้อม filter tab
+### v0.13.0 — Unified Inbox (กำลังทำ)
 
-**Interface ที่ต้อง implement:**
-```
-GET /api/inbox/conversations?channel=ALL|FACEBOOK|LINE&status=open|closed&search=
-GET /api/inbox/conversations/[id]/messages
-POST /api/inbox/conversations/[id]/messages  { text }
-```
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/components/UnifiedInbox.js` | ✅ done | FB+LINE inbox, pagination, reply bar |
+| `GET /api/inbox/conversations` | ✅ fixed | **bug fix**: ลบ `channel` ออกจาก customer select |
+| `GET+POST /api/inbox/conversations/[id]/messages` | ✅ done | paginated GET + POST reply |
 
-**Component:**
-```
-src/components/UnifiedInbox.js
-  ├ ConversationList  (แสดง channel badge: 🔵FB / 🟢LINE)
-  ├ FilterBar         ([ทั้งหมด] [Facebook] [LINE])
-  └ MessageThread     (bubble UI เหมือนเดิม)
-```
+**Bug ที่แก้แล้ว (สำคัญ — อย่าทำซ้ำ):**
+> `Customer` model **ไม่มี field `channel`** — ถ้า query `customer: { select: { channel: true } }` จะ throw Prisma error
+> ให้ใช้ `conversation.channel` แทนเสมอ
 
 ---
 
@@ -208,12 +202,16 @@ model Order {
 }
 
 model Customer {
-  id         String  @id @default(uuid())
-  customerId String  @unique @map("customer_id")     // TVS-CUS-[CH]-[YY]-[XXXX]
-  firstName  String  @map("first_name")
-  lastName   String? @map("last_name")
-  phone      String?
-  channel    String  @default("WALK_IN")
+  id             String   @id @default(uuid())
+  customerId     String   @unique @map("customer_id")  // TVS-CUS-[CH]-[YY]-[XXXX]
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  facebookId     String?  @unique @map("facebook_id")
+  facebookName   String?  @map("facebook_name")
+  lineId         String?  @map("line_id")
+  phonePrimary   String?  @map("phone_primary")       // E.164
+  membershipTier String   @default("MEMBER") @map("membership_tier")
+  // ⚠️ ไม่มี field `channel` — channel อยู่ใน Conversation ไม่ใช่ Customer
 }
 ```
 
@@ -229,8 +227,8 @@ app/api/
   orders/[id]/route.js         GET ✅
   analytics/executive/route.js GET ✅  (adsRevenue + storeRevenue)
   customers/route.js           GET ✅ (?search=phone supported)
-  inbox/conversations/route.js ❌ → Phase 12
-  inbox/conversations/[id]/messages/route.js ❌ → Phase 12
+  inbox/conversations/route.js              ✅ done (v0.13.0)
+  inbox/conversations/[id]/messages/route.js ✅ done (v0.13.0)
 components/
   Sidebar.js                   ✅ icon-only w-20, Lucide (v0.12.0)
   TopBar.js                    ✅ Search + Theme + Lang toggle (v0.12.0)
@@ -238,8 +236,8 @@ components/
   AuditHistory.js              ✅ connected
   InventoryManager.js          ✅ connected
   PremiumPOS.js                ✅ connected
-  ExecutiveAnalytics.js        ✅ connected (Total/Ads/Store tabs)
-  UnifiedInbox.js              ❌ → Phase 12
+  ExecutiveAnalytics.js        ✅ Lucide icons + Recharts (v0.12.0 + fix)
+  UnifiedInbox.js              ✅ done (v0.13.0)
 lib/
   db/index.js                  getPrisma() singleton
   logger.js                    logger.error/info/warn

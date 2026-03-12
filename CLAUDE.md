@@ -19,12 +19,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.9.0` | Auth Stable | ✅ released |
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
-| `v0.12.0` | UI Enhanced | ✅ **stable / current** ← HEAD |
-| `v0.13.0` | Unified Inbox | 🔲 planned (Phase 12 ค้างอยู่) |
+| `v0.12.0` | UI Enhanced | ✅ released |
+| `v0.13.0` | Unified Inbox | 🚧 **in-progress** ← HEAD (Phase 12) |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
+
+### v0.13.0 — สิ่งที่ทำแล้ว (Phase 12)
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/components/UnifiedInbox.js` | ✅ implemented | FB + LINE inbox รวม, pagination, reply |
+| `src/app/api/inbox/conversations/route.js` | ✅ fixed | แก้ bug: Customer ไม่มี `channel` field |
+| `src/app/api/inbox/conversations/[id]/messages/route.js` | ✅ implemented | GET paginated + POST reply |
+| `src/components/ExecutiveAnalytics.js` | ✅ fixed | FontAwesome → Lucide ครบทุก icon |
+
+> ⚠️ **Known Gotcha — Customer model**: ไม่มี field `channel` — ใช้ `conversation.channel` แทน
 
 ---
 

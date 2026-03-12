@@ -1,182 +1,199 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { 
+    AreaChart, Area, BarChart, Bar, XAxis, YAxis, 
+    CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts';
+import { TrendingUp, Facebook, Store, Receipt, Tag, MessageCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
 export default function ExecutiveAnalytics({ language = 'TH' }) {
     const [data, setData] = useState(null);
+    const [historyData, setHistoryData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [historyLoading, setHistoryLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('this_week');
+    const [historyDays, setHistoryDays] = useState(30);
 
     const labels = {
         EN: { title: 'Executive Analytics', daily: 'Total Revenue', weekly: 'Orders Count', target: 'Conversion Rate', loading: 'Loading...' },
         TH: { title: 'ระบบวิเคราะห์บริหารงาน', daily: 'ยอดขายรวม', weekly: 'จำนวนออเดอร์', target: 'อัตราการเปลี่ยนเป็นยอดขาย', loading: 'กำลังโหลด...' }
     }[language];
 
+    // Fetch primary stats
     useEffect(() => {
         setLoading(true);
         fetch(`/api/analytics/executive?timeframe=${timeframe}`)
             .then(r => r.json())
             .then(d => {
-                // Guard: only accept valid payload (not error objects)
-                if (d && typeof d.ordersCount === 'number') {
-                    setData(d);
-                } else {
-                    setData(null);
-                }
-                setLoading(false);
+                if (d && typeof d.totalRevenue === 'number') setData(d);
             })
-            .catch(() => setLoading(false));
+            .catch(err => console.error('[ExecutiveAnalytics] Fetch failed:', err))
+            .finally(() => setLoading(false));
     }, [timeframe]);
 
+    // Fetch historical data for charts
+    useEffect(() => {
+        setHistoryLoading(true);
+        fetch(`/api/analytics/executive/history?days=${historyDays}`)
+            .then(r => r.json())
+            .then(d => setHistoryData(d))
+            .catch(err => console.error('[ExecutiveAnalytics] History fetch failed:', err))
+            .finally(() => setHistoryLoading(false));
+    }, [historyDays]);
+
+    const fmtChange = (val) => {
+        if (val === null || val === undefined) return { text: 'N/A', isUp: true, hasData: false };
+        return { text: (val >= 0 ? '+' : '') + val + '%', isUp: val >= 0, hasData: true };
+    };
+
     const stats = [
-        { 
-            label: 'Total Revenue', 
-            value: data?.totalRevenue !== undefined ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', 
-            change: data?.revenueChange !== undefined ? (data.revenueChange >= 0 ? '+' : '') + data.revenueChange + '%' : '', 
-            isUp: (data?.revenueChange ?? 0) >= 0, 
-            icon: <i className="fas fa-chart-line"></i>, 
-            color: 'text-[#C9A34E]' 
-        },
-        { 
-            label: 'Ads Revenue', 
-            value: data?.revenueAds !== undefined ? '฿' + Math.round(data.revenueAds).toLocaleString() : '-', 
-            change: data?.revenueAdsChange !== undefined ? (data.revenueAdsChange >= 0 ? '+' : '') + data.revenueAdsChange + '%' : '', 
-            isUp: (data?.revenueAdsChange ?? 0) >= 0, 
-            icon: <i className="fab fa-facebook"></i>, 
-            color: 'text-blue-500' 
-        },
-        { 
-            label: 'Store Revenue', 
-            value: data?.revenueStore !== undefined ? '฿' + Math.round(data.revenueStore).toLocaleString() : '-', 
-            change: data?.revenueStoreChange !== undefined ? (data.revenueStoreChange >= 0 ? '+' : '') + data.revenueStoreChange + '%' : '', 
-            isUp: (data?.revenueStoreChange ?? 0) >= 0, 
-            icon: <i className="fas fa-store"></i>, 
-            color: 'text-emerald-500' 
-        },
-        { 
-            label: labels.weekly, 
-            value: data?.ordersCount !== undefined ? data.ordersCount.toLocaleString() + ' Orders' : '-', 
-            change: '', 
-            isUp: true, 
-            icon: <i className="fas fa-receipt"></i>, 
-            color: 'text-indigo-500' 
-        },
+        { label: labels.daily, value: data?.totalRevenue !== undefined ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', ...fmtChange(data?.revenueChange), icon: <TrendingUp size={16} />, color: 'text-[#C9A34E]' },
+        { label: 'Ads Revenue', value: data?.revenueAds !== undefined ? '฿' + Math.round(data.revenueAds).toLocaleString() : '-', ...fmtChange(data?.revenueAdsChange), icon: <Facebook size={16} />, color: 'text-blue-500' },
+        { label: 'Store Revenue', value: data?.revenueStore !== undefined ? '฿' + Math.round(data.revenueStore).toLocaleString() : '-', ...fmtChange(data?.revenueStoreChange), icon: <Store size={16} />, color: 'text-emerald-500' },
+        { label: labels.weekly, value: data?.ordersCount !== undefined ? data.ordersCount.toLocaleString() + ' Orders' : '-', text: '', hasData: false, isUp: true, icon: <Receipt size={16} />, color: 'text-indigo-500' },
+        { label: 'Avg. Ticket', value: data?.avgTicket !== undefined ? '฿' + Math.round(data.avgTicket).toLocaleString() : '-', text: '', hasData: false, isUp: true, icon: <Tag size={16} />, color: 'text-purple-400' },
+        { label: 'Active Convs.', value: data?.activeSessions !== undefined ? data.activeSessions.toLocaleString() + ' Convs' : '-', text: '', hasData: false, isUp: true, icon: <MessageCircle size={16} />, color: 'text-sky-400' },
     ];
+
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-[#0D2040] border border-white/10 p-3 rounded-xl shadow-2xl">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{label}</p>
+                    {payload.map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
+                            <span className="text-[10px] font-bold text-white uppercase">{entry.name}:</span>
+                            <span className="text-xs font-black" style={{ color: entry.color }}>
+                                {entry.name.includes('Revenue') ? '฿' + entry.value.toLocaleString() : entry.value + ' ออเดอร์'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
 
     if (loading && !data) {
         return (
             <div className="p-8 flex items-center justify-center min-h-[400px]">
-                <p className="text-[#C9A34E] font-black animate-pulse">{labels.loading}</p>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-[#C9A34E]/20 border-t-[#C9A34E] rounded-full animate-spin"></div>
+                    <p className="text-[#C9A34E] font-black text-xs uppercase tracking-widest animate-pulse">{labels.loading}</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto animate-fade-in space-y-8">
-            {/* Header */}
+        <div className="max-w-7xl mx-auto animate-fade-in space-y-8 p-4 md:p-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Real-time Business Intelligence Engine</p>
                 </div>
-                
-                {/* Timeframe Selector */}
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
                     {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([key, label]) => (
-                        <button
-                            key={key}
-                            onClick={() => setTimeframe(key)}
-                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                timeframe === key
-                                ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg'
-                                : 'text-white/40 hover:text-white'
-                            }`}
-                        >
-                            {label}
-                        </button>
+                        <button key={key} onClick={() => setTimeframe(key)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === key ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg' : 'text-white/40 hover:text-white'}`}>{label}</button>
                     ))}
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 {stats.map((stat, i) => (
-                    <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all group shadow-2xl">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className={`w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center ${stat.color} shadow-xl ring-1 ring-white/10`}>
-                                {stat.icon}
-                            </div>
-                            {stat.change && (
+                    <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-all group shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/5 group-hover:bg-[#C9A34E]/20 transition-all"></div>
+                        <div className="flex justify-between items-start mb-4">
+                            <div className={`w-10 h-10 bg-[#0A1A2F] rounded-xl flex items-center justify-center ${stat.color} shadow-xl ring-1 ring-white/10`}>{stat.icon}</div>
+                            {stat.hasData && (
                                 <div className={`flex items-center gap-1 text-[10px] font-black ${stat.isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                    {stat.isUp ? <i className="fas fa-arrow-up"></i> : <i className="fas fa-arrow-down"></i>}
-                                    {stat.change}
+                                    {stat.isUp ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                                    {stat.text}
                                 </div>
                             )}
                         </div>
-                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
-                        <p className="text-3xl font-black text-[#F8F8F6] italic tracking-tight">{stat.value}</p>
+                        <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-1 truncate">{stat.label}</p>
+                        <p className="text-2xl font-black text-[#F8F8F6] italic tracking-tight truncate">{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Chart Placeholder */}
-                <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-[3rem] p-10 relative overflow-hidden shadow-3xl">
-                    <div className="flex items-center justify-between mb-10">
-                        <h3 className="text-xl font-black text-[#F8F8F6] uppercase tracking-tight italic">Performance Trends ({timeframe})</h3>
-                        <div className="flex gap-2">
-                            <span className="w-3 h-3 rounded-full bg-[#C9A34E]"></span>
-                            <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                {/* CHART 1: RevenueAreaChart */}
+                <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-[3rem] p-8 shadow-3xl">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-black text-[#F8F8F6] uppercase tracking-tight italic">Revenue Trends</h3>
+                            <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">Growth Comparison (Ads vs Store)</p>
+                        </div>
+                        <div className="flex bg-white/5 p-1 rounded-xl">
+                            {[7, 30, 90].map(d => (
+                                <button key={d} onClick={() => setHistoryDays(d)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${historyDays === d ? 'bg-red-500 text-white' : 'text-white/40 hover:text-white'}`}>{d} วัน</button>
+                            ))}
                         </div>
                     </div>
-                    {/* Visual placeholder for graph */}
-                    <div className="h-64 flex items-end gap-3 pb-4 px-2">
-                        {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-                            <div key={i} className="flex-1 bg-gradient-to-t from-[#C9A34E]/20 to-[#C9A34E] rounded-t-xl group relative cursor-pointer hover:brightness-125 transition-all" style={{ height: `${h}%` }}>
-                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-[#0A1A2F] px-2 py-1 rounded text-[10px] font-black opacity-0 group-hover:opacity-100 transition-opacity shadow-xl">
-                                    ฿{(data?.totalRevenue ? Math.round(data.totalRevenue * (h/100)) : h * 120).toLocaleString()}
-                                </div>
-                            </div>
-                        ))}
+                    <div className="h-[220px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={historyData?.revenueHistory || []}>
+                                <defs>
+                                    <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                    </linearGradient>
+                                    <linearGradient id="colorStore" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#C9A34E" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#C9A34E" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                <XAxis dataKey="dateLabel" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.2)', fontSize: 10, fontWeight: 900}} />
+                                <YAxis hide />
+                                <Tooltip content={<CustomTooltip />} cursor={{stroke: 'rgba(255,255,255,0.1)'}} />
+                                <Area name="Ads Revenue" type="monotone" dataKey="adsRevenue" stroke="#ef4444" fillOpacity={1} fill="url(#colorAds)" strokeWidth={3} />
+                                <Area name="Store Revenue" type="monotone" dataKey="storeRevenue" stroke="#C9A34E" fillOpacity={1} fill="url(#colorStore)" strokeWidth={3} />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
-                    <div className="flex justify-between mt-4 px-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
-                        <span>P1</span><span>P2</span><span>P3</span><span>P4</span><span>P5</span><span>P6</span><span>P7</span>
+
+                    {/* CHART 2: OrderVolumeBarChart */}
+                    <div className="mt-8 pt-8 border-t border-white/5">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Daily Order Volume</h4>
+                        </div>
+                        <div className="h-[160px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={historyData?.dailyOrders || []}>
+                                    <XAxis dataKey="dateLabel" hide />
+                                    <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                                    <Bar name="Ads Count" dataKey="adsCount" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                                    <Bar name="Store Count" dataKey="storeCount" fill="#C9A34E" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
 
-                {/* Goal Wheel */}
-                <div className="bg-[#C9A34E] rounded-[3rem] p-10 text-[#0A1A2F] shadow-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                {/* Conversion Gauge */}
+                <div className="bg-[#C9A34E] rounded-[3rem] p-10 text-[#0A1A2F] shadow-3xl flex flex-col items-center justify-center text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 w-full">
                         <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2 leading-none">{labels.target}</h3>
                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mb-10">Sales Efficiency</p>
-
                         <div className="relative w-48 h-48 mx-auto mb-10">
                             <svg className="w-full h-full rotate-[-90deg]">
                                 <circle cx="96" cy="96" r="88" fill="transparent" stroke="#000" strokeWidth="16" className="opacity-10" />
-                                <circle 
-                                    cx="96" 
-                                    cy="96" 
-                                    r="88" 
-                                    fill="transparent" 
-                                    stroke="#0A1A2F" 
-                                    strokeWidth="16" 
-                                    strokeDasharray="552.92" 
-                                    strokeDashoffset={552.92 - (552.92 * (data?.conversionRate || 0) / 100)} 
-                                    strokeLinecap="round" 
-                                    className="drop-shadow-xl transition-all duration-1000" 
-                                />
+                                <circle cx="96" cy="96" r="88" fill="transparent" stroke="#0A1A2F" strokeWidth="16" strokeDasharray="552.92" strokeDashoffset={552.92 - (552.92 * (data?.conversionRate || 0) / 100)} strokeLinecap="round" className="drop-shadow-xl transition-all duration-1000" />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-4xl font-black italic">{data ? data.conversionRate.toFixed(1) + '%' : '0%'}</span>
+                                <span className="text-4xl font-black italic">{data?.conversionRate ? data.conversionRate.toFixed(1) + '%' : '0%'}</span>
                                 <span className="text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Conversion</span>
                             </div>
                         </div>
-
                         <div className="space-y-2">
-                            <p className="text-sm font-black italic leading-none">{data?.ordersCount || 0} Successful Conversions</p>
+                            <p className="text-sm font-black italic leading-none">{data?.ordersCount || 0} Successes</p>
                             <div className="w-full h-1 bg-black/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0A1A2F] transition-all duration-1000" style={{ width: `${data?.conversionRate || 0}%` }}></div>
+                                <div className="h-full bg-[#0A1A2F] transition-all duration-1000" style={{ width: `${Math.min(data?.conversionRate || 0, 100)}%` }}></div>
                             </div>
                         </div>
                     </div>
@@ -185,4 +202,3 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
         </div>
     );
 }
-
