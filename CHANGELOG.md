@@ -5,7 +5,37 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — 2026-03-12
+## [0.12.0] — 2026-03-13
+
+### Phase 12 — UI Enhancement: Icon Sidebar + Charts + Motion + Lucide
+
+#### Sidebar Redesign (ADR-031)
+- **`src/components/Sidebar.js`**: ปรับ layout เป็น icon-only `w-20` — ลบ text label ออก, เพิ่ม tooltip hover (popup ขวา), group separator เส้นบาง, active left-bar indicator
+- **Lucide React migration**: แทน FontAwesome CDN ด้วย `lucide-react` (tree-shakeable) ครบทุก icon ใน Sidebar และ TopBar
+- **`src/components/TopBar.js`** (new): Global navigation header — search input, TH/EN language toggle, dark/light theme toggle, notification bell — ใช้ Lucide icons ทั้งหมด
+
+#### Charts & Data Visualization (A1)
+- **`src/components/ExecutiveAnalytics.js`**: เพิ่ม Recharts `AreaChart` (Ads vs Store Revenue trend) + `BarChart` (daily order volume) พร้อม timeframe toggle [7d/30d/90d]
+- **`src/app/api/analytics/executive/history/route.js`** (new): `GET ?days=7|30|90` — GROUP BY date split by `conversationId IS NULL/NOT NULL` → `revenueHistory[]` + `dailyOrders[]`
+- **`src/lib/repositories/analyticsRepository.js`** (new): `getRevenueHistory(days)` — Prisma aggregation ผ่าน repository pattern
+
+#### Animations (A2)
+- **`src/app/page.js`**: `AnimatePresence` + `motion.div` page transition fade+slide (200ms) เมื่อเปลี่ยน activeView
+- **`src/components/Dashboard.js`**: `AnimatedNumber` — `useSpring` stiffness:80/damping:20 animate stat จาก 0 → จริง
+
+#### Employee Directory Redesign
+- **`src/components/EmployeeManagement.js`**: เขียนใหม่ทั้งหมด — stacked card deck (3 ghost cards + swipe/drag), dot pagination, thumbnail strip, dashboard 4 tabs (Overview / Permissions / Customers / Sales), role-color system, edit modal
+
+#### Infrastructure
+- **Node.js upgrade**: `node:20-alpine` → `node:22-alpine` ทุก Dockerfile stage, เพิ่ม `.nvmrc` + `engines.node >=22`
+- **Git versioning**: tags `v0.9.0`–`v0.12.0` + branch `stable`
+
+#### Cleanup
+- ลบไฟล์ขยะ Gemini fragment (`",\n    keyMetric: "`)
+
+---
+
+## [0.11.0] — 2026-03-12
 
 ### Executive Analytics — Revenue Split by Channel
 

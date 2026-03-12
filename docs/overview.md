@@ -9,11 +9,15 @@ The Single Source of Truth for system architecture, data flow, and technical dec
 
 ## 🚀 Quick Start
 ```bash
-cd /Users/ideab/Desktop/data_hub/crm-app
-npm run dev
-# Access at http://localhost:3000
-# Login: admin@vschool.co.th / admin123
+cd /Users/ideab/Desktop/crm
+docker compose up -d          # PostgreSQL (port 5433) + Redis
+npx prisma generate
+npx prisma migrate dev
+npm run dev                   # http://localhost:3000
+npm run worker                # BullMQ worker (terminal แยก)
 ```
+Login: `admin@vschool.com` / (ดูใน `.env`)
+Node.js: **v22 LTS** (ดู `.nvmrc`)
 
 ---
 
@@ -117,6 +121,20 @@ npm run dev
 Major technical choices and their rationale.
 👉 [**View ADR Directory**](./adr/)
 
+### v2 Core ADRs
+| ADR | Title | Summary |
+|---|---|---|
+| **024** | Marketing Intelligence | Bottom-Up Aggregation, Checksum, Hourly Ledger |
+| **025** | Identity Resolution | Phone E.164, Cross-platform Merge, LINE Attribution |
+| **026** | RBAC | 6-tier role hierarchy, server-side guard |
+| **027** | DB Schema Init | 23 models, UUID PKs, named relations |
+| **028** | Facebook Messaging | Webhook < 200ms, fire-and-forget, prisma.$transaction |
+| **029** | Employee Registry | Auto-generate TVS-EMP ID, JSONB identities, bcrypt |
+| **030** | Revenue Channel Split | conversationId → Ads vs Store classification |
+| **031** | Icon-Only Sidebar | w-20 sidebar, Lucide migration ออกจาก FontAwesome CDN |
+| **032** | UI Enhancement (A) | Recharts charts, Framer Motion animations, cherry-pick approach |
+
+### v1 Reference ADRs
 | ADR | Title | Summary |
 |---|---|---|
 | **019** | Agent Attribution | Automation of staff tracking via Business Suite scraping. |
