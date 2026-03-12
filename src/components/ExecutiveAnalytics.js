@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 export default function ExecutiveAnalytics({ language = 'TH' }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [timeframe, setTimeframe] = useState('week');
+    const [timeframe, setTimeframe] = useState('this_week');
 
     const labels = {
         EN: { title: 'Executive Analytics', daily: 'Total Revenue', weekly: 'Orders Count', target: 'Conversion Rate', loading: 'Loading...' },
@@ -30,36 +30,36 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
 
     const stats = [
         { 
-            label: labels.daily, 
-            value: data ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', 
-            change: data ? (data.revenueChange >= 0 ? '+' : '') + data.revenueChange + '%' : '', 
+            label: 'Total Revenue', 
+            value: data?.totalRevenue !== undefined ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', 
+            change: data?.revenueChange !== undefined ? (data.revenueChange >= 0 ? '+' : '') + data.revenueChange + '%' : '', 
             isUp: (data?.revenueChange ?? 0) >= 0, 
-            icon: <i className="fas fa-dollar-sign"></i>, 
+            icon: <i className="fas fa-chart-line"></i>, 
+            color: 'text-[#C9A34E]' 
+        },
+        { 
+            label: 'Ads Revenue', 
+            value: data?.revenueAds !== undefined ? '฿' + Math.round(data.revenueAds).toLocaleString() : '-', 
+            change: data?.revenueAdsChange !== undefined ? (data.revenueAdsChange >= 0 ? '+' : '') + data.revenueAdsChange + '%' : '', 
+            isUp: (data?.revenueAdsChange ?? 0) >= 0, 
+            icon: <i className="fab fa-facebook"></i>, 
+            color: 'text-blue-500' 
+        },
+        { 
+            label: 'Store Revenue', 
+            value: data?.revenueStore !== undefined ? '฿' + Math.round(data.revenueStore).toLocaleString() : '-', 
+            change: data?.revenueStoreChange !== undefined ? (data.revenueStoreChange >= 0 ? '+' : '') + data.revenueStoreChange + '%' : '', 
+            isUp: (data?.revenueStoreChange ?? 0) >= 0, 
+            icon: <i className="fas fa-store"></i>, 
             color: 'text-emerald-500' 
         },
         { 
             label: labels.weekly, 
-            value: data ? data.ordersCount.toLocaleString() + ' Orders' : '-', 
+            value: data?.ordersCount !== undefined ? data.ordersCount.toLocaleString() + ' Orders' : '-', 
             change: '', 
             isUp: true, 
             icon: <i className="fas fa-receipt"></i>, 
-            color: 'text-blue-500' 
-        },
-        { 
-            label: 'Active Sessions', 
-            value: data ? String(data.activeSessions) : '-', 
-            change: '', 
-            isUp: true, 
-            icon: <i className="fas fa-users"></i>, 
-            color: 'text-rose-500' 
-        },
-        { 
-            label: 'Average Ticket', 
-            value: data ? '฿' + Math.round(data.avgTicket).toLocaleString() : '-', 
-            change: '', 
-            isUp: true, 
-            icon: <i className="fas fa-crosshairs"></i>, 
-            color: 'text-[#C9A34E]' 
+            color: 'text-indigo-500' 
         },
     ];
 
@@ -82,17 +82,17 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                 
                 {/* Timeframe Selector */}
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
-                    {['today', 'week', 'month'].map((t) => (
+                    {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([key, label]) => (
                         <button
-                            key={t}
-                            onClick={() => setTimeframe(t)}
+                            key={key}
+                            onClick={() => setTimeframe(key)}
                             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                timeframe === t 
-                                ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg' 
+                                timeframe === key
+                                ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg'
                                 : 'text-white/40 hover:text-white'
                             }`}
                         >
-                            {t}
+                            {label}
                         </button>
                     ))}
                 </div>
