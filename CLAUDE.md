@@ -72,6 +72,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Session Start Protocol (บังคับ — ทำทุกครั้งที่เริ่ม session ใหม่)
+
+1. **อ่าน `MEMORY.md`** — ตรวจว่า Antigravity ทำอะไรไปบ้างระหว่างที่ Claude ไม่อยู่
+2. **อ่าน `GOAL.md` → Project Status table** — ดู Active Phase + Known Issues
+3. ถ้ามีการเปลี่ยนแปลงที่ Claude ไม่เห็นด้วย → บันทึกใน MEMORY.md + แจ้ง Boss
+4. ถ้าไม่มีอะไรเปลี่ยน → ข้ามได้ ทำงานต่อปกติ
+
+---
+
+## Conflict Resolution Protocol
+
+เมื่อ Agent ตัดสินใจที่ขัดแย้งกับ architecture:
+
+| ระดับ | ตัวอย่าง | ใครตัดสิน |
+|---|---|---|
+| **Naming/Style** | ตั้งชื่อ variable ผิด convention | Agent แก้เองได้ |
+| **Implementation** | เลือก algorithm ต่างกัน | Claude review แล้วอนุมัติ/แก้ |
+| **Architecture** | เพิ่ม model ใหม่, เปลี่ยน DB schema | Claude ตัดสินใจ + เขียน ADR |
+| **Breaking Change** | เปลี่ยน API contract, ลบ field | Boss อนุมัติเท่านั้น |
+
+**กฎ:** ถ้า Antigravity ทำ Architecture-level change ไปแล้ว → Claude ต้อง review + เขียน ADR retroactive
+
+---
+
+## Domain Routing (ใช้เลือก context ตาม task)
+
+| Task เกี่ยวกับ | โหลด Skill | ADR หลัก | Key Files |
+|---|---|---|---|
+| Ad sync, ROAS, campaign | `domain-marketing` | ADR-024 | marketingRepo.js, sync-meta-ads.mjs |
+| Chat, webhook, inbox | `domain-inbox` | ADR-028, 033 | UnifiedInbox.js, webhooks/ |
+| Customer, order, identity | `domain-customer` | ADR-025, 030 | customerRepo.js, identityService.js |
+| DB, Redis, auth, deploy | `domain-infra` | ADR-026, 034 | prisma.ts, redis.js, middleware.js |
+
+---
+
 ## Architecture Decisions ใหม่ (v2)
 
 | ADR | Decision |
