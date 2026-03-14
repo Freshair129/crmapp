@@ -79,8 +79,9 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
         <aside className="w-20 bg-[#0A1A2F] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100] items-center overflow-x-hidden">
             {/* Logo */}
             <div className="py-5 flex items-center justify-center w-full border-b border-white/5">
-                <div className="w-9 h-9 rounded-xl bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-lg shadow-lg shadow-[#C9A34E]/20">
+                <div className="w-9 h-9 rounded-xl bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-lg shadow-lg shadow-[#C9A34E]/20 relative">
                     V
+                    <span className="absolute -bottom-1 text-[6px] opacity-20">v0.14-NEW</span>
                 </div>
             </div>
 

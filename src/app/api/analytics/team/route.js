@@ -85,11 +85,18 @@ export async function GET(request) {
         });
 
         // Calculate Global Summary
+        const adsSpendData = await prisma.adDailyMetric.aggregate({
+            where: {
+                ...(dateFilter ? { date: dateFilter } : {})
+            },
+            _sum: { spend: true }
+        });
+
         const summary = {
             totalRevenue: employeeStats.reduce((s, e) => s + e.revenue, 0),
             totalLeads: employeeStats.reduce((s, e) => s + e.leads, 0),
             totalCustomers: employeeStats.reduce((s, e) => s + e.customers, 0),
-            marketingSpend: 15000, // Mock or fetch from Ads API if available
+            marketingSpend: adsSpendData._sum.spend || 0,
             marketingRevenue: 0,
             marketingPurchases: 0,
             marketingLeads: 0

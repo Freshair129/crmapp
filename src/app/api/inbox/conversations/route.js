@@ -13,8 +13,8 @@ export async function GET(request) {
         const limit = parseInt(searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
         const search = searchParams.get('search');
-        const prisma = await getPrisma();
-
+        logger.info('[InboxConversations]', `Fetching conversations: channel=${channel}, status=${status}, search=${search}, skip=${skip}`);
+        
         const conversations = await prisma.conversation.findMany({
             where: {
                 ...(channel !== 'ALL' ? { channel: { equals: channel.toLowerCase(), mode: 'insensitive' } } : {}),
@@ -56,17 +56,19 @@ export async function GET(request) {
             take: limit
         });
 
+        logger.info('[InboxConversations]', `Found ${conversations.length} conversations`);
+
         const formatted = conversations.map(c => ({
             id: c.id,
             conversationId: c.conversationId,
-            channel: c.channel.toUpperCase(),
+            channel: (c.channel || 'facebook').toUpperCase(),
             status: c.status,
             updatedAt: c.updatedAt,
             customer: c.customer ? {
                 customerId: c.customer.customerId,
-                firstName: c.customer.firstName,
-                lastName: c.customer.lastName,
-                channel: c.channel.toUpperCase(),
+                firstName: c.customer.firstName || 'Unknown',
+                lastName: c.customer.lastName || '',
+                channel: (c.channel || 'facebook').toUpperCase(),
                 phonePrimary: c.customer.phonePrimary,
                 facebookId: c.customer.facebookId,
                 originId: c.customer.originId,
@@ -75,9 +77,9 @@ export async function GET(request) {
                 intelligence: c.customer.intelligence
             } : {
                 customerId: null,
-                firstName: c.participantName || 'Unknown',
+                firstName: c.participantName || (c.messages[0]?.fromName) || 'Unknown',
                 lastName: '',
-                channel: c.channel.toUpperCase(),
+                channel: (c.channel || 'facebook').toUpperCase(),
                 phonePrimary: null,
                 facebookId: c.participantId,
                 originId: null,
@@ -86,7 +88,7 @@ export async function GET(request) {
                 intelligence: null
             },
             lastMessage: c.messages[0] ? {
-                text: c.messages[0].content,
+                text: c.messages[0].content || '(Message)',
                 createdAt: c.messages[0].createdAt,
                 senderId: c.messages[0].fromId
             } : null
@@ -95,6 +97,6 @@ export async function GET(request) {
         return NextResponse.json(formatted);
     } catch (error) {
         logger.error('[InboxConversations]', 'GET error', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
 }

@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
         const formatted = messages.map(m => ({
             id: m.id,
             messageId: m.messageId,
-            text: m.content,
+            text: m.content || '(Media or Empty Content)',
             senderId: m.fromId,
             senderType: m.responderId ? 'AGENT' : 'CUSTOMER',
             createdAt: m.createdAt

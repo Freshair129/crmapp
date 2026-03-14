@@ -25,7 +25,7 @@ export async function GET() {
             impressions: acc.impressions + (ad.impressions || 0),
             clicks: acc.clicks + (ad.clicks || 0),
             revenue: acc.revenue + (ad.revenue || 0),
-            reach: acc.impressions + (ad.impressions || 0) // Proxy reach as impressions for now or total them
+            reach: acc.reach + (ad.impressions || 0) // Proxy reach as impressions for now or total them
         }), { spend: 0, impressions: 0, clicks: 0, revenue: 0, reach: 0 });
 
         return NextResponse.json({

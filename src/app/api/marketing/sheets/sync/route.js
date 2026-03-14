@@ -1,6 +1,8 @@
 import { syncGoogleSheetTasks } from '@/lib/googleSheetService';
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
+import { getPrisma } from '@/lib/db';
+import { cache } from '@/lib/redis';
 
 export async function POST() {
     try {

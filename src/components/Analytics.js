@@ -18,7 +18,7 @@ export default function Analytics({ customers, products }) {
     useEffect(() => {
         const fetchTeamAnalytics = async () => {
             try {
-                const res = await fetch(`/api/analytics/team?timeframe=${rankingPeriod === 'month' ? 'lifetime' : rankingPeriod === 'week' ? 'week' : 'today'}`);
+                const res = await fetch(`/api/analytics/team?timeframe=${rankingPeriod === 'month' ? 'all_time' : rankingPeriod === 'week' ? 'this_week' : 'today'}`);
                 const data = await res.json();
                 if (data.success) setTeamAnalytics(data);
             } catch (err) {

@@ -35,40 +35,41 @@ services:
       retries: 5
 
   # ─── Prisma Migrations (one-shot, exits 0 on success) ────────────────────
-  migrator:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: migrator
-    container_name: crm_migrator
-    restart: on-failure
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file: .env
-    environment:
-      DATABASE_URL: postgresql://postgres:password123@postgres:5432/vschool_crm
-
-  # ─── Next.js App (production) ─────────────────────────────────────────────
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: crm_app
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrator:
-        condition: service_completed_successfully
-    env_file: .env
-    environment:
-      DATABASE_URL: postgresql://postgres:password123@postgres:5432/vschool_crm
-      REDIS_URL: redis://redis:6379
-    ports:
-      - '3000:3000'
+#  migrator:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#      target: migrator
+#    container_name: crm_migrator
+#    restart: on-failure
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    env_file: .env
+#    environment:
+#      # Use DATABASE_URL from .env
+#      NODE_ENV: production
+#
+#  # ─── Next.js App (production) ─────────────────────────────────────────────
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: crm_app
+#    restart: unless-stopped
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      migrator:
+#        condition: service_completed_successfully
+#    env_file: .env
+#    environment:
+#      # Use DATABASE_URL from .env
+#      REDIS_URL: redis://redis:6379
+#    ports:
+#      - '3000:3000'
 
 volumes:
   postgres_data:

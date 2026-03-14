@@ -110,7 +110,12 @@ export default function UnifiedInbox({ language = 'TH' }) {
             const { channel: fChannel, status: fStatus, search: fSearch } = filterRef.current;
             const start = Date.now();
             const res = await fetch(`/api/inbox/conversations?channel=${fChannel}&status=${fStatus}&search=${fSearch}&page=${pageNum}&limit=10`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.details || errData.error || `HTTP ${res.status}`);
+            }
             const data = await res.json();
+            console.log(`[UnifiedInbox] Fetched ${data.length} conversations`);
             
             // Artificial delay to stabilize UI if returned too fast
             const elapsed = Date.now() - start;
@@ -142,6 +147,10 @@ export default function UnifiedInbox({ language = 'TH' }) {
         try {
             const start = Date.now();
             const res = await fetch(`/api/inbox/conversations/${id}/messages?page=${pageNum}&limit=10`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.details || errData.error || `HTTP ${res.status}`);
+            }
             const data = await res.json();
             
             // Artificial delay for visual stability
@@ -220,7 +229,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                            <h2 className="text-xl font-black tracking-tight">{language === 'TH' ? 'กล่องข้อความ' : 'Inbox'}</h2>
-                           <span className="text-[10px] text-[#C9A34E] font-black uppercase tracking-[0.2em] opacity-80">1,099 Active Chats</span>
+                           <span className="text-[10px] text-[#C9A34E] font-black uppercase tracking-[0.2em] opacity-80">{conversations.length} {language === 'TH' ? 'บทสนทนา' : 'Active Chats'}</span>
                         </div>
                         <MessageCircle size={20} className="text-[#C9A34E]" />
                     </div>
@@ -294,14 +303,14 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                         <div className="flex items-center gap-2">
                                             <div className={`w-2 h-2 rounded-full ${conv.channel === 'FACEBOOK' ? 'bg-[#1877F2]' : 'bg-[#06C755]'}`}></div>
                                             <h3 className="font-bold text-sm truncate max-w-[140px]">
-                                                {conv.customer.firstName} {conv.customer.lastName}
+                                                {conv.customer?.firstName || 'Unknown'} {conv.customer?.lastName || ''}
                                             </h3>
                                         </div>
                                         <span className="text-[10px] text-white/30 font-medium">{formatTime(conv.updatedAt)}</span>
                                     </div>
                                     
                                     <p className="text-xs text-white/40 truncate leading-relaxed">
-                                        {conv.lastMessage?.text || (language === 'TH' ? 'ส่งแล้ว' : 'Sent')}
+                                        {conv.lastMessage?.text || (language === 'TH' ? 'ไม่มีข้อความ' : 'No message')}
                                     </p>
                                     
                                     <div className="mt-2 flex items-center justify-between">
@@ -350,7 +359,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-3">
                                         <h2 className="font-black text-lg tracking-tight truncate">
-                                            {selectedConv?.customer.firstName} {selectedConv?.customer.lastName}
+                                            {selectedConv?.customer?.firstName || 'Unknown'} {selectedConv?.customer?.lastName || ''}
                                         </h2>
                                         <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0 ${
                                             selectedConv?.channel === 'FACEBOOK' 
@@ -467,7 +476,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             {(selectedConv.customer.firstName || '?').charAt(0)}
                         </div>
                         <h3 className="font-black text-white text-sm leading-tight">
-                            {selectedConv.customer.firstName} {selectedConv.customer.lastName}
+                            {selectedConv.customer?.firstName || 'Unknown'} {selectedConv.customer?.lastName || ''}
                         </h3>
                         <p className="text-[9px] text-white/25 font-mono mt-1 truncate px-2">
                             {selectedConv.customer.customerId || '—'}

@@ -88,7 +88,7 @@ export default function PremiumPOS({ language = 'TH' }) {
         setCustomerLookupLoading(true);
         setCustomerError('');
         try {
-            const res = await fetch('/api/customers?phone=' + customerPhone.trim());
+            const res = await fetch('/api/customers?search=' + customerPhone.trim());
             const data = await res.json();
             const customer = Array.isArray(data) ? data[0] : (data.customers?.[0] || null);
 
