@@ -19,6 +19,7 @@ src/generated/
 
 # Claude local settings & session files
 .claude/
+!.claude/skills/
 *session-is-being-continued*.txt
 
 # HTML exports / browser saves
