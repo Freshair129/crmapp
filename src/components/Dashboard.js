@@ -1,8 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion';
 
-export default function Dashboard({ customers, products, onRefresh }) {
+function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
+    const count = useMotionValue(0);
+    const rounded = useSpring(count, { stiffness: 80, damping: 20 });
+    const display = useTransform(rounded, (latest) =>
+        prefix + latest.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix
+    );
+
+    useEffect(() => {
+        animate(count, value, { duration: 2 });
+    }, [value, count]);
+
+    return <motion.span>{display}</motion.span>;
+}
+
+export default function Dashboard({ customers, products, orders = [], onRefresh }) {
     const [insights, setInsights] = useState({ spend: 0, reach: 0, impressions: 0 });
     const [loadingInsights, setLoadingInsights] = useState(false);
     const [syncing, setSyncing] = useState(false);
@@ -50,10 +65,11 @@ export default function Dashboard({ customers, products, onRefresh }) {
 
     // Generate some metrics based on data
     const totalCustomers = customers.length;
-    const totalPoints = customers.reduce((sum, c) => sum + (c.walletPoints || c.wallet?.points || 0), 0);
-    // T7 Note: total_spend = cumulative customer purchase amount (LTV), NOT ad spend
-    // Populated in page.js checkout: existing + cartTotal; starts at 0 in RegistrationModal
-    const totalRevenue = customers.reduce((sum, c) => sum + (c.intelligence?.metrics?.total_spend || 0), 0);
+    
+    // Calculate total revenue from orders with 'closed' or 'CLOSED' status
+    const totalRevenue = orders
+        .filter(o => ['closed', 'CLOSED'].includes(o.status))
+        .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     // Calculate Average Lifespan
     const now = new Date();
@@ -65,9 +81,8 @@ export default function Dashboard({ customers, products, onRefresh }) {
         if (joinDateStr) {
             const joinDate = new Date(joinDateStr);
             const diffTime = Math.abs(now - joinDate);
-            // T12 Fix: Math.round instead of ceil to avoid upward bias
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            totalLifespanMonths += (diffDays / 30); // Convert days to months for better precision
+            totalLifespanMonths += (diffDays / 30);
             customerWithHistory++;
         }
     });
@@ -79,17 +94,17 @@ export default function Dashboard({ customers, products, onRefresh }) {
 
     const avgLTV = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
 
-    // Calculate Churn Rate (Percentage of inactive/churned customers)
+    // Calculate Churn Rate
     const churnedCustomers = customers.filter(c => (c.status || c.profile?.status) === 'Inactive' || (c.status || c.profile?.status) === 'Churned').length;
     const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
 
     const stats = [
-        { label: 'Total Revenue', value: `฿${totalRevenue.toLocaleString()}`, icon: 'fa-coins', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: 'fa-coins', color: 'text-amber-500', bg: 'bg-amber-500/10' },
         { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: 'fa-user-graduate', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Avg. Lifetime Value', value: `฿${Math.round(avgLTV).toLocaleString()}`, subValue: `Avg. Lifespan: ${avgLifespanText}`, icon: 'fa-chart-line', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Churn Rate', value: `${churnRate.toFixed(1)}%`, icon: 'fa-user-minus', color: 'text-rose-500', bg: 'bg-rose-500/10' },
-        { label: 'Marketing Spend (30d)', value: `฿${Number(insights.spend).toLocaleString()}`, icon: 'fa-ads-click', color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { label: 'Marketing Reach', value: Number(insights.reach).toLocaleString(), icon: 'fa-bullhorn', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+        { label: 'Avg. Lifetime Value', value: Math.round(avgLTV), prefix: '฿', subValue: `Avg. Lifespan: ${avgLifespanText}`, icon: 'fa-chart-line', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, icon: 'fa-user-minus', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: 'fa-ads-click', color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Marketing Reach', value: Number(insights.reach || 0), icon: 'fa-bullhorn', color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
 
     // --- AI Insight Calculations ---
@@ -142,7 +157,14 @@ export default function Dashboard({ customers, products, onRefresh }) {
                             <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">Live Sync</span>
                         </div>
                         <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                        <p className="text-2xl font-black text-white group-hover:text-[#C9A34E] transition-colors">{stat.value}</p>
+                        <p className="text-2xl font-black text-white group-hover:text-[#C9A34E] transition-colors font-mono">
+                            <AnimatedNumber
+                                value={stat.value}
+                                prefix={stat.prefix}
+                                suffix={stat.suffix}
+                                decimals={stat.decimals || 0}
+                            />
+                        </p>
                         {stat.subValue && (
                             <p className="text-[10px] font-bold text-white/40 mt-1 flex items-center gap-1">
                                 <i className="fas fa-clock text-[#C9A34E]"></i>

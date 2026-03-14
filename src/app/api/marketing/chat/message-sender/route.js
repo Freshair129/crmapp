@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/db';
 
 /**
  * POST /api/marketing/chat/message-sender
@@ -19,6 +19,7 @@ import prisma from '@/lib/prisma';
 export async function POST(req) {
     try {
         const { conversationId, senders } = await req.json();
+        const prisma = await getPrisma();
 
         if (!conversationId || !Array.isArray(senders) || senders.length === 0) {
             return NextResponse.json({ error: 'conversationId and senders required' }, { status: 400 });

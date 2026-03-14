@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
 import { eventBus } from '@/lib/eventBus';
+import { notificationEngine } from '@/lib/notificationEngine';
 
 const PAGE_ID = process.env.FB_PAGE_ID;
 
@@ -52,7 +53,8 @@ async function processEvent(event) {
 
     // Handle FB read-receipt: admin read in Business Suite → reset unreadCount in DB
     if (read && !message) {
-        const isFromPage    = sender.id === PAGE_ID;
+        const knownPageIds = [PAGE_ID, '113042456073167', '170707786504'];
+        const isFromPage    = knownPageIds.includes(sender.id);
         const customerPsid  = isFromPage ? recipient.id : sender.id;
         const threadId      = `t_${customerPsid}`;
         const prisma = await getPrisma();
@@ -68,7 +70,8 @@ async function processEvent(event) {
 
     if (!message || (message.is_echo === true && !message.text && !message.attachments)) return;
 
-    const isFromPage  = sender.id === PAGE_ID;
+    const knownPageIds = [PAGE_ID, '113042456073167', '170707786504'];
+    const isFromPage  = knownPageIds.includes(sender.id) || message?.is_echo === true;
     const customerPsid = isFromPage ? recipient.id : sender.id;
     const threadId     = `t_${customerPsid}`;   // FB thread convention
 
@@ -121,19 +124,24 @@ async function processEvent(event) {
         // 2. Upsert message
         if (message.mid) {
             const attach = (message.attachments || [])[0];
+            const isEcho = message.is_echo === true || knownPageIds.includes(sender.id);
+            
             await tx.message.upsert({
                 where: { messageId: message.mid },
                 create: {
                     messageId: message.mid,
                     conversationId: conv.id,
                     fromId: sender.id,
-                    fromName: null,
+                    fromName: isEcho ? 'Admin' : null,
                     content: message.text || null,
                     hasAttachment: !!attach,
                     attachmentType: attach?.type || null,
                     attachmentUrl: attach?.payload?.url || null,
                     createdAt: new Date(timestamp),
-                    metadata: referral ? { ad_id: referral.ad_id, source: referral.source } : {},
+                    metadata: {
+                        ...(referral ? { ad_id: referral.ad_id, source: referral.source } : {}),
+                        is_echo: isEcho
+                    },
                 },
                 update: {},  // never overwrite existing message
             });
@@ -143,4 +151,14 @@ async function processEvent(event) {
     // 3. Broadcast real-time update to all connected SSE clients
     eventBus.emit('chat-update', { conversationId: threadId, customerPsid, isFromPage });
     logger.info('FacebookWebhook', `chat-update emitted for ${threadId}`);
+
+    // 4. Trigger Notification Engine (Rule evaluation)
+    if (!isFromPage && message.mid) {
+        notificationEngine.evaluateRules('MESSAGE_RECEIVED', {
+            message: { id: message.mid, content: message.text, metadata: message.metadata },
+            conversationId: threadId,
+            channel: 'facebook',
+            customerPsid
+        }).catch(err => logger.error('FacebookWebhook', 'notificationEngine failed', err));
+    }
 }

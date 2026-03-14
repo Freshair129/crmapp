@@ -19,6 +19,7 @@ const ROUTE_ROLES = [
   { prefix: '/api/auth',             role: null },   // NextAuth — session/signin/callback must be free
   { prefix: '/api/webhooks',         role: null },   // skip — handler does own auth
   { prefix: '/api/members/register', role: null },   // public — customer self-registration
+  { prefix: '/api/products',         role: 'AGENT' },
   { prefix: '/api/employees',        role: 'MANAGER' },
   { prefix: '/api/marketing',        role: 'SUPERVISOR' },
   { prefix: '/api/analytics',        role: 'SUPERVISOR' },

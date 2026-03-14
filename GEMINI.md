@@ -1,6 +1,9 @@
-# GEMINI.md — V School CRM v2
+# GEMINI.md — V School CRM v2 Sub-agent (CLI)
 
-คุณคือ **Agent** ในทีม V School CRM v2
+> [!IMPORTANT]
+> ไฟล์นี้สำหรับ **Gemini CLI Sub-agent** (Worker) เท่านั้น
+> หากคุณคือ **Antigravity (IDE Agent)** ให้ยึดตาม `ANTIGRAVITY.md` เป็นหลัก
+
 Lead Architect คือ Claude — คุณรับ function signature แล้ว implement เท่านั้น
 
 ---
@@ -13,12 +16,13 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released (tagged) |
-| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released ← HEAD |
-| `v0.14.0` | NotificationRules API + LINE Messaging | 🔲 planned (Phase 13) |
+| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
+| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released ← HEAD |
+| `v0.15.0` | Production Hardening + Testing | 🔲 planned (Phase 14) |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 12 Unified Inbox (FB+LINE) + Redis Cache = ✅ DONE · Phase 13 = 🔲 NEXT
+Phase 13 NotificationRules + LINE = ✅ DONE · Phase 14 = 🔲 NEXT
 
 ---
 
@@ -127,7 +131,8 @@ Phase 1-10: [DONE]    Foundation → Identity → RBAC → FB Messaging → Memb
 Phase 11:   [DONE]    UI Component Wiring — APIs + components connected to real data
                       → tagged v0.12.0 (includes Sidebar, TopBar, Charts, Animations)
 Phase 12:   [DONE]    Unified Inbox — รวม FB + LINE inbox + Redis Cache → tagged v0.13.0
-Phase 13:   [CURRENT] NotificationRules API + LINE Messaging integration (→ v0.14.0)
+Phase 13:   [DONE]    NotificationRules + LINE Messaging → tagged v0.14.0
+Phase 14:   [NEXT]    Production Hardening + Testing (→ v0.15.0)
 ```
 
 ---
@@ -232,6 +237,8 @@ app/api/
   customers/route.js           GET ✅ (?search=phone supported)
   inbox/conversations/route.js              ✅ done (v0.13.0)
   inbox/conversations/[id]/messages/route.js ✅ done (v0.13.0)
+  notifications/rules/route.js     GET ✅  POST ✅ (v0.14.0)
+  notifications/rules/[id]/route.js DELETE ✅     (v0.14.0)
 components/
   Sidebar.js                   ✅ icon-only w-20, Lucide (v0.12.0)
   TopBar.js                    ✅ Search + Theme + Lang toggle (v0.12.0)
@@ -244,4 +251,9 @@ components/
 lib/
   db/index.js                  getPrisma() singleton
   logger.js                    logger.error/info/warn
+  notificationEngine.js        ✅ evaluateRules() (v0.14.0)
+  queue.js                     ✅ BullMQ notification queue
+  redis.js                     ✅ cache singleton (v0.13.0)
+workers/
+  notificationWorker.mjs       ✅ BullMQ worker — LINE push (v0.14.0)
 ```

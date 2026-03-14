@@ -107,11 +107,11 @@ export async function GET(request) {
 
         // 3. Sync Ads with insights
         const fbAds = await paginate(`/${AD_ACCOUNT_ID}/ads`, {
-            fields: `id,name,status,adset_id,creative{id}`,
+            fields: `id,name,status,effective_status,adset_id,creative{id}`,
             limit: '100',
         });
 
-        const insightFields = 'spend,impressions,clicks,revenue,actions';
+        const insightFields = 'spend,impressions,clicks,actions,action_values';
         let adsUpdated = 0;
 
         for (const ad of fbAds) {
@@ -123,17 +123,67 @@ export async function GET(request) {
                 const insights = await graphGet(`/${ad.id}/insights`, {
                     fields: insightFields,
                     time_range: JSON.stringify({ since, until: new Date().toISOString().split('T')[0] }),
+                    time_increment: 1,
                 });
-                const i = (insights.data || [])[0];
-                if (i) {
-                    spend = parseFloat(i.spend || 0);
-                    impressions = parseInt(i.impressions || 0, 10);
-                    clicks = parseInt(i.clicks || 0, 10);
-                    const purchaseAction = (i.actions || []).find((a) => a.action_type === 'purchase');
-                    revenue = purchaseAction ? parseFloat(purchaseAction.value || 0) : 0;
+
+                for (const day of (insights.data || [])) {
+                    const dSpend = parseFloat(day.spend || 0);
+                    const dImpressions = parseInt(day.impressions || 0, 10);
+                    const dClicks = parseInt(day.clicks || 0, 10);
+                    
+                    const purchaseValue = (day.action_values || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+                    const dRevenue = purchaseValue ? parseFloat(purchaseValue.value || 0) : 0;
+                    
+                    const purchaseAction = (day.actions || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+                    const dPurchases = purchaseAction ? parseInt(purchaseAction.value || 0) : 0;
+                    
+                    const leadAction = (day.actions || []).find(a => a.action_type === 'lead');
+                    const dLeads = leadAction ? parseInt(leadAction.value || 0) : 0;
+
+                    spend += dSpend;
+                    impressions += dImpressions;
+                    clicks += dClicks;
+                    revenue += dRevenue;
+
+                    await prisma.adDailyMetric.upsert({
+                        where: { adId_date: { adId: ad.id, date: new Date(day.date_start) } },
+                        update: {
+                            spend: dSpend,
+                            impressions: dImpressions,
+                            clicks: dClicks,
+                            revenue: dRevenue,
+                            leads: dLeads,
+                            purchases: dPurchases,
+                            roas: dSpend > 0 ? dRevenue / dSpend : 0,
+                        },
+                        create: {
+                            adId: ad.id,
+                            date: new Date(day.date_start),
+                            spend: dSpend,
+                            impressions: dImpressions,
+                            clicks: dClicks,
+                            revenue: dRevenue,
+                            leads: dLeads,
+                            purchases: dPurchases,
+                            roas: dSpend > 0 ? dRevenue / dSpend : 0,
+                        },
+                    });
                 }
             } catch (err) {
                 logger.error('[MarketingSync]', `Insights fetch failed for ad ${ad.id}`, err);
+            }
+
+            let creativeDbId = null;
+            if (ad.creative?.id) {
+                const creative = await prisma.adCreative.upsert({
+                    where: { creativeId: ad.creative.id },
+                    update: {},
+                    create: {
+                        creativeId: ad.creative.id,
+                        name: `Creative ${ad.creative.id}`,
+                    }
+                });
+                creativeDbId = creative.id;
             }
 
             await prisma.ad.upsert({
@@ -141,26 +191,26 @@ export async function GET(request) {
                 update: {
                     name: ad.name,
                     status: ad.status,
-                    deliveryStatus: ad.delivery_status ?? null,
+                    deliveryStatus: ad.effective_status ?? null,
                     spend,
                     impressions,
                     clicks,
                     revenue,
                     roas: spend > 0 ? revenue / spend : 0,
-                    creativeId: ad.creative?.id,
+                    creativeId: creativeDbId,
                 },
                 create: {
                     adId: ad.id,
                     name: ad.name,
                     status: ad.status,
-                    deliveryStatus: ad.delivery_status ?? null,
+                    deliveryStatus: ad.effective_status ?? null,
                     adSetId: adSet.id,
                     spend,
                     impressions,
                     clicks,
                     revenue,
                     roas: spend > 0 ? revenue / spend : 0,
-                    creativeId: ad.creative?.id,
+                    creativeId: creativeDbId,
                 },
             });
             adsUpdated++;

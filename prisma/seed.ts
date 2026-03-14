@@ -84,10 +84,55 @@ async function main() {
         { customerId: 'TVS-CUS-FB-26-0001', firstName: 'Somchai', lastName: 'Saito', nickName: 'Chai', facebookId: 'fb_test_001', lifecycleStage: 'Lead', membershipTier: 'MEMBER' },
         { customerId: 'TVS-CUS-LN-26-0001', firstName: 'Yuki', lastName: 'Tanaka', nickName: 'Yuki', lineId: 'line_test_001', lifecycleStage: 'Customer', membershipTier: 'VIP' },
     ];
+    const seededCustomers = [];
     for (const c of customers) {
-        await prisma.customer.upsert({ where: { customerId: c.customerId }, update: c, create: c });
+        const sc = await prisma.customer.upsert({ where: { customerId: c.customerId }, update: c, create: c });
+        seededCustomers.push(sc);
     }
     console.log('✅ Customers seeded');
+
+    // 4. Conversations & Messages
+    const convs = [
+      { 
+        conversationId: 't_10163799966326505', 
+        channel: 'facebook', 
+        status: 'open', 
+        participantName: 'Somchai Saito',
+        customerId: seededCustomers[0].id,
+        messages: [
+          { messageId: 'm_1', content: 'สนใจคอร์สซูชิครับ', fromName: 'Somchai Saito', fromId: 'fb_test_001' },
+          { messageId: 'm_2', content: 'สวัสดีค่ะ สนใจเป็นคอร์สพื้นฐานหรือมืออาชีพคะ?', fromName: 'Admin', responderId: (await prisma.employee.findFirst())?.id }
+        ]
+      },
+      { 
+        conversationId: 't_202603080001', 
+        channel: 'line', 
+        status: 'open', 
+        participantName: 'Yuki Tanaka',
+        customerId: seededCustomers[1].id,
+        messages: [
+          { messageId: 'm_3', content: 'สอบถามเรื่องการแล่ปลาครับ', fromName: 'Yuki Tanaka', fromId: 'line_test_001' }
+        ]
+      }
+    ];
+
+    for (const c of convs) {
+      const { messages, ...convData } = c;
+      const conversation = await prisma.conversation.upsert({
+        where: { conversationId: convData.conversationId },
+        update: { status: convData.status, participantName: convData.participantName },
+        create: convData
+      });
+
+      for (const m of messages) {
+        await prisma.message.upsert({
+          where: { messageId: m.messageId },
+          update: { content: m.content },
+          create: { ...m, conversationId: conversation.id }
+        });
+      }
+    }
+    console.log('✅ Conversations & Messages seeded');
 
     console.log('🚀 Seed complete');
 }

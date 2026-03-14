@@ -7,6 +7,26 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased] — 2026-03-14
 
+### Phase 13 — NotificationRules + LINE Messaging (by Antigravity)
+
+#### Notification Rules Engine
+- **`src/app/api/notifications/rules/route.js`** (new): GET list + POST create/upsert rules — auto-generate `NOT-[YYYYMMDD]-[SERIAL]` ruleId
+- **`src/app/api/notifications/rules/[id]/route.js`** (new): DELETE by UUID or ruleId (dual lookup)
+- **`src/lib/notificationEngine.js`** (new): Rule evaluation — keyword/tier/VIP conditions → BullMQ queue
+- **`src/workers/notificationWorker.mjs`** (new): BullMQ worker — LINE push via `pushMessage()`, template vars, SIGTERM graceful shutdown
+- **`src/lib/queue.js`** (new): BullMQ queue singleton for notifications
+- **`prisma/schema.prisma`**: Added `NotificationRule` model
+
+#### LINE Messaging
+- **`src/lib/lineService.js`**: Added `pushMessage(to, messages)` — circuit breaker (quota → silence 24h via Redis)
+
+#### Webhook Integration
+- **`src/app/api/webhooks/facebook/route.js`**: Integrated `notificationEngine.evaluateRules('MESSAGE_RECEIVED')`
+- **`src/app/api/webhooks/line/route.js`**: Integrated notification engine + records LINE messages in Message table
+
+#### Testing
+- **`src/lib/__tests__/notificationEngine.test.js`** (new): Vitest — 4 test cases
+
 ### Documentation
 
 #### Project Docs (International Standards Compliance)

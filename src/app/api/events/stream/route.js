@@ -1,6 +1,9 @@
 import { logger } from '@/lib/logger';
 import { eventBus } from '@/lib/eventBus';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * Real-time SSE Stream
  * Broadcasts chat-updates events to connected clients via Node.js EventEmitter.
@@ -57,6 +60,7 @@ export async function GET() {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache, no-transform',
             'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no', // Disable Nginx buffering
         },
     });
 }

@@ -436,32 +436,32 @@ export default function CampaignTracking({ customers }) {
                         return (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <i className="fas fa-bullhorn text-indigo-400"></i> Active Campaigns
-                                    </p>
+                                    </div>
                                     <p className="text-2xl font-black text-white">{activeCampaigns}</p>
                                     <span className="text-[10px] text-white/30 font-bold">of {processedCampaigns.length} total</span>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <i className="fas fa-coins text-amber-400"></i> Total Spend
-                                    </p>
+                                    </div>
                                     <p className="text-2xl font-black text-white">฿{fmt(totalSpend)}</p>
                                     <span className="text-[10px] text-white/30 font-bold">Budget: ฿{fmt(totalBudget)}</span>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl relative overflow-hidden">
-                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <i className="fas fa-fire text-orange-400"></i> Burn Rate
-                                    </p>
+                                    </div>
                                     <p className="text-2xl font-black text-white">{burnRate.toFixed(1)}%</p>
                                     <div className="w-full bg-white/5 h-1 mt-2 rounded-full overflow-hidden">
                                         <div style={{ width: `${Math.min(burnRate, 100)}%` }} className="h-full bg-orange-500 rounded-full"></div>
                                     </div>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <i className="fas fa-sack-dollar text-[#C9A34E]"></i> Revenue Generated
-                                    </p>
+                                    </div>
                                     <p className="text-2xl font-black text-white">฿{fmt(totalRevenue)}</p>
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${overallRoas >= 1 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                         {fmt(overallRoas, 2)}x ROAS
@@ -532,7 +532,7 @@ export default function CampaignTracking({ customers }) {
                                             <p className="text-lg font-black text-white">฿{fmt(campaign.spend)}</p>
                                         </div>
                                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                            <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
                                                 CRM ROAS
                                                 <MetricSource source="CRM" type="internal" />
                                                 <AskAIButton
@@ -542,7 +542,7 @@ export default function CampaignTracking({ customers }) {
                                                         data: { spend: campaign.spend, revenue: totalRevenue, orders: campaignOrders.length }
                                                     }}
                                                 />
-                                            </p>
+                                            </div>
                                             <p className={`text-lg font-black ${roas >= 2 ? 'text-[#C9A34E]' : 'text-white/60'}`}>{fmt(roas, 2)}x</p>
                                         </div>
                                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
@@ -725,9 +725,16 @@ export default function CampaignTracking({ customers }) {
                                                                                                     <p className="text-[8px] text-white/30 font-mono">ID: {ad.id}</p>
                                                                                                 </td>
                                                                                                 <td className="py-2 px-4">
-                                                                                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${ad.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/30'}`}>
-                                                                                                        {ad.status}
-                                                                                                    </span>
+                                                                                                    <div className="flex flex-col items-start gap-1">
+                                                                                                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${ad.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/30'}`}>
+                                                                                                            {ad.status}
+                                                                                                        </span>
+                                                                                                        {ad.deliveryStatus && ad.deliveryStatus !== ad.status && (
+                                                                                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-tighter">
+                                                                                                                {ad.deliveryStatus}
+                                                                                                            </span>
+                                                                                                        )}
+                                                                                                    </div>
                                                                                                 </td>
                                                                                                 <td className="py-2 px-4 text-right text-[10px] text-white/60">฿{fmt(ad.spend)}</td>
                                                                                                 <td className="py-2 px-4 text-right text-[10px] text-white/60">{fmt(ad.impressions)}</td>

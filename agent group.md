@@ -12,21 +12,20 @@
     role: Lead Architect / Senior Dev
 
 ## System Context (Current State)
-- **Status**: Level 4 Execution in Progress (Approved by Boss)
-- **Roles**: Claude (Lead Architect — plans + reviews) | Antigravity (Coding Agent — implements)
+- **Roles**: Claude (Lead Architect) | Antigravity (Senior Agent) | Gemini CLI (Sub-agent)
+- **Sync Tools**: `CLAUDE.md`, `ANTIGRAVITY.md`, `MEMORY.md`, `GOAL.md`
 - **Completed**:
-    - [x] Level 0: Fix Blockers (framer-motion, lucide-react, tsconfig, NEXTAUTH_SECRET, AuthRoute)
-    - [x] Level 1: Core API Routes (Customer, Order, Conv, Emp, Prod, Marketing)
-    - [x] Level 2: UI-Data Binding (Dashboard, Customer List)
-    - [x] Level 3: Marketing Intelligence (Aggregation, Fatigue Check, Hourly Ledger)
-    - [x] Level 3.5: Dev Server fix (next/server imports, serverExternalPackages, logger)
-- **Active Plan**: Level 4 — ดูแผนละเอียดใน Chat (mid0007)
+    - [x] Level 0-3: Core API, UI Binding, Marketing Intelligence
+    - [x] Level 4: Auth, Webhook, Docker (Standalone)
+    - [x] Level 5: Unified Inbox & Redis Caching (v0.13.0)
+    - [x] Level 6: NotificationRules + LINE Messaging (v0.14.0) — by Antigravity
+    - [x] Agent Refactor: Defined Antigravity (Senior) vs Gemini CLI (Sub) roles.
+    - [x] Established `MEMORY.md` for Architect-to-Architect sync.
+    - [x] Domain Skills: 4 domain skill files for context management
+- **Active Plan**: Phase 14 — Production Hardening + Testing
 - **Known Gaps**:
-    - NextAuth: mock credentials เท่านั้น (ต้องต่อ Employee DB)
-    - Facebook Webhook: ยังไม่มี route
-    - Login UI: ยังไม่มี /auth/signin page
-    - Dockerfile: ยังไม่ copy prisma.config.ts
-    - `npm run build`: ยังไม่ทดสอบ
+    - `npm run build`: ยังไม่ทดสอบหลัง Phase 13
+    - node-cron scheduling ยังอยู่ใน instrumentation.js (ไม่ย้ายไป BullMQ)
 - **Note**: ทุกคนต้องอ่านส่วนนี้ก่อนเริ่มงานและ Update เมื่อจบ Task เพื่อประหยัด Token
 
 ## Chat (Last 20 messages):

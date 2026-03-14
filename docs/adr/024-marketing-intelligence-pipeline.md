@@ -2,7 +2,7 @@
 
 ## Status
 Implemented (2026-03-09)
-
+Updated (2026-03-11): Phase 7 fix implemented to support Daily Breakdown in `AdDailyMetric`.
 ## Context
 ระบบ Marketing Analytics ปัจจุบันซิงค์ข้อมูลจาก Meta API ในระดับ Ad แต่ยังขาด:
 

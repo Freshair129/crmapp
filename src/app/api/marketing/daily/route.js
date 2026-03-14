@@ -10,7 +10,7 @@ export async function GET() {
     try {
         const prisma = await getPrisma();
 
-        const since = new Date(Date.now() - 30 * 86400000);
+        const since = new Date(Date.now() - 90 * 86400000);
 
         const metrics = await prisma.adDailyMetric.findMany({
             where: { date: { gte: since } },

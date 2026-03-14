@@ -31,7 +31,7 @@ export async function GET() {
             }),
         ]);
 
-        const totalRevenue = recentOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+        const totalRevenue = recentOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
         const avgOrderValue = recentOrders.length > 0 ? totalRevenue / recentOrders.length : 0;
 
         const metrics = {
@@ -45,25 +45,53 @@ export async function GET() {
         // Generate AI summary
         let insights = null;
         try {
-            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-            const prompt = `Analyze these V School CRM metrics and provide 3 actionable insights in Thai:
+            const model = genAI.getGenerativeModel({ 
+                model: 'gemini-1.5-flash',
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
+            });
+            const prompt = `Analyze these V School CRM metrics (Japanese cooking school, Bangkok):
 - Total customers: ${totalCustomers}
 - Total orders: ${totalOrders}
 - Active ads: ${activeAds}
-- Recent 20 orders revenue: ฿${totalRevenue.toLocaleString()}
+- Recent orders revenue: ฿${totalRevenue.toLocaleString()}
 - Average order value: ฿${Math.round(avgOrderValue).toLocaleString()}
 
-Format: JSON with keys { summary: string, insights: string[], recommendations: string[] }`;
+Return a JSON object with this exact structure:
+{
+  "executiveSummary": {
+    "healthScore": 85,
+    "sentiment": "Positive",
+    "keyMetric": "฿45,000"
+  },
+  "opportunities": [
+    { "score": "A", "type": "upsell", "message": "Thai insight", "action": "Thai CTA" }
+  ],
+  "risks": [
+    { "type": "churn", "message": "Thai warning" }
+  ]
+}
+Provide 2-3 opportunities and 1-2 risks. Write message/action fields in Thai.`;
 
             const result = await model.generateContent(prompt);
-            const text = result.response.text().replace(/```json\n?|\n?```/g, '').trim();
-            insights = JSON.parse(text);
+            const text = result.response.text();
+            
+            // Clean markdown fences if Gemini still returns them despite responseMimeType
+            const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
+            insights = JSON.parse(cleanedText);
         } catch (aiErr) {
             logger.error('[AIAnalyze]', 'Gemini error', aiErr);
             insights = {
-                summary: 'ไม่สามารถวิเคราะห์ได้ชั่วคราว',
-                insights: [],
-                recommendations: [],
+                executiveSummary: {
+                    healthScore: totalOrders > 0 ? Math.min(100, Math.round((totalCustomers / 10) + (totalOrders * 2))) : 40,
+                    sentiment: totalOrders > 5 ? 'Positive' : 'Neutral',
+                    keyMetric: `฿${totalRevenue.toLocaleString()}`,
+                },
+                opportunities: [
+                    { score: 'A', type: 'ลูกค้า', message: `มีลูกค้าทั้งหมด ${totalCustomers} ราย`, action: 'ติดตาม' },
+                ],
+                risks: [],
             };
         }
 

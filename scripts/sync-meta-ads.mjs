@@ -11,7 +11,7 @@ const { Client } = pg;
 const GRAPH_API     = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = 'act_231498665634943';
 const ACCESS_TOKEN  = 'EAAMJp3v5Ai0BQoATDBpuNFeEdltWOXfDrzrUURQJoZANDNdCXHPZCZBqQkZACB59uUzrUI0ZCAzwCSl9Q6pYWHLuZCNm7u3rkDJzZAGIiZCAmtlpoIP602cQa3obNVOfwNSSKeyJ6E9wy4IZABhRj0pvPUnPZAZBITNpceW4jBR4FSzONvqpZAnVkGcdOSIXpe9VTnvMZBn0e6sAq2CZAYcAZDZD';
-const SUPABASE_URL  = 'postgresql://postgres.qcxjallsoccqsgmrpqdz:Suanranger1295@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres';
+const SUPABASE_URL  = process.env.DATABASE_URL || 'postgresql://postgres:password123@localhost:5433/vschool_crm';
 const MONTHS        = parseInt(process.argv[2] || '3', 10);
 const INSIGHTS_ONLY = process.argv.includes('--insights-only');
 const BATCH_SIZE    = 50;   // ads per Meta Batch API call
@@ -196,7 +196,7 @@ async function main() {
     // ── 4. Ads + Insights (batched) ──────────────────────────────────────────
     console.log('Syncing ads + insights...');
     const ads = await paginate(`/${AD_ACCOUNT_ID}/ads`, {
-        fields: 'id,name,status,adset_id,creative{id}',
+        fields: 'id,name,status,effective_status,adset_id,creative{id}',
     });
 
     // Pre-load lookup maps (avoid per-ad DB round trips)
@@ -260,15 +260,16 @@ async function main() {
         const creativeUuid = ad.creative?.id ? creativeMap.get(ad.creative.id) ?? null : null;
         const { spend = 0, impressions = 0, clicks = 0, revenue = 0 } = insightMap.get(ad.id) || {};
         await db.query(`
-            INSERT INTO ads (id, ad_id, name, status, ad_set_id, creative_id, spend, impressions, clicks, revenue, roas, created_at, updated_at)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+            INSERT INTO ads (id, ad_id, name, status, delivery_status, ad_set_id, creative_id, spend, impressions, clicks, revenue, roas, created_at, updated_at)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             ON CONFLICT (ad_id) DO UPDATE SET
                 name = EXCLUDED.name, status = EXCLUDED.status,
+                delivery_status = EXCLUDED.delivery_status,
                 creative_id = EXCLUDED.creative_id,
                 spend = EXCLUDED.spend, impressions = EXCLUDED.impressions,
                 clicks = EXCLUDED.clicks, revenue = EXCLUDED.revenue,
                 roas = EXCLUDED.roas, updated_at = NOW()
-        `, [ad.id, ad.name, ad.status,
+        `, [ad.id, ad.name, ad.status, ad.effective_status || null,
             adsetUuid, creativeUuid,
             spend, impressions, clicks, revenue,
             spend > 0 ? revenue / spend : 0]);

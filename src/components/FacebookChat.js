@@ -97,9 +97,9 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
         const loadEmployees = async () => {
             try {
                 const res = await fetch('/api/employees');
-                const data = await res.json();
-                setEmployees(data || []);
-            } catch (err) { console.error('Failed to load employees:', err); }
+                const result = await res.json();
+                setEmployees(Array.isArray(result.data) ? result.data : []);
+            } catch (err) { console.error('Failed to load employees:', err); setEmployees([]); }
         };
         loadEmployees();
     }, []);
@@ -290,7 +290,10 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         message: text,
                         from: { name: currentUser?.identities?.facebook?.name || currentUser?.facebookName || currentUser?.nickName || currentUser?.firstName || 'Me', id: pageId },
                         created_time: new Date().toISOString(),
-                        metadata: { agent_name: currentUser?.identities?.facebook?.name || currentUser?.facebookName || currentUser?.nickName || currentUser?.firstName || 'Agent' },
+                        metadata: { 
+                            agent_name: currentUser?.identities?.facebook?.name || currentUser?.facebookName || currentUser?.nickName || currentUser?.firstName || 'Agent',
+                            is_echo: true 
+                        },
                         isOptimistic: true
                     };
                     setMessages(prev => [...prev, newMsg]);
@@ -578,7 +581,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             >
                                 <option value="" className="bg-[#0A1A2F] text-white">All Agents</option>
                                 <option value="Unassigned" className="bg-[#0A1A2F] text-white">Unassigned</option>
-                                {employees.map(emp => (
+                                {Array.isArray(employees) && employees.map(emp => (
                                     <option key={emp.employeeCode || emp.id} value={emp.nickName || emp.firstName} className="bg-[#0A1A2F] text-white">
                                         {emp.nickName || emp.firstName}
                                     </option>
@@ -605,92 +608,93 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         </div>
                     ) : (
                         filteredConversations.map(conv => (
-                            <button
-                                key={conv.id}
-                                onClick={() => {
-                                    setSelectedConv(conv);
-                                    // Mark as read — reset unreadCount; stealth = ไม่ส่ง read receipt ไป FB
-                                    if (conv.unread_count > 0) {
-                                        fetch('/api/marketing/chat/read', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                                conversationId: conv.id,
-                                                recipientId: conv.participant_id || conv.participantId,
-                                                mode: readMode,
-                                            }),
-                                        }).then(() => {
-                                            // อัพเดท UI ทันทีโดยไม่ต้อง refetch
-                                            setConversations(prev =>
-                                                prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
-                                            );
-                                        }).catch(err => console.error('[ChatRead] failed', err));
-                                    }
-                                }}
-                                className={`w-full p-5 text-left border-b border-white/5 hover:bg-white/5 transition-all group relative ${selectedConv?.id === conv.id ? 'bg-blue-600/10' : ''}`}
-                            >
-                                {selectedConv?.id === conv.id && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                                )}
-                                <div className="flex justify-between items-start mb-1.5">
-                                    <h3 className={`font-black text-sm truncate pr-2 flex items-center gap-1.5 ${selectedConv?.id === conv.id ? 'text-blue-400' : 'text-white'}`}>
-                                        <button
-                                            onClick={(e) => handleToggleStar(conv.id, conv.isStarred, e)}
-                                            className={`transition-colors ${conv.isStarred ? 'text-[#C9A34E] hover:text-[#e0b961]' : 'text-white/20 hover:text-white/50'}`}
-                                            title={conv.isStarred ? "Unstar" : "Star"}
-                                        >
-                                            <i className="fas fa-star text-[10px]"></i>
-                                        </button>
-                                        {getParticipantName(conv)}
-                                    </h3>
-                                    <span className="text-[9px] text-white/30 whitespace-nowrap font-bold">
-                                        {new Date(conv.updated_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-white/50 truncate font-medium pr-6 leading-relaxed">
-                                    {conv.snippet}
-                                </p>
-                                <div className="flex items-center justify-between mt-1">
-                                    <p className="text-[9px] text-white/30 truncate font-bold flex items-center gap-1.5">
-                                        {/* Status dot — click to cycle: open → pending → closed → open */}
-                                        {(() => {
-                                            const s = conv.status || 'open';
-                                            const next = { open: 'pending', pending: 'closed', closed: 'open' }[s];
-                                            const color = { open: 'bg-emerald-500', pending: 'bg-amber-500', closed: 'bg-red-500/60' }[s];
-                                            return (
-                                                <button
-                                                    onClick={(e) => handleStatusChange(conv.conversation_id, next, e)}
-                                                    title={`Status: ${s} — click to set ${next}`}
-                                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${color} hover:ring-2 ring-white/30 transition-all`}
-                                                />
-                                            );
-                                        })()}
-                                        <i className="fas fa-headset text-blue-500/50"></i> {conv.agent || 'Unassigned'}
+                                <div
+                                    key={conv.id}
+                                    onClick={() => {
+                                        setSelectedConv(conv);
+                                        // Mark as read — reset unreadCount; stealth = ไม่ส่ง read receipt ไป FB
+                                        if (conv.unread_count > 0) {
+                                            const readMode = conv.channel === 'line' ? 'line' : 'facebook';
+                                            fetch('/api/marketing/chat/read', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    conversationId: conv.id,
+                                                    recipientId: conv.participant_id || conv.participantId,
+                                                    mode: readMode,
+                                                }),
+                                            }).then(() => {
+                                                // อัพเดท UI ทันทีโดยไม่ต้อง refetch
+                                                setConversations(prev =>
+                                                    prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
+                                                );
+                                            }).catch(err => console.error('[ChatRead] failed', err));
+                                        }
+                                    }}
+                                    className={`w-full p-5 text-left border-b border-white/5 hover:bg-white/5 transition-all group relative cursor-pointer ${selectedConv?.id === conv.id ? 'bg-blue-600/10' : ''}`}
+                                >
+                                    {selectedConv?.id === conv.id && (
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                    )}
+                                    <div className="flex justify-between items-start mb-1.5">
+                                        <h3 className={`font-black text-sm truncate pr-2 flex items-center gap-1.5 ${selectedConv?.id === conv.id ? 'text-blue-400' : 'text-white'}`}>
+                                            <button
+                                                onClick={(e) => handleToggleStar(conv.id, conv.isStarred, e)}
+                                                className={`transition-colors ${conv.isStarred ? 'text-[#C9A34E] hover:text-[#e0b961]' : 'text-white/20 hover:text-white/50'}`}
+                                                title={conv.isStarred ? "Unstar" : "Star"}
+                                            >
+                                                <i className="fas fa-star text-[10px]"></i>
+                                            </button>
+                                            {getParticipantName(conv)}
+                                        </h3>
+                                        <span className="text-[9px] text-white/30 whitespace-nowrap font-bold">
+                                            {new Date(conv.updated_time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-white/50 truncate font-medium pr-6 leading-relaxed">
+                                        {conv.snippet}
                                     </p>
-                                    {conv.unread_count > 0 && (
-                                        <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-md">
-                                            {conv.unread_count}
+                                    <div className="flex items-center justify-between mt-1">
+                                        <div className="text-[9px] text-white/30 truncate font-bold flex items-center gap-1.5">
+                                            {/* Status dot — click to cycle: open → pending → closed → open */}
+                                            {(() => {
+                                                const s = conv.status || 'open';
+                                                const next = { open: 'pending', pending: 'closed', closed: 'open' }[s];
+                                                const color = { open: 'bg-emerald-500', pending: 'bg-amber-500', closed: 'bg-red-500/60' }[s];
+                                                return (
+                                                    <button
+                                                        onClick={(e) => handleStatusChange(conv.conversation_id, next, e)}
+                                                        title={`Status: ${s} — click to set ${next}`}
+                                                        className={`w-2 h-2 rounded-full flex-shrink-0 ${color} hover:ring-2 ring-white/30 transition-all`}
+                                                    />
+                                                );
+                                            })()}
+                                            <i className="fas fa-headset text-blue-500/50"></i> {conv.agent || 'Unassigned'}
+                                        </div>
+                                        {conv.unread_count > 0 && (
+                                            <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-md">
+                                                {conv.unread_count}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                        {getCustomerTags(conv).map((tag, idx) => {
+                                            const isPaid = tag.toLowerCase().includes('paid') || tag.includes('ชำระ') || tag.includes('โอน');
+                                            return (
+                                                <span key={idx} className={`text-[7px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider border ${isPaid
+                                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                                    : 'bg-white/5 text-white/30 border-white/10'}`}>
+                                                    {tag}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                    {!conv.has_history && (
+                                        <span className="absolute right-4 bottom-4 text-[8px] text-white/20 font-black uppercase tracking-tighter">
+                                            Lead / Legacy
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                    {getCustomerTags(conv).map((tag, idx) => {
-                                        const isPaid = tag.toLowerCase().includes('paid') || tag.includes('ชำระ') || tag.includes('โอน');
-                                        return (
-                                            <span key={idx} className={`text-[7px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider border ${isPaid
-                                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                                : 'bg-white/5 text-white/30 border-white/10'}`}>
-                                                {tag}
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                                {!conv.has_history && (
-                                    <span className="absolute right-4 bottom-4 text-[8px] text-white/20 font-black uppercase tracking-tighter">
-                                        Lead / Legacy
-                                    </span>
-                                )}
-                            </button>
                         ))
                     )}
                 </div>
@@ -703,7 +707,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0A1A2F]/80 backdrop-blur-md">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-black text-sm">
-                                {getParticipantName(selectedConv).charAt(0)}
+                                {(getParticipantName(selectedConv) || 'P').charAt(0)}
                             </div>
                             <div>
                                 <h2 className="font-black text-lg text-white leading-none flex items-center gap-2">
@@ -773,15 +777,26 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             </div>
                         ) : (
                             messages.map((msg, i) => {
-                                const isMe = msg.from?.id && String(msg.from.id) === String(pageId);
-                                const metadataAgent = msg.metadata?.agent_name;
-                                const fromName = msg.from?.name;
+                                const knownPageIds = [pageId, '113042456073167', '170707786504', 'PAGE'];
+                                // Parse metadata defensively in case it's a string from DB
+                                let parsedMeta = msg.metadata;
+                                if (typeof parsedMeta === 'string') {
+                                    try { parsedMeta = JSON.parse(parsedMeta); } catch(e) {}
+                                }
+                                
+                                const isMe = (msg.from?.id && knownPageIds.includes(String(msg.from.id))) || 
+                                             parsedMeta?.is_echo === true || 
+                                             msg.from?.name === 'Admin' ||
+                                             msg.fromName === 'Admin';
+                                             
+                                const metadataAgent = parsedMeta?.agent_name;
+                                const fromName = msg.from?.name || msg.fromName;
 
                                 let displayAgentName = isMe ? 'Admin' : (fromName || 'Customer');
                                 if (isMe) {
                                     if (metadataAgent && !['The V School', 'Agent', 'Me', ''].includes(metadataAgent)) {
                                         displayAgentName = metadataAgent;
-                                    } else if (fromName && !['The V School', 'Agent', 'Me', ''].includes(fromName)) {
+                                    } else if (fromName && !['The V School', 'Admin', 'Agent', 'Me', ''].includes(fromName)) {
                                         displayAgentName = fromName;
                                     } else if (selectedConv?.assignedAgent && !['Unassigned', 'The V School'].includes(selectedConv.assignedAgent)) {
                                         displayAgentName = selectedConv.assignedAgent;
@@ -850,7 +865,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     {/* ── Profile Header ── */}
                     <div className="px-5 pt-6 pb-5 border-b border-white/5 text-center">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20 text-2xl font-black text-white select-none">
-                            {getParticipantName(selectedConv).charAt(0)}
+                            {(getParticipantName(selectedConv) || 'P').charAt(0)}
                         </div>
                         <h3 className="font-black text-white text-sm leading-tight">{getParticipantName(selectedConv)}</h3>
                         <p className="text-[9px] text-white/25 font-mono mt-1 truncate px-2">
@@ -958,9 +973,14 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                         <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Campaign</p>
                                         <p className="text-[10px] font-black text-white line-clamp-2 leading-tight">{activeAd.campaign_name || 'Direct Message'}</p>
                                         <p className="text-[9px] text-slate-400 truncate">{activeAd.name}</p>
-                                        <span className={`inline-block mt-1 text-[7px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest ${activeAd.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
-                                            {activeAd.status}
-                                        </span>
+                                        <div className="flex items-center justify-between mt-1">
+                                            <span className={`inline-block text-[7px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest ${activeAd.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
+                                                {activeAd.status}
+                                            </span>
+                                            <span className="text-[8px] font-mono text-indigo-300/60 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 cursor-help" title="Ad ID">
+                                                ID: {activeAd.id}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             )}

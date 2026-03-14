@@ -47,6 +47,9 @@ model Customer {
   tasks          Task[]
   timeline       TimelineEvent[]
 
+  @@index([status])
+  @@index([phonePrimary])
+  @@index([firstName, lastName])
   @@map("customers")
 }
 
@@ -69,6 +72,9 @@ model Order {
   conversation Conversation? @relation("OrderConversation", fields: [conversationId], references: [id])
   transactions Transaction[]
 
+  @@index([date])
+  @@index([status])
+  @@index([customerId])
   @@map("orders")
 }
 
@@ -150,6 +156,10 @@ model Conversation {
   messages         Message[]
   orders           Order[]       @relation("OrderConversation")
 
+  @@index([status])
+  @@index([channel])
+  @@index([updatedAt])
+  @@index([lastMessageAt])
   @@map("conversations")
 }
 
@@ -224,6 +234,9 @@ model Employee {
   assignedConversations Conversation[] @relation("ConversationAssignee")
   closedOrders          Order[]        @relation("OrderCloser")
 
+  @@index([status])
+  @@index([department])
+  @@index([role])
   @@map("employees")
 }
 
@@ -252,6 +265,8 @@ model Product {
 
   cartItems CartItem[]
 
+  @@index([category])
+  @@index([isActive])
   @@map("products")
 }
 
@@ -496,6 +511,9 @@ model Task {
   assignee Employee? @relation("AgentTasks", fields: [assigneeId], references: [id])
   customer Customer? @relation(fields: [customerId], references: [id])
 
+  @@index([status])
+  @@index([dueDate])
+  @@index([assigneeId])
   @@map("tasks")
 }
 
@@ -516,4 +534,23 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([target])
   @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Notifications
+// ─────────────────────────────────────────────
+
+model NotificationRule {
+  id          String   @id @default(uuid())
+  ruleId      String   @unique @map("rule_id")     // NOT-[YYYYMMDD]-[SERIAL]
+  name        String
+  description String?
+  event       String                               // MESSAGE_RECEIVED | CONVERSATION_CLOSED | INACTIVITY
+  conditions  Json     @default("{}")              // { "vip": true, "keywords": ["..."] }
+  actions     Json     @default("{}")              // { "lineNotify": "target_id", "email": "..." }
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_rules")
 }

@@ -2,27 +2,17 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 
-function getDateFilter(timeframe) {
-    const now = new Date();
-    if (timeframe === 'today') {
-        const start = new Date(now);
-        start.setUTCHours(0, 0, 0, 0);
-        return { gte: start };
-    }
-    if (timeframe === 'week') return { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
-    if (timeframe === 'month') return { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
-    return undefined; // lifetime
-}
+import { getDateRange } from '@/lib/timeframes';
 
 /**
- * GET /api/analytics/admin-performance?timeframe=today|week|month|lifetime
+ * GET /api/analytics/admin-performance?timeframe=today|this_week|this_month|last_month|all_time
  */
 export async function GET(request) {
     try {
         const prisma = await getPrisma();
         const { searchParams } = new URL(request.url);
-        const timeframe = searchParams.get('timeframe') || 'month';
-        const dateFilter = getDateFilter(timeframe);
+        const timeframe = searchParams.get('timeframe') || 'this_month';
+        const { current: dateFilter } = getDateRange(timeframe);
 
         const employees = await prisma.employee.findMany({
             include: {
@@ -37,7 +27,7 @@ export async function GET(request) {
                               messages: {
                                   orderBy: { createdAt: 'asc' },
                                   take: 2,
-                                  select: { respondedById: true, createdAt: true },
+                                  select: { responderId: true, createdAt: true },
                               },
                           },
                       }
@@ -47,7 +37,7 @@ export async function GET(request) {
                               messages: {
                                   orderBy: { createdAt: 'asc' },
                                   take: 2,
-                                  select: { respondedById: true, createdAt: true },
+                                  select: { responderId: true, createdAt: true },
                               },
                           },
                       },
@@ -56,7 +46,7 @@ export async function GET(request) {
 
         const data = employees.map((emp) => {
             const ordersCount = emp.closedOrders.length;
-            const totalRevenue = emp.closedOrders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+            const totalRevenue = emp.closedOrders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
             const avgOrderValue = ordersCount > 0 ? totalRevenue / ordersCount : 0;
             const conversationsCount = emp.assignedConversations.length;
 
@@ -64,8 +54,8 @@ export async function GET(request) {
             let responseCount = 0;
             for (const conv of emp.assignedConversations) {
                 const msgs = conv.messages || [];
-                const firstCustomer = msgs.find((m) => !m.respondedById);
-                const firstReply = msgs.find((m) => m.respondedById === emp.id);
+                const firstCustomer = msgs.find((m) => !m.responderId);
+                const firstReply = msgs.find((m) => m.responderId === emp.id);
                 if (firstCustomer && firstReply) {
                     const diff = new Date(firstReply.createdAt) - new Date(firstCustomer.createdAt);
                     if (diff > 0) { totalResponseMs += diff; responseCount++; }
@@ -78,20 +68,41 @@ export async function GET(request) {
             return {
                 id: emp.id,
                 employeeId: emp.employeeId,
+                name: emp.nickName || emp.firstName,
+                fullName: `${emp.firstName} ${emp.lastName}`,
                 firstName: emp.firstName,
                 lastName: emp.lastName,
                 nickName: emp.nickName,
                 role: emp.role,
                 department: emp.department,
                 status: emp.status,
-                stats: { ordersCount, totalRevenue, avgOrderValue, conversationsCount, avgResponseTimeMinutes },
+                stats: { 
+                    ordersCount, 
+                    totalRevenue, 
+                    avgOrderValue, 
+                    conversationsCount, 
+                    avgResponseTimeMinutes,
+                    messages: conversationsCount, // Proxy
+                    conversationsHandled: conversationsCount // Proxy
+                },
             };
         });
+
+        const combinedStats = data.reduce((acc, e) => {
+            acc.totalMessages += e.stats.conversationsCount || 0; // Using conversationsCount as proxy for now
+            acc.totalConversations += e.stats.conversationsCount || 0;
+            acc.totalResponseMs += (e.stats.avgResponseTimeMinutes || 0) * 60000;
+            acc.responseCount += e.stats.avgResponseTimeMinutes > 0 ? 1 : 0;
+            return acc;
+        }, { totalMessages: 0, totalConversations: 0, totalResponseMs: 0, responseCount: 0 });
 
         const summary = {
             totalEmployees: data.length,
             totalOrders: data.reduce((s, e) => s + e.stats.ordersCount, 0),
             totalRevenue: data.reduce((s, e) => s + e.stats.totalRevenue, 0),
+            totalMessages: combinedStats.totalMessages,
+            totalConversations: combinedStats.totalConversations,
+            avgResponseTimeMinutes: combinedStats.responseCount > 0 ? (combinedStats.totalResponseMs / combinedStats.responseCount / 60000) : 0,
             avgOrderValue: data.reduce((s, e) => s + e.stats.ordersCount, 0) > 0
                 ? data.reduce((s, e) => s + e.stats.totalRevenue, 0) / data.reduce((s, e) => s + e.stats.ordersCount, 0)
                 : 0,

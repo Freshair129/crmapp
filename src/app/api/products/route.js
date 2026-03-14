@@ -20,6 +20,7 @@ export async function GET(request) {
             },
             orderBy: { name: 'asc' }
         });
+        console.log(`[ProductAPI] Found ${products.length} products`);
         return NextResponse.json(products);
     } catch (error) {
         logger.error('ProductAPI', 'GET error', error);

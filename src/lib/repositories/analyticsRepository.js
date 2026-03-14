@@ -12,7 +12,7 @@ export const analyticsRepository = {
             const orders = await prisma.order.findMany({
                 where: {
                     date: { gte: startDate },
-                    status: 'closed'
+                    status: { in: ['closed', 'CLOSED'] }
                 },
                 orderBy: { date: 'asc' },
                 select: {

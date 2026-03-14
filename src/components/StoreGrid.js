@@ -352,44 +352,17 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
                             <div className="p-6 border-t border-slate-100 bg-white flex-shrink-0">
                                 <div className="p-6 bg-[#0A1A2F] rounded-3xl text-white shadow-2xl relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-                                    {/* Payment Method Selector */}
-                                    <div className="grid grid-cols-2 gap-3 mb-2">
+                                    {/* Payment Method Selector - Only Wallet now */}
+                                    <div className="grid grid-cols-1 gap-3 mb-2">
                                         <button
                                             onClick={() => setPaymentMethod('wallet')}
-                                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1 ${paymentMethod === 'wallet'
-                                                ? 'bg-orange-500/20 border-orange-500 text-orange-400'
-                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
-                                                }`}
+                                            className="p-3 rounded-2xl border bg-orange-500/20 border-orange-500 text-orange-400 flex flex-col items-center gap-1"
                                         >
                                             <i className="fas fa-wallet text-sm"></i>
                                             <span className="text-[10px] font-black uppercase tracking-widest">Wallet</span>
                                         </button>
-                                        <button
-                                            onClick={() => setPaymentMethod('transfer')}
-                                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1 ${paymentMethod === 'transfer'
-                                                ? 'bg-blue-500/20 border-blue-500 text-blue-400'
-                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
-                                                }`}
-                                        >
-                                            <i className="fas fa-university text-sm"></i>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Transfer</span>
-                                        </button>
                                     </div>
 
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-3">
-                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                                            {paymentMethod === 'transfer' ? 'Attach Payment Slip (Required)' : 'Payment Evidence (Optional)'}
-                                        </p>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex-1 h-12 bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center text-[10px] font-bold text-white/30 truncate px-4 text-center">
-                                                <i className="fas fa-file-upload mr-2"></i>
-                                                {paymentMethod === 'transfer' ? 'CLICK TO UPLOAD SLIP' : 'DRAG SLIP OR CLICK'}
-                                            </div>
-                                            <button onClick={() => alert("Slip upload simulation triggered.")} className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-colors ${paymentMethod === 'transfer' ? 'bg-blue-500 text-white' : 'bg-[#C9A34E] text-[#0A1A2F]'}`}>
-                                                <i className="fas fa-camera"></i>
-                                            </button>
-                                        </div>
-                                    </div>
                                     <div className="flex justify-between items-center px-4">
                                         <span className="text-white/60 font-black uppercase tracking-widest text-xs">Final Amount</span>
                                         <span className="text-3xl font-black text-orange-400">฿{cartTotal.toLocaleString()}</span>
@@ -397,14 +370,11 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
                                     <button
                                         onClick={() => onCheckout({
                                             method: paymentMethod,
-                                            slip_url: paymentMethod === 'transfer' ? '/assets/slips/mock-slip.jpg' : null
+                                            slip_url: null
                                         })}
-                                        className={`w-full py-4 rounded-xl font-black transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 group ${paymentMethod === 'transfer'
-                                            ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                                            : 'bg-orange-500 hover:bg-orange-400 text-white'
-                                            }`}
+                                        className="w-full py-4 rounded-xl font-black transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 group bg-orange-500 hover:bg-orange-400 text-white"
                                     >
-                                        <span>{paymentMethod === 'transfer' ? 'CONFIRM TRANSFER' : 'PAY WITH WALLET'}</span>
+                                        <span>PAY WITH WALLET</span>
                                         <i className="fas fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
                                     </button>
                                 </div>

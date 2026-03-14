@@ -20,8 +20,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released |
-| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released ← HEAD |
-| `v0.14.0` | NotificationRules API + LINE Messaging | 🔲 planned (Phase 13) |
+| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
+| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released ← HEAD |
+| `v0.15.0` | Production Hardening + Testing | 🔲 planned (Phase 14) |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
@@ -38,6 +39,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `src/components/NotificationCenter.js` | ✅ done | Google Sheets sync + alert rules |
 
 > ⚠️ **Known Gotcha — Customer model**: ไม่มี field `channel` — ใช้ `conversation.channel` แทน
+
+### v0.14.0 — สิ่งที่ทำแล้ว (Phase 13) ✅ — by Antigravity
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/app/api/notifications/rules/route.js` | ✅ done | GET list + POST create/upsert rules |
+| `src/app/api/notifications/rules/[id]/route.js` | ✅ done | DELETE by UUID or ruleId |
+| `src/lib/notificationEngine.js` | ✅ done | evaluateRules() — keyword/tier/VIP conditions → BullMQ queue |
+| `src/workers/notificationWorker.mjs` | ✅ done | BullMQ worker — LINE push via pushMessage() |
+| `src/lib/lineService.js` | ✅ updated | เพิ่ม pushMessage() generic function + quota circuit breaker |
+| `src/lib/__tests__/notificationEngine.test.js` | ✅ done | Vitest — 4 test cases |
+| `prisma/schema.prisma` → NotificationRule | ✅ done | model + ruleId format NOT-[YYYYMMDD]-[SERIAL] |
+| FB+LINE webhooks | ✅ updated | integrated notificationEngine.evaluateRules() |
 
 ---
 
@@ -143,6 +156,16 @@ Trace/Sync  : SYNC-[TYPE]-[YYYYMMDD]-[RND] e.g. SYNC-ADS-20260308-A92B
 
 ---
 
+---
+
+## Role & Hierarchy
+
+1. **Claude (Lead Architect)**: กำหนดทิศทางภาพรวม, อนุมัติ ADRs, และตัดสินใจเรื่อง Architecture หลัก
+2. **Antigravity (Senior Agent)**: รับแผนจาก Claude, วางแผนละเอียด (Task Breakdown), และดำเนินการแบบ End-to-End (Context ใน `ANTIGRAVITY.md`)
+3. **Gemini CLI (Sub-agent)**: รับหน้าที่ Implement เฉพาะจุด, เขียน Unit Test หรือ Boilerplate (Context ใน `GEMINI.md`)
+
+---
+
 ## Sub-agent Protocol (Gemini CLI)
 
 ```bash
@@ -198,6 +221,7 @@ E:\crm\
   system_requirements.yaml   ← spec หลัก
   id_standards.yaml          ← naming หลัก
   CLAUDE.md                  ← this file
+  ANTIGRAVITY.md             ← Senior Agent context
   GEMINI.md                  ← Gemini sub-agent context
   CHANGELOG.md               ← version history
   architect_plan.md          ← implementation roadmap (7 phases)

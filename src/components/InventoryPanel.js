@@ -38,8 +38,13 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
         try {
             const res = await fetch('/api/products');
             if (res.ok) {
-                const data = await res.json();
-                setCatalog({ courses: data.courses || [], packages: data.packages || [] });
+                const result = await res.json();
+                const products = Array.isArray(result) ? result : result.data || [];
+                
+                setCatalog({ 
+                    courses: products.filter(p => p.category === 'course' || p.category === 'japanese_culinary'), 
+                    packages: products.filter(p => p.category === 'package' || p.category === 'bundle') 
+                });
             }
         } catch (e) {
             console.error('Failed to load catalog', e);

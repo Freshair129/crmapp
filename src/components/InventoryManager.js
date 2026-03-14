@@ -12,13 +12,14 @@ export default function InventoryManager({ language = 'TH' }) {
     const [editingProduct, setEditingProduct] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
 
-    const [formData, setFormData] = useState({ name: '', price: '', category: 'Drinks', image: '' });
+    const [formData, setFormData] = useState({ name: '', price: '', category: 'japanese_culinary', image: '' });
 
     useEffect(() => {
         fetch('/api/products')
             .then(r => r.json())
             .then(data => {
-                setProducts(Array.isArray(data) ? data : []);
+                const list = (data.success && Array.isArray(data.data)) ? data.data : Array.isArray(data) ? data : [];
+                setProducts(list);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -32,7 +33,7 @@ export default function InventoryManager({ language = 'TH' }) {
     const handleOpenModal = (product = null) => {
         if (product) {
             setEditingProduct(product);
-            setFormData({ name: product.name, price: product.price, category: product.category, image: product.image });
+            setFormData({ name: product.name || '', price: product.price ?? '', category: product.category || 'japanese_culinary', image: product.image || '' });
         } else {
             setEditingProduct(null);
             setFormData({ name: '', price: '', category: 'Drinks', image: '' });
@@ -60,7 +61,8 @@ export default function InventoryManager({ language = 'TH' }) {
             fetch('/api/products')
                 .then(r => r.json())
                 .then(data => {
-                    setProducts(Array.isArray(data) ? data : []);
+                    const list = (data.success && Array.isArray(data.data)) ? data.data : Array.isArray(data) ? data : [];
+                    setProducts(list);
                     setIsModalOpen(false);
                 });
         });
@@ -197,11 +199,17 @@ export default function InventoryManager({ language = 'TH' }) {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Classification</label>
-                                <select className="w-full bg-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
-                                    <option>Drinks</option>
-                                    <option>Food</option>
-                                    <option>Desserts</option>
-                                </select>
+                                    <select
+                                        className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all appearance-none"
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    >
+                                        <option value="japanese_culinary">Japanese Culinary</option>
+                                        <option value="course">Course</option>
+                                        <option value="package">Package</option>
+                                        <option value="merchandise">Merchandise</option>
+                                        <option value="other">Other</option>
+                                    </select>
                             </div>
                             <div className="col-span-2 space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Visual Asset (URL)</label>

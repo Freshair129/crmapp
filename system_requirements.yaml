@@ -175,8 +175,8 @@ functional_requirements:
         status: "Pending Implementation"
 
   - module: "Payment Verification"
-    status: "Out of Scope"
-    description: "Slip OCR verification — removed, not needed at this stage."
+    status: "Removed"
+    description: "Slip OCR verification — removed from scope."
 
 
 # ---------------------------------------------------------

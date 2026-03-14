@@ -25,7 +25,7 @@ export async function GET(request) {
             },
             include: {
                 ad: {
-                    select: { adId: true, name: true, status: true },
+                    select: { adId: true, name: true, status: true, deliveryStatus: true },
                 },
             },
             orderBy: { date: 'asc' },
@@ -40,6 +40,7 @@ export async function GET(request) {
                     ad_id: adId,
                     name: m.ad?.name || 'Unknown',
                     status: m.ad?.status || 'UNKNOWN',
+                    deliveryStatus: m.ad?.deliveryStatus || null,
                     totalSpend: 0,
                     totalImpressions: 0,
                     totalClicks: 0,
@@ -61,7 +62,7 @@ export async function GET(request) {
             success: true,
             since,
             until,
-            ads: Object.values(adsMap),
+            data: Object.values(adsMap),
         });
     } catch (error) {
         console.error('[ad-calendar] GET error', error);

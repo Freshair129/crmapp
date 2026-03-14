@@ -19,7 +19,7 @@ function normalize(c) {
         lifecycleStage: c.lifecycleStage || p.lifecycle_stage || p.lifecycleStage || 'Lead',
         membershipTier: c.membershipTier || p.membership_tier || p.membershipTier || 'MEMBER',
         email: c.email || c.contact_info?.email || p.email || '',
-        phone: c.phonePrimary || c.contact_info?.phone_primary || p.phone_primary || '',
+        phone: c.phonePrimary || c.phone || c.contact_info?.phone_primary || p.phone_primary || '',
         facebookId: c.facebookId || c.contact_info?.facebook_id || p.facebook_id || '',
         intelligence: c.intelligence || {},
         totalSpend: c.intelligence?.metrics?.total_spend || 0,
@@ -96,10 +96,12 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
         fetch('/api/employees')
             .then(r => r.json())
             .then(data => {
-                if (Array.isArray(data)) {
-                    const names = data
-                        .filter(e => e.status === 'Active')
-                        .map(e => e.nickName || `${e.firstName} ${e.lastName}`.trim())
+                // Ensure the component correctly handles API responses that are wrapped in a { success, data } object.
+                const empListRaw = data.data || data;
+                if (Array.isArray(empListRaw)) {
+                    const names = empListRaw
+                        .filter(e => e.status === 'ACTIVE' || e.status === 'Active')
+                        .map(e => e.nickname || e.nickName || `${e.firstName} ${e.lastName || ''}`.trim())
                         .filter(Boolean);
                     setEmployeeAgents(names);
                 }

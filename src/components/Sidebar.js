@@ -1,52 +1,72 @@
 'use client';
 
+import { 
+    PieChart, 
+    Brain, 
+    ShoppingCart, 
+    Package, 
+    History, 
+    Users, 
+    MessageCircle, 
+    MessageSquare, 
+    Megaphone, 
+    Crosshair, 
+    TrendingUp, 
+    Bell, 
+    UserCircle, 
+    Settings2, 
+    Timer, 
+    SlidersHorizontal, 
+    Settings, 
+    LogOut 
+} from 'lucide-react';
+
 const menuGroups = [
     {
         label: 'OVERVIEW',
         items: [
-            { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
-            { id: 'executive-analytics', icon: 'fa-analytics', label: 'Executive AI' }
+            { id: 'dashboard', icon: PieChart, label: 'Dashboard' },
+            { id: 'executive-analytics', icon: Brain, label: 'BI Engine' }
         ]
     },
     {
         label: 'SALES',
         items: [
-            { id: 'pos-system', icon: 'fa-cash-register', label: 'Premium POS' },
-            { id: 'inventory-manager', icon: 'fa-boxes', label: 'Catalog Manager' },
-            { id: 'audit-trail', icon: 'fa-history', label: 'Audit Trail' },
-            { id: 'verification', icon: 'fa-robot', label: 'Slip Verification' }
+            { id: 'pos-system', icon: ShoppingCart, label: 'Premium POS' },
+            { id: 'inventory-manager', icon: Package, label: 'Catalog Manager' },
+            { id: 'audit-trail', icon: History, label: 'Audit Trail' }
         ]
     },
     {
         label: 'CRM',
         items: [
-            { id: 'customers', icon: 'fa-users', label: 'Customers 360' },
-            { id: 'facebook-chat', icon: 'fa-comments', label: 'Facebook Inbox' },
-            { id: 'line-connect', icon: 'fa-comment-dots', label: 'LINE Connect' }
+            { id: 'customers', icon: Users, label: 'Customers 360' },
+            { id: 'facebook-chat', icon: MessageCircle, label: 'Unified Inbox' },
+            { id: 'line-connect', icon: MessageSquare, label: 'LINE Connect' }
         ]
     },
     {
         label: 'MARKETING',
         items: [
-            { id: 'facebook-ads', icon: 'fa-bullhorn', label: 'Facebook Ads' },
-            { id: 'campaign-tracking', icon: 'fa-crosshairs', label: 'Campaign Tracking' },
-            { id: 'analytics', icon: 'fa-chart-line', label: 'Analytics' },
-            { id: 'notification-rules', icon: 'fa-bell-on', label: 'Notification Rules' }
+            { id: 'facebook-ads', icon: Megaphone, label: 'Facebook Ads' },
+            { id: 'campaign-tracking', icon: Crosshair, label: 'Campaign Tracking' },
+            { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
+            { id: 'notification-rules', icon: Bell, label: 'Notification Center' }
         ]
     },
     {
         label: 'HR',
         items: [
-            { id: 'employees', icon: 'fa-user-tie', label: 'Employees' },
-            { id: 'team-kpi', icon: 'fa-chart-network', label: 'Team KPI' },
-            { id: 'admin-performance', icon: 'fa-stopwatch', label: 'Admin Perf.' }
+            { id: 'employees', icon: UserCircle, label: 'Employees' },
+            { id: 'team-kpi', icon: Settings2, label: 'Team KPI' },
+            { id: 'admin-performance', icon: Timer, label: 'Admin Perf.' }
         ]
     },
     {
         label: 'SYSTEM',
         items: [
-            { id: 'system-config', icon: 'fa-sliders-h', label: 'System Config' },
-            { id: 'settings', icon: 'fa-cog', label: 'Legacy Settings' }
+            { id: 'system-config', icon: SlidersHorizontal, label: 'System Config' },
+            { id: 'settings', icon: Settings, label: 'Legacy Settings' }
         ]
     }
 ];
@@ -56,101 +76,97 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
     const userRole = currentUser?.role || currentUser?.profile?.role || 'Guest';
 
     return (
-        <aside className="w-64 bg-[#0A1A2F] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100]">
-            {/* Logo Section - Champagne Gold Accent */}
-            <div className="p-8 border-b border-white/5">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-2xl shadow-lg shadow-[#C9A34E]/20 rotate-[-4deg] group-hover:rotate-0 transition-transform duration-500">
-                        V
-                    </div>
-                    <div>
-                        <h1 className="font-black text-[#F8F8F6] text-xl tracking-tight leading-none mb-1">V SCHOOL</h1>
-                        <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] leading-none">Customer 360</p>
-                    </div>
+        <aside className="w-20 bg-[#0A1A2F] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100] items-center overflow-x-hidden">
+            {/* Logo */}
+            <div className="py-5 flex items-center justify-center w-full border-b border-white/5">
+                <div className="w-9 h-9 rounded-xl bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-lg shadow-lg shadow-[#C9A34E]/20">
+                    V
                 </div>
             </div>
 
-            {/* Navigation - High Contrast Ivory on Navy */}
-            <nav className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                <div className="space-y-6">
-                    {menuGroups.map((group, groupIndex) => (
-                        <div key={groupIndex}>
-                            {group.label && (
-                                <h3 className="px-5 mb-2 text-[10px] font-black text-white/20 uppercase tracking-widest">
-                                    {group.label}
-                                </h3>
-                            )}
-                            <ul className="space-y-1">
-                                {group.items.map((item) => {
-                                    const isActive = activeView === item.id;
-                                    // Permission-based visibility
-                                    const canAccess = item.id === 'analytics'
-                                        ? (currentUser?.permissions?.can_access_analytics || currentUser?.permissions?.can_manage_analytics || currentUser?.permissions?.is_admin)
-                                        : true;
+            {/* Navigation */}
+            <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden w-full flex flex-col items-center gap-0 custom-scrollbar">
+                {menuGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className="w-full flex flex-col items-center">
+                        {/* Group divider (except first) */}
+                        {groupIndex > 0 && (
+                            <div className="w-6 h-px bg-white/10 my-2" />
+                        )}
+                        {group.items.map((item) => {
+                            const isActive = activeView === item.id;
+                            const Icon = item.icon;
+                            const canAccess = item.id === 'analytics'
+                                ? (currentUser?.permissions?.can_access_analytics || currentUser?.permissions?.can_manage_analytics || currentUser?.permissions?.is_admin)
+                                : true;
 
-                                    if (!canAccess) return null;
+                            if (!canAccess) return null;
 
-                                    return (
-                                        <li key={item.id}>
-                                            <button
-                                                onClick={() => onViewChange(item.id)}
-                                                className={`w - full flex items - center gap - 4 px - 5 py - 3 rounded - 2xl text - sm font - bold transition - all duration - 300 relative group ${isActive
-                                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 translate-x-1'
-                                                        : 'text-white/60 hover:text-[#F8F8F6] hover:bg-white/5'
-                                                    } `}
-                                            >
-                                                {/* Active Indicator Light */}
-                                                {isActive && (
-                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full"></span>
-                                                )}
+                            return (
+                                <div key={item.id} className="relative group w-full flex justify-center">
+                                    <button
+                                        onClick={() => onViewChange(item.id)}
+                                        className={`relative w-10 h-10 my-0.5 rounded-2xl flex items-center justify-center transition-all duration-200 ${isActive
+                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                            : 'text-white/40 hover:text-white hover:bg-white/8'
+                                            }`}
+                                        title={item.label}
+                                    >
+                                        {/* Active left bar */}
+                                        {isActive && (
+                                            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-5 bg-red-400 rounded-r-full" />
+                                        )}
 
-                                                <i className={`fas ${item.icon} w - 6 text - center text - lg ${isActive ? 'text-white' : 'group-hover:text-red-500 transition-colors'} `}></i>
-                                                <span className="tracking-tight">{item.label}</span>
+                                        <Icon size={18} />
 
-                                                {/* Task Notification Badge */}
-                                                {item.id === 'dashboard' && pendingTaskCount > 0 && (
-                                                    <span className="ml-auto w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-black animate-pulse shadow-lg shadow-red-500/40">
-                                                        {pendingTaskCount}
-                                                    </span>
-                                                )}
+                                        {/* Pending badge */}
+                                        {item.id === 'dashboard' && pendingTaskCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-black animate-pulse shadow-lg shadow-red-500/40">
+                                                {pendingTaskCount}
+                                            </span>
+                                        )}
 
-                                                {/* Cart badge - Japan Red Accent */}
-                                                {item.id === 'store' && cartCount > 0 && (
-                                                    <span className={`ml - auto px - 2 py - 0.5 rounded - full text - [10px] font - black ${isActive ? 'bg-white text-red-500' : 'bg-red-500 text-white'
-                                                        } `}>
-                                                        {cartCount}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
+                                        {/* Cart badge */}
+                                        {item.id === 'store' && cartCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-black">
+                                                {cartCount}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {/* Tooltip */}
+                                    <div className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-[200] opacity-0 group-hover:opacity-100 hidden group-hover:block transition-opacity duration-150">
+                                        <div className="bg-[#0A1A2F] border border-white/10 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl whitespace-nowrap shadow-2xl">
+                                            {item.label}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ))}
             </nav>
 
-            {/* User Profile - Premium Warm Gray & Navy */}
-            <div className="p-6 border-t border-white/5 bg-black/20">
-                <div className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center border-2 border-white/10 shadow-xl overflow-hidden">
-                        <span className="text-white font-black text-lg">{userName.charAt(0)}</span>
+            {/* User avatar + logout */}
+            <div className="py-4 border-t border-white/5 w-full flex flex-col items-center gap-2">
+                <div className="relative group">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center border border-white/10 shadow-xl cursor-default">
+                        <span className="text-white font-black text-sm">{(userName || 'U').charAt(0)}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-[#F8F8F6] truncate uppercase tracking-tight">{userName}</p>
-                        <p className="text-[10px] text-white/30 font-bold truncate uppercase">{userRole}</p>
+                    {/* User tooltip */}
+                    <div className="pointer-events-none absolute left-full ml-3 bottom-0 z-[200] opacity-0 group-hover:opacity-100 hidden group-hover:block transition-opacity duration-150">
+                        <div className="bg-[#0A1A2F] border border-white/10 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl whitespace-nowrap shadow-2xl">
+                            {userName} · {userRole}
+                        </div>
                     </div>
-                    <button
-                        onClick={onLogout}
-                        className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                        title="Logout"
-                    >
-                        <i className="fas fa-sign-out-alt text-sm"></i>
-                    </button>
                 </div>
+                <button
+                    onClick={onLogout}
+                    className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    title="Logout"
+                >
+                    <LogOut size={18} />
+                </button>
             </div>
         </aside>
     );
 }
-

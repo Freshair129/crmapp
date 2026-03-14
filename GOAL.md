@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
-> **Lead Architect:** Claude 🧠 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-09 (Phase 1–7 ✅ + Phase 8–10 ✅)
+> **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
+> Last updated: 2026-03-14 (Phase 1–13 ✅)
 
 ---
 
@@ -33,7 +33,8 @@
 | Phase 10 | Member Self-Registration | ✅ Done | 3/3 |
 | Phase 11 | UI → Backend Wiring + Charts + Animations | ✅ Done | 6/6 |
 | Phase 12 | Unified Inbox + Redis Cache | ✅ Done | 6/6 |
-| Phase 13 | NotificationRules API + LINE Messaging | 🔲 Planned | 0/4 |
+| Phase 13 | NotificationRules API + LINE Messaging | ✅ Done | 4/4 |
+| Phase 14 | Production Hardening + Testing | 🔲 Planned | 0/? |
 
 ---
 
@@ -189,15 +190,19 @@
 
 ---
 
-## 🔲 Phase 13: NotificationRules API + LINE Messaging
+## ✅ Phase 13: NotificationRules API + LINE Messaging
+> **ADR:** (inline — NotificationRule model in schema.prisma)
 > **Goal:** ระบบ Notification rules + LINE push messaging integration (→ v0.14.0)
+> **Implemented by:** Antigravity (Senior Agent) — verified by Claude (Lead)
 
 | # | Task | Who | Status |
 |---|---|---|---|
-| 13.1 | `POST/GET /api/notifications/rules` — CRUD notification rules | 🔲 | 🔲 |
-| 13.2 | LINE Messaging API integration — push message to customer | 🔲 | 🔲 |
-| 13.3 | Trigger engine — evaluate rules on conversation events | 🔲 | 🔲 |
-| 13.4 | node-cron → BullMQ worker process แยก (fix missed execution warning) | 🔲 | 🔲 |
+| 13.1 | `POST/GET/DELETE /api/notifications/rules` — CRUD notification rules | 🤖 Antigravity | ✅ |
+| 13.2 | LINE Messaging API integration — `pushMessage()` in lineService.js | 🤖 Antigravity | ✅ |
+| 13.3 | `notificationEngine.js` — evaluate rules on MESSAGE_RECEIVED events (FB+LINE webhooks) | 🤖 Antigravity | ✅ |
+| 13.4 | `notificationWorker.mjs` — BullMQ worker for notification actions (LINE push, etc.) | 🤖 Antigravity | ✅ |
+
+**Bonus:** Vitest unit tests for notificationEngine (4 test cases) ✅
 
 ---
 

@@ -10,7 +10,7 @@ export default function AdminPerformance() {
         avgResponseTimeMinutes: 0
     });
     const [loading, setLoading] = useState(true);
-    const [timeframe, setTimeframe] = useState('weekly'); // today, weekly, monthly, lifetime
+    const [timeframe, setTimeframe] = useState('this_month'); // today, this_week, this_month, last_month, all_time
     const [sortBy, setSortBy] = useState('speed'); // speed or volume
 
     useEffect(() => {
@@ -68,16 +68,22 @@ export default function AdminPerformance() {
                     </div>
 
                     <div className="flex bg-[#0A1A2F]/80 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        {['today', 'weekly', 'monthly', 'lifetime'].map((tf) => (
+                        {[
+                            { key: 'today',       label: 'Today' },
+                            { key: 'this_week',   label: 'This Week' },
+                            { key: 'this_month',  label: 'This Month' },
+                            { key: 'last_month',  label: 'Last Month' },
+                            { key: 'all_time',    label: 'All Time' },
+                        ].map((tf) => (
                             <button
-                                key={tf}
-                                onClick={() => setTimeframe(tf)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === tf
+                                key={tf.key}
+                                onClick={() => setTimeframe(tf.key)}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === tf.key
                                     ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
                                     : 'text-white/40 hover:text-white'
                                     }`}
                             >
-                                {tf}
+                                {tf.label}
                             </button>
                         ))}
                     </div>
@@ -95,7 +101,7 @@ export default function AdminPerformance() {
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-5 text-emerald-400"><i className="fas fa-stopwatch text-6xl"></i></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Team Avg. Response</p>
-                    <p className="text-4xl font-black text-emerald-400">{summary.avgResponseTimeMinutes.toFixed(1)} <span className="text-lg">min</span></p>
+                    <p className="text-4xl font-black text-emerald-400">{(summary?.avgResponseTimeMinutes || 0).toFixed(1)} <span className="text-lg">min</span></p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-400">
                         <i className="fas fa-check-circle"></i>
                         <span>First-reply speed</span>
@@ -104,7 +110,7 @@ export default function AdminPerformance() {
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><i className="fas fa-comment-dots text-6xl"></i></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total System Messages</p>
-                    <p className="text-4xl font-black text-white">{(summary.totalMessages || 0).toLocaleString()}</p>
+                    <p className="text-4xl font-black text-white">{(summary?.totalMessages || 0).toLocaleString()}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/20">
                         <span>Outbound only</span>
                     </div>
@@ -112,7 +118,7 @@ export default function AdminPerformance() {
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><i className="fas fa-users-cog text-6xl"></i></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Unique Convs Handled</p>
-                    <p className="text-4xl font-black text-[#C9A34E]">{(summary.totalConversations || 0).toLocaleString()}</p>
+                    <p className="text-4xl font-black text-[#C9A34E]">{(summary?.totalConversations || 0).toLocaleString()}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/20">
                         <span>Across all active channels</span>
                     </div>
@@ -154,10 +160,10 @@ export default function AdminPerformance() {
                                     <div className="flex items-center gap-4">
                                         <div className="relative">
                                             {admin.profilePicture ? (
-                                                <img src={admin.profilePicture} alt={admin.name} className="w-14 h-14 rounded-2xl object-cover border border-white/10" />
+                                                <img src={admin.profilePicture} alt={admin.name || admin.fullName || 'Admin'} className="w-14 h-14 rounded-2xl object-cover border border-white/10" />
                                             ) : (
                                                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center border border-white/10">
-                                                    <span className="text-white font-black text-xl">{admin.name.charAt(0)}</span>
+                                                    <span className="text-white font-black text-xl">{(admin.name || admin.fullName || 'A').charAt(0)}</span>
                                                 </div>
                                             )}
                                             {isTopPerformer && (
@@ -167,8 +173,8 @@ export default function AdminPerformance() {
                                             )}
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-black text-white tracking-tight">{admin.fullName}</h3>
-                                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{admin.role}</p>
+                                            <h3 className="text-lg font-black text-white tracking-tight">{admin.fullName || admin.name || 'Anonymous Admin'}</h3>
+                                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{admin.role || 'Agent'}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">

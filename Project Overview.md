@@ -34,11 +34,10 @@ The Single Source of Truth for system architecture, data flow, and technical dec
   3. **Attribution:** คำนวณ ROI/ROAS รายชิ้นงานโฆษณา.  
 * **Result:** ข้อมูลเชิงลึก (Intelligence) ที่พร้อมสำหรับการทำ Dashboard และ AI Recommendations.
 
-### **Phase 4: High-Performance Presentation (Cache-Aside)**
-
+### **Phase 4: High-Performance Presentation (Redis Cache-Aside)**
 * **Input:** ข้อมูลล่าสุดจาก Postgres.  
-* **Action:** cacheSyncWorker ดึงข้อมูลมาเขียนเป็นไฟล์ JSON ในโฟลเดอร์ cache/ แบบ Atomic.  
-* **Result:** UI Dashboard โหลดข้อมูลภายใน \< 500ms (NFR2) และอัปเดตสถานะ Real-time ผ่าน Socket.io
+* **Action:** API Handlers ใช้ Redis `getOrSet` pattern ในการทำ caching ข้อมูลที่มีการคำนวณซับซ้อน (e.g., Executive Analytics) โดยมี TTL 5 นาที  
+* **Result:** UI Dashboard โหลดข้อมูลภายใน < 50ms (Cache HIT) และรักษาความเสถียรของ Database
 
 ## **📊 Pipeline Work Flow Diagram**
 
@@ -77,6 +76,9 @@ The Single Source of Truth for system architecture, data flow, and technical dec
 | ADR | Title | Summary |
 | :---- | :---- | :---- |
 | **015** | Scalable Sync | การแยก Stack Node/Python เพื่อประสิทธิภาพสูงสุด |
+| **033** | Unified Inbox | การรวมระบบแชท Facebook + LINE ไว้ที่เดียว |
+| **034** | Redis Cache | การใช้ Redis เป็น Caching Layer สำหรับ Analytics |
+| **Protocol** | [API Testing](docs/guide/API_TEST_PROTOCOL.md) | มาตรฐาน 10 มิติเพื่อความปลอดภัยและเสถียรภาพของ API |
 | **023** | 4-Phase Work Flow | มาตรฐานการแบ่งระยะการทำงานของข้อมูลในระบบ CRM (Current) |
 
 ## **📂 Directories at a Glance**

@@ -19,7 +19,7 @@ We have decided to migrate to an **Event-Driven Architecture** using a **"Reacti
 1.  **Ingestion:** Facebook Webhooks (`/api/webhooks/facebook`) receive real-time notifications.
 2.  **Buffering:** Redis Message Queue via `bullmq` (optional/fallback supported).
 3.  **Processing:** A dedicated background Worker (`eventProcessor.mjs`) handles the business logic.
-4.  **Shared Logic:** Chat synchronization and Slip Verification logic are extracted into shared libraries (`src/lib/chatService.js`, `src/lib/slipService.js`) and `src/lib/eventHandler.js`.
+4.  **Shared Logic:** Chat synchronization logic is extracted into shared libraries (`src/lib/chatService.js`) and `src/lib/eventHandler.js`.
 5.  **Audit Logging:** Structured JSONL logging (`src/lib/auditLogger.js`) tracks every step.
 
 ### Modes of Operation

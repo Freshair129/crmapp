@@ -69,6 +69,11 @@ export async function GET(request) {
             return {
                 ...campaign,
                 adSets,
+                spend: cSpend,
+                impressions: cImpressions,
+                clicks: cClicks,
+                revenue: cRevenue,
+                roas: cSpend > 0 ? cRevenue / cSpend : 0,
                 metrics: {
                     spend: cSpend,
                     impressions: cImpressions,

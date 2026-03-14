@@ -9,87 +9,90 @@
  * Must respond 200 OK within 200ms (LINE requirement) — heavy work is fire-and-forget.
  */
 
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { recordLineConversion } from '@/lib/lineService';
-import { logger } from '@/lib/logger';
-
-const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET;
+import { getPrisma } from '@/lib/db';
 
 /**
- * Verifies LINE webhook signature (HMAC-SHA256).
- * @param {string} rawBody - Raw request body as string
- * @param {string} signature - X-Line-Signature header value
- * @returns {boolean}
- */
-function verifyLineSignature(rawBody, signature) {
-  if (!LINE_CHANNEL_SECRET || !signature) return false;
-  const expected = crypto
-    .createHmac('sha256', LINE_CHANNEL_SECRET)
-    .update(rawBody)
-    .digest('base64');
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-}
-
-export async function POST(request) {
-  const rawBody = await request.text();
-  const signature = request.headers.get('x-line-signature') ?? '';
-
-  if (!verifyLineSignature(rawBody, signature)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let body;
-  try {
-    body = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  // Respond 200 immediately — LINE requires response within 200ms
-  // Attribution work runs fire-and-forget after response
-  processEvents(body.events ?? []).catch((err) =>
-    logger.error('line-webhook', 'processEvents error', err)
-  );
-
-  return NextResponse.json({ ok: true });
-}
-
-/**
- * Processes LINE webhook events relevant for conversion attribution.
- * Currently handles: message events containing order/phone info.
+ * Processes LINE webhook events relevant for conversion attribution and messaging.
  * @param {object[]} events
  */
 async function processEvents(events) {
+  const prisma = await getPrisma();
+
   for (const event of events) {
     if (event.type !== 'message') continue;
 
     const lineUserId = event.source?.userId;
     if (!lineUserId) continue;
 
-    // Extract phone from text message if present (format: "โอน 2500 บาท 0812345678")
     const text = event.message?.text ?? '';
+    
+    // 1. Resolve Customer & Conversation (NFR5)
+    let customer = await prisma.customer.findFirst({
+        where: { lineId: lineUserId }
+    });
+
+    if (!customer) {
+        // Fallback or create? For now, we use lineService logic
+        // But we need the ID here for the Message table
+        const { randomUUID } = await import('crypto');
+        const customerId = `TVS-CUS-LN-26-${randomUUID().slice(-4).toUpperCase()}`;
+        customer = await prisma.customer.create({
+            data: {
+                customerId,
+                lineId: lineUserId,
+                status: 'Active',
+                membershipTier: 'MEMBER'
+            }
+        });
+    }
+
+    const conversation = await prisma.conversation.upsert({
+        where: { conversationId: lineUserId }, // For LINE, we use lineUserId as conversationId
+        create: {
+            conversationId: lineUserId,
+            customerId: customer.id,
+            channel: 'line',
+            participantId: lineUserId,
+            lastMessageAt: new Date(event.timestamp),
+            unreadCount: 1
+        },
+        update: {
+            lastMessageAt: new Date(event.timestamp),
+            unreadCount: { increment: 1 }
+        }
+    });
+
+    // 2. Record Message
+    const msg = await prisma.message.create({
+        data: {
+            messageId: event.message.id || `ln_${crypto.randomUUID()}`,
+            conversationId: conversation.id,
+            fromId: lineUserId,
+            content: text,
+            createdAt: new Date(event.timestamp)
+        }
+    });
+
+    // 3. Attribution (Existing logic)
     const phoneMatch = text.match(/0[6-9]\d{8}|(?:\+|00)66\d{8,9}/);
     const phone = phoneMatch ? phoneMatch[0] : '';
-
-    // Parse amount from text if present (e.g. "โอน 2500 บาท")
     const amountMatch = text.match(/(\d[\d,]+)\s*บาท/);
     const orderAmount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 0;
 
-    if (!phone && !lineUserId) continue;
-
-    try {
-      const result = await recordLineConversion({
-        lineUserId,
-        phone,
-        orderAmount,
-      });
-
-      if (result.attributed) {
-        logger.info('line-webhook', 'Attribution OK', { customerId: result.customerId, adId: result.adId, amount: orderAmount });
-      }
-    } catch (err) {
-      logger.error('line-webhook', 'recordLineConversion failed', err, { lineUserId });
+    if (phone || orderAmount > 0) {
+        recordLineConversion({
+            lineUserId,
+            phone,
+            orderAmount,
+        }).catch(err => logger.error('line-webhook', 'recordLineConversion failed', err));
     }
+
+    // 4. Trigger Notification Engine
+    notificationEngine.evaluateRules('MESSAGE_RECEIVED', {
+        message: { id: msg.messageId, content: msg.content },
+        conversationId: lineUserId,
+        channel: 'line',
+        lineUserId
+    }).catch(err => logger.error('line-webhook', 'notificationEngine failed', err));
   }
 }

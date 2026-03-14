@@ -1,6 +1,6 @@
 system_name: "The V School CRM"
 version: "0.1.0"
-description: "A comprehensive Hybrid CRM system integrating Meta Ads, Messenger, AI (Gemini), and Automated Bank Slip Verification."
+description: "A comprehensive Hybrid CRM system integrating Meta Ads, Messenger, and AI (Gemini)."
 
 # ---------------------------------------------------------
 # FUNCTIONAL REQUIREMENTS
@@ -175,14 +175,8 @@ functional_requirements:
         status: "Working"
 
   - module: "Payment Verification"
-    ui_tab: ["verification"]
-    status: "Working"
-    description: "Automated verification of Thai bank transfer slips."
-    features:
-      - name: "Bank Slip Automation Queue (OCR)"
-        status: "Working"
-      - name: "Manual Approve/Reject Slip Workflow"
-        status: "Working"
+    status: "Removed"
+    description: "Automated verification of Thai bank transfer slips (Removed)."
 
 
 # ---------------------------------------------------------

@@ -25,7 +25,28 @@ export default function PremiumPOS({ language = 'TH' }) {
             .catch(() => setLoading(false));
     }, []);
 
-    const categories = ['All', 'Drinks', 'Food', 'Desserts'];
+    const categories = ['All', 'japanese_culinary', 'specialty', 'management', 'arts', 'package', 'full_course'];
+
+    const categoryLabels = {
+        EN: {
+            japanese_culinary: 'Japanese',
+            specialty: 'Specialty',
+            management: 'Management',
+            arts: 'Arts',
+            package: 'Package',
+            full_course: 'Full Course',
+            All: 'All'
+        },
+        TH: {
+            japanese_culinary: 'อาหารญี่ปุ่น',
+            specialty: 'พิเศษ',
+            management: 'การจัดการ',
+            arts: 'ศิลปะ',
+            package: 'แพ็คเกจ',
+            full_course: 'คอร์สเต็ม',
+            All: 'ทั้งหมด'
+        }
+    }[language];
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
@@ -201,7 +222,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             onClick={() => setActiveCategory(cat)}
                             className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${activeCategory === cat ? 'bg-[#C9A34E] border-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
                         >
-                            {cat}
+                            {categoryLabels[cat] || cat}
                         </button>
                     ))}
                 </div>
@@ -215,7 +236,12 @@ export default function PremiumPOS({ language = 'TH' }) {
                             className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/30 rounded-[2rem] p-4 transition-all duration-500 cursor-pointer relative overflow-hidden active:scale-95"
                         >
                             <div className="aspect-square bg-slate-900 rounded-2xl mb-4 overflow-hidden relative">
-                                <img src={product.image} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="" />
+                                <img 
+                                    src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'} 
+                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" 
+                                    alt={product.name} 
+                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=V+School'; }}
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1A2F] to-transparent opacity-60"></div>
                                 <div className="absolute top-2 right-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded text-[8px] font-black text-[#C9A34E] uppercase tracking-widest border border-white/5">
                                     {product.category}
@@ -257,7 +283,12 @@ export default function PremiumPOS({ language = 'TH' }) {
                     ) : (
                         cart.map(item => (
                             <div key={item.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex gap-4 group hover:bg-white/10 transition-all">
-                                <img src={item.image} className="w-14 h-14 rounded-xl object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" alt="" />
+                                <img 
+                                    src={item.image || 'https://via.placeholder.com/100x100?text=No+Image'} 
+                                    className="w-14 h-14 rounded-xl object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" 
+                                    alt={item.name} 
+                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=V'; }}
+                                />
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start">
                                         <h5 className="font-bold text-white text-xs mb-1 line-clamp-1">{item.name}</h5>

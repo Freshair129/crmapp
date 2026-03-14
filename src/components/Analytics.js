@@ -1030,7 +1030,7 @@ export default function Analytics({ customers, products }) {
                                     <div className="col-span-1 text-xs font-bold text-white/50">{i + 1}</div>
                                     <div className="col-span-5 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#162A47] to-[#0A1A2F] border border-white/10 flex items-center justify-center text-xs font-bold text-[#C9A34E]">
-                                            {c.profile?.first_name?.charAt(0)}
+                                            {(c.profile?.first_name || 'C').charAt(0)}
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{c.profile?.first_name} {c.profile?.last_name}</p>
@@ -1117,7 +1117,7 @@ export default function Analytics({ customers, products }) {
                                 {rfmSegments['Champions'].slice(0, 8).map((c, i) => (
                                     <div key={i} className="min-w-[140px] p-4 bg-gradient-to-br from-[#C9A34E]/20 to-[#0A1A2F] border border-[#C9A34E]/30 rounded-2xl flex flex-col items-center text-center">
                                         <div className="w-10 h-10 rounded-full bg-[#C9A34E] text-[#0A1A2F] flex items-center justify-center font-black text-lg mb-2 shadow-lg">
-                                            {c.profile?.first_name?.charAt(0)}
+                                            {(c.profile?.first_name || 'C').charAt(0)}
                                         </div>
                                         <p className="text-xs font-bold text-white truncate w-full">{c.profile?.first_name}</p>
                                         <p className="text-[10px] text-[#C9A34E] font-black">Score: 5-5-5</p>
@@ -1590,8 +1590,11 @@ export default function Analytics({ customers, products }) {
                                                         {prod}
                                                     </span>
                                                 ))}
-                                                {(!teamAnalytics?.summary?.liveDelivery?.productsRunning || teamAnalytics.summary.liveDelivery.productsRunning.length === 0) && (
-                                                    <span className="text-white/20 text-[10px] font-bold italic">No active products detected</span>
+                                                {(!teamAnalytics?.summary?.liveDelivery?.productsRunning || teamAnalytics.summary.liveDelivery.productsRunning?.length === 0) && (
+                                                    <div className="col-span-2 py-10 flex flex-col items-center justify-center text-white/10">
+                                                        <i className="fas fa-box-open text-3xl mb-3"></i>
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest">No products currently promoted</span>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -1668,7 +1671,7 @@ export default function Analytics({ customers, products }) {
                                                     i === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-800' :
                                                         'bg-white/10 text-white'
                                                     }`}>
-                                                    {agent.name.charAt(0)}
+                                                    {(agent.name || 'A').charAt(0)}
                                                 </div>
                                                 <div>
                                                     <p className="font-black text-white text-lg">{agent.name}</p>

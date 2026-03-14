@@ -21,6 +21,67 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const [msgPage, setMsgPage] = useState(1);
     const [msgHasMore, setMsgHasMore] = useState(true);
 
+    const filterRef = useRef({ channel, status, search });
+    const selectedIdRef = useRef(selectedId);
+    const conversationsRef = useRef(conversations);
+
+    useEffect(() => { filterRef.current = { channel, status, search }; }, [channel, status, search]);
+    useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+    useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+
+    // Real-time SSE Connection
+    useEffect(() => {
+        let eventSource;
+        let retryCount = 0;
+        let reconnectTimeout;
+
+        const connect = () => {
+            console.log('[UnifiedInbox] Establishing Real-time connection...');
+            eventSource = new EventSource('/api/events/stream');
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'connected') {
+                        console.log('[UnifiedInbox] SSE Connected:', payload.timestamp);
+                        retryCount = 0;
+                        return;
+                    }
+
+                    if (payload.channel === 'chat-updates') {
+                        console.log('[UnifiedInbox] Real-time event received:', payload.data);
+                        fetchConversations(1, true);
+
+                        const currentId = selectedIdRef.current;
+                        if (currentId) {
+                            const currentConv = conversationsRef.current.find(c => c.id === currentId);
+                            if (currentConv && currentConv.conversationId === payload.data.conversationId) {
+                                console.log('[UnifiedInbox] Refreshing active messages for:', currentId);
+                                fetchMessages(currentId, 1, true);
+                            }
+                        }
+                    }
+                } catch (e) { /* Heartbeats or malformed data */ }
+            };
+
+            eventSource.onerror = (err) => {
+                console.warn('[UnifiedInbox] SSE Connection lost. Retrying...');
+                eventSource.close();
+                const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+                retryCount++;
+                reconnectTimeout = setTimeout(connect, delay);
+            };
+        };
+
+        connect();
+
+        return () => {
+            console.log('[UnifiedInbox] Terminating Real-time connection');
+            if (eventSource) eventSource.close();
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        };
+    }, []);
+
     useEffect(() => {
         setPage(1);
         setHasMore(true);
@@ -46,8 +107,9 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const fetchConversations = async (pageNum = 1, reset = false) => {
         setLoading(pageNum === 1);
         try {
+            const { channel: fChannel, status: fStatus, search: fSearch } = filterRef.current;
             const start = Date.now();
-            const res = await fetch(`/api/inbox/conversations?channel=${channel}&status=${status}&search=${search}&page=${pageNum}&limit=10`);
+            const res = await fetch(`/api/inbox/conversations?channel=${fChannel}&status=${fStatus}&search=${fSearch}&page=${pageNum}&limit=10`);
             const data = await res.json();
             
             // Artificial delay to stabilize UI if returned too fast

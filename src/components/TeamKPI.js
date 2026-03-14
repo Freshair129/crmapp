@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getDateRange, TIMEFRAME_LABELS } from '@/lib/timeframes';
 
 export default function TeamKPI({ customers = [] }) {
     const [stats, setStats] = useState([]);
@@ -10,10 +11,11 @@ export default function TeamKPI({ customers = [] }) {
         totalCustomers: 0,
         marketingRevenue: 0,
         marketingPurchases: 0,
-        marketingLeads: 0
+        marketingLeads: 0,
+        marketingSpend: 0
     });
     const [loading, setLoading] = useState(true);
-    const [timeframe, setTimeframe] = useState('lifetime'); // today, weekly, monthly, lifetime
+    const [timeframe, setTimeframe] = useState('all_time'); // today, this_week, this_month, last_month, all_time
     const [selectedAgentDetail, setSelectedAgentDetail] = useState(null); // { agent, type: 'sales' | 'customers' }
 
     useEffect(() => {
@@ -42,11 +44,7 @@ export default function TeamKPI({ customers = [] }) {
         if (!agentName) return { assignedCustomers: [], sales: [] };
 
         // Resolve Date Range for prop filtering
-        const now = new Date();
-        let startDate = null;
-        if (timeframe === 'today') startDate = new Date(now.setHours(0, 0, 0, 0));
-        else if (timeframe === 'weekly') startDate = new Date(now.setDate(now.getDate() - 7));
-        else if (timeframe === 'monthly') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startDate = getDateRange(timeframe).current?.gte || null;
 
         // Find the employee object to get aliases and FB names for mapping
         const emp = stats.find(s => s.name === agentName);
@@ -104,16 +102,22 @@ export default function TeamKPI({ customers = [] }) {
 
                 <div className="flex items-center gap-3">
                     <div className="flex bg-[#0A1A2F]/80 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        {['today', 'weekly', 'monthly', 'lifetime'].map((tf) => (
+                        {[
+                            { key: 'today',       label: 'Today' },
+                            { key: 'this_week',   label: 'This Week' },
+                            { key: 'this_month',  label: 'This Month' },
+                            { key: 'last_month',  label: 'Last Month' },
+                            { key: 'all_time',    label: 'All Time' },
+                        ].map((tf) => (
                             <button
-                                key={tf}
-                                onClick={() => setTimeframe(tf)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === tf
+                                key={tf.key}
+                                onClick={() => setTimeframe(tf.key)}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === tf.key
                                     ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
                                     : 'text-white/40 hover:text-white'
                                     }`}
                             >
-                                {tf}
+                                {tf.label}
                             </button>
                         ))}
                     </div>
@@ -130,7 +134,7 @@ export default function TeamKPI({ customers = [] }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><i className="fas fa-coins text-6xl"></i></div>
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{timeframe} Revenue</p>
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{TIMEFRAME_LABELS[timeframe] || timeframe} Revenue</p>
                     <p className="text-4xl font-black text-[#C9A34E]">฿{formatCurrency(summary.totalRevenue)}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-400">
                         <i className="fas fa-caret-up"></i>
@@ -226,7 +230,7 @@ export default function TeamKPI({ customers = [] }) {
                                 <div>
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-3xl font-black">
-                                            {bestConv.name.charAt(0)}
+                                            {(bestConv.name || 'A').charAt(0)}
                                         </div>
                                         <div>
                                             <p className="font-black text-white text-xl">{bestConv.name}</p>
@@ -257,7 +261,7 @@ export default function TeamKPI({ customers = [] }) {
                                 <div>
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="w-16 h-16 rounded-[1.5rem] bg-[#C9A34E]/20 border border-[#C9A34E]/30 flex items-center justify-center text-[#C9A34E] text-3xl font-black">
-                                            {bestAOV.name.charAt(0)}
+                                            {(bestAOV.name || 'A').charAt(0)}
                                         </div>
                                         <div>
                                             <p className="font-black text-white text-xl">{bestAOV.name}</p>
@@ -385,12 +389,13 @@ export default function TeamKPI({ customers = [] }) {
                                     const now = new Date();
                                     let sd = '';
                                     if (timeframe === 'today') sd = new Date(now.setHours(0, 0, 0, 0)).toISOString().split('T')[0];
-                                    else if (timeframe === 'weekly') {
+                                    else if (timeframe === 'this_week') {
                                         const past = new Date(now);
-                                        past.setDate(past.getDate() - 7);
+                                        past.setUTCDate(past.getUTCDate() - 7);
                                         sd = past.toISOString().split('T')[0];
                                     }
-                                    else if (timeframe === 'monthly') sd = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                                    else if (timeframe === 'this_month') sd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split('T')[0];
+                                    else if (timeframe === 'last_month') sd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().split('T')[0];
 
                                     onInvestigate && onInvestigate({
                                         agent: selectedAgentDetail.agent.name,

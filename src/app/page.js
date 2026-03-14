@@ -25,7 +25,7 @@ import UnifiedInbox from "@/components/UnifiedInbox";
 // New Standalone Modules
 import PremiumPOS from "@/components/PremiumPOS";
 import LineConnect from "@/components/LineConnect";
-import NotificationRules from "@/components/NotificationRules";
+import NotificationCenter from "@/components/NotificationCenter";
 import ExecutiveAnalytics from "@/components/ExecutiveAnalytics";
 import InventoryManager from "@/components/InventoryManager";
 import AuditHistory from "@/components/AuditHistory";
@@ -191,7 +191,7 @@ export default function Home() {
                     <AnimatePresence mode="wait">
 
                         {activeView === "dashboard" && wrap("dashboard",
-                            <Dashboard customers={customers} products={products} employees={employees} currentUser={currentUser} onRefresh={fetchData} />
+                            <Dashboard customers={customers} products={products} employees={employees} orders={orders} currentUser={currentUser} onRefresh={fetchData} />
                         )}
 
                         {activeView === "executive-analytics" && wrap("executive-analytics",
@@ -261,7 +261,7 @@ export default function Home() {
                         )}
 
                         {activeView === "notification-rules" && wrap("notification-rules",
-                            <NotificationRules language={language} />
+                            <NotificationCenter language={language} />
                         )}
 
                         {activeView === "employees" && wrap("employees",

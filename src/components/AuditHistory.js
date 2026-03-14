@@ -11,7 +11,8 @@ export default function AuditHistory({ language = 'TH' }) {
         fetch('/api/orders?limit=50')
             .then(r => r.json())
             .then(data => {
-                setOrders(Array.isArray(data) ? data : []);
+                const list = Array.isArray(data) ? data : data.data || [];
+                setOrders(list);
                 setLoading(false);
             })
             .catch(() => setLoading(false));

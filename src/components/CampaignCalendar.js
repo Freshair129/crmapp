@@ -304,7 +304,7 @@ export default function CampaignCalendar() {
                                                 return (
                                                     <div
                                                         key={ad.ad_id}
-                                                        title={`${ad.name}\nStatus: ${ad.status}${ad.isDelivering ? ' (DELIVERING)' : ''}\nSpend: ฿${fmtDec(ad.totalSpend)}\nImpressions: ${fmt(ad.totalImpressions)}\nClicks: ${fmt(ad.totalClicks)}\nActive ${ad.daysActive} day(s)`}
+                                                        title={`${ad.name}\nStatus: ${ad.status}${ad.deliveryStatus ? ` (${ad.deliveryStatus})` : ''}${ad.isDelivering ? ' (DELIVERING)' : ''}\nSpend: ฿${fmtDec(ad.totalSpend)}\nImpressions: ${fmt(ad.totalImpressions)}\nClicks: ${fmt(ad.totalClicks)}\nActive ${ad.daysActive} day(s)`}
                                                         className={`h-[16px] relative flex items-center px-1 text-[8px] font-bold text-white shadow-sm cursor-help transition-all hover:brightness-110 ${colorClass} ${roundClass} ${ringClass}`}
                                                         style={{ zIndex: 10 - sIdx }}
                                                     >
@@ -375,12 +375,19 @@ export default function CampaignCalendar() {
                                             {ad.isDelivering ? (
                                                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
                                                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                                    Delivering
+                                                    {ad.deliveryStatus || 'Delivering'}
                                                 </span>
                                             ) : (
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${ad.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                    {ad.status}
-                                                </span>
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${ad.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {ad.status}
+                                                    </span>
+                                                    {ad.deliveryStatus && ad.deliveryStatus !== ad.status && (
+                                                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">
+                                                            {ad.deliveryStatus}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                         <td className="p-3 text-center text-slate-500">{ad.daysActive}d</td>

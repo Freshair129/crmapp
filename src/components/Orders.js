@@ -45,7 +45,7 @@ export default function Orders({ customers }) {
                                 <td className="px-8 py-6">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-[#C9A34E]/20 text-[#C9A34E] flex items-center justify-center text-[10px] font-black border border-[#C9A34E]/30">
-                                            {order.customerName.charAt(0)}
+                                            {(order.customerName || 'C').charAt(0)}
                                         </div>
                                         <div>
                                             <p className="text-sm font-black text-white group-hover:text-[#C9A34E] transition-colors">{order.customerName}</p>
