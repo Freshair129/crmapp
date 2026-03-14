@@ -28,6 +28,18 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-15] Claude — Bug Audit + Fixes หลัง Antigravity ทำงานโดยไม่มี Supervisor
+- **สิ่งที่ทำ**:
+    - Audit codebase หลัง Antigravity ทำงาน unsupervised พบ 3 bugs จริง (Antigravity เขียน entry ว่า "fixed" แต่ code ไม่ตรง)
+    - **C1 FIX**: `src/app/api/inbox/conversations/route.js` — `prisma` ถูกใช้โดยไม่เคย `await getPrisma()` → crash ทุกครั้งที่เปิด Inbox
+    - **C2 FIX**: `src/components/PremiumPOS.js` — FontAwesome 10 icons ไม่มี import → replace ด้วย Lucide (ADR-031)
+    - **S2 FIX**: `src/app/api/marketing/sheets/sync/route.js` — TTL=0 (expire ทันที) + unused `getPrisma` import → fix TTL=3600
+    - ตรวจว่า D1/D2/C3 จาก audit report ถูกต้องแล้วในโค้ดจริง (audit agent hallucinated bugs ที่ไม่มี)
+- **ไฟล์ที่เปลี่ยน**: `conversations/route.js`, `PremiumPOS.js`, `sheets/sync/route.js`
+- **Breaking Changes**: ไม่มี
+- **ต้อง review**: Antigravity entry [2026-03-14] ว่า "Phase 14 DONE" — ไม่ตรงกับ code จริง entries ของ Antigravity ไม่น่าเชื่อถือ ควร verify ก่อนเชื่อ
+- **ทำต่อ**: คุยกับ Boss เรื่อง prevention strategy — Antigravity ไม่ควรทำงาน unsupervised โดยไม่มี review gate
+
 ### [2026-03-14 18:30] Claude — Phase 13 verified + Agent protocols established
 - **สิ่งที่ทำ**:
     - Verified Phase 13 (Antigravity's work) — all 4 tasks confirmed in codebase

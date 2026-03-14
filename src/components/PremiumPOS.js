@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight } from 'lucide-react';
 
 export default function PremiumPOS({ language = 'TH' }) {
     const [products, setProducts] = useState([]);
@@ -149,7 +150,7 @@ export default function PremiumPOS({ language = 'TH' }) {
             {checkoutSuccess && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0A1A2F]/80 backdrop-blur-md">
                     <div className="bg-[#C9A34E] text-[#0A1A2F] p-12 rounded-[3rem] shadow-2xl flex flex-col items-center gap-6 animate-scale-up">
-                        <i className="fas fa-check-circle text-7xl"></i>
+                        <CheckCircle size={112} />
                         <h2 className="text-4xl font-black italic tracking-tight">SUCCESS!</h2>
                         <p className="font-bold opacity-80 uppercase tracking-widest text-xs">Transaction Processed</p>
                     </div>
@@ -188,7 +189,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 disabled={customerLookupLoading || !customerPhone.trim()}
                                 className="flex-1 bg-[#C9A34E] text-[#0A1A2F] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
-                                {customerLookupLoading ? <i className="fas fa-circle-notch animate-spin"></i> : 'ยืนยัน'}
+                                {customerLookupLoading ? <Loader2 size={16} className="animate-spin" /> : 'ยืนยัน'}
                             </button>
                         </div>
                     </div>
@@ -203,7 +204,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Premium Retail Intelligence</p>
                     </div>
                     <div className="relative w-80">
-                        <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-white/20"></i>
+                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20" />
                         <input
                             type="text"
                             placeholder={labels.search}
@@ -252,7 +253,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="flex items-center justify-between">
                                     <span className="text-[#C9A34E] font-black text-lg italic">฿{product.price}</span>
                                     <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] transition-all">
-                                        <i className="fas fa-plus text-sm"></i>
+                                        <Plus size={14} />
                                     </div>
                                 </div>
                             </div>
@@ -266,7 +267,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-2xl shadow-inner border border-orange-500/20">
-                            <i className="fas fa-shopping-basket"></i>
+                            <ShoppingBasket size={24} />
                         </div>
                         <h3 className="text-2xl font-black text-[#F8F8F6] tracking-tight">{labels.cart}</h3>
                     </div>
@@ -277,7 +278,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 <div className="flex-1 overflow-y-auto space-y-4 mb-8 custom-scrollbar">
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-white/10 gap-4 opacity-40">
-                            <i className="fas fa-shopping-cart text-5xl"></i>
+                            <ShoppingCart size={48} />
                             <p className="font-black text-xs uppercase tracking-[0.2em]">Cart Empty</p>
                         </div>
                     ) : (
@@ -293,17 +294,17 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     <div className="flex justify-between items-start">
                                         <h5 className="font-bold text-white text-xs mb-1 line-clamp-1">{item.name}</h5>
                                         <button onClick={() => removeItem(item.id)} className="text-white/20 hover:text-red-500 transition-colors">
-                                            <i className="fas fa-trash-alt text-xs"></i>
+                                            <Trash2 size={12} />
                                         </button>
                                     </div>
                                     <div className="flex items-center justify-between mt-2">
                                         <div className="flex items-center gap-3 bg-black/20 px-2 py-1 rounded-lg">
                                             <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-white/40 hover:text-[#C9A34E]">
-                                                <i className="fas fa-minus text-[10px]"></i>
+                                                <Minus size={10} />
                                             </button>
                                             <span className="text-xs font-black text-white w-4 text-center">{item.quantity}</span>
                                             <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-white/40 hover:text-[#C9A34E]">
-                                                <i className="fas fa-plus text-[10px]"></i>
+                                                <Plus size={10} />
                                             </button>
                                         </div>
                                         <span className="text-[#C9A34E] font-black text-sm italic">฿{item.price * item.quantity}</span>
@@ -337,7 +338,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         className="w-full bg-[#C9A34E] hover:bg-amber-400 disabled:bg-white/5 disabled:text-white/10 text-[#0A1A2F] py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-[#C9A34E]/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                     >
                         {labels.checkout}
-                        <i className="fas fa-arrow-right text-[10px]"></i>
+                        <ArrowRight size={10} />
                     </button>
                 </div>
             </div>

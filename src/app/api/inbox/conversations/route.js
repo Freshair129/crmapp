@@ -14,7 +14,8 @@ export async function GET(request) {
         const skip = (page - 1) * limit;
         const search = searchParams.get('search');
         logger.info('[InboxConversations]', `Fetching conversations: channel=${channel}, status=${status}, search=${search}, skip=${skip}`);
-        
+
+        const prisma = await getPrisma();
         const conversations = await prisma.conversation.findMany({
             where: {
                 ...(channel !== 'ALL' ? { channel: { equals: channel.toLowerCase(), mode: 'insensitive' } } : {}),
