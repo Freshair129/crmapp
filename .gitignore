@@ -17,9 +17,10 @@ src/generated/
 *.log
 .DS_Store
 
-# Claude local settings & session files
-.claude/
+# Claude local settings & session files (track skills/ only)
+.claude/**
 !.claude/skills/
+!.claude/skills/**
 *session-is-being-continued*.txt
 
 # HTML exports / browser saves
