@@ -5,6 +5,49 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — 2026-03-14
+
+### Documentation
+
+#### Project Docs (International Standards Compliance)
+- **`README.md`** (new): Entry point — quick start (7 steps), tech stack, architecture diagram, key docs index
+- **`.env.example`** (new): Environment template ครบทุก variable พร้อม comment — แทน `.env` ที่ไม่ควร commit
+- **`CONTRIBUTING.md`** (new): Commit convention (Conventional Commits), branch strategy, ADR process, coding rules, sync-docs protocol
+- **`docs/guide/getting-started.md`** (new): Step-by-step developer setup — clone → install → docker → prisma → dev server
+- **`docs/database_erd.md`**: Rewritten ครบ 23 models — Customer, Conversation, Employee, Product, Marketing (10 models), Task, AuditLog พร้อม key fields และ ADR references
+
+#### Agent Tooling
+- **`.claude/skills/sync-docs.md`** (new): 9-step protocol สำหรับ sync context docs หลังทำงาน — ใช้ได้ทั้ง Claude Code (`/sync-docs`) และ Gemini CLI
+- **`CLAUDE.md`**: เพิ่ม Auto-Update Protocol section — บังคับ sync docs หลัง commit ทุกครั้ง
+- **`~/.claude/settings.json`**: PostToolUse hook — remind เมื่อ code files เปลี่ยน
+
+#### Context Files Sync (2026-03-14)
+- **`CLAUDE.md`**: v0.13.0 → ✅ released, เพิ่ม v0.14.0 planned, อัปเดต date
+- **`GEMINI.md`**: Phase 12 → [DONE], Phase 13 → [CURRENT], ลบ contradictions ภายในไฟล์
+- **`GOAL.md`**: เพิ่ม Phase 11 + Phase 12 detail sections + Phase 13 planned
+
+---
+
+## [0.13.0] — 2026-03-13
+
+### Phase 12 — Unified Inbox & Performance Optimization
+
+#### Unified Inbox (ADR-033)
+- **`src/components/UnifiedInbox.js`** (new): ศูนย์รวมแชท Facebook + LINE — รองรับการกรองตาม Channel และ Status (Open, Pending, Closed), ค้นหาลูกค้า, และ pagination โหลดแชททีละ 10 รายการ
+- **`src/app/api/inbox/conversations/route.js`** (new): `GET` conversations พร้อมระบบ search & filtering
+- **`src/app/api/inbox/conversations/[id]/messages/route.js`** (new): `GET` message history + `POST` send message
+- **Data Seeding**: อัปเดต `prisma/seed.ts` ให้รวมตัวอย่าง Conversation และ Message สำหรับการเทสระบบ Inbox
+
+#### Redis Caching Layer (ADR-034)
+- **`src/lib/redis.js`** (new): Redis singleton client ครอบด้วย `getOrSet` pattern เพื่อมาตรฐานการทำ cache
+- **`src/app/api/analytics/executive/route.js`**: เชื่อมต่อระบบ Cache — ลด latency ของ dashboard จาก ~2s เหลือ < 50ms โดยเก็บผล aggregation ไว้ 5 นาที
+
+#### Bug Fixes & Stability
+- **`src/middleware.js`**: ตรวจสอบ RBAC และ Permission สำหรับ Unified Inbox routes
+- **Performance**: เพิ่ม index บน Database schema เพื่อเร่งความเร็วในการ query แชทตามวันที่และสถานะ
+
+---
+
 ## [0.12.0] — 2026-03-13
 
 ### Phase 12 — UI Enhancement: Icon Sidebar + Charts + Motion + Lucide

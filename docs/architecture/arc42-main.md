@@ -15,7 +15,7 @@ A comprehensive CRM system designed for V School (Japanese Culinary Academy). It
 
 ## 2. Architecture Constraints
 - **Database:** PostgreSQL (Supabase) as the primary relational store.
-- **High Performance:** Must use local JSON caching for high-traffic dashboard components.
+- **High Performance:** Must use Redis caching for high-traffic dashboard components and heavy analytics queries.
 - **AI Integration:** Python-based worker for Gemini AI processing and heavy data manipulation.
 - **Queueing:** Redis/BullMQ for asynchronous job processing.
 
@@ -27,27 +27,48 @@ Describes the system's environment and external interfaces.
 ### 3.1 Business Context
 The CRM interacts with students (Customers), Academy staff (Employees), and external platforms like Meta (Facebook/Messenger).
 
-### 3.2 Technical Context
-```mermaid
-graph TD
-    User([Customer / Employee])
-    System[V School CRM System]
-    Meta[Meta Graph API / Facebook]
-    Supabase[(Supabase / PostgreSQL)]
-    Gemini[Google Gemini AI]
+### 3.2 Technical Context (C4 Level 1 — System Context)
 
-    User -->|Uses| System
-    System -->|Fetches Marketing/Chat Data| Meta
-    System -->|Stores & Retrieves Data| Supabase
-    System -->|Processes Intelligence| Gemini
-    Meta -->|Sends Webhooks| System
+```mermaid
+graph TB
+    subgraph Actors
+        Student([🎓 Student / Lead])
+        Employee([👤 Employee / Agent])
+    end
+
+    subgraph VSchool_CRM [V School CRM System]
+        CRM[V School CRM v2\nNext.js 14 App Router\n+ Python Worker]
+    end
+
+    subgraph External_Systems [External Systems]
+        Meta[📘 Meta / Facebook\nGraph API v19.0]
+        LINE[🟢 LINE Messaging API]
+        Gemini[🤖 Google Gemini AI]
+        Supabase[(🐘 PostgreSQL\nSupabase)]
+        SlipOK[💳 SlipOK\nSlip Verification]
+        Sheets[📊 Google Sheets\nTask Sync]
+    end
+
+    Student -->|Chat via Facebook / LINE| Meta
+    Student -->|Chat via LINE| LINE
+    Employee -->|CRM Dashboard / Inbox| CRM
+
+    Meta -->|Webhook: messages + ad events| CRM
+    LINE -->|Webhook: messages| CRM
+
+    CRM -->|Fetch ad metrics + send messages| Meta
+    CRM -->|Push notifications| LINE
+    CRM -->|AI analysis + insights| Gemini
+    CRM -->|Read / Write data| Supabase
+    CRM -->|Verify payment slip| SlipOK
+    CRM -->|Sync tasks| Sheets
 ```
 
 ---
 
 ## 4. Solution Strategy
 - **Hybrid Platform:** Next.js for the web interface and API; Python for background AI and sync tasks.
-- **Cache-First UI:** Local filesystem caching to minimize database latency and API rate limits.
+- **Cache-First UI:** Redis-based caching layer to minimize database latency and API rate limits.
 - **Event-Driven:** Changes in the database or external webhooks trigger background workers via Redis.
 
 ---
@@ -64,7 +85,7 @@ graph TD
         Web_App[Next.js App / Webhook Listener]
         Python_Worker[Python AI Worker]
         Redis_Queue[Redis Queue / BullMQ]
-        JSON_Cache[Local JSON Cache]
+        Redis_Cache[Redis Cache / Caching Layer]
     end
 
     Supabase[(PostgreSQL / Supabase)]
@@ -73,7 +94,7 @@ graph TD
 
     User -->|Interacts with| Web_App
     Web_App -->|Reads/Writes| Supabase
-    Web_App -->|Fast Reads| JSON_Cache
+    Web_App -->|Fast Reads| Redis_Cache
     Web_App -->|Enqueues Events| Redis_Queue
     Meta -->|Webhooks| Web_App
     
@@ -110,7 +131,7 @@ graph TD
     Lib_Core -->|Fetch Insights| FB_API
     
     Cron_Scheduler -->|Triggers Sync| Lib_Core
-    Cache_Sync -->|Read/Write| JSON_Cache[(Local JSON Cache)]
+    Cache_Sync -->|Read/Write| Redis_Cache[(Redis Cache)]
     Prisma_Client -->|Read/Write| Postgres[(PostgreSQL)]
 ```
 
@@ -128,7 +149,7 @@ sequenceDiagram
     participant NX as Next.js API/Cron
     participant RD as Redis (BullMQ)
     participant WK as cacheSyncWorker.js
-    participant LC as Local JSON Cache
+    participant LC as Redis Cache
 
     rect rgb(240, 240, 240)
         Note over PS, FB: Daily Bulk Sync (Legacy/Deep)
@@ -148,7 +169,7 @@ sequenceDiagram
     RD->>WK: Process Job
     WK->>DB: Read Latest Metrics
     WK->>LC: Write JSON Cache
-    Note over LC: Optimized for High Performance UI
+    Note over LC: Optimized for High Performance UI (Redis)
 ```
 
 ### 6.2 Event-Driven Chat Synchronization (Real-time)
@@ -159,7 +180,7 @@ sequenceDiagram
     participant RD as Redis (BullMQ)
     participant WK as eventProcessor.mjs
     participant DB as PostgreSQL (Supabase)
-    participant LC as Local JSON Cache
+    participant LC as Redis Cache
 
     FB->>WH: New Message/Event
     WH->>RD: Enqueue 'fb-events'
@@ -167,20 +188,82 @@ sequenceDiagram
     
     RD->>WK: Pull Event
     WK->>DB: Upsert Message & Customer
-    WK->>LC: Update Local Cache
+    WK->>LC: Update Redis Cache
     Note over WK: Automatic Slip Detection & AI Analysis
 ```
 
 ---
 
 ## 7. Deployment View
-Managed via a unified repository structure under `data_hub/` with a portable Node.js environment. Production targets include Supabase for the database and Vercel or custom VPS for the web/worker nodes.
+
+### 7.1 Infrastructure Overview
+
+```mermaid
+graph TB
+    subgraph Internet
+        Student([🎓 Student / Lead])
+        Employee([👤 Employee / Agent])
+    end
+
+    subgraph Vercel [Vercel — Production]
+        NextApp[Next.js 14\nApp Router\nSSR + API Routes]
+    end
+
+    subgraph VPS_or_Local [VPS / Local Worker]
+        BullWorker[BullMQ Worker\nNode.js eventProcessor]
+        PythonWorker[Python Worker\nAd Calc / NumPy / Pandas]
+    end
+
+    subgraph Data_Layer [Data Layer]
+        Supabase[(PostgreSQL\nSupabase Cloud)]
+        Redis[(Redis\nCache + Queue)]
+    end
+
+    subgraph External
+        Meta[Meta Graph API]
+        LINE[LINE Messaging API]
+        Gemini[Google Gemini AI]
+        SlipOK[SlipOK Verify]
+    end
+
+    Student -->|HTTPS| NextApp
+    Employee -->|HTTPS| NextApp
+
+    NextApp -->|Prisma ORM| Supabase
+    NextApp -->|Cache-Aside| Redis
+    NextApp -->|Enqueue jobs| Redis
+
+    Redis -->|BullMQ pull| BullWorker
+    Redis -->|BullMQ pull| PythonWorker
+
+    BullWorker -->|Upsert| Supabase
+    PythonWorker -->|Upsert metrics| Supabase
+    PythonWorker -->|Fetch ads| Meta
+
+    NextApp -->|Webhook receive| Meta
+    NextApp -->|Webhook receive| LINE
+    NextApp -->|AI call| Gemini
+    NextApp -->|Slip verify| SlipOK
+```
+
+### 7.2 Environments
+
+| Environment | Next.js | Database | Redis | Worker |
+|---|---|---|---|---|
+| **Local Dev** | `npm run dev` (port 3000) | Docker PostgreSQL (port 5433) | Docker Redis (port 6379) | `npm run worker` |
+| **Production** | Vercel (auto-deploy from master) | Supabase Cloud | Redis Cloud / Upstash | VPS cron or always-on |
+
+### 7.3 Key NFRs for Deployment
+
+- **NFR1:** Webhook ตอบ Meta < 200ms — ใช้ Vercel Edge proximity
+- **NFR2:** Dashboard API < 500ms — Redis cache-aside ลด DB round-trips
+- **NFR3:** BullMQ retry ≥ 5 ครั้ง, exponential backoff — worker process แยกต่างหาก
 
 ---
 
 ## 8. Cross-cutting Concepts
 ### 8.1 Data Consistency & Caching
-- **Cache-First:** UI reads local `.json` files in `crm-app/cache/`.
+- **Cache-First:** API handlers use `src/lib/redis.js` to manage transient data.
 - **Stale-While-Revalidate:** Immediate stale data display with background refresh.
 - **Sync Logic:** Managed by `src/lib/cacheSync.js`.
 
@@ -203,6 +286,11 @@ Detailed history of key architectural choices:
 - [ADR 013: Hourly Marketing Sync](../adr/013-hourly-marketing-sync.md)
 - [ADR 014: AI-Driven Chat Automation](../adr/014-ai-driven-chat-automation.md)
 - [ADR 015: Scalable Synchronization Architecture](../adr/015-scalable-sync-architecture.md)
+- [ADR 030: Executive Revenue Channel Split](../adr/030-executive-revenue-channel-split.md)
+- [ADR 031: Icon-only Sidebar Lucide Migration](../adr/031-icon-only-sidebar-lucide-migration.md)
+- [ADR 032: UI Enhancement Recharts Framer Motion](../adr/032-ui-enhancement-recharts-framer-motion.md)
+- [ADR 033: Unified Inbox Implementation](../adr/033-unified-inbox-implementation.md)
+- [ADR 034: Redis Caching Layer](../adr/034-redis-caching-layer.md)
 
 ---
 

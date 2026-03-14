@@ -1,104 +1,393 @@
-# V School CRM - Entity Relationship Diagram (ERD)
+# V School CRM — Entity Relationship Diagram (ERD)
 
-**วันที่อัปเดต:** 2026-03-03  
-**อ้างอิง:** `prisma/schema.prisma` และ `docs/id-mapping.yaml`
+**อัปเดต:** 2026-03-14
+**อ้างอิง:** `prisma/schema.prisma` (23 models)
+**Standard:** Mermaid erDiagram
 
-นี่คือแผนภาพแสดงความสัมพันธ์ของข้อมูล (ERD) ฉบับล่าสุดในระบบ CRM ซึ่งรวมเอาการเชื่อมโยง (Mapping) ที่แม่นยำที่สุดผ่าน Primary Key (`cuid`) และ Foreign Keys (FK) แบบ 100%
+---
+
+## Full ERD — ทุก Relationship
 
 ```mermaid
 erDiagram
-    %% ความสัมพันธ์กับลูกค้า (Customer)
-    Customer ||--o{ Conversation : "ทักแชท (customerId)"
-    Customer ||--o{ Order : "สั่งซื้อ (customerId)"
-    Customer ||--o{ Task : "มีงานที่ต้องดูแล (customerId)"
+    %% ═══════════════════════════════
+    %% DOMAIN: Customer (Core)
+    %% ═══════════════════════════════
+    Customer ||--o{ Order          : "สั่งซื้อ"
+    Customer ||--o{ Conversation   : "ทักแชท"
+    Customer ||--o{ Task           : "มีงานติดตาม"
+    Customer ||--o{ CartItem       : "มีของในตะกร้า"
+    Customer ||--o{ InventoryItem  : "คอร์สที่ซื้อแล้ว"
+    Customer ||--o{ TimelineEvent  : "timeline กิจกรรม"
 
-    %% ความสัมพันธ์กับพนักงาน/แอดมิน (Employee) - จุดสำคัญของ REQ 01-03
-    Employee ||--o{ Message : "ตอบแชท (responderId)"
-    Employee ||--o{ Conversation : "รับผิดชอบ (assignedEmployeeId)"
-    Employee ||--o{ Order : "ปิดการขาย (closedById)"
-    Employee ||--o{ Task : "ได้รับมอบหมาย (assigneeId)"
+    %% ═══════════════════════════════
+    %% DOMAIN: Conversation
+    %% ═══════════════════════════════
+    Conversation ||--o{ Message     : "มีข้อความ"
+    Conversation ||--o{ ChatEpisode : "แบ่งเป็นตอน"
+    Conversation ||--o{ Order       : "นำไปสู่คำสั่งซื้อ (OrderConversation)"
 
-    %% ความสัมพันธ์ของแชทและการขาย
-    Conversation ||--o{ Message : "มีข้อความ (conversationId)"
-    Conversation ||--o{ Order : "นำไปสู่คำสั่งซื้อ (conversationId)"
-    
-    Order ||--o{ Transaction : "มีการชำระเงิน (orderId)"
+    %% ═══════════════════════════════
+    %% DOMAIN: Employee (RBAC)
+    %% ═══════════════════════════════
+    Employee ||--o{ Message      : "ตอบแชท (MessageResponder)"
+    Employee ||--o{ Conversation : "รับผิดชอบ (ConversationAssignee)"
+    Employee ||--o{ Order        : "ปิดการขาย (OrderCloser)"
+    Employee ||--o{ Task         : "ได้รับมอบหมาย (AgentTasks)"
 
-    %% ฝั่งโฆษณาและการตลาด
-    Campaign ||--o{ AdSet : "มีชุดโฆษณา"
-    AdSet ||--o{ Ad : "มีโฆษณา"
+    %% ═══════════════════════════════
+    %% DOMAIN: Order / Sales
+    %% ═══════════════════════════════
+    Order ||--o{ Transaction : "มีการชำระเงิน"
 
+    %% ═══════════════════════════════
+    %% DOMAIN: Product / Cart
+    %% ═══════════════════════════════
+    Product ||--o{ CartItem : "ถูกเพิ่มในตะกร้า"
+
+    %% ═══════════════════════════════
+    %% DOMAIN: Marketing / Ads (ADR-024)
+    %% ═══════════════════════════════
+    AdAccount ||--o{ Campaign       : "มีแคมเปญ"
+    Campaign  ||--o{ AdSet          : "มีชุดโฆษณา"
+    AdSet     ||--o{ Ad             : "มีโฆษณา"
+    Ad        ||--|{ AdDailyMetric  : "สถิติรายวัน"
+    Ad        ||--|{ AdHourlyMetric : "สถิติรายชั่วโมง"
+    Ad        ||--|{ AdHourlyLedger : "append-only ledger (ADR-024 D4)"
+    Ad        ||--o| AdLiveStatus   : "สถานะ live"
+    Ad        }o--o| AdCreative     : "ใช้ creative"
+    Ad        }o--o| Experiment     : "อยู่ใน A/B test"
+```
+
+---
+
+## Entity Blocks — Key Fields
+
+### DOMAIN: Customer
+
+```mermaid
+erDiagram
     Customer {
-        String id PK "cuid (Primary)"
-        String customerId UK "TVS-CUS-..."
-        String facebookId "Customer PSID (ชัวร์ 100%)"
-        String facebookName
-    }
-
-    Employee {
-        String id PK "cuid (Primary)"
-        String employeeId UK "TVS-EMP-..."
-        String facebookId "Admin PSID (ชัวร์ 100%)"
-        String facebookName 
-        String nickName
-    }
-
-    Conversation {
-        String id PK "cuid (Primary)"
-        String conversationId UK "t_XXXXXX (Thread ID)"
-        String customerId FK "เชื่อม Customer.id"
-        String assignedEmployeeId FK "เชื่อม Employee.id"
-    }
-
-    Message {
-        String id PK "cuid (Primary)"
-        String messageId UK "msg_{psid}_{time}_{seq}"
-        String conversationId FK "เชื่อม Conversation.id"
-        String responderId FK "ใครตอบ: เชื่อม Employee.id"
-        String fromName "ชื่อแอดมินส่งโชว์หน้า UI"
+        String  id             PK  "UUID"
+        String  customerId     UK  "TVS-CUS-[CH]-[YY]-[XXXX]"
+        String  memberId           "MEM-... (optional)"
+        String  originId           "source ad_id for ROAS (ADR-025)"
+        String  status             "Active | Inactive"
+        String  firstName
+        String  lastName
+        String  nickName
+        String  membershipTier     "MEMBER | VIP | PREMIUM"
+        String  lifecycleStage     "Lead | Prospect | Customer | Loyal"
+        String  email
+        String  phonePrimary       "E.164 format (+66...)"
+        String  lineId
+        String  facebookId     UK  "PSID — ห้ามซ้ำ"
+        String  facebookName
+        Float   walletBalance      "default 0"
+        Int     walletPoints       "default 0"
+        Json    intelligence       "source_ad_id, courses_owned, metrics"
+        DateTime createdAt
+        DateTime updatedAt
     }
 
     Order {
-        String id PK "cuid (Primary)"
-        String orderId UK 
-        String customerId FK "เชื่อม Customer.id"
-        String closedById FK "ใครปิดการขาย: เชื่อม Employee.id"
-        String conversationId FK "แชทไหน: เชื่อม Conversation.id"
-        Float totalAmount
+        String  id             PK  "UUID"
+        String  orderId        UK  "crypto.randomUUID()"
+        String  customerId     FK
+        String  closedById     FK  "Employee"
+        String  conversationId FK  "null = walk-in (Store), not null = Ads"
+        String  status             "PENDING | CLOSED | CANCELLED"
+        Float   totalAmount
+        Float   paidAmount         "default 0"
+        Json    items              "[{productId,name,price,qty}]"
+        DateTime date
     }
 
     Transaction {
-        String id PK "cuid (Primary)"
-        String transactionId UK
-        String orderId FK "เชื่อม Order.id"
-        Float amount
+        String  id              PK  "UUID"
+        String  transactionId   UK
+        String  orderId         FK
+        Float   amount
+        String  type                "PAYMENT | REFUND | CREDIT"
+        String  method              "Transfer | Cash | QR"
+        String  slipStatus          "PENDING | VERIFIED | FAILED"
+        Json    slipData            "SlipOK verification result"
+        DateTime date
     }
 
-    Task {
-        String id PK "cuid (Primary)"
-        String taskId UK
-        String customerId FK "เชื่อม Customer.id"
-        String assigneeId FK "ใครทำ: เชื่อม Employee.id"
+    InventoryItem {
+        String  id         PK  "UUID"
+        String  customerId FK
+        String  type           "COURSE | MENU | PACKAGE"
+        String  itemId
+        String  name
+        String  status         "ACTIVE | EXPIRED | USED"
+        DateTime enrollDate
+        DateTime expiryDate
+        Json    metadata
     }
 
-    Campaign {
-        String id PK "cuid (Primary)"
-        String campaignId UK "จาก FB Ads"
-    }
-
-    Ad {
-        String id PK "cuid (Primary)"
-        String adId UK "จาก FB Ads"
+    TimelineEvent {
+        String  id         PK  "UUID"
+        String  eventId
+        String  customerId FK
+        String  type           "PURCHASE | CHAT | FOLLOW_UP | NOTE"
+        String  summary
+        Json    details
+        DateTime date
     }
 ```
 
-## สรุปจุดสำคัญของโครงสร้าง (Key Architectural Changes)
+### DOMAIN: Conversation
 
-1. **`Employee` เป็นศูนย์กลางของการปฏิบัติงานทั้งหมด:**
-   - การกระทำทั้งหมด ไม่ว่าจะเป็น **"ใครตอบแชท" (`Message.responderId`)**, **"ใครดูแลลูกค้าคนนี้" (`Conversation.assignedEmployeeId`)** หรือ **"ใครปิดการขาย" (`Order.closedById`)** ล้วนชี้ตรงกลับมาที่ `Employee.id` (cuid) ของตาราง Employee การวัดผล KPI และค่าคอมมิชชันจึงถูกต้องที่สุด 100%
-2. **เลิกใช้การยึดโยงด้วยชื่อ (String Match):**
-   - แม้ Field อย่าง `fromName` หรือ `assignedAgent` จะยังเก็บอยู่ แต่ออกแบบมาเพื่อแสดงผลบนหน้าจอให้มนุษย์อ่านง่ายๆ เท่านั้น (Human-readable) ในขณะที่ฐานข้อมูลหลังบ้านและการคำนวณเงินอ้างอิงจาก FK ทั้งหมด
-3. **`facebookId` (PSID) แบบเจาะจง:**
-   - ทั้ง `Customer` และ `Employee` มี `facebookId` ซึ่งเป็น Page-Scoped ID (PSID) ป้องกันปัญหากรณีลูกค้าหรือแอดมินเปลี่ยนชื่อเฟสบุ๊ก
-4. **Attribution Chain ที่สมบูรณ์:**
-   - สายเชื่อมโยง `Conversation` -> `Order` -> `Transaction` ทำให้ระบบตอบได้ชัดเจนว่า "สลิปโอนเงินใบนี้ มาจากออเดอร์ไหน และออเดอร์นี้เกิดจากการปิดการขายในห้องแชทไหน และใครเป็นผู้ตอบในเวลานั้น"
+```mermaid
+erDiagram
+    Conversation {
+        String  id                 PK  "UUID"
+        String  conversationId     UK  "t_{15_digit_uid}"
+        String  customerId         FK  "nullable"
+        String  assignedEmployeeId FK  "nullable"
+        String  channel                "facebook | line"
+        String  participantId          "PSID หรือ LINE userId"
+        String  participantName
+        String  status                 "open | pending | closed"
+        Boolean isStarred              "default false"
+        Int     unreadCount            "default 0"
+        DateTime lastMessageAt
+    }
+
+    Message {
+        String  id             PK  "UUID"
+        String  messageId      UK  "mid.$... หรือ m_..."
+        String  conversationId FK
+        String  responderId    FK  "Employee — null ถ้า customer ส่ง"
+        String  fromId             "PSID ของผู้ส่ง"
+        String  fromName
+        String  content
+        Boolean hasAttachment
+        String  attachmentType
+        String  attachmentUrl
+        Json    metadata           "adReferral, deliveryStatus"
+        DateTime createdAt
+    }
+
+    ChatEpisode {
+        String  id             PK  "UUID"
+        String  episodicId     UK
+        String  conversationId FK
+        String  episodicName
+        String  summary
+        String  state
+        String  cta
+        Json    tags               "[]"
+        String  sessionId
+    }
+```
+
+### DOMAIN: Employee
+
+```mermaid
+erDiagram
+    Employee {
+        String  id           PK  "UUID"
+        String  employeeId   UK  "TVS-EMP-YYYY-XXXX"
+        String  firstName
+        String  lastName
+        String  nickName
+        String  email        UK
+        String  phone
+        String  department
+        String  passwordHash
+        String  role             "Developer | Manager | Supervisor | Admin | Agent | Guest"
+        String  status           "ACTIVE | INACTIVE"
+        Json    identities       "{ facebook: { psid, name }, line: { id } }"
+        Json    permissions      "granular overrides"
+        DateTime lastLoginAt
+    }
+```
+
+### DOMAIN: Product / Cart
+
+```mermaid
+erDiagram
+    Product {
+        String  id                  PK  "UUID"
+        String  productId           UK  "TVS-PKG..."
+        String  name
+        Float   price
+        Float   basePrice
+        String  category                "course | menu | package"
+        Int     duration
+        String  durationUnit
+        String[] linkedMenuIds          "COURSE-TO-MENU link"
+        Boolean isActive                "default true (soft delete)"
+        Json    metadata
+    }
+
+    CartItem {
+        String  id         PK
+        String  customerId FK
+        String  productId  FK
+        Int     quantity
+    }
+```
+
+### DOMAIN: Marketing / Ads (ADR-024)
+
+```mermaid
+erDiagram
+    AdAccount {
+        String  id        PK  "UUID"
+        String  accountId UK  "act_XXXXXXXXX"
+        String  name
+        String  currency      "THB"
+    }
+
+    Campaign {
+        String  id              PK  "UUID"
+        String  campaignId      UK
+        String  adAccountId     FK
+        String  name
+        String  objective
+        String  status          "ACTIVE | PAUSED | DELETED"
+        Float   fbSpend             "audit snapshot จาก FB API เท่านั้น"
+        Float   fbRevenue           "audit snapshot — ไม่ใช้คำนวณ"
+        Json    rawData
+    }
+
+    AdSet {
+        String  id         PK  "UUID"
+        String  adSetId    UK
+        String  campaignId FK
+        String  name
+        String  status
+        Float   dailyBudget
+        Json    targeting
+    }
+
+    Ad {
+        String  id             PK  "UUID"
+        String  adId           UK
+        String  adSetId        FK
+        String  creativeId     FK  "nullable"
+        String  experimentId   FK  "nullable (A/B test)"
+        String  name
+        String  status
+        Float   spend              "Bottom-Up aggregate (ADR-024)"
+        Int     impressions
+        Int     clicks
+        Float   roas
+        Float   revenue
+        DateTime createdAt         "ใช้ detect creative fatigue (Phase 3)"
+    }
+
+    AdDailyMetric {
+        String  id          PK
+        String  adId        FK  "unique per adId+date"
+        DateTime date
+        Float   spend
+        Int     impressions
+        Int     clicks
+        Int     leads
+        Int     purchases
+        Float   revenue
+        Float   roas
+    }
+
+    AdHourlyLedger {
+        String  id    PK
+        String  adId  FK  "append-only — ห้าม UPDATE (ADR-024 D4)"
+        DateTime date
+        Int     hour
+        Float   spend
+        Float   roas
+    }
+
+    AdCreative {
+        String  id         PK
+        String  creativeId UK
+        String  name
+        String  headline
+        String  body
+        String  imageUrl
+        String  videoUrl
+        String  callToAction
+    }
+
+    Experiment {
+        String  id             PK
+        String  name
+        String  status             "RUNNING | CONCLUDED"
+        String  hypothesis
+        String  winningVariant
+        DateTime startDate
+        DateTime endDate
+    }
+
+    AdLiveStatus {
+        String  adId          PK+FK  "1-to-1 กับ Ad"
+        Boolean isRunningNow
+        DateTime lastImpressionTime
+        DateTime updatedAt
+    }
+```
+
+### DOMAIN: Tasks & Audit
+
+```mermaid
+erDiagram
+    Task {
+        String  id          PK  "UUID"
+        String  taskId      UK  "TSK-YYYYMMDD-XXXX"
+        String  customerId  FK  "nullable"
+        String  assigneeId  FK  "Employee — nullable"
+        String  title
+        String  type            "FOLLOW_UP | CALL | PAYMENT | OTHER"
+        String  priority        "LOW | MEDIUM | HIGH | URGENT"
+        String  status          "PENDING | IN_PROGRESS | DONE | CANCELLED"
+        Boolean aiGenerated     "true = สร้างโดย Gemini"
+        Json    aiContext        "prompt + reasoning"
+        DateTime dueDate
+        DateTime completedAt
+    }
+
+    AuditLog {
+        String  id       PK  "UUID"
+        String  action       "CREATE | UPDATE | DELETE | LOGIN"
+        String  actor        "employeeId หรือ 'system'"
+        String  target       "customerId / orderId ที่ถูกแก้"
+        String  status       "PENDING | SUCCESS | FAILED"
+        String  traceId      "SYNC-... trace ID"
+        Json    details      "before/after snapshot"
+        DateTime createdAt
+    }
+```
+
+---
+
+## Domain Summary
+
+| Domain | Models | หมายเหตุ |
+|---|---|---|
+| Customer Core | Customer, Order, Transaction, InventoryItem, TimelineEvent, CartItem | 6 models |
+| Conversation | Conversation, Message, ChatEpisode | 3 models |
+| Employee / RBAC | Employee | 1 model — ADR-026 6-tier roles |
+| Product | Product, CartItem | 2 models (CartItem shared กับ Customer) |
+| Marketing / Ads | AdAccount, Campaign, AdSet, Ad, AdDailyMetric, AdHourlyMetric, AdHourlyLedger, AdLiveStatus, AdCreative, Experiment | 10 models — ADR-024 |
+| Tasks | Task | 1 model |
+| Audit | AuditLog | 1 model |
+| **รวม** | **23 models** | |
+
+---
+
+## Key Architecture Decisions
+
+| Decision | ผลต่อ Schema |
+|---|---|
+| **ADR-024** Bottom-Up Aggregation | Campaign ไม่เก็บ aggregated metrics — คำนวณจาก Ad layer ขึ้นไป |
+| **ADR-024 D4** Append-only Ledger | AdHourlyLedger ห้าม UPDATE — insert only เมื่อ delta != 0 |
+| **ADR-025** Identity Resolution | Customer เก็บ `facebookId`, `lineId`, `phonePrimary` ทั้งสาม + `originId` สำหรับ ROAS |
+| **ADR-026** RBAC | Employee.role = Developer > Manager > Supervisor > Admin > Agent > Guest |
+| **ADR-027** UUID PKs | ทุก model ใช้ `@default(uuid())` — ไม่ใช้ CUID หรือ auto-increment |
+| **ADR-030** Revenue Split | `Order.conversationId IS NULL` = Store Revenue, `NOT NULL` = Ads Revenue |
+| **ADR-033** Unified Inbox | `Conversation.channel` = "facebook" | "line" — ไม่มี field `channel` บน Customer |

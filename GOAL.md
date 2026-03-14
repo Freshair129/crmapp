@@ -31,6 +31,9 @@
 | Phase 8 | Facebook Messaging Integration | ✅ Done | 3/3 |
 | Phase 9 | Employee Registry | ✅ Done | 4/4 |
 | Phase 10 | Member Self-Registration | ✅ Done | 3/3 |
+| Phase 11 | UI → Backend Wiring + Charts + Animations | ✅ Done | 6/6 |
+| Phase 12 | Unified Inbox + Redis Cache | ✅ Done | 6/6 |
+| Phase 13 | NotificationRules API + LINE Messaging | 🔲 Planned | 0/4 |
 
 ---
 
@@ -153,6 +156,48 @@
 | 10.1 | `POST /api/members/register` — public API, MemberId gen, duplicate check | 🧠 Claude | ✅ |
 | 10.2 | `/register` page — branded form (interest radio cards) | 🧠 Claude | ✅ |
 | 10.3 | Middleware whitelist `/api/members/register` | 🧠 Claude | ✅ |
+
+---
+
+## ✅ Phase 11: UI → Backend Wiring + Charts + Animations
+> **ADR:** ADR-031 (Icon Sidebar), ADR-032 (UI Enhancement)
+> **Goal:** เชื่อม UI components ทั้งหมดกับ real API endpoints, Recharts charts, Framer Motion
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 11.1 | `Sidebar.js` — icon-only w-20, Lucide React, tooltip hover | 🧠 Claude | ✅ |
+| 11.2 | `TopBar.js` — Global Search, Language, Theme toggle | 🧠 Claude | ✅ |
+| 11.3 | `ExecutiveAnalytics.js` — Recharts AreaChart + BarChart + timeframe toggle | 🧠 Claude | ✅ |
+| 11.4 | `Dashboard.js` — AnimatedNumber (useSpring), Framer Motion page transition | 🧠 Claude | ✅ |
+| 11.5 | `EmployeeManagement.js` — stacked card deck, swipe gesture, 4-tab dashboard | 🧠 Claude | ✅ |
+| 11.6 | Node.js upgrade 20 → 22 LTS, `.nvmrc`, Dockerfile 4-stage build | 🧠 Claude | ✅ |
+
+---
+
+## ✅ Phase 12: Unified Inbox + Redis Cache
+> **ADR:** ADR-033 (Unified Inbox), ADR-034 (Redis Caching Layer)
+> **Goal:** รวม FB + LINE inbox ไว้ที่เดียว + Redis caching สำหรับ analytics
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 12.1 | `UnifiedInbox.js` — 3-panel layout: conv list + message thread + customer card | 🧠 Claude | ✅ |
+| 12.2 | `GET /api/inbox/conversations` — channel/status filter, search, pagination | 🧠 Claude | ✅ |
+| 12.3 | `GET+POST /api/inbox/conversations/[id]/messages` — paginated + reply | 🧠 Claude | ✅ |
+| 12.4 | `src/lib/redis.js` — Redis singleton + getOrSet cache pattern | 🧠 Claude | ✅ |
+| 12.5 | `executive/route.js` — Redis cache 5min TTL (latency 2s → <50ms) | 🧠 Claude | ✅ |
+| 12.6 | `NotificationCenter.js` — Google Sheets sync + alert rules UI | 🧠 Claude | ✅ |
+
+---
+
+## 🔲 Phase 13: NotificationRules API + LINE Messaging
+> **Goal:** ระบบ Notification rules + LINE push messaging integration (→ v0.14.0)
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 13.1 | `POST/GET /api/notifications/rules` — CRUD notification rules | 🔲 | 🔲 |
+| 13.2 | LINE Messaging API integration — push message to customer | 🔲 | 🔲 |
+| 13.3 | Trigger engine — evaluate rules on conversation events | 🔲 | 🔲 |
+| 13.4 | node-cron → BullMQ worker process แยก (fix missed execution warning) | 🔲 | 🔲 |
 
 ---
 

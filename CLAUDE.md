@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-13)
+## Version Status (อัพเดท: 2026-03-14)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -20,19 +20,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released |
-| `v0.13.0` | Unified Inbox | 🚧 **in-progress** ← HEAD (Phase 12) |
+| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released ← HEAD |
+| `v0.14.0` | NotificationRules API + LINE Messaging | 🔲 planned (Phase 13) |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
 
-### v0.13.0 — สิ่งที่ทำแล้ว (Phase 12)
+### v0.13.0 — สิ่งที่ทำแล้ว (Phase 12) ✅
 | ไฟล์ | สถานะ | หมายเหตุ |
 |---|---|---|
-| `src/components/UnifiedInbox.js` | ✅ implemented | FB + LINE inbox รวม, pagination, reply |
-| `src/app/api/inbox/conversations/route.js` | ✅ fixed | แก้ bug: Customer ไม่มี `channel` field |
-| `src/app/api/inbox/conversations/[id]/messages/route.js` | ✅ implemented | GET paginated + POST reply |
-| `src/components/ExecutiveAnalytics.js` | ✅ fixed | FontAwesome → Lucide ครบทุก icon |
+| `src/components/UnifiedInbox.js` | ✅ done | FB + LINE inbox รวม, pagination, reply, right customer card panel |
+| `src/app/api/inbox/conversations/route.js` | ✅ done | enriched customer data: originId, membershipTier, intelligence |
+| `src/app/api/inbox/conversations/[id]/messages/route.js` | ✅ done | GET paginated + POST reply |
+| `src/components/ExecutiveAnalytics.js` | ✅ done | Lucide icons ครบ, Recharts charts |
+| `src/lib/redis.js` | ✅ done | Redis singleton + getOrSet cache pattern (ADR-034) |
+| `src/components/NotificationCenter.js` | ✅ done | Google Sheets sync + alert rules |
 
 > ⚠️ **Known Gotcha — Customer model**: ไม่มี field `channel` — ใช้ `conversation.channel` แทน
 
@@ -151,6 +154,25 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 - ส่งเฉพาะ **function signature / interface** ไม่ส่งโค้ดทั้งไฟล์
 - Gemini: boilerplate, helpers, unit tests
 - Claude: architectural decisions, integration logic, security, QA
+
+---
+
+## Auto-Update Protocol (บังคับ — ทำทุกครั้งหลังเสร็จงาน)
+
+หลังทำงานชิ้นใหญ่ หรือ commit สำเร็จ Claude **ต้องอัปเดต** ไฟล์เหล่านี้โดยไม่ต้องรอให้สั่ง:
+
+| ไฟล์ | เมื่อไหร่ต้องอัปเดต |
+|---|---|
+| `CLAUDE.md` | เมื่อ version status เปลี่ยน, phase เสร็จ, หรือมี Known Gotcha ใหม่ |
+| `GEMINI.md` | เมื่อ phase เปลี่ยน (DONE/CURRENT/PLANNED), DB schema เพิ่มฟิลด์, หรือ API routes ใหม่ |
+| `GOAL.md` | เมื่อ task ใน phase เสร็จ → tick ✅, หรือ phase ใหม่เริ่ม |
+| `CHANGELOG.md` | เมื่อทำ commit ที่มีนัยสำคัญ (feature, fix, breaking change) |
+
+### กฎ
+1. หลัง commit ทุกครั้ง → ตรวจ CLAUDE.md version table ว่าตรงไหม
+2. เมื่อ phase เสร็จ → อัปเดต GOAL.md table + เพิ่ม detail section
+3. ถ้า API route ใหม่ → เพิ่มใน GEMINI.md Directory section
+4. Known Gotcha ใหม่ → เพิ่มใน CLAUDE.md ทันที
 
 ---
 

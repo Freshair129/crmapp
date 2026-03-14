@@ -13,11 +13,12 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.10.0` | API Connected | ✅ released |
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released (tagged) |
-| `v0.13.0` | Unified Inbox | 🚧 **in-progress** ← HEAD ตอนนี้อยู่ที่นี่ |
+| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released ← HEAD |
+| `v0.14.0` | NotificationRules API + LINE Messaging | 🔲 planned (Phase 13) |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 12 ไฟล์ implement แล้ว → รอ QA + tag `v0.13.0`
+Phase 12 Unified Inbox (FB+LINE) + Redis Cache = ✅ DONE · Phase 13 = 🔲 NEXT
 
 ---
 
@@ -125,8 +126,8 @@ try { ... } catch (error) {
 Phase 1-10: [DONE]    Foundation → Identity → RBAC → FB Messaging → Member Self-Reg
 Phase 11:   [DONE]    UI Component Wiring — APIs + components connected to real data
                       → tagged v0.12.0 (includes Sidebar, TopBar, Charts, Animations)
-Phase 12:   [CURRENT] Unified Inbox — รวม FB + LINE inbox (→ v0.13.0 เมื่อเสร็จ)
-Phase 13:   [PLANNED] NotificationRules API + LINE Messaging integration (→ v0.14.0)
+Phase 12:   [DONE]    Unified Inbox — รวม FB + LINE inbox + Redis Cache → tagged v0.13.0
+Phase 13:   [CURRENT] NotificationRules API + LINE Messaging integration (→ v0.14.0)
 ```
 
 ---
@@ -148,7 +149,7 @@ Phase 13:   [PLANNED] NotificationRules API + LINE Messaging integration (→ v0
 
 ---
 
-## Phase 12 — IN PROGRESS 🚧
+## Phase 12 — DONE ✅ (tagged v0.13.0, 2026-03-13)
 
 ### v0.12.0 — เสร็จแล้วทั้งหมด ✅ (tagged 2026-03-13)
 - `Sidebar.js` — icon-only `w-20`, Lucide React, tooltip on hover (ADR-031)
@@ -158,13 +159,15 @@ Phase 13:   [PLANNED] NotificationRules API + LINE Messaging integration (→ v0
 - `EmployeeManagement.js` — stacked card deck UI + swipe gesture
 - Node.js ยกระดับจาก 20 → 22 LTS, Dockerfile อัพเดทครบ 4 stages
 
-### v0.13.0 — Unified Inbox (กำลังทำ)
+### v0.13.0 — Unified Inbox ✅ RELEASED
 
 | ไฟล์ | สถานะ | หมายเหตุ |
 |---|---|---|
-| `src/components/UnifiedInbox.js` | ✅ done | FB+LINE inbox, pagination, reply bar |
-| `GET /api/inbox/conversations` | ✅ fixed | **bug fix**: ลบ `channel` ออกจาก customer select |
+| `src/components/UnifiedInbox.js` | ✅ done | FB+LINE inbox, pagination, reply bar, right customer card panel |
+| `GET /api/inbox/conversations` | ✅ done | enriched: originId, membershipTier, intelligence |
 | `GET+POST /api/inbox/conversations/[id]/messages` | ✅ done | paginated GET + POST reply |
+| `src/lib/redis.js` | ✅ done | Redis singleton + getOrSet (ADR-034) |
+| `src/components/NotificationCenter.js` | ✅ done | Sheets sync + alert rules |
 
 **Bug ที่แก้แล้ว (สำคัญ — อย่าทำซ้ำ):**
 > `Customer` model **ไม่มี field `channel`** — ถ้า query `customer: { select: { channel: true } }` จะ throw Prisma error

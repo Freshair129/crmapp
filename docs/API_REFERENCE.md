@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-02-25
+> อัปเดตล่าสุด: 2026-03-14
 
 ---
 
@@ -21,6 +21,9 @@
 11. [Export / Import](#11-export--import)
 12. [Verification](#12-verification)
 13. [Test](#13-test)
+14. [Unified Inbox (ADR-033)](#14-unified-inbox-adr-033)
+15. [Marketing — Advanced Sync (ADR-024)](#15-marketing--advanced-sync-adr-024)
+16. [Google Sheets Integration](#16-google-sheets-integration)
 
 ---
 
@@ -537,6 +540,126 @@ Health check
 |---|---|
 | Response | `{ ok: true, time: ISO_timestamp }` |
 | Dependencies | None |
+
+---
+
+---
+
+## 14. Unified Inbox (ADR-033)
+
+> Base path: `/api/inbox/`
+
+### `GET /api/inbox/conversations`
+
+ดึงรายการ conversations ทั้งหมด (FB + LINE) พร้อม customer enrichment
+
+| Field | Value |
+|---|---|
+| Auth | Session cookie required |
+| Query | `?channel=ALL\|facebook\|line` `&status=open\|closed` `&page=1` `&limit=10` `&search=text` |
+| Response | `[{ id, conversationId, channel, participantName, status, isStarred, unreadCount, lastMessageAt, customer: { customerId, firstName, lastName, membershipTier, originId, ... }, lastMessage: { content, createdAt } }]` |
+| Includes | `customer` (enriched), `messages` (latest 1) |
+| Sort | `updatedAt DESC` |
+| Dependencies | Prisma `Conversation` + `Customer` + `Message` |
+
+### `GET /api/inbox/conversations/[id]/messages`
+
+ดึงข้อความใน conversation (paginated, chronological)
+
+| Field | Value |
+|---|---|
+| Params | `id` = conversation UUID |
+| Query | `?page=1&limit=10` |
+| Response | `[{ id, messageId, text, senderId, senderType: "AGENT"\|"CUSTOMER", createdAt }]` |
+| Sort | `createdAt ASC` (reversed after DESC fetch) |
+| Dependencies | Prisma `Message` |
+
+### `POST /api/inbox/conversations/[id]/messages`
+
+ส่งข้อความตอบกลับใน conversation
+
+| Field | Value |
+|---|---|
+| Params | `id` = conversation UUID |
+| Body | `{ text: string }` |
+| Response | `{ success: true, message: { id, messageId, content, createdAt } }` |
+| Side Effects | Update `conversation.updatedAt` + `lastMessageAt` |
+| Message ID format | `m_${crypto.randomUUID()}` |
+| Dependencies | Prisma `Message`, `Conversation` |
+
+---
+
+## 15. Marketing — Advanced Sync (ADR-024)
+
+### `GET /api/marketing/ads/insights?ad_id=X`
+
+ดึง daily metrics ย้อนหลัง 30 วันสำหรับ ad เดียว (สำหรับ chart)
+
+| Field | Value |
+|---|---|
+| Query | `?ad_id=string` (required) |
+| Response | `[{ date, spend, impressions, clicks, leads, purchases, revenue, roas }]` |
+| Source | `AdDailyMetric` table |
+| Window | 30 วันล่าสุด |
+| Dependencies | Prisma `AdDailyMetric` |
+
+### `GET /api/marketing/hourly?date=YYYY-MM-DD`
+
+ดึง hourly aggregated metrics สำหรับ date ที่ระบุ (24 ช่วง)
+
+| Field | Value |
+|---|---|
+| Query | `?date=YYYY-MM-DD` (required) |
+| Response | `[{ hour: 0-23, spend, impressions, clicks, roas }]` — 24 elements เสมอ |
+| Source | `AdHourlyMetric` aggregated by hour |
+| Dependencies | Prisma `AdHourlyMetric` |
+
+### `GET /api/marketing/sync-hourly`
+
+Incremental hourly sync — ดึง stats วันนี้จาก Meta และบันทึก delta (ADR-024 D4)
+
+| Field | Value |
+|---|---|
+| Trigger | Cron (node-cron) หรือ manual |
+| Action | Fetch Meta Graph API hourly breakdown → `upsertAdHourlyMetric` + `appendHourlyLedgerIfChanged` |
+| Ledger rule | Insert เฉพาะเมื่อ spend delta != 0 (append-only) |
+| Response | `{ success: true, synced: N }` |
+| Dependencies | Meta Graph API v19.0, `marketingRepo.upsertAdHourlyMetric` |
+
+### `GET /api/marketing/sync-audit?months=1`
+
+Audit task — pull Meta Campaign snapshots แล้ว log mismatches กับ local aggregates
+
+| Field | Value |
+|---|---|
+| Query | `?months=1` (default 1) |
+| Action | Fetch Campaign-level data from Meta → store in `Campaign.fbSpend`/`fbRevenue` → log delta ใน `AuditLog` |
+| Response | `{ audited: N, mismatches: [...] }` |
+| Dependencies | Meta Graph API, `marketingRepo.updateCampaignAuditSnapshot` |
+
+---
+
+## 16. Google Sheets Integration
+
+### `POST /api/marketing/sheets/sync`
+
+Manual trigger — sync tasks จาก Google Sheets เข้า database
+
+| Field | Value |
+|---|---|
+| Body | (none) |
+| Response | `{ success: true, imported: N, updated: N }` |
+| Side Effects | Cache `sheets:sync_config.lastSyncAt` |
+| Dependencies | `src/lib/googleSheetService.js` `syncGoogleSheetTasks()` |
+
+### `GET /api/marketing/sheets/config`
+
+ดึง config การ sync (mode, interval, lastSyncAt)
+
+| Field | Value |
+|---|---|
+| Response | `{ mode: "manual"\|"auto", interval: minutes, lastSyncAt: ISO }` |
+| Source | Redis cache `sheets:sync_config` |
 
 ---
 
