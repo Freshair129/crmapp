@@ -62,3 +62,28 @@ node scripts/sync-fb-messages.mjs 90
 ```bash
 npm run worker
 ```
+
+---
+
+## 7. ระบบดึงชื่อพนักงาน (Automation / Playwright) 🤖
+หากต้องการให้ Windows ดึงชื่อ "ส่งโดย [ชื่อพนักงาน]" อัตโนมัติ:
+
+1. **ติดตั้งหุ่นยนต์ (ครั้งแรก):**
+   ```bash
+   npx playwright install chromium
+   ```
+
+2. **เปิด Chrome ในโหมดพิเศษ (Debug):**
+   - ไปที่โฟลเดอร์ `automation`
+   - ดับเบิ้ลคลิกไฟล์ `เปิด_Chrome_Windows.bat`
+   - ล็อคอิน Facebook และเข้าหน้า Inbox ให้เรียบร้อย
+
+3. **รันตัวดึงชื่อ:**
+   - ดับเบิ้ลคลิกไฟล์ `รัน_Sync_Agents_Windows.bat`
+   - หุ่นยนต์จะเริ่มอ่านชื่อคนตอบใน Inbox และอัปเดตเข้า DB ทันทีครับ
+
+---
+
+## 8. หมายเหตุสำหรับการแยกเครื่องทำงาน
+- **Database**: ทั้ง Windows และ Mac ต้องใช้ `DATABASE_URL` ตัวเดียวกัน (Supabase)
+- **Next.js API**: เนื่องจาก Automation ต้องการส่งข้อมูลผ่าน API แนะนำให้รัน `npm run dev` ที่เครื่อง Windows ทิ้งไว้ด้วยครับ เพื่อให้หุ่นยนต์ส่งข้อมูลเข้าเว็บตัวเองได้ลื่นไหลครับ
