@@ -43,8 +43,9 @@ for f in $STAGED_ROUTES; do
     fi
 done
 
-# ─── Cache TTL: ห้าม cache.set TTL=0 ในทุก staged files ─────────────────
-for f in $STAGED_FILES; do
+# ─── Cache TTL: ห้าม cache.set TTL=0 ใน JS/TS files เท่านั้น ────────────
+STAGED_JS=$(echo "$STAGED_FILES" | grep -E "\.(js|ts|jsx|tsx|mjs)$")
+for f in $STAGED_JS; do
     if [ -f "$f" ]; then
         # อนุญาต TTL=0 ถ้ามี comment "Permanent" หรือ "permanent" (intentional)
         BAD_TTL=$(grep -n "cache\.set(.*,\s*0)" "$f" 2>/dev/null | grep -iv "permanent\|persist forever")
