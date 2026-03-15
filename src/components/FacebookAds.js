@@ -8,6 +8,14 @@ import DailyReport from './DailyReport';
 import WeeklyReport from './WeeklyReport';
 import HourlyReport from './HourlyReport';
 import YearlyReport from './YearlyReport';
+import {
+  AlertCircle, ShieldCheck, AlertTriangle, KeyRound, Facebook,
+  Loader2, CalendarDays, History, RefreshCw, TrendingUp, Clock,
+  CalendarRange, Calendar, Layers, Filter, X, RotateCcw, Banknote,
+  ShoppingCart, Tag, MessageSquare, BarChart2, Percent, Megaphone,
+  BarChart, ChevronDown, ChevronRight, ImageOff, PieChart, Ghost,
+  Package, Inbox, UserCircle, Headphones
+} from 'lucide-react';
 import ActiveAdsDashboard from './ActiveAdsDashboard';
 
 export default function FacebookAds({ customers }) {
@@ -72,7 +80,7 @@ export default function FacebookAds({ customers }) {
                 </p>
                 {isError && (
                     <div className="absolute -right-2 -top-2 flex items-center justify-center w-4 h-4 bg-rose-500 rounded-full cursor-help" title={errorMsg}>
-                        <i className="fas fa-exclamation text-[8px] text-white"></i>
+                        <AlertCircle className="w-2.5 h-2.5 text-white" />
                     </div>
                 )}
             </div>
@@ -87,13 +95,13 @@ export default function FacebookAds({ customers }) {
                     System Health: {auditResults.healthScore}%
                 </div>
                 <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                    <i className="fas fa-shield-check mr-2 text-emerald-500/40"></i>
+                    <ShieldCheck className="w-3 h-3 mr-2 text-emerald-500/40 inline-block" />
                     {auditResults.verified} Metrics Autonomously Audited
                 </p>
             </div>
             {auditResults.anomalies.length > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/20 rounded-lg border border-rose-500/30 animate-pulse">
-                    <i className="fas fa-triangle-exclamation text-rose-400 text-[10px]"></i>
+                    <AlertTriangle className="text-rose-400 w-2.5 h-2.5" />
                     <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Critical: {auditResults.anomalies[0].reason}</span>
                 </div>
             )}
@@ -137,8 +145,8 @@ export default function FacebookAds({ customers }) {
             setLoading(true);
             setError(null);
             try {
-                // Trigger sync in background
-                syncMarketingData();
+                // Trigger sync in background REMOVED per user request
+                // syncMarketingData();
 
                 const [campRes, adsetRes, dailyRes, adsRes] = await Promise.all([
                     fetch('/api/marketing/campaigns'),
@@ -430,7 +438,7 @@ export default function FacebookAds({ customers }) {
                     <div className="relative w-20 h-20 mx-auto mb-6">
                         <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
                         <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
-                        <i className="fab fa-facebook text-blue-500 text-2xl absolute inset-0 flex items-center justify-center"></i>
+                        <Facebook className="text-blue-500 w-8 h-8 absolute inset-0 m-auto" />
                     </div>
                     <p className="text-white/60 text-sm font-bold uppercase tracking-widest">Loading Facebook Ads Data...</p>
                 </div>
@@ -442,7 +450,7 @@ export default function FacebookAds({ customers }) {
         return (
             <div className="flex items-center justify-center h-96">
                 <div className="text-center bg-red-500/10 border border-red-500/30 rounded-3xl p-10 max-w-md">
-                    <i className={`fas ${isTokenExpired ? 'fa-key' : 'fa-exclamation-triangle'} text-red-400 text-4xl mb-4`}></i>
+                    {isTokenExpired ? <KeyRound className="text-red-400 w-10 h-10 mx-auto mb-4" /> : <AlertTriangle className="text-red-400 w-10 h-10 mx-auto mb-4" />}
                     <h3 className="text-white font-black text-xl mb-2">
                         {isTokenExpired ? 'Token Expired' : 'Connection Error'}
                     </h3>
@@ -472,7 +480,7 @@ export default function FacebookAds({ customers }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                            <i className="fab fa-facebook-f text-white text-2xl"></i>
+                            <Facebook className="text-white w-8 h-8" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-black text-white tracking-tight">Facebook Ads</h1>
@@ -491,7 +499,7 @@ export default function FacebookAds({ customers }) {
                                 }`}
                             title="Sync last 37 months of data"
                         >
-                            <i className={`fas ${deepSyncing ? 'fa-spinner animate-spin' : 'fa-calendar-alt'}`}></i>
+                            {deepSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarDays className="w-4 h-4" />}
                             {deepSyncing ? 'Deep Syncing...' : 'Deep Sync (3Y)'}
                         </button>
                         <button
@@ -502,14 +510,14 @@ export default function FacebookAds({ customers }) {
                                 : 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30'
                                 }`}
                         >
-                            <i className={`fas ${syncing ? 'fa-spinner animate-spin' : 'fa-history'}`}></i>
+                            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
                             {syncing ? 'Syncing...' : 'Quick Sync'}
                         </button>
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-5 py-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all"
+                            className="px-5 py-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all flex items-center gap-2"
                         >
-                            <i className="fas fa-sync-alt mr-2"></i> Refresh
+                            <RefreshCw className="w-4 h-4" /> Refresh
                         </button>
                     </div>
                 </div>
@@ -518,46 +526,46 @@ export default function FacebookAds({ customers }) {
                 <div className="flex flex-wrap justify-center gap-4 mb-8">
                     <button
                         onClick={() => setDashboardMode('daily')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'daily' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-chart-line mr-2"></i> Overview
+                        <TrendingUp className="w-4 h-4" /> Overview
                     </button>
                     <button
                         onClick={() => setDashboardMode('hourly_report')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'hourly_report' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'hourly_report' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-clock mr-2"></i> Daily (Hourly)
+                        <Clock className="w-4 h-4" /> Daily (Hourly)
                     </button>
                     <button
                         onClick={() => setDashboardMode('daily_report')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'daily_report' ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily_report' ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-calendar-alt mr-2"></i> Detailed Daily
+                        <CalendarDays className="w-4 h-4" /> Detailed Daily
                     </button>
                     <button
                         onClick={() => setDashboardMode('weekly_report')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'weekly_report' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'weekly_report' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-calendar-week mr-2"></i> Weekly Report
+                        <CalendarRange className="w-4 h-4" /> Weekly Report
                     </button>
                     <button
                         onClick={() => setDashboardMode('monthly')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'monthly' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'monthly' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-calendar mr-2"></i> Monthly Report
+                        <Calendar className="w-4 h-4" /> Monthly Report
                     </button>
                     <button
                         onClick={() => setDashboardMode('yearly')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${dashboardMode === 'yearly' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'yearly' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <i className="fas fa-layer-group mr-2"></i> Yearly Report
+                        <Layers className="w-4 h-4" /> Yearly Report
                     </button>
                 </div>
 
                 {/* Campaign Keyword Filter */}
                 <div className="flex items-center gap-3 mb-8 px-2">
                     <div className="relative flex-1 max-w-sm">
-                        <i className="fas fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-xs"></i>
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 w-3 h-3" />
                         <input
                             type="text"
                             value={filterKeyword}
@@ -567,7 +575,7 @@ export default function FacebookAds({ customers }) {
                         />
                         {filterKeyword && (
                             <button onClick={() => setFilterKeyword('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-                                <i className="fas fa-times text-xs"></i>
+                                <X className="w-3 h-3" />
                             </button>
                         )}
                     </div>
@@ -607,7 +615,7 @@ export default function FacebookAds({ customers }) {
                             <div className="mb-8 p-6 bg-rose-500/10 border border-rose-500/30 rounded-[2rem] flex items-center justify-between animate-pulse">
                                 <div className="flex items-center gap-6">
                                     <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center text-[#0A1A2F] shadow-lg shadow-rose-500/20">
-                                        <i className="fas fa-key text-xl"></i>
+                                        <KeyRound className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h3 className="text-rose-500 font-black text-lg tracking-tight">Facebook Token Expired</h3>
@@ -624,7 +632,7 @@ export default function FacebookAds({ customers }) {
                             <div className="mb-8 p-6 bg-amber-500/10 border border-amber-500/30 rounded-[2rem] flex items-center justify-between">
                                 <div className="flex items-center gap-6">
                                     <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-[#0A1A2F] shadow-lg shadow-amber-500/20">
-                                        <i className="fas fa-clock-rotate-left text-xl"></i>
+                                        <RotateCcw className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h3 className="text-amber-500 font-black text-lg tracking-tight">Data Delay Detected</h3>
@@ -636,7 +644,7 @@ export default function FacebookAds({ customers }) {
                                     disabled={syncing}
                                     className="px-6 py-3 bg-amber-500 text-[#0A1A2F] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all flex items-center gap-3"
                                 >
-                                    <i className={`fas fa-sync-alt ${syncing ? 'animate-spin' : ''}`}></i>
+                                    <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                                     {syncing ? 'Syncing...' : 'Sync Today\'s Data'}
                                 </button>
                             </div>
@@ -647,18 +655,18 @@ export default function FacebookAds({ customers }) {
                         {/* KPI Cards */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
-                                { label: 'Total Spend', value: `฿${fmt(totalSpend, 2)}`, icon: 'fa-money-bill-wave', color: 'from-blue-600 to-blue-500', iconBg: 'bg-blue-500/20 text-blue-400' },
-                                { label: 'ROAS', value: `${fmt(avgROAS, 2)}x`, icon: 'fa-chart-line', color: 'from-[#C9A34E] to-amber-500', iconBg: 'bg-[#C9A34E]/20 text-[#C9A34E]' },
+                                { label: 'Total Spend', value: `฿${fmt(totalSpend, 2)}`, Icon: Banknote, color: 'from-blue-600 to-blue-500', iconBg: 'bg-blue-500/20 text-blue-400' },
+                                { label: 'ROAS', value: `${fmt(avgROAS, 2)}x`, Icon: TrendingUp, color: 'from-[#C9A34E] to-amber-500', iconBg: 'bg-[#C9A34E]/20 text-[#C9A34E]' },
                                 {
                                     label: 'Purchases',
                                     value: fmt(totalPurchases),
-                                    icon: 'fa-shopping-cart',
+                                    Icon: ShoppingCart,
                                     color: 'from-emerald-600 to-emerald-500',
                                     iconBg: 'bg-emerald-500/20 text-emerald-400',
                                     onClick: () => setPurchaseModalOpen(true),
                                     cursor: 'cursor-pointer hover:scale-[1.02]'
                                 },
-                                { label: 'Cost / Purchase', value: `฿${fmt(avgCPP, 0)}`, icon: 'fa-tag', color: 'from-rose-600 to-rose-500', iconBg: 'bg-rose-500/20 text-rose-400' },
+                                { label: 'Cost / Purchase', value: `฿${fmt(avgCPP, 0)}`, Icon: Tag, color: 'from-rose-600 to-rose-500', iconBg: 'bg-rose-500/20 text-rose-400' },
                             ].map((kpi, i) => (
                                 <div
                                     key={i}
@@ -669,7 +677,7 @@ export default function FacebookAds({ customers }) {
                                     <div className="flex items-start justify-between mb-3">
                                         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{kpi.label} {dashboardMode === 'daily' ? '(Daily)' : '(30-Day)'}</p>
                                         <div className={`w-8 h-8 rounded-lg ${kpi.iconBg} flex items-center justify-center`}>
-                                            <i className={`fas ${kpi.icon} text-xs`}></i>
+                                            <kpi.Icon className="w-4 h-4" />
                                         </div>
                                     </div>
                                     {kpi.label === 'Total Spend' ? (
@@ -684,17 +692,17 @@ export default function FacebookAds({ customers }) {
                                 </div>
                             ))}
                             {[
-                                { label: 'Cost / Message', value: `฿${fmt(avgCostPerMsg, 0)}`, icon: 'fa-comment-dollar', iconBg: 'bg-blue-500/20 text-blue-400', color: 'from-blue-600 to-cyan-500' },
-                                { label: 'Cost / Result', value: `฿${fmt(avgCPR, 2)}`, icon: 'fa-poll', iconBg: 'bg-indigo-500/20 text-indigo-400', color: 'from-indigo-600 to-indigo-500' },
-                                { label: 'CTR', value: `${fmt(avgCTR, 2)}%`, icon: 'fa-percentage', iconBg: 'bg-purple-500/20 text-purple-400', color: 'from-purple-600 to-purple-500' },
-                                { label: 'Active Campaigns', value: activeCampaigns.toString(), icon: 'fa-bullhorn', iconBg: 'bg-slate-500/20 text-slate-400', color: 'from-slate-600 to-slate-500' },
+                                { label: 'Cost / Message', value: `฿${fmt(avgCostPerMsg, 0)}`, Icon: MessageSquare, iconBg: 'bg-blue-500/20 text-blue-400', color: 'from-blue-600 to-cyan-500' },
+                                { label: 'Cost / Result', value: `฿${fmt(avgCPR, 2)}`, Icon: BarChart2, iconBg: 'bg-indigo-500/20 text-indigo-400', color: 'from-indigo-600 to-indigo-500' },
+                                { label: 'CTR', value: `${fmt(avgCTR, 2)}%`, Icon: Percent, iconBg: 'bg-purple-500/20 text-purple-400', color: 'from-purple-600 to-purple-500' },
+                                { label: 'Active Campaigns', value: activeCampaigns.toString(), Icon: Megaphone, iconBg: 'bg-slate-500/20 text-slate-400', color: 'from-slate-600 to-slate-500' },
                             ].map((kpi, i) => (
                                 <div key={i + 4} className="bg-[#0A1A2F]/60 border border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-white/20 transition-all">
                                     <div className={`absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r ${kpi.color}`}></div>
                                     <div className="flex items-start justify-between mb-3">
                                         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{kpi.label} {dashboardMode === 'daily' ? '(Daily)' : '(30-Day)'}</p>
                                         <div className={`w-8 h-8 rounded-lg ${kpi.iconBg} flex items-center justify-center`}>
-                                            <i className={`fas ${kpi.icon} text-xs`}></i>
+                                            <kpi.Icon className="w-4 h-4" />
                                         </div>
                                     </div>
                                     <div className="text-2xl font-black text-white tracking-tight">
@@ -792,7 +800,7 @@ export default function FacebookAds({ customers }) {
                             ) : (
                                 <div className="flex items-center justify-center h-52 text-white/20">
                                     <div className="text-center">
-                                        <i className="fas fa-chart-bar text-4xl mb-3"></i>
+                                        <BarChart className="w-10 h-10 mx-auto mb-3" />
                                         <p className="text-xs font-bold uppercase tracking-widest">No daily data available</p>
                                     </div>
                                 </div>
@@ -843,7 +851,7 @@ export default function FacebookAds({ customers }) {
                                                     >
                                                         <td className="p-4 pl-8">
                                                             <div className="flex items-center gap-3">
-                                                                <i className={`fas fa-chevron-${isExpanded ? 'down' : 'right'} text-[8px] text-white/30 w-3 transition-transform`}></i>
+                                                                {isExpanded ? <ChevronDown className="w-2.5 h-2.5 text-white/30" /> : <ChevronRight className="w-2.5 h-2.5 text-white/30" />}
                                                                 <div className="min-w-0">
                                                                     <p className="font-black text-white truncate max-w-[200px]">{c.name}</p>
                                                                     <p className="text-[9px] text-white/30 mt-0.5">
@@ -866,7 +874,7 @@ export default function FacebookAds({ customers }) {
                                                                     </span>
                                                                 </div>
                                                                 <span className="flex items-center gap-1 text-[7px] text-emerald-400/60 font-black uppercase tracking-widest whitespace-nowrap">
-                                                                    <i className="fas fa-shield-check"></i> Audited
+                                                                    <ShieldCheck className="w-2.5 h-2.5" /> Audited
                                                                 </span>
                                                             </div>
                                                         </td>
@@ -907,8 +915,8 @@ export default function FacebookAds({ customers }) {
                                                                 >
                                                                     <td className="p-3 pl-16">
                                                                         <div className="flex items-center gap-2">
-                                                                            <i className={`fas fa-chevron-${isAdsetExpanded ? 'down' : 'right'} text-[7px] text-blue-400/40 w-2`}></i>
-                                                                            <i className="fas fa-layer-group text-[8px] text-blue-400/60"></i>
+                                                                            {isAdsetExpanded ? <ChevronDown className="w-2.5 h-2.5 text-blue-400/40" /> : <ChevronRight className="w-2.5 h-2.5 text-blue-400/40" />}
+                                                                            <Layers className="text-blue-400/60 w-2.5 h-2.5" />
                                                                             <p className="text-[11px] text-white/70 truncate max-w-[180px]">{adset.name}</p>
                                                                         </div>
                                                                     </td>
@@ -946,8 +954,8 @@ export default function FacebookAds({ customers }) {
                                                                         <tr key={ad.id || k} className="bg-white/[0.02] border-l-4 border-emerald-500/30 group">
                                                                             <td className="p-2 pl-24">
                                                                                 <div className="flex items-center gap-3">
-                                                                                    <div className="w-8 h-8 rounded bg-white/5 border border-white/10 overflow-hidden flex-shrink-0">
-                                                                                        {ad.thumbnail ? <img src={ad.thumbnail} alt="" className="w-full h-full object-cover" /> : <i className="fas fa-image text-[10px] text-white/10 h-full w-full flex items-center justify-center"></i>}
+                                                                                    <div className="w-8 h-8 rounded bg-white/5 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                                                                        {ad.thumbnail ? <img src={ad.thumbnail} alt="" className="w-full h-full object-cover" /> : <ImageOff className="w-4 h-4 text-white/10" />}
                                                                                     </div>
                                                                                     <div className="min-w-0">
                                                                                         <p className="text-[10px] text-white/60 truncate max-w-[150px] font-bold">{ad.name}</p>
@@ -955,7 +963,7 @@ export default function FacebookAds({ customers }) {
                                                                                             onClick={(e) => { e.stopPropagation(); setSelectedAd(ad); }}
                                                                                             className="text-[8px] font-black text-blue-400 uppercase tracking-widest hover:text-blue-300 flex items-center gap-1 mt-0.5"
                                                                                         >
-                                                                                            <i className="fas fa-chart-pie text-[7px]"></i> Visual Report
+                                                                                            <PieChart className="w-2.5 h-2.5" /> Visual Report
                                                                                         </button>
                                                                                     </div>
                                                                                 </div>
@@ -996,7 +1004,7 @@ export default function FacebookAds({ customers }) {
                                         {campaigns.length === 0 && (
                                             <tr>
                                                 <td colSpan={9} className="p-12 text-center text-white/20">
-                                                    <i className="fas fa-bullhorn text-4xl mb-3 block"></i>
+                                                    <Megaphone className="w-10 h-10 mx-auto mb-3" />
                                                     <p className="text-xs font-bold uppercase tracking-widest">No campaigns found</p>
                                                 </td>
                                             </tr>
@@ -1063,7 +1071,7 @@ export default function FacebookAds({ customers }) {
                             <div>
                                 <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                        <i className="fas fa-shopping-cart"></i>
+                                        <ShoppingCart className="w-6 h-6" />
                                     </div>
                                     Purchase Breakdown
                                 </h2>
@@ -1077,7 +1085,7 @@ export default function FacebookAds({ customers }) {
                                 onClick={() => setPurchaseModalOpen(false)}
                                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors"
                             >
-                                <i className="fas fa-times"></i>
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -1145,7 +1153,7 @@ export default function FacebookAds({ customers }) {
                                 <div className="flex flex-col h-full bg-blue-900/10 rounded-2xl border border-blue-500/10 overflow-hidden">
                                     <div className="p-4 border-b border-blue-500/10 bg-blue-900/20 flex justify-between items-center">
                                         <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                                            <i className="fab fa-facebook"></i> Hierarchical Breakdown
+                                            <Facebook className="w-3.5 h-3.5" /> Hierarchical Breakdown
                                         </h3>
                                         <span className="text-[9px] font-bold text-blue-400/60 bg-blue-400/10 px-2 py-0.5 rounded-full">
                                             Campaign &gt; Ad Set &gt; Ad
@@ -1161,7 +1169,7 @@ export default function FacebookAds({ customers }) {
 
                                             if (activeCampaigns.length === 0) return (
                                                 <div className="h-full flex flex-col items-center justify-center text-center p-8 text-white/20">
-                                                    <i className="fas fa-ghost text-4xl mb-2"></i>
+                                                    <Ghost className="w-10 h-10 mx-auto mb-2" />
                                                     <p className="text-xs">No Ad Attribution Found</p>
                                                 </div>
                                             );
@@ -1179,7 +1187,7 @@ export default function FacebookAds({ customers }) {
                                                             className={`bg-blue-600/10 border border-blue-500/20 rounded-xl p-3 flex justify-between items-center cursor-pointer hover:bg-blue-600/20 transition-all ${isExpanded ? 'border-blue-500/50 bg-blue-600/20' : ''}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <i className={`fas fa-chevron-right text-[10px] text-blue-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}></i>
+                                                                <ChevronRight className={`w-3 h-3 text-blue-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                                                 <div>
                                                                     <p className="font-bold text-white text-sm line-clamp-1">{camp.name}</p>
                                                                     <p className="text-[10px] text-blue-300 font-black uppercase tracking-tighter">Campaign</p>
@@ -1211,7 +1219,7 @@ export default function FacebookAds({ customers }) {
                                                                                 className={`bg-white/5 border border-white/10 rounded-lg p-2 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all ${isAdsetExpanded ? 'bg-white/10 border-white/20' : ''}`}
                                                                             >
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <i className={`fas fa-caret-right text-[10px] text-white/30 transition-transform ${isAdsetExpanded ? 'rotate-90' : ''}`}></i>
+                                                                                    <ChevronRight className={`w-2.5 h-2.5 text-white/30 transition-transform ${isAdsetExpanded ? 'rotate-90' : ''}`} />
                                                                                     <div>
                                                                                         <p className="font-bold text-white/80 text-xs line-clamp-1">{adset.name}</p>
                                                                                         <p className="text-[9px] text-white/40 font-bold uppercase tracking-tighter">Ad Set</p>
@@ -1233,8 +1241,8 @@ export default function FacebookAds({ customers }) {
                                                                                         return (
                                                                                             <div key={ad.id} className="bg-white/5 p-2 rounded-md flex justify-between items-center group">
                                                                                                 <div className="flex items-center gap-2">
-                                                                                                    <div className="w-6 h-6 rounded bg-white/10 overflow-hidden shrink-0">
-                                                                                                        {ad.thumbnail ? <img src={ad.thumbnail} className="w-full h-full object-cover" /> : <i className="fas fa-ad text-[10px] m-auto"></i>}
+                                                                                                    <div className="w-6 h-6 rounded bg-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                                                                                                        {ad.thumbnail ? <img src={ad.thumbnail} className="w-full h-full object-cover" /> : <Megaphone className="w-3.5 h-3.5 text-white/20" />}
                                                                                                     </div>
                                                                                                     <div className="min-w-0">
                                                                                                         <p className="text-[11px] font-medium text-white/60 truncate w-32 md:w-48 group-hover:text-white transition-colors">{ad.name}</p>
@@ -1266,7 +1274,7 @@ export default function FacebookAds({ customers }) {
                                 <div className="flex flex-col h-full bg-emerald-900/10 rounded-2xl border border-emerald-500/10 overflow-hidden">
                                     <div className="p-4 border-b border-emerald-500/10 bg-emerald-900/20">
                                         <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                            <i className="fas fa-box-open"></i> Actual Products Sold (CRM)
+                                            <Package className="w-3.5 h-3.5" /> Actual Products Sold (CRM)
                                         </h3>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -1361,7 +1369,7 @@ export default function FacebookAds({ customers }) {
                                             if (relevantOrders.length === 0) {
                                                 return (
                                                     <div className="h-full flex flex-col items-center justify-center text-center p-8 text-white/20">
-                                                        <i className="fas fa-inbox text-4xl mb-2"></i>
+                                                        <Inbox className="w-10 h-10 mx-auto mb-2" />
                                                         <p className="text-xs">No CRM orders found for {targetDateStr || 'this period'}.</p>
                                                     </div>
                                                 );
@@ -1383,17 +1391,17 @@ export default function FacebookAds({ customers }) {
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[10px] font-medium">
                                                                     <p className="text-white/60 flex items-center gap-1">
-                                                                        <i className="fas fa-user-circle text-emerald-400"></i> {ord.customer}
+                                                                        <UserCircle className="w-3 h-3 text-emerald-400" /> {ord.customer}
                                                                     </p>
                                                                     <p className="text-emerald-300 flex items-center gap-1">
-                                                                        <i className="fas fa-headset"></i> {ord.agent}
+                                                                        <Headphones className="w-3 h-3" /> {ord.agent}
                                                                     </p>
                                                                     <p className="text-white/40 flex items-center gap-1">
-                                                                        <i className="fas fa-clock"></i> {ord.time}
+                                                                        <Clock className="w-2.5 h-2.5" /> {ord.time}
                                                                     </p>
                                                                     {ord.attribution && (
                                                                         <p className="text-blue-300/60 flex items-center gap-1 italic">
-                                                                            <i className="fas fa-bullhorn text-[8px]"></i> {ord.attribution}
+                                                                            <Megaphone className="w-2.5 h-2.5" /> {ord.attribution}
                                                                         </p>
                                                                     )}
                                                                 </div>
