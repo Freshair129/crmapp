@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-14 (Phase 1–13 ✅)
+> Last updated: 2026-03-15 (Phase 1–13 ✅ | Phase 15 Planned)
 
 ---
 
@@ -35,6 +35,7 @@
 | Phase 12 | Unified Inbox + Redis Cache | ✅ Done | 6/6 |
 | Phase 13 | NotificationRules API + LINE Messaging | ✅ Done | 4/4 |
 | Phase 14 | Production Hardening + Testing | 🔲 Planned | 0/? |
+| Phase 15 | Asset + Kitchen Ops + Course Enrollment | 🔲 Planned | 0/50 |
 
 ---
 
@@ -206,13 +207,35 @@
 
 ---
 
+---
+
+## 📋 Phase 15: Asset + Kitchen Ops + Course Enrollment
+> **ADRs:** ADR-035 (Remove FB Login), ADR-036 (Google Sheets SSOT), ADR-037 (Product-as-Course)
+> **Goal:** Course enrollment tracking, kitchen stock + BOM, purchase requests, asset inventory, Google Sheets master data sync, POS enhancement
+> **Implement Plan:** `docs/implement_plan_phase15.md`
+> **Target version:** v0.15.0
+
+| # | Sub-phase | สถานะ |
+|---|---|---|
+| 15a | Prisma Schema + Migration (9 models) | 🔲 |
+| 15b | Repository Layer + Business Logic + Unit Tests | 🔲 |
+| 15c | API Routes (17 routes) | 🔲 |
+| 15d | UI Components (8 components) | 🔲 |
+| 15e | Sidebar Wiring + Google Sheets Template | 🔲 |
+
+**New Models:** Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset
+
+**Certificate Rule:** hoursCompleted ≥ 30 → Level 1 | ≥ 111 → Full Course 111 | ≥ 201 → Full Course 201
+
+---
+
 ## 📋 Backlog / Known Issues
 
 | ID | Issue | Priority |
 |---|---|---|
-| BKL-01 | FB Login พัง (PSID mapping recovery) — FR1.1 | HIGH |
+| BKL-01 | ~~FB Login พัง (PSID mapping recovery) — FR1.1~~ | ~~HIGH~~ → **CLOSED** (ADR-035: FB hides admin PSID by design — won't fix) |
 | BKL-02 | Revenue real-time socket integration — FR5.1 | MEDIUM |
-| BKL-03 | Product.linkedMenuIds → Course-to-Menu link | LOW |
+| BKL-03 | ~~Product.linkedMenuIds → Course-to-Menu link~~ | ~~LOW~~ → **RESOLVED** by ADR-037 (Product-as-Course, Phase 15) |
 
 ---
 
