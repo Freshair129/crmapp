@@ -1,6 +1,7 @@
 
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { Send, RefreshCw, Eye, EyeOff, Lock, Clock, Mail, Star, Headphones, User, Users, Hand, Facebook, MessageSquare, Phone, Tag, CheckCircle2, BarChart2, Loader2, GraduationCap, Search, Wand2 } from 'lucide-react';
 
 export default function FacebookChat({ onViewCustomer, initialCustomerId, currentUser }) {
     const [conversations, setConversations] = useState([]);
@@ -490,7 +491,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
         return (
             <div className="flex items-center justify-center h-full text-white/50">
                 <div className="text-center">
-                    <i className="fas fa-circle-notch animate-spin text-3xl mb-4 text-blue-500"></i>
+                    <Loader2 className="animate-spin text-3xl mb-4 text-blue-500" size={30} />
                     <p className="text-xs font-bold uppercase tracking-widest">Loading Chats...</p>
                 </div>
             </div>
@@ -517,7 +518,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                             }`}
                         >
-                            <i className={`fas ${readMode === 'stealth' ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                            {readMode === 'stealth' ? <EyeOff size={12} /> : <Eye size={12} />}
                             <span className="text-[9px] uppercase tracking-widest">{readMode}</span>
                         </button>
                         <button
@@ -526,13 +527,13 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             className={`p-2 rounded-xl transition-all ${isSyncing ? 'bg-blue-500/20 text-blue-400 rotate-180' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
                             title="Force Sync from Facebook"
                         >
-                            <i className={`fas fa-sync-alt text-xs ${isSyncing ? 'animate-spin' : ''}`}></i>
+                            <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
                         </button>
                     </div>
 
                     {isTokenExpired && (
                         <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-3 animate-pulse">
-                            <i className="fas fa-key text-rose-500 text-xs"></i>
+                            <Lock size={12} className="text-rose-500" />
                             <div>
                                 <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Token Expired</p>
                                 <p className="text-[8px] text-rose-500/70 font-bold leading-tight">Sync restricted to local cache.</p>
@@ -542,7 +543,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
 
                     {!isTokenExpired && (
                         <div className="flex items-center gap-2 text-[8px] font-bold text-white/20 uppercase tracking-widest">
-                            <i className="fas fa-clock"></i>
+                            <Clock size={10} />
                             Last Updated: {lastUpdated.toLocaleTimeString()}
                         </div>
                     )}
@@ -596,7 +597,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                         : 'bg-white/5 text-white/30 border-white/10 hover:bg-white/10'
                                 }`}
                             >
-                                <i className="fas fa-envelope text-xs"></i>
+                                <Mail size={12} />
                             </button>
                         </div>
                     </div>
@@ -643,7 +644,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                                 className={`transition-colors ${conv.isStarred ? 'text-[#C9A34E] hover:text-[#e0b961]' : 'text-white/20 hover:text-white/50'}`}
                                                 title={conv.isStarred ? "Unstar" : "Star"}
                                             >
-                                                <i className="fas fa-star text-[10px]"></i>
+                                                <Star size={10} />
                                             </button>
                                             {getParticipantName(conv)}
                                         </h3>
@@ -669,7 +670,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                                     />
                                                 );
                                             })()}
-                                            <i className="fas fa-headset text-blue-500/50"></i> {conv.agent || 'Unassigned'}
+                                            <Headphones size={10} className="text-blue-500/50" /> {conv.agent || 'Unassigned'}
                                         </div>
                                         {conv.unread_count > 0 && (
                                             <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-md">
@@ -717,7 +718,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                         className={`transition-colors flex items-center justify-center w-6 h-6 rounded-md hover:bg-white/10 ${selectedConv.isStarred ? 'text-[#C9A34E]' : 'text-white/20 hover:text-white/50'}`}
                                         title={selectedConv.isStarred ? "Unstar Chat" : "Star Chat"}
                                     >
-                                        <i className="fas fa-star text-[14px]"></i>
+                                        <Star size={14} />
                                     </button>
                                 </h2>
                                 <div className="flex items-center gap-3 mt-1.5">
@@ -729,14 +730,14 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                         {selectedConv.id}
                                     </span>
                                     <span className="text-[9px] text-blue-300/80 font-black uppercase tracking-wider border-l border-white/10 pl-3 flex items-center gap-1.5">
-                                        <i className="fas fa-user-shield"></i>
+                                        <User size={10} />
                                         Agent: {selectedConv.agent || 'Unassigned'}
                                     </span>
 
                                     {/* Expose Extracted Senders explicitly to eliminate guesswork */}
                                     {(selectedConv.intelligence?.senders?.length > 0 || selectedConv.customer?.intelligence?.senders?.length > 0) && (
                                         <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-md flex items-center gap-1.5 shadow-sm">
-                                            <i className="fas fa-users-cog text-[8px]"></i>
+                                            <Users size={8} />
                                             {(selectedConv.intelligence?.senders || selectedConv.customer?.intelligence?.senders).join(', ')}
                                         </span>
                                     )}
@@ -746,18 +747,18 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                             onClick={() => handleAssignAgent(currentUser?.identities?.facebook?.name || currentUser?.facebookName || currentUser?.nickName || currentUser?.firstName || 'Me')}
                                             className="ml-4 px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500/40 transition-all flex items-center gap-1.5"
                                         >
-                                            <i className="fas fa-hand-paper"></i> Claim Chat
+                                            <Hand size={10} /> Claim Chat
                                         </button>
                                     )}
 
                                     {/* Direct Facebook Business Suite Deep Link */}
                                     <a
-                                        href={`https://business.facebook.com/latest/inbox/all?asset_id=113042456073167&selected_item_id=${(selectedConv.id || '').replace('t_', '')}`}
+                                        href={`https://business.facebook.com/latest/inbox/all?asset_id=${pageId || '170707786504'}&selected_item_id=${(selectedConv.id || '').replace('t_', '')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="ml-auto px-4 py-1.5 bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/30 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#1877F2]/20 hover:shadow-[0_0_10px_rgba(24,119,242,0.2)] transition-all flex items-center gap-2"
                                     >
-                                        <i className="fab fa-facebook text-[11px]"></i> Open in Meta Suite
+                                        <Facebook size={11} /> Open in Meta Suite
                                     </a>
                                 </div>
                             </div>
@@ -769,7 +770,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         {messages.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-white/20 px-12 text-center">
                                 <div>
-                                    <i className="fas fa-history text-4xl mb-4 opacity-20"></i>
+                                    <Clock size={36} className="mb-4 opacity-20" />
                                     <p className="text-xs font-black uppercase tracking-[0.2em] mb-2">
                                         {selectedConv?.has_history ? 'Loading History...' : 'No Local History'}
                                     </p>
@@ -777,7 +778,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             </div>
                         ) : (
                             messages.map((msg, i) => {
-                                const knownPageIds = [pageId, '113042456073167', '170707786504', 'PAGE'];
+                                const knownPageIds = [pageId, '170707786504', 'PAGE'].filter(Boolean);
                                 // Parse metadata defensively in case it's a string from DB
                                 let parsedMeta = msg.metadata;
                                 if (typeof parsedMeta === 'string') {
@@ -846,13 +847,13 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                         />
                         <button type="submit" disabled={sending || !inputText.trim()} className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50">
-                            {sending ? <i className="fas fa-circle-notch animate-spin"></i> : <i className="fas fa-paper-plane"></i>}
+                            {sending ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
                         </button>
                     </form>
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-white/30 bg-[#0f2440]/50">
-                    <i className="fas fa-comments text-4xl mb-6"></i>
+                    <MessageSquare size={36} className="mb-6" />
                     <h3 className="text-2xl font-black mb-2 text-white/80">Welcome to Inbox</h3>
                     <p className="text-xs">Select a conversation to start chatting</p>
                 </div>
@@ -902,7 +903,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         {selectedConv.customer?.contact_info?.phone && (
                             <div className="flex items-center gap-2.5">
                                 <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                                    <i className="fas fa-phone text-[9px] text-white/40"></i>
+                                    <Phone size={9} className="text-white/40" />
                                 </div>
                                 <span className="text-[11px] text-white/70 font-bold">{selectedConv.customer.contact_info.phone}</span>
                             </div>
@@ -910,14 +911,14 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         {selectedConv.customer?.contact_info?.email && (
                             <div className="flex items-center gap-2.5">
                                 <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                                    <i className="fas fa-envelope text-[9px] text-white/40"></i>
+                                    <Mail size={9} className="text-white/40" />
                                 </div>
                                 <span className="text-[11px] text-white/60 truncate">{selectedConv.customer.contact_info.email}</span>
                             </div>
                         )}
                         <div className="flex items-center gap-2.5">
                             <div className="w-6 h-6 rounded-lg bg-[#1877F2]/10 flex items-center justify-center shrink-0">
-                                <i className="fab fa-facebook text-[9px] text-[#1877F2]"></i>
+                                <Facebook size={9} className="text-[#1877F2]" />
                             </div>
                             <span className="text-[10px] text-white/35 font-mono truncate">
                                 {selectedConv.customer?.contact_info?.facebook_id || selectedConv.participant_id || '—'}
@@ -926,7 +927,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                         {(selectedConv.intelligence?.senders?.length > 0 || selectedConv.customer?.intelligence?.senders?.length > 0) && (
                             <div className="flex items-start gap-2.5 mt-1">
                                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i className="fas fa-users-cog text-[8px] text-blue-400"></i>
+                                    <Users size={8} className="text-blue-400" />
                                 </div>
                                 <span className="text-[9px] text-blue-400 font-black leading-tight">
                                     {(selectedConv.intelligence?.senders || selectedConv.customer?.intelligence?.senders).join(', ')}
@@ -939,14 +940,14 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     {getCustomerTags(selectedConv).length > 0 && (
                         <div className="px-5 py-4 border-b border-white/5">
                             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
-                                <i className="fas fa-tags text-blue-500 text-[9px]"></i> Labels
+                                <Tag size={9} className="text-blue-500" /> Labels
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                                 {getCustomerTags(selectedConv).map((tag, idx) => {
                                     const isPaid = tag.toLowerCase().includes('paid') || tag.includes('ชำระ') || tag.includes('โอน');
                                     return (
                                         <span key={idx} className={`px-2 py-0.5 rounded-md text-[8px] font-black border uppercase tracking-wider flex items-center gap-1 ${isPaid ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-white/35 border-white/10'}`}>
-                                            {isPaid && <i className="fas fa-check-circle text-[7px]"></i>}{tag}
+                                            {isPaid && <CheckCircle2 size={7} />}{tag}
                                         </span>
                                     );
                                 })}
@@ -958,11 +959,11 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     {(loadingAd || activeAd) && (
                         <div className="px-5 py-4 border-b border-white/5">
                             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
-                                <i className="fas fa-ad text-indigo-400 text-[9px]"></i> Ad Attribution
+                                <BarChart2 size={9} className="text-indigo-400" /> Ad Attribution
                             </p>
                             {loadingAd ? (
                                 <div className="h-14 bg-white/5 rounded-xl flex items-center justify-center">
-                                    <i className="fas fa-circle-notch animate-spin text-indigo-500/50"></i>
+                                    <Loader2 className="animate-spin text-indigo-500/50" size={16} />
                                 </div>
                             ) : (
                                 <div className="bg-[#0d1e36] rounded-xl border border-indigo-500/20 overflow-hidden">
@@ -991,7 +992,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     {selectedConv.customer?.inventory?.learning_courses?.length > 0 && (
                         <div className="px-5 py-4 border-b border-white/5">
                             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5">
-                                <i className="fas fa-graduation-cap text-amber-500 text-[9px]"></i> Courses Owned
+                                <GraduationCap size={9} className="text-amber-500" /> Courses Owned
                             </p>
                             <div className="space-y-1.5">
                                 {selectedConv.customer.inventory.learning_courses.map((item, i) => (
@@ -1008,11 +1009,11 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     <div className="px-5 py-4 border-b border-white/5">
                         <div className="flex justify-between items-center mb-2.5">
                             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                                <i className="fas fa-search-dollar text-purple-400 text-[9px]"></i> AI Detect
+                                <Search size={9} className="text-purple-400" /> AI Detect
                             </p>
                             <button onClick={handleDiscoverProducts} disabled={isAnalyzing}
                                 className="text-[8px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-all flex items-center gap-1 disabled:opacity-50">
-                                {isAnalyzing ? <i className="fas fa-circle-notch animate-spin"></i> : <i className="fas fa-magic"></i>}
+                                {isAnalyzing ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
                                 {isAnalyzing ? 'Scanning...' : 'Scan'}
                             </button>
                         </div>
@@ -1050,14 +1051,14 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             }}
                             className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                         >
-                            <i className="fas fa-id-card"></i> View Full Profile
+                            <User size={14} /> View Full Profile
                         </button>
                         <a
                             href={`https://business.facebook.com/latest/inbox/all?selected_item_id=${(selectedConv.id || '').replace('t_', '')}`}
                             target="_blank" rel="noopener noreferrer"
                             className="w-full py-2.5 bg-[#1877F2]/10 hover:bg-[#1877F2]/20 text-[#1877F2] border border-[#1877F2]/20 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                         >
-                            <i className="fab fa-facebook"></i> Open in Meta Suite
+                            <Facebook size={14} /> Open in Meta Suite
                         </a>
                     </div>
                 </div>
