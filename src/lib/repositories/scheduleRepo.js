@@ -40,17 +40,25 @@ export async function getUpcomingSchedules(days = 14) {
         const endDate = new Date();
         endDate.setDate(now.getDate() + days);
 
-        return prisma.courseSchedule.findMany({
+        const rows = await prisma.courseSchedule.findMany({
             where: {
                 scheduledDate: { gte: now, lte: endDate },
                 status: { in: ['OPEN', 'FULL'] }
             },
             include: {
-                product: { select: { name: true, duration: true } },
+                product: { select: { name: true, duration: true, days: true } },
                 instructor: { select: { firstName: true, lastName: true, nickName: true } }
             },
             orderBy: { scheduledDate: 'asc' }
         });
+
+        return rows.map(s => ({
+            ...s,
+            productName: s.product?.name ?? '',
+            instructorName: s.instructor
+                ? (s.instructor.nickName || `${s.instructor.firstName ?? ''} ${s.instructor.lastName ?? ''}`.trim())
+                : '',
+        }));
     } catch (error) {
         logger.error('[ScheduleRepo]', 'Failed to get upcoming schedules', error);
         throw error;

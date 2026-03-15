@@ -32,6 +32,16 @@ function hashColor(str) {
   return COURSE_PALETTE[Math.abs(h) % COURSE_PALETTE.length];
 }
 
+// Normalise schedule row — works regardless of whether API returns flat or nested fields
+function normItem(s) {
+  const productName = s.product?.name || s.productName || '';
+  const instructorName = s.instructor
+    ? (s.instructor.nickName || `${s.instructor.firstName ?? ''} ${s.instructor.lastName ?? ''}`.trim())
+    : (s.instructorName || '');
+  const courseDays = s.product?.days ?? s.courseDays ?? 1;
+  return { ...s, productName, instructorName, courseDays };
+}
+
 export default function ScheduleCalendar({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('LIST');
@@ -106,7 +116,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       setLoading(true);
       const res = await fetch('/api/schedules?upcoming=true&days=30');
       const data = await res.json();
-      setSchedules(Array.isArray(data) ? data : []);
+      setSchedules((Array.isArray(data) ? data : []).map(normItem));
     } catch (err) {
       console.error(err);
     } finally {
@@ -119,7 +129,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       setLoading(true);
       const res = await fetch('/api/schedules');
       const data = await res.json();
-      setCalSchedules(Array.isArray(data) ? data : []);
+      setCalSchedules((Array.isArray(data) ? data : []).map(normItem));
     } catch (err) {
       console.error(err);
     } finally {
@@ -200,7 +210,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     const map = {};
     calSchedules.forEach(s => {
       const startDate = new Date(s.scheduledDate);
-      const totalDays = Math.ceil(s.product?.days || s.days || 1);
+      const totalDays = Math.ceil(s.courseDays || s.product?.days || 1);
       for (let offset = 0; offset < totalDays; offset++) {
         const date = new Date(startDate);
         date.setDate(startDate.getDate() + offset);
@@ -436,29 +446,53 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                               {items.map((s, si) => {
                                 const isCancelled = s.status === 'CANCELLED';
                                 const isCompleted = s.status === 'COMPLETED';
+                                const isFull = s.status === 'FULL';
                                 const colorClass = isCancelled
                                   ? 'bg-red-900/50 text-red-300'
                                   : isCompleted
                                     ? 'bg-white/10 text-white/40'
                                     : hashColor(s.productId || s.productName || String(si));
+                                const isFirstDay = s._offset === 0;
 
                                 return (
                                   <div
                                     key={`${s.id}-${s._offset}`}
-                                    className={`rounded-md px-1.5 py-1 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60 line-through' : ''}`}
-                                    title={`${s.productName}\n${s.startTime}–${s.endTime}\nนักเรียน: ${s.confirmedStudents}/${s.maxStudents}`}
+                                    className={`rounded-md px-1.5 py-1 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60' : ''}`}
+                                    title={`${s.productName}\n${s.startTime}–${s.endTime}\nนักเรียน: ${s.confirmedStudents}/${s.maxStudents}\nสถานะ: ${s.status}`}
                                   >
-                                    <p className="text-[10px] font-black leading-snug break-words">
+                                    {/* Course name — show on every day of multi-day course */}
+                                    <p className={`text-[10px] font-black leading-snug break-words ${isCancelled ? 'line-through' : ''}`}>
                                       {s.productName}
                                     </p>
+
+                                    {/* Day indicator for multi-day */}
                                     {s._totalDays > 1 && (
                                       <p className="text-[9px] opacity-80 font-bold">
-                                        ({s._totalDays} {t.dayUnit}{language === 'TH' ? '' : ' course'})
+                                        ({s._offset + 1}/{s._totalDays} {t.dayUnit})
                                       </p>
                                     )}
-                                    <p className="text-[9px] opacity-75 font-bold">
-                                      {s.startTime}–{s.endTime}
-                                    </p>
+
+                                    {/* Time — only on first day to save space */}
+                                    {isFirstDay && s.startTime && (
+                                      <p className="text-[9px] opacity-75 font-bold">
+                                        {s.startTime}{s.endTime ? `–${s.endTime}` : ''}
+                                      </p>
+                                    )}
+
+                                    {/* Student count + status badge */}
+                                    {isFirstDay && (
+                                      <div className="flex items-center justify-between mt-0.5">
+                                        <span className="text-[8px] opacity-70 font-bold">
+                                          {s.confirmedStudents}/{s.maxStudents} คน
+                                        </span>
+                                        {isFull && (
+                                          <span className="text-[7px] font-black bg-amber-400 text-amber-900 rounded px-1 leading-4">เต็ม</span>
+                                        )}
+                                        {isCancelled && (
+                                          <span className="text-[7px] font-black bg-red-400/30 text-red-200 rounded px-1 leading-4">ยกเลิก</span>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}

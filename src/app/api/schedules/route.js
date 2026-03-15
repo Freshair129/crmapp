@@ -19,13 +19,21 @@ export async function GET(request) {
         }
 
         const prisma = await getPrisma();
-        const data = await prisma.courseSchedule.findMany({
+        const rows = await prisma.courseSchedule.findMany({
             include: {
-                product: { select: { name: true, duration: true, category: true } },
+                product: { select: { name: true, duration: true, category: true, days: true } },
                 instructor: { select: { firstName: true, lastName: true, nickName: true } }
             },
             orderBy: { scheduledDate: 'desc' }
         });
+
+        const data = rows.map(s => ({
+            ...s,
+            productName: s.product?.name ?? '',
+            instructorName: s.instructor
+                ? (s.instructor.nickName || `${s.instructor.firstName ?? ''} ${s.instructor.lastName ?? ''}`.trim())
+                : '',
+        }));
 
         return NextResponse.json(data);
     } catch (error) {
