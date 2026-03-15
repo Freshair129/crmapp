@@ -1,20 +1,27 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight } from 'lucide-react';
+import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export default function PremiumPOS({ language = 'TH' }) {
+    const { data: session } = useSession();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
-    
+    const [enrollmentCount, setEnrollmentCount] = useState(0);
+
     const [customerPhone, setCustomerPhone] = useState('');
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
     const [customerError, setCustomerError] = useState('');
+
+    // Inline Customer Creation
+    const [showRegisterForm, setShowRegisterForm] = useState(false);
+    const [regForm, setRegForm] = useState({ firstName: '', lastName: '', nickName: '' });
 
     useEffect(() => {
         fetch('/api/products')
@@ -82,6 +89,37 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     const handleCheckout = () => {
         setShowCustomerModal(true);
+        setShowRegisterForm(false);
+        setCustomerError('');
+    };
+
+    const handleRegisterCustomer = async () => {
+        if (!regForm.firstName || !regForm.lastName || !customerPhone) {
+            setCustomerError('กรุณากรอกข้อมูลให้ครบถ้วน');
+            return;
+        }
+        setCustomerLookupLoading(true);
+        try {
+            const res = await fetch('/api/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...regForm,
+                    phonePrimary: customerPhone,
+                    channel: 'WALK_IN'
+                })
+            });
+            const customer = await res.json();
+            if (customer.id) {
+                await processOrder(customer);
+            } else {
+                setCustomerError('ไม่สามารถสร้างลูกค้าได้');
+            }
+        } catch (err) {
+            setCustomerError('เกิดข้อผิดพลาดในการสร้างลูกค้า');
+        } finally {
+            setCustomerLookupLoading(false);
+        }
     };
 
     const handleConfirmCheckout = async () => {
@@ -94,12 +132,23 @@ export default function PremiumPOS({ language = 'TH' }) {
             const customer = Array.isArray(data) ? data[0] : (data.customers?.[0] || null);
 
             if (!customer) {
-                setCustomerError('ไม่พบลูกค้า กรุณาลงทะเบียนก่อน');
+                setCustomerError('ไม่พบลูกค้า');
+                setShowRegisterForm(true);
                 setCustomerLookupLoading(false);
                 return;
             }
 
-            await fetch('/api/orders', {
+            await processOrder(customer);
+        } catch (error) {
+            setCustomerError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            setCustomerLookupLoading(false);
+        }
+    };
+
+    const processOrder = async (customer) => {
+        try {
+            const orderRes = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -116,18 +165,45 @@ export default function PremiumPOS({ language = 'TH' }) {
                 })
             });
 
-            setShowCustomerModal(false);
-            setCustomerPhone('');
-            setCustomerError('');
-            setCheckoutSuccess(true);
-            setTimeout(() => {
-                setCheckoutSuccess(false);
-                setCart([]);
-            }, 3000);
-        } catch (error) {
-            setCustomerError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-        } finally {
-            setCustomerLookupLoading(false);
+            if (orderRes.ok) {
+                // UPGRADE 2: Enrollment Creation
+                const courseItems = cart.filter(item =>
+                    ['course', 'package', 'full_course', 'japanese_culinary', 'specialty', 'management'].includes(item.category)
+                );
+
+                let createdEnrollments = 0;
+                for (const item of courseItems) {
+                    try {
+                        await fetch('/api/enrollments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                customerId: customer.id,
+                                productId: item.id,
+                                soldById: session?.user?.employeeId || null,
+                                totalPrice: item.price * item.quantity,
+                                notes: 'POS checkout'
+                            })
+                        });
+                        createdEnrollments++;
+                    } catch (err) {
+                        console.error('[POS] Enrollment failed', err);
+                    }
+                }
+                setEnrollmentCount(createdEnrollments);
+
+                setShowCustomerModal(false);
+                setCustomerPhone('');
+                setCustomerError('');
+                setCheckoutSuccess(true);
+                setTimeout(() => {
+                    setCheckoutSuccess(false);
+                    setCart([]);
+                    setEnrollmentCount(0);
+                }, 4000);
+            }
+        } catch (err) {
+            setCustomerError('เกิดข้อผิดพลาดในการสั่งซื้อ');
         }
     };
 
@@ -152,7 +228,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                     <div className="bg-[#C9A34E] text-[#0A1A2F] p-12 rounded-[3rem] shadow-2xl flex flex-col items-center gap-6 animate-scale-up">
                         <CheckCircle size={112} />
                         <h2 className="text-4xl font-black italic tracking-tight">SUCCESS!</h2>
-                        <p className="font-bold opacity-80 uppercase tracking-widest text-xs">Transaction Processed</p>
+                        <div className="text-center">
+                            <p className="font-bold opacity-80 uppercase tracking-widest text-xs mb-2">Transaction Processed</p>
+                            {enrollmentCount > 0 && (
+                                <p className="font-black text-sm border-t border-[#0A1A2F]/10 pt-2">
+                                    ✅ ลงทะเบียนคอร์ส {enrollmentCount} รายการแล้ว
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -162,30 +245,79 @@ export default function PremiumPOS({ language = 'TH' }) {
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0A1A2F]/90 backdrop-blur-lg p-6">
                     <div className="bg-[#0A1A2F] border border-[#C9A34E]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
                         <div className="text-center">
-                            <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">ค้นหาลูกค้า</h2>
+                            <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">
+                                {showRegisterForm ? 'ลงทะเบียนลูกค้าใหม่' : 'ค้นหาลูกค้า'}
+                            </h2>
                             <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest">Customer Authentication</p>
                         </div>
-                        
-                        <div className="space-y-2">
-                            <input
-                                type="text"
-                                placeholder="เบอร์โทรศัพท์"
-                                value={customerPhone}
-                                onChange={(e) => setCustomerPhone(e.target.value)}
-                                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#C9A34E]/50 outline-none transition-all text-center text-xl"
-                            />
-                            {customerError && <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>}
+
+                        <div className="space-y-4">
+                            {!showRegisterForm ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="เบอร์โทรศัพท์"
+                                        value={customerPhone}
+                                        onChange={(e) => setCustomerPhone(e.target.value)}
+                                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#C9A34E]/50 outline-none transition-all text-center text-xl"
+                                    />
+                                    {customerError && (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>
+                                            <button
+                                                onClick={() => setShowRegisterForm(true)}
+                                                className="text-[#C9A34E] flex items-center gap-2 font-black text-[10px] uppercase hover:underline"
+                                            >
+                                                <UserPlus size={14} /> สร้างลูกค้าใหม่
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="ชื่อ"
+                                            value={regForm.firstName}
+                                            onChange={(e) => setRegForm({...regForm, firstName: e.target.value})}
+                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="นามสกุล"
+                                            value={regForm.lastName}
+                                            onChange={(e) => setRegForm({...regForm, lastName: e.target.value})}
+                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                        />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="ชื่อเล่น (ถ้ามี)"
+                                        value={regForm.nickName}
+                                        onChange={(e) => setRegForm({...regForm, nickName: e.target.value})}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                    />
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={customerPhone}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white font-bold opacity-50"
+                                    />
+                                    {customerError && <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-4">
                             <button
-                                onClick={() => { setShowCustomerModal(false); setCustomerError(''); }}
+                                onClick={() => { setShowCustomerModal(false); setShowRegisterForm(false); setCustomerError(''); }}
                                 className="flex-1 px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/10 text-white/40 hover:bg-white/5 transition-all"
                             >
                                 ยกเลิก
                             </button>
                             <button
-                                onClick={handleConfirmCheckout}
+                                onClick={showRegisterForm ? handleRegisterCustomer : handleConfirmCheckout}
                                 disabled={customerLookupLoading || !customerPhone.trim()}
                                 className="flex-1 bg-[#C9A34E] text-[#0A1A2F] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
@@ -237,10 +369,10 @@ export default function PremiumPOS({ language = 'TH' }) {
                             className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/30 rounded-[2rem] p-4 transition-all duration-500 cursor-pointer relative overflow-hidden active:scale-95"
                         >
                             <div className="aspect-square bg-slate-900 rounded-2xl mb-4 overflow-hidden relative">
-                                <img 
-                                    src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'} 
-                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" 
-                                    alt={product.name} 
+                                <img
+                                    src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'}
+                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                                    alt={product.name}
                                     onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=V+School'; }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1A2F] to-transparent opacity-60"></div>
@@ -284,10 +416,10 @@ export default function PremiumPOS({ language = 'TH' }) {
                     ) : (
                         cart.map(item => (
                             <div key={item.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex gap-4 group hover:bg-white/10 transition-all">
-                                <img 
-                                    src={item.image || 'https://via.placeholder.com/100x100?text=No+Image'} 
-                                    className="w-14 h-14 rounded-xl object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all" 
-                                    alt={item.name} 
+                                <img
+                                    src={item.image || 'https://via.placeholder.com/100x100?text=No+Image'}
+                                    className="w-14 h-14 rounded-xl object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all"
+                                    alt={item.name}
                                     onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=V'; }}
                                 />
                                 <div className="flex-1">
@@ -345,4 +477,3 @@ export default function PremiumPOS({ language = 'TH' }) {
         </div>
     );
 }
-

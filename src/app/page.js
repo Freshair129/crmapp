@@ -32,6 +32,10 @@ import AuditHistory from "@/components/AuditHistory";
 import SystemConfig from "@/components/SystemConfig";
 import LoginPage from "@/components/LoginPage";
 import TopBar from "@/components/TopBar";
+// Phase 15 — Operations
+import ScheduleCalendar from "@/components/ScheduleCalendar";
+import KitchenStockPanel from "@/components/KitchenStockPanel";
+import AssetPanel from "@/components/AssetPanel";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -282,6 +286,18 @@ export default function Home() {
 
                         {activeView === "settings" && wrap("settings",
                             <Settings />
+                        )}
+
+                        {activeView === "schedules" && wrap("schedules",
+                            <ScheduleCalendar language={language} />
+                        )}
+
+                        {activeView === "kitchen-stock" && wrap("kitchen-stock",
+                            <KitchenStockPanel language={language} />
+                        )}
+
+                        {activeView === "assets" && wrap("assets",
+                            <AssetPanel language={language} />
                         )}
 
                     </AnimatePresence>

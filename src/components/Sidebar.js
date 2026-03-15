@@ -1,24 +1,11 @@
 'use client';
 
-import { 
-    PieChart, 
-    Brain, 
-    ShoppingCart, 
-    Package, 
-    History, 
-    Users, 
-    MessageCircle, 
-    MessageSquare, 
-    Megaphone, 
-    Crosshair, 
-    TrendingUp, 
-    Bell, 
-    UserCircle, 
-    Settings2, 
-    Timer, 
-    SlidersHorizontal, 
-    Settings, 
-    LogOut 
+import {
+    PieChart, Brain, ShoppingCart, Package, History,
+    Users, MessageCircle, MessageSquare, Megaphone,
+    Crosshair, TrendingUp, Bell, UserCircle, Settings2,
+    Timer, SlidersHorizontal, Settings, LogOut,
+    ChefHat, Monitor, CalendarDays
 } from 'lucide-react';
 
 const menuGroups = [
@@ -52,6 +39,14 @@ const menuGroups = [
             { id: 'campaign-tracking', icon: Crosshair, label: 'Campaign Tracking' },
             { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
             { id: 'notification-rules', icon: Bell, label: 'Notification Center' }
+        ]
+    },
+    {
+        label: 'OPERATIONS',
+        items: [
+            { id: 'schedules', icon: CalendarDays, label: 'ตารางคลาส' },
+            { id: 'kitchen-stock', icon: ChefHat, label: 'สต็อกครัว' },
+            { id: 'assets', icon: Monitor, label: 'อุปกรณ์' }
         ]
     },
     {
