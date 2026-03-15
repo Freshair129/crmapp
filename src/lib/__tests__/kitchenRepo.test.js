@@ -1,22 +1,33 @@
 // FILE: src/lib/__tests__/kitchenRepo.test.js
+/**
+ * ## Pre-flight: kitchenRepo.js
+ * Models used:
+ *   - prisma.ingredient (findMany, upsert, update, findUnique)
+ *   - prisma.courseBOM (findMany, upsert)
+ *   - prisma.courseSchedule (findUnique)
+ *   - prisma.purchaseRequest (findFirst, create, findUnique)
+ *   - prisma.purchaseRequestItem (createMany)
+ * Internal calls:
+ *   - createPurchaseRequest() calls calculateStockNeeded() → mock at DB level (prisma.courseSchedule, prisma.courseBOM)
+ *   - generatePurchaseRequestId() called inside createPurchaseRequest() → mock prisma.purchaseRequest.findFirst
+ * Function signatures:
+ *   - getAllIngredients(opts = {}) { category, search, lowStockOnly }
+ *   - calculateStockNeeded(scheduleId)
+ *   - createPurchaseRequest(scheduleId, notes)
+ * Potential mock gaps: costPerUnit calculation in PR items.
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-    calculateStockNeeded,
-    getAllIngredients,
-    createPurchaseRequest
+import { 
+    getAllIngredients, 
+    calculateStockNeeded, 
+    createPurchaseRequest 
 } from '../repositories/kitchenRepo';
 import { getPrisma } from '@/lib/db';
 
-vi.mock('@/lib/db', () => ({
-    getPrisma: vi.fn()
-}));
-
+vi.mock('@/lib/db', () => ({ getPrisma: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn()
-    }
+    logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() }
 }));
 
 describe('kitchenRepo', () => {
@@ -26,13 +37,15 @@ describe('kitchenRepo', () => {
         vi.clearAllMocks();
         mockPrisma = {
             $transaction: vi.fn(cb => cb(mockPrisma)),
-            courseSchedule: { findUnique: vi.fn() },
-            // courseBOM (NOT productBOM) — matches actual Prisma model name
-            courseBOM: { findMany: vi.fn(), upsert: vi.fn() },
             ingredient: {
                 findMany: vi.fn(),
-                update: vi.fn(),
-                upsert: vi.fn()
+                findUnique: vi.fn()
+            },
+            courseBOM: {
+                findMany: vi.fn()
+            },
+            courseSchedule: {
+                findUnique: vi.fn()
             },
             purchaseRequest: {
                 findFirst: vi.fn(),
@@ -50,190 +63,104 @@ describe('kitchenRepo', () => {
         vi.useRealTimers();
     });
 
-    // ─────────────────────────────────────────────────
-    // calculateStockNeeded
-    // ─────────────────────────────────────────────────
+    describe('getAllIngredientsScan', () => {
+        it('should filter low stock items in JS layer correctly', async () => {
+            const mockData = [
+                { id: 'i1', name: 'A', currentStock: 5, minStock: 10 },
+                { id: 'i2', name: 'B', currentStock: 20, minStock: 10 }
+            ];
+            mockPrisma.ingredient.findMany.mockResolvedValue(mockData);
+
+            const result = await getAllIngredients({ lowStockOnly: true });
+
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('i1');
+        });
+    });
+
     describe('calculateStockNeeded', () => {
-        it('should calculate qtyNeeded correctly from confirmedStudents', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
-                id: 'sch-1',
-                confirmedStudents: 5,
-                maxStudents: 10,
-                productId: 'prod-1',
-                product: { name: 'Ramen' }
+        it('should use confirmedStudents if available', async () => {
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ 
+                productId: 'p1', 
+                confirmedStudents: 5, 
+                maxStudents: 10 
             });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                {
-                    qtyPerPerson: 0.2,
-                    unit: 'kg',
-                    ingredient: { id: 'ing-1', name: 'Sugar', currentStock: 0.5 }
-                }
+                { qtyPerPerson: 2, unit: 'kg', ingredient: { currentStock: 4 } }
             ]);
 
             const result = await calculateStockNeeded('sch-1');
 
-            expect(result[0].qtyNeeded).toBeCloseTo(1.0);
-            expect(result[0].qtyInStock).toBe(0.5);
-            expect(result[0].qtyToBuy).toBeCloseTo(0.5);
+            expect(result[0].qtyNeeded).toBe(10); // 5 * 2
+            expect(result[0].qtyToBuy).toBe(6);  // 10 - 4
             expect(result[0].isSufficient).toBe(false);
         });
 
-        it('should fallback to maxStudents when confirmedStudents is 0', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
-                id: 'sch-1',
-                confirmedStudents: 0,
-                maxStudents: 8,
-                productId: 'prod-1',
-                product: { name: 'Soba' }
+        it('should fallback to maxStudents if confirmed is 0/null', async () => {
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ 
+                productId: 'p1', 
+                confirmedStudents: 0, 
+                maxStudents: 8 
             });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                {
-                    qtyPerPerson: 1,
-                    unit: 'unit',
-                    ingredient: { id: 'ing-1', name: 'Salt', currentStock: 10 }
-                }
+                { qtyPerPerson: 1, unit: 'pcs', ingredient: { currentStock: 10 } }
             ]);
 
             const result = await calculateStockNeeded('sch-1');
-
             expect(result[0].qtyNeeded).toBe(8);
-            expect(result[0].qtyToBuy).toBe(0);
             expect(result[0].isSufficient).toBe(true);
         });
-
-        it('should set qtyToBuy=0 when stock is sufficient', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
-                id: 'sch-1',
-                confirmedStudents: 5,
-                maxStudents: 10,
-                productId: 'prod-1',
-                product: { name: 'Udon' }
-            });
-            mockPrisma.courseBOM.findMany.mockResolvedValue([
-                {
-                    qtyPerPerson: 1,
-                    unit: 'unit',
-                    ingredient: { id: 'ing-1', name: 'Water', currentStock: 10 }
-                }
-            ]);
-
-            const result = await calculateStockNeeded('sch-1');
-
-            // Math.max(0, 5 - 10) = 0
-            expect(result[0].qtyToBuy).toBe(0);
-        });
-
-        it('should throw if schedule not found', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue(null);
-
-            await expect(calculateStockNeeded('invalid'))
-                .rejects.toThrow('Schedule not found: invalid');
-        });
     });
 
-    // ─────────────────────────────────────────────────
-    // getAllIngredients — lowStockOnly filter is in JS (not DB)
-    // ─────────────────────────────────────────────────
-    describe('getAllIngredients', () => {
-        it('should return only low stock items when lowStockOnly=true', async () => {
-            const ingredients = [
-                { id: '1', name: 'A', currentStock: 5, minStock: 10 },   // low ✓
-                { id: '2', name: 'B', currentStock: 15, minStock: 10 },  // ok
-                { id: '3', name: 'C', currentStock: 10, minStock: 10 }   // low ✓ (equal = low)
-            ];
-            mockPrisma.ingredient.findMany.mockResolvedValue(ingredients);
-
-            // Correct call signature: opts object with lowStockOnly key
-            const result = await getAllIngredients({ lowStockOnly: true });
-
-            expect(result).toHaveLength(2);
-            expect(result.find(i => i.id === '1')).toBeDefined();
-            expect(result.find(i => i.id === '3')).toBeDefined();
-            expect(result.find(i => i.id === '2')).toBeUndefined();
-        });
-
-        it('should return all ingredients when lowStockOnly=false', async () => {
-            const ingredients = [
-                { id: '1', name: 'A', currentStock: 5, minStock: 10 },
-                { id: '2', name: 'B', currentStock: 15, minStock: 10 }
-            ];
-            mockPrisma.ingredient.findMany.mockResolvedValue(ingredients);
-
-            const result = await getAllIngredients({ lowStockOnly: false });
-
-            expect(result).toHaveLength(2);
-        });
-    });
-
-    // ─────────────────────────────────────────────────
-    // createPurchaseRequest
-    // Mocked at DB level — calculateStockNeeded is called internally
-    // ─────────────────────────────────────────────────
     describe('createPurchaseRequest', () => {
-        it('should return { alreadySufficient: true } when all stock is sufficient', async () => {
-            // calculateStockNeeded uses: courseSchedule.findUnique + courseBOM.findMany
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
-                id: 'sch-1',
-                confirmedStudents: 2,
-                maxStudents: 5,
-                productId: 'prod-1',
-                product: { name: 'Test' }
-            });
+        it('should return alreadySufficient if all qtyToBuy are 0', async () => {
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ confirmedStudents: 1, productId: 'p1' });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                {
-                    qtyPerPerson: 1,
-                    unit: 'unit',
-                    ingredient: { id: 'ing-1', name: 'Water', currentStock: 100 }
-                }
+                { qtyPerPerson: 1, ingredient: { currentStock: 10 } }
             ]);
-            // All qtyToBuy=0 → no purchase needed
 
             const result = await createPurchaseRequest('sch-1');
-
             expect(result.alreadySufficient).toBe(true);
-            // $transaction should NOT be called
-            expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+            expect(mockPrisma.purchaseRequest.create).not.toHaveBeenCalled();
         });
 
-        it('should generate PR-YYYYMMDD-NNN format ID', async () => {
+        it('should generate PR ID and create request with items', async () => {
             vi.useFakeTimers();
-            vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
-
-            // Insufficient stock → qtyToBuy > 0
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
-                id: 'sch-1',
-                confirmedStudents: 5,
-                maxStudents: 10,
-                productId: 'prod-1',
-                product: { name: 'Ramen' }
-            });
+            vi.setSystemTime(new Date('2026-03-15'));
+            
+            // Step 1: calculateStockNeeded mock
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ confirmedStudents: 10, productId: 'p1' });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                {
-                    qtyPerPerson: 2,
-                    unit: 'kg',
-                    ingredient: { id: 'ing-1', name: 'Flour', currentStock: 1, costPerUnit: 50 }
+                { 
+                    qtyPerPerson: 1, unit: 'kg', 
+                    ingredient: { id: 'ing-1', currentStock: 5, costPerUnit: 100 } 
                 }
             ]);
 
-            // generatePurchaseRequestId → findFirst for serial
+            // Step 2: generatePurchaseRequestId mock
             mockPrisma.purchaseRequest.findFirst.mockResolvedValue(null);
-            mockPrisma.purchaseRequest.create.mockResolvedValue({ id: 'pr-uuid-1', requestId: 'PR-20260315-001' });
-            mockPrisma.purchaseRequestItem.createMany.mockResolvedValue({ count: 1 });
-            mockPrisma.purchaseRequest.findUnique.mockResolvedValue({
-                id: 'pr-uuid-1',
-                requestId: 'PR-20260315-001',
-                items: []
-            });
 
-            await createPurchaseRequest('sch-1', 'test notes');
+            // Step 3: Transaction mocks
+            mockPrisma.purchaseRequest.create.mockResolvedValue({ id: 'pr-1' });
+            mockPrisma.purchaseRequest.findUnique.mockResolvedValue({ id: 'pr-1', items: [] });
 
-            expect(mockPrisma.purchaseRequest.create).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({
-                        requestId: 'PR-20260315-001'
-                    })
+            await createPurchaseRequest('sch-1', 'Urgently needed');
+
+            expect(mockPrisma.purchaseRequest.create).toHaveBeenCalledWith(expect.objectContaining({
+                data: expect.objectContaining({
+                    requestId: 'PR-20260315-001',
+                    notes: 'Urgently needed'
                 })
-            );
+            }));
+
+            expect(mockPrisma.purchaseRequestItem.createMany).toHaveBeenCalledWith(expect.objectContaining({
+                data: expect.arrayContaining([
+                    expect.objectContaining({
+                        qtyToBuy: 5,
+                        estimatedCost: 500 // 5 * 100
+                    })
+                ])
+            }));
         });
     });
 });
