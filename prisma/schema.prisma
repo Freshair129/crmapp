@@ -741,6 +741,7 @@ model Asset {
   warrantyExpiry  DateTime? @map("warranty_expiry")
   lastServiceDate DateTime? @map("last_service_date")
   notes           String?
+  photos          Json      @default("[]") @map("photos") // Array of base64 or URL strings, max 5
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

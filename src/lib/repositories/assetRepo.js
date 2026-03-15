@@ -41,7 +41,7 @@ export async function getAllAssets(opts = {}) {
     }
 }
 
-export async function createAsset({ name, category, status, location, assignedToId, purchaseDate, purchasePrice, vendor, serialNumber, warrantyExpiry, notes }) {
+export async function createAsset({ name, category, status, location, assignedToId, purchaseDate, purchasePrice, vendor, serialNumber, warrantyExpiry, notes, photos }) {
     try {
         const prisma = await getPrisma();
         const assetId = await generateAssetId(category);
@@ -49,6 +49,7 @@ export async function createAsset({ name, category, status, location, assignedTo
             data: {
                 assetId, name, category: category ?? 'GENERAL', status: status ?? 'ACTIVE',
                 location, assignedToId, vendor, serialNumber, notes,
+                photos: photos ?? [],
                 purchasePrice: purchasePrice ? Number(purchasePrice) : undefined,
                 purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
                 warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : undefined
@@ -66,12 +67,19 @@ export async function updateAsset(id, data) {
         return prisma.asset.update({
             where: { id },
             data: {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.category !== undefined && { category: data.category }),
                 ...(data.status && { status: data.status }),
                 ...(data.location !== undefined && { location: data.location }),
                 ...(data.assignedToId !== undefined && { assignedToId: data.assignedToId }),
                 ...(data.notes !== undefined && { notes: data.notes }),
+                ...(data.vendor !== undefined && { vendor: data.vendor }),
+                ...(data.serialNumber !== undefined && { serialNumber: data.serialNumber }),
+                ...(data.photos !== undefined && { photos: data.photos }),
+                ...(data.purchasePrice !== undefined && { purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null }),
                 ...(data.lastServiceDate && { lastServiceDate: new Date(data.lastServiceDate) }),
-                ...(data.warrantyExpiry && { warrantyExpiry: new Date(data.warrantyExpiry) })
+                ...(data.warrantyExpiry && { warrantyExpiry: new Date(data.warrantyExpiry) }),
+                ...(data.purchaseDate && { purchaseDate: new Date(data.purchaseDate) }),
             },
             include: { assignedTo: { select: { firstName: true, lastName: true, nickName: true } } }
         });
