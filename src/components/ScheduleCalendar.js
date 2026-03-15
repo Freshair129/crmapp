@@ -421,7 +421,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     return (
                       <div
                         key={di}
-                        className={`min-h-[130px] p-1.5 border-r last:border-r-0 border-white/10 align-top ${
+                        className={`min-h-[160px] p-1.5 border-r last:border-r-0 border-white/10 align-top ${
                           !day ? 'bg-black/20' :
                           isToday(day) ? 'bg-[#C9A34E]/8' :
                           isSun ? 'bg-red-500/[0.03]' :
@@ -457,33 +457,40 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                                 return (
                                   <div
                                     key={`${s.id}-${s._offset}`}
-                                    className={`rounded-md px-1.5 py-1 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60' : ''}`}
+                                    className={`rounded-lg px-2 py-1.5 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60' : ''}`}
                                     title={`${s.productName}\n${s.startTime}–${s.endTime}\nนักเรียน: ${s.confirmedStudents}/${s.maxStudents}\nสถานะ: ${s.status}`}
                                   >
-                                    {/* Course name — show on every day of multi-day course */}
-                                    <p className={`text-[10px] font-black leading-snug break-words ${isCancelled ? 'line-through' : ''}`}>
-                                      {s.productName}
-                                    </p>
-
-                                    {/* Day indicator for multi-day */}
-                                    {s._totalDays > 1 && (
-                                      <p className="text-[9px] opacity-80 font-bold">
-                                        ({s._offset + 1}/{s._totalDays} {t.dayUnit})
+                                    {/* Row 1: Course name (large) + DAY indicator */}
+                                    <div className="flex items-start justify-between gap-1 mb-0.5">
+                                      <p className={`text-[11px] font-black leading-tight break-words flex-1 ${isCancelled ? 'line-through' : ''}`}>
+                                        {s.productName}
                                       </p>
-                                    )}
+                                      {s._totalDays > 1 && (
+                                        <span className="text-[8px] font-black opacity-90 whitespace-nowrap shrink-0 mt-px">
+                                          DAY {s._offset + 1}
+                                        </span>
+                                      )}
+                                    </div>
 
-                                    {/* Time — only on first day to save space */}
+                                    {/* Row 2: Time */}
                                     {isFirstDay && s.startTime && (
-                                      <p className="text-[9px] opacity-75 font-bold">
+                                      <p className="text-[9px] opacity-80 font-bold leading-tight">
                                         {s.startTime}{s.endTime ? `–${s.endTime}` : ''}
                                       </p>
                                     )}
 
-                                    {/* Student count + status badge */}
+                                    {/* Row 3: Chef */}
+                                    {isFirstDay && s.instructorName && (
+                                      <p className="text-[9px] opacity-75 font-bold leading-tight">
+                                        Chef: {s.instructorName}
+                                      </p>
+                                    )}
+
+                                    {/* Row 4: Student count + status badges */}
                                     {isFirstDay && (
                                       <div className="flex items-center justify-between mt-0.5">
-                                        <span className="text-[8px] opacity-70 font-bold">
-                                          {s.confirmedStudents}/{s.maxStudents} คน
+                                        <span className="text-[9px] opacity-80 font-bold">
+                                          {s.confirmedStudents}/{s.maxStudents}
                                         </span>
                                         {isFull && (
                                           <span className="text-[7px] font-black bg-amber-400 text-amber-900 rounded px-1 leading-4">เต็ม</span>
