@@ -5,6 +5,28 @@ import { getPrisma } from '@/lib/db';
 import { eventBus } from '@/lib/eventBus';
 import { notificationEngine } from '@/lib/notificationEngine';
 
+/**
+ * Fire-and-forget: fetch sender name from FB Graph API and update customer record.
+ * Called outside prisma.$transaction so it doesn't block webhook < 200ms.
+ */
+async function enrichCustomerName(customerId, psid) {
+    const token = process.env.FB_PAGE_ACCESS_TOKEN;
+    const res = await fetch(`https://graph.facebook.com/v19.0/${psid}?fields=name&access_token=${token}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.name) return;
+    const [firstName, ...rest] = data.name.split(' ');
+    const prisma = await getPrisma();
+    await prisma.customer.update({
+        where: { id: customerId },
+        data: {
+            facebookName: data.name,
+            firstName,
+            lastName: rest.join(' ') || null,
+        },
+    });
+}
+
 const KNOWN_PAGE_IDS = [
     process.env.FB_PAGE_ID,
     ...(process.env.FB_KNOWN_PAGE_IDS || '').split(',').map(s => s.trim()).filter(Boolean)
@@ -78,6 +100,9 @@ async function processEvent(event) {
 
     const prisma = await getPrisma();
 
+    // Track new customer for post-tx enrichment
+    let newCustomerId = null;
+
     // 1. Upsert conversation + customer (NFR5: transaction)
     await prisma.$transaction(async (tx) => {
         // Ensure customer exists
@@ -101,6 +126,7 @@ async function processEvent(event) {
                     },
                     select: { id: true },
                 });
+                newCustomerId = customer.id; // mark for post-tx name enrichment
             } catch (err) {
                 if (err.code === 'P2002') {
                     logger.info('FacebookWebhook', `Race condition recovered for PSID ${customerPsid}`);
@@ -162,7 +188,14 @@ async function processEvent(event) {
         }
     });
 
-    // 3. Broadcast real-time update to all connected SSE clients
+    // 3. Fire-and-forget: enrich new customer name from FB Graph API
+    if (newCustomerId && !isFromPage && process.env.FB_PAGE_ACCESS_TOKEN) {
+        enrichCustomerName(newCustomerId, customerPsid).catch(err =>
+            logger.warn('FacebookWebhook', `Name enrichment failed for ${customerPsid}`, err)
+        );
+    }
+
+    // 4. Broadcast real-time update to all connected SSE clients
     eventBus.emit('chat-update', { conversationId: threadId, customerPsid, isFromPage });
     logger.info('FacebookWebhook', `chat-update emitted for ${threadId}`);
 

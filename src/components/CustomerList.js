@@ -15,9 +15,9 @@ function normalize(c) {
     return {
         _raw: c, // keep original for onSelectCustomer callback
         id: c.customer_id || c.customerId || c.id,
-        firstName: c.firstName || p.first_name || p.firstName || '',
-        lastName: c.lastName || p.last_name || p.lastName || '',
-        nickName: c.nickName || p.nick_name || p.nickName || '',
+        firstName: c.firstName || (c.facebookName ? c.facebookName.split(' ')[0] : '') || p.first_name || p.firstName || '',
+        lastName: c.lastName || (c.facebookName && c.facebookName.includes(' ') ? c.facebookName.split(' ').slice(1).join(' ') : '') || p.last_name || p.lastName || '',
+        nickName: c.nickName || c.facebookName || p.nick_name || p.nickName || '',
         memberId: c.memberId || p.member_id || p.memberId || '',
         agent: c.agent || p.agent || c.intelligence?.agent || 'Unassigned',
         status: c.status || 'New Lead',
@@ -482,8 +482,10 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                                         {(c.firstName || 'C')[0]}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-black text-white group-hover:text-[#C9A34E] transition-colors truncate">{c.firstName} {c.lastName}</p>
-                                                        <p className="text-[10px] font-bold text-white/30 truncate">{c.nickName || c.memberId || c.id}</p>
+                                                        <p className="text-sm font-black text-white group-hover:text-[#C9A34E] transition-colors truncate">
+                                                            {c.firstName || c.lastName ? `${c.firstName} ${c.lastName}`.trim() : <span className="text-white/30 italic">ไม่ระบุชื่อ</span>}
+                                                        </p>
+                                                        <p className="text-[10px] font-bold text-white/30 truncate">{c.nickName || c.memberId || c.facebookId || c.id}</p>
                                                     </div>
                                                 </div>
                                             </td>
