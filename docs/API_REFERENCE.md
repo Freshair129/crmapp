@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-03-14
+> อัปเดตล่าสุด: 2026-03-15 (Phase 16)
 
 ---
 
@@ -23,6 +23,9 @@
 13. [Test](#13-test)
 14. [Unified Inbox (ADR-033)](#14-unified-inbox-adr-033)
 15. [Marketing — Advanced Sync (ADR-024)](#15-marketing--advanced-sync-adr-024)
+17. [Recipes (Phase 16)]
+18. [Packages (Phase 16)]
+19. [Schedule — Complete Session (Phase 16)]
 16. [Google Sheets Integration](#16-google-sheets-integration)
 
 ---
@@ -683,3 +686,137 @@ Manual trigger — sync tasks จาก Google Sheets เข้า database
 | `/api/facebook/webhook` | Legacy — มี file logging เพิ่ม |
 
 ควรรวมเป็น endpoint เดียวในอนาคต
+
+---
+
+## 17. Recipes (Phase 16)
+
+> Repository: `src/lib/repositories/recipeRepo.js`
+
+### `GET /api/recipes`
+
+ดึงสูตรอาหารทั้งหมด พร้อม ingredients + equipment + linked courses
+
+| Field | Value |
+|---|---|
+| Query | `?category=JP\|TH\|WESTERN\|PASTRY` `?search=keyword` `?isActive=true` |
+| Response | `Recipe[]` แต่ละตัวมี `ingredients[].ingredient`, `equipment[]`, `courseMenus[].product` |
+| Auth | Session required |
+
+### `POST /api/recipes`
+
+สร้างสูตรใหม่ พร้อม ingredients + equipment ในครั้งเดียว
+
+| Field | Value |
+|---|---|
+| Body | `{ name*, description, category, sellingPrice, estimatedCost, ingredients: [{ingredientId, qtyPerPerson, unit}], equipment: [{name, unit, qtyRequired, currentStock, minStock}] }` |
+| Response | `Recipe` (201) พร้อม recipeId `RCP-[YYYY]-[SERIAL]` |
+| Validation | `name` required |
+
+### `GET /api/recipes/[id]`
+
+ดึงสูตรรายตัว (UUID)
+
+| Field | Value |
+|---|---|
+| Response | `Recipe` พร้อม `ingredients`, `equipment`, `courseMenus` |
+| Error | 404 if not found |
+
+### `PATCH /api/recipes/[id]`
+
+แก้ไขข้อมูลสูตร (name / description / category / sellingPrice / estimatedCost / isActive)
+
+| Field | Value |
+|---|---|
+| Body | Partial `Recipe` fields |
+| Note | ไม่ได้ replace ingredients/equipment ผ่าน endpoint นี้ (ทำผ่าน DB โดยตรงหรือ endpoint แยก) |
+
+---
+
+## 18. Packages (Phase 16)
+
+> Repository: `src/lib/repositories/packageRepo.js`
+
+### `GET /api/packages`
+
+ดึงแพ็กเกจทั้งหมด พร้อม courses + gifts
+
+| Field | Value |
+|---|---|
+| Query | `?isActive=true` `?search=keyword` |
+| Response | `Package[]` แต่ละตัวมี `courses[].product`, `gifts[]` |
+
+### `POST /api/packages`
+
+สร้างแพ็กเกจใหม่
+
+| Field | Value |
+|---|---|
+| Body | `{ name*, originalPrice*, packagePrice*, description, courses: [{productId, isRequired, isLocked, swapGroup, swapGroupMax, sortOrder}], gifts: [{name, qty, estimatedCost, notes}] }` |
+| Response | `Package` (201) พร้อม packageId `PKG-[YYYY]-[SERIAL]` |
+| Notes | `originalPrice` = sum ราคาคอร์ส (computed client-side), `packagePrice` = ราคาจริงหลังลด |
+
+### `GET /api/packages/[id]`
+
+ดึงแพ็กเกจรายตัว
+
+| Field | Value |
+|---|---|
+| Response | `Package` พร้อม `courses`, `gifts` |
+
+### `PATCH /api/packages/[id]`
+
+แก้ไข name / description / originalPrice / packagePrice / isActive
+
+### `POST /api/packages/[id]/swap`
+
+**Swap course** ใน package enrollment (ใช้ได้ครั้งเดียวต่อ enrollment)
+
+| Field | Value |
+|---|---|
+| Route Param | `[id]` = `PackageEnrollment.id` (UUID) |
+| Body | `{ oldProductId, newProductId }` |
+| Response | Updated `PackageEnrollment` พร้อม `selectedCourses` |
+| Error | 409 if `swapUsedAt != null` (swap already used) |
+| Error | 404 if enrollment not found หรือ oldProductId ไม่อยู่ใน enrollment |
+| Constraint | `newProductId` ต้องอยู่ใน `swapGroup` เดียวกันกับ `oldProductId` (validate ที่ UI layer) |
+
+### `GET /api/packages/enrollments`
+
+ดึงประวัติ package enrollment ของลูกค้า
+
+| Field | Value |
+|---|---|
+| Query | `?customerId=UUID` (required) |
+| Response | `PackageEnrollment[]` พร้อม `package`, `selectedCourses` |
+
+### `POST /api/packages/enrollments`
+
+ลงทะเบียน package สำหรับลูกค้า
+
+| Field | Value |
+|---|---|
+| Body | `{ packageId*, customerId*, totalPrice*, soldById, selectedCourseIds: [UUID], notes }` |
+| Response | `PackageEnrollment` (201) พร้อม enrollmentId `PENR-[YYYY]-[SERIAL]` |
+
+---
+
+## 19. Schedule — Complete Session (Phase 16)
+
+### `POST /api/schedules/[id]/complete`
+
+**Complete session + Real-time stock deduction** (Prisma `$transaction`)
+
+| Field | Value |
+|---|---|
+| Route Param | `[id]` = `CourseSchedule.id` (UUID) |
+| Body | `{ studentCount?: number }` — default = `schedule.confirmedStudents \|\| 1` |
+| Response | `{ schedule, ingredientsDeducted: N, equipmentDeducted: N, studentCount: N }` |
+| Side Effects | **Deducts** `Ingredient.currentStock` (qty × studentCount per recipe) + `RecipeEquipment.currentStock` (qtyRequired per session) via atomic transaction |
+| Error | 404 if schedule not found |
+| Error | 409 if already `COMPLETED` or `CANCELLED` |
+| Note | ตัดสต็อกจาก **ทุก recipe** ที่ link กับ course ผ่าน `CourseMenu` |
+
+---
+
+> **อัปเดต:** 2026-03-15 (Phase 16 — Recipe + Package + Stock Deduction)

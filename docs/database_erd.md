@@ -1,7 +1,7 @@
 # V School CRM — Entity Relationship Diagram (ERD)
 
-**อัปเดต:** 2026-03-14
-**อ้างอิง:** `prisma/schema.prisma` (23 models)
+**อัปเดต:** 2026-03-15 (Phase 16)
+**อ้างอิง:** `prisma/schema.prisma` (37 models)
 **Standard:** Mermaid erDiagram
 
 ---
@@ -57,6 +57,27 @@ erDiagram
     Ad        ||--o| AdLiveStatus   : "สถานะ live"
     Ad        }o--o| AdCreative     : "ใช้ creative"
     Ad        }o--o| Experiment     : "อยู่ใน A/B test"
+
+    %% ═══════════════════════════════
+    %% DOMAIN: Recipe + Menu (Phase 16)
+    %% ═══════════════════════════════
+    Recipe       ||--o{ CourseMenu        : "ใช้ในคอร์ส"
+    Product      ||--o{ CourseMenu        : "มีเมนูที่สอน"
+    Recipe       ||--o{ RecipeIngredient  : "ใช้วัตถุดิบ"
+    Ingredient   ||--o{ RecipeIngredient  : "ถูกใช้ใน recipe"
+    Recipe       ||--o{ RecipeEquipment   : "ต้องการอุปกรณ์พิเศษ"
+
+    %% ═══════════════════════════════
+    %% DOMAIN: Package (Phase 16)
+    %% ═══════════════════════════════
+    Package           ||--o{ PackageCourse            : "ประกอบด้วยคอร์ส"
+    Product           ||--o{ PackageCourse            : "อยู่ใน package"
+    Package           ||--o{ PackageGift              : "มีของแถม"
+    Package           ||--o{ PackageEnrollment        : "ลูกค้าลงทะเบียน"
+    Customer          ||--o{ PackageEnrollment        : "ซื้อ package"
+    Employee          ||--o{ PackageEnrollment        : "ปิดการขาย (PackageEnrollmentSeller)"
+    PackageEnrollment ||--o{ PackageEnrollmentCourse  : "เลือกคอร์สไว้"
+    Product           ||--o{ PackageEnrollmentCourse  : "ถูกเลือก"
 ```
 
 ---
@@ -391,3 +412,133 @@ erDiagram
 | **ADR-027** UUID PKs | ทุก model ใช้ `@default(uuid())` — ไม่ใช้ CUID หรือ auto-increment |
 | **ADR-030** Revenue Split | `Order.conversationId IS NULL` = Store Revenue, `NOT NULL` = Ads Revenue |
 | **ADR-033** Unified Inbox | `Conversation.channel` = "facebook" | "line" — ไม่มี field `channel` บน Customer |
+
+---
+
+## DOMAIN: Recipe + Menu (Phase 16)
+
+```mermaid
+erDiagram
+    Recipe {
+        String  id             PK  "UUID"
+        String  recipeId       UK  "RCP-[YYYY]-[SERIAL]"
+        String  name
+        String  description
+        Float   sellingPrice       "ราคาขาย per เมนู (optional)"
+        Float   estimatedCost      "ต้นทุนรวม (manual หรือ computed)"
+        String  category           "JP | TH | WESTERN | PASTRY | DESSERT | OTHER"
+        Boolean isActive           "default true"
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    CourseMenu {
+        String  id         PK  "UUID"
+        String  productId  FK  "→ Product (Course)"
+        String  recipeId   FK  "→ Recipe"
+        Int     sortOrder      "default 0"
+    }
+
+    RecipeIngredient {
+        String  id           PK  "UUID"
+        String  recipeId     FK  "→ Recipe"
+        String  ingredientId FK  "→ Ingredient (stock)"
+        Float   qtyPerPerson     "ปริมาณต่อ 1 นักเรียน"
+        String  unit             "อาจต่างจาก Ingredient.unit"
+    }
+
+    RecipeEquipment {
+        String  id           PK  "UUID"
+        String  recipeId     FK  "→ Recipe"
+        String  name             "เช่น แม่พิมพ์รูปดาว 10 นิ้ว"
+        String  unit             "default piece"
+        Int     qtyRequired      "จำนวนที่ต้องใช้ต่อ session"
+        Int     currentStock     "default 0"
+        Int     minStock         "default 0"
+        String  notes
+        DateTime createdAt
+        DateTime updatedAt
+    }
+```
+
+## DOMAIN: Package (Phase 16)
+
+```mermaid
+erDiagram
+    Package {
+        String  id             PK  "UUID"
+        String  packageId      UK  "PKG-[YYYY]-[SERIAL]"
+        String  name
+        String  description
+        Float   originalPrice      "sum ราคาคอร์สทั้งหมด (before discount)"
+        Float   packagePrice       "ราคาขายจริง (after discount)"
+        Boolean isActive           "default true"
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    PackageCourse {
+        String  id           PK  "UUID"
+        String  packageId    FK
+        String  productId    FK
+        Boolean isRequired       "true = ต้องเรียน, ห้ามตัดออก"
+        Boolean isLocked         "true = ห้าม swap แม้อยู่ใน swapGroup"
+        String  swapGroup        "null = ไม่มี swap option, เช่น GROUP_A"
+        Int     swapGroupMax     "null = เลือกได้ทั้งหมดในกลุ่ม"
+        Int     sortOrder
+    }
+
+    PackageGift {
+        String  id             PK  "UUID"
+        String  packageId      FK
+        String  name               "เช่น ผ้ากันเปื้อน V School"
+        Int     qty                "default 1"
+        Float   estimatedCost      "ต้นทุนของแถม"
+        String  notes
+    }
+
+    PackageEnrollment {
+        String   id             PK  "UUID"
+        String   enrollmentId   UK  "PENR-[YYYY]-[SERIAL]"
+        String   packageId      FK
+        String   customerId     FK
+        String   soldById       FK  "Employee (optional)"
+        Float    totalPrice
+        String   status             "ACTIVE | COMPLETED | CANCELLED"
+        DateTime swapUsedAt         "null = ยังไม่ swap, non-null = ใช้สิทธิ์แล้ว (1 ครั้ง)"
+        DateTime enrolledAt
+        String   notes
+    }
+
+    PackageEnrollmentCourse {
+        String  id                  PK  "UUID"
+        String  packageEnrollmentId FK
+        String  productId           FK
+        Boolean wasSwapped              "true = เลือกผ่าน swap"
+    }
+```
+
+---
+
+## Stock Deduction Flow (Phase 16)
+
+```
+POST /api/schedules/[id]/complete
+      │
+      ▼
+  CourseSchedule.product
+      │
+      ▼
+  Product.courseMenus[]  ──► CourseMenu ──► Recipe
+                                                │
+                          ┌─────────────────────┤
+                          ▼                     ▼
+                  RecipeIngredient[]      RecipeEquipment[]
+                  (qty × studentCount)   (qtyRequired, per session)
+                          │                     │
+                          ▼                     ▼
+                  Ingredient.currentStock  RecipeEquipment.currentStock
+                  -= total                -= qtyRequired
+                          │
+                   prisma.$transaction (atomic — all or nothing)
+```

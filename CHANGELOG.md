@@ -5,9 +5,46 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — 2026-03-15
+## [v0.16.0] — 2026-03-15
 
-### Phase 15 (In Progress) — Asset + Kitchen Ops + Course Enrollment
+### Phase 16 — Recipe + Package + Real-time Stock Deduction
+
+#### 16a — Schema (prisma db push) ✅
+- `prisma/schema.prisma`: 9 new models — Recipe, CourseMenu, RecipeIngredient, RecipeEquipment, Package, PackageCourse, PackageGift, PackageEnrollment, PackageEnrollmentCourse
+- `Product`: + `hours Float?` (ชั่วโมงเรียน), + `sessionType String?` (MORNING|AFTERNOON|EVENING)
+- `CourseSchedule`: + `sessionType String?`
+- Back-relations added to Customer, Employee, Product, Ingredient
+
+#### 16b — Repository Layer ✅
+- `recipeRepo.js` (new): CRUD recipes, `addCourseMenu/removeCourseMenu`, `getMenusByProduct` — supports nested ingredient + equipment creation
+- `packageRepo.js` (new): CRUD packages + gifts + courses, `createPackageEnrollment`, `swapCourseInEnrollment` (atomic `$transaction`, enforces 1-swap-per-enrollment rule)
+- `scheduleRepo.js` (updated): + `completeSessionWithStockDeduction(id, studentCount)` — Prisma `$transaction` deducts `Ingredient.currentStock` (qty × studentCount) + `RecipeEquipment.currentStock` (per session)
+
+#### 16c — API Routes ✅
+- `GET|POST /api/recipes` — list + create recipes
+- `GET|PATCH /api/recipes/[id]` — detail + update
+- `GET|POST /api/packages` — list + create packages
+- `GET|PATCH /api/packages/[id]` — detail + update
+- `POST /api/packages/[id]/swap` — one-time course swap (409 if already used)
+- `GET|POST /api/packages/enrollments` — list by customer + create enrollment
+- `POST /api/schedules/[id]/complete` — complete session + real-time stock deduction
+
+#### 16d — UI ✅
+- `RecipePage.js` (new): expandable recipe cards, low-stock badges, add modal with ingredient/equipment builder
+- `PackagePage.js` (new): expandable package cards, swap group display, discount calculation, add modal with auto-calculate originalPrice
+- `Sidebar.js`: OPERATIONS group + BookOpen (เมนูสูตร) + Gift (แพ็กเกจ)
+
+#### 16e — Docs ✅
+- `docs/API_REFERENCE.md`: sections 17–19 (Recipes, Packages, Schedule Complete)
+- `docs/database_erd.md`: Phase 16 domain added
+- `docs/adr/038-recipe-package-stock-deduction.md` (new ADR)
+- `docs/guide/VALIDATOR.md` (new): QA checklist + manual validation procedures
+
+---
+
+## [v0.15.0] — 2026-03-15
+
+### Phase 15 — Asset + Kitchen Ops + Course Enrollment
 
 #### 15a — Schema ✅
 - `prisma/schema.prisma`: 9 new models — Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset
