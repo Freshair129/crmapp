@@ -1,20 +1,14 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import FacebookProvider from "next-auth/providers/facebook";
 import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
 const handler = NextAuth({
     providers: [
-        // ─── FR1.1: Facebook Meta Login ──────────────────────────────────────
-        FacebookProvider({
-            clientId: process.env.FACEBOOK_APP_ID,
-            clientSecret: process.env.FACEBOOK_APP_SECRET,
-            authorization: { params: { scope: "email" } },
-        }),
-
-        // ─── Email + Password (existing) ─────────────────────────────────────
+        // ─── Email + Password ─────────────────────────────────────────────────
+        // การเข้าระบบทำโดย Manager/Dev สร้าง account ให้ employee เท่านั้น
+        // ไม่มี self-signup, ไม่มี OAuth (FB Login ถูกตัดออก — ไม่สามารถ attribute admin reply ได้)
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -62,87 +56,11 @@ const handler = NextAuth({
     secret: process.env.NEXTAUTH_SECRET,
 
     callbacks: {
-        // ─── FR1.1 + FR1.2: ตรวจสอบ Facebook user → ต้องมีใน Employee registry ─
-        async signIn({ account, profile }) {
-            if (account?.provider === "facebook") {
-                try {
-                    const prisma = await getPrisma();
-
-                    // หา Employee จาก facebookSub ก่อน (เคย link แล้ว)
-                    let employee = await prisma.employee.findUnique({
-                        where: { facebookSub: profile.id }
-                    });
-
-                    // ถ้ายังไม่ link → ลอง match ด้วย email (auto-link ครั้งแรก)
-                    if (!employee && profile.email) {
-                        employee = await prisma.employee.findUnique({
-                            where: { email: profile.email }
-                        });
-
-                        if (employee) {
-                            // Auto-link: บันทึก facebookSub ลง Employee
-                            await prisma.employee.update({
-                                where: { id: employee.id },
-                                data: { facebookSub: profile.id }
-                            });
-                            logger.info('NEXTAUTH', 'Facebook auto-linked to employee', {
-                                employeeId: employee.employeeId,
-                                facebookSub: profile.id,
-                            });
-                        }
-                    }
-
-                    // FR1.2: ถ้าไม่พบใน registry → ปฏิเสธ
-                    if (!employee || employee.status !== "ACTIVE") {
-                        logger.warn('NEXTAUTH', 'Facebook login rejected — not in registry', {
-                            facebookSub: profile.id,
-                            email: profile.email,
-                        });
-                        return "/auth/signin?error=NotRegistered";
-                    }
-
-                    return true;
-                } catch (error) {
-                    logger.error('NEXTAUTH', 'Facebook signIn callback error', error);
-                    return false;
-                }
-            }
-
-            return true; // Credentials provider — ผ่านแล้วจาก authorize()
-        },
-
-        // ─── JWT: แนบ role + employeeId ลงใน token ──────────────────────────
-        async jwt({ token, user, account, profile }) {
-            // Credentials login: user มี role + employeeId จาก authorize()
-            if (user && account?.provider === "credentials") {
+        async jwt({ token, user }) {
+            if (user) {
                 token.role = user.role;
                 token.employeeId = user.employeeId;
             }
-
-            // Facebook login: ดึง Employee จาก DB แล้วแนบ role + employeeId
-            if (account?.provider === "facebook" && profile?.id) {
-                try {
-                    const prisma = await getPrisma();
-                    const employee = await prisma.employee.findFirst({
-                        where: {
-                            OR: [
-                                { facebookSub: profile.id },
-                                { email: profile.email || "" }
-                            ]
-                        }
-                    });
-
-                    if (employee) {
-                        token.role = employee.role;
-                        token.employeeId = employee.employeeId;
-                        token.name = `${employee.firstName} ${employee.lastName}`;
-                        token.email = employee.email;
-                    }
-                } catch (error) {
-                    logger.error('NEXTAUTH', 'JWT Facebook lookup error', error);
-                }
-            }
-
             return token;
         },
 

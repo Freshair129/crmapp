@@ -32,3 +32,22 @@ data/ad-mapping.json
 # Chat backup files (sensitive customer data — never commit)
 backup/
 prisma/*.db
+.claude/skills/academic-researcher
+.claude/skills/code-reviewer
+.claude/skills/content-creator
+.claude/skills/data-analyst
+.claude/skills/debugger
+.claude/skills/decision-helper
+.claude/skills/deep-research
+.claude/skills/editor
+.claude/skills/email-drafter
+.claude/skills/fact-checker
+.claude/skills/fullstack-developer
+.claude/skills/meeting-notes
+.claude/skills/project-planner
+.claude/skills/python-expert
+.claude/skills/sprint-planner
+.claude/skills/strategy-advisor
+.claude/skills/technical-writer
+.claude/skills/ux-designer
+.claude/skills/visualization-expert

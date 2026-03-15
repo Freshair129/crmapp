@@ -28,6 +28,36 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-15 13:00] Claude — Architecture Review + Phase 15 Design
+
+- **สิ่งที่ทำ**:
+  - Audit โค้ดที่ Antigravity ทำโดยไม่มี Claude คุม → พบ bugs จาก context loss (C1/C2/S2)
+  - ตัด Facebook Login ออก (ใช้แก้ attribution ไม่ได้จริง — Facebook ซ่อน admin PSID)
+  - ออกแบบ Phase 15: Asset + Kitchen Ops + Course Enrollment domain
+  - ตัดสินใจ architecture: Google Sheets เป็น SSOT สำหรับ master data (courses, BOM, ingredients, assets)
+  - ตัดสินใจ: ใช้ Product model เดิมเป็น Course catalog ไม่สร้าง model ใหม่
+  - บันทึก incident report: `docs/incidents/2026-03-15-context-loss-bugs.md`
+
+- **ไฟล์ที่เปลี่ยน**:
+  - `src/app/api/auth/[...nextauth]/route.js` — ลบ FacebookProvider ออก (simplified)
+  - `docs/incidents/2026-03-15-context-loss-bugs.md` — incident post-mortem (new)
+  - `scripts/check-adr.sh` — fix: cache TTL check เฉพาะ JS/TS files (ไม่ใช่ .md)
+
+- **Breaking Changes**:
+  - ❌ Facebook Login ถูกลบออก — `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` ไม่ใช้แล้ว
+  - Employee ที่เคย login ด้วย FB ต้องใช้ email+password แทน
+  - `employee.facebookSub` field ยังอยู่ใน schema แต่ไม่ถูกใช้ใน auth flow แล้ว
+
+- **ต้อง review**:
+  - Phase 15 design: Product model extended เป็น Course catalog — ดู GOAL.md Phase 15
+  - Google Sheets SSOT approach: 4 tabs (Courses, Ingredients, CourseBOM, Assets) → sync to DB
+
+- **ทำต่อ**:
+  - Phase 15a: Prisma schema — เพิ่ม Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, Asset models
+  - สร้าง Google Sheet template 4 tabs + วาง URL ใน .env
+  - Upgrade POS: สร้างลูกค้าใหม่ได้ + สร้าง Enrollment หลัง checkout
+
+
 ### [2026-03-15] Claude — Bug Audit + Fixes หลัง Antigravity ทำงานโดยไม่มี Supervisor
 - **สิ่งที่ทำ**:
     - Audit codebase หลัง Antigravity ทำงาน unsupervised พบ 3 bugs จริง (Antigravity เขียน entry ว่า "fixed" แต่ code ไม่ตรง)

@@ -5,6 +5,20 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — 2026-03-15
+
+### Phase 15 (Planned) — Asset + Kitchen Ops + Course Enrollment
+- **Architecture Decision**: ใช้ `Product` model เดิมเป็น Course catalog (ไม่สร้าง Course model ใหม่)
+- **Architecture Decision**: Google Sheets เป็น SSOT สำหรับ master data — sync to DB via CRM UI
+- **Planned models**: Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset
+
+### Auth Cleanup (2026-03-15)
+- **`src/app/api/auth/[...nextauth]/route.js`**: ลบ FacebookProvider ออก — Facebook ซ่อน admin PSID ทำให้ attribution ไม่ทำงานจริง. Login เหลือแค่ email+password
+- **`docs/incidents/2026-03-15-context-loss-bugs.md`** (new): Post-mortem — context loss bugs จาก Antigravity unsupervised session
+- **`scripts/check-adr.sh`**: Fix cache TTL guard ให้ตรวจเฉพาะ JS/TS files
+
+---
+
 ## [Unreleased] — 2026-03-14
 
 ### Phase 13 — NotificationRules + LINE Messaging (by Antigravity)
