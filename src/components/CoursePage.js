@@ -9,10 +9,12 @@ import {
     Trash2
 } from 'lucide-react';
 
+// 1 วัน = 2 session มาตรฐาน (เช้า + บ่าย)
+// EVENING = session ค่ำพิเศษ ไม่ใช่ session ปกติ
 const SESSION_LABELS = {
-    MORNING:   { label: 'เช้า',   icon: Sun,    color: 'text-amber-400 bg-amber-400/10' },
-    AFTERNOON: { label: 'บ่าย',   icon: Sunset, color: 'text-orange-400 bg-orange-400/10' },
-    EVENING:   { label: 'ค่ำ',    icon: Moon,   color: 'text-indigo-400 bg-indigo-400/10' }
+    MORNING:   { label: 'เช้า',        icon: Sun,    color: 'text-amber-400 bg-amber-400/10',   isStandard: true },
+    AFTERNOON: { label: 'บ่าย',        icon: Sunset, color: 'text-orange-400 bg-orange-400/10', isStandard: true },
+    EVENING:   { label: 'ค่ำ (พิเศษ)', icon: Moon,   color: 'text-indigo-400 bg-indigo-400/10', isStandard: false }
 };
 
 const CATEGORIES = ['JP', 'TH', 'WESTERN', 'PASTRY', 'DESSERT', 'OTHER'];
@@ -173,7 +175,7 @@ function AddCourseModal({ onClose, onCreated }) {
                                             {sessionCount(parseFloat(form.hours), parseFloat(form.days))} session
                                         </span>
                                         <span className="ml-1">
-                                            ({parseFloat(form.hours) / parseFloat(form.days) > 6 ? 'เต็มวัน — 2 session/วัน' : 'ครึ่งวัน — 1 session/วัน'})
+                                            ({parseFloat(form.hours) / parseFloat(form.days) > 6 ? 'เต็มวัน — เช้า + บ่าย' : 'ครึ่งวัน — 1 session'})
                                         </span>
                                     </p>
                                 )}
@@ -276,9 +278,9 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
                                     onChange={e => setForm({ ...form, sessionSlot: e.target.value })}
                                 >
                                     <option value="">ไม่ระบุ</option>
-                                    <option value="MORNING">เช้า</option>
-                                    <option value="AFTERNOON">บ่าย</option>
-                                    <option value="EVENING">ค่ำ</option>
+                                    <option value="MORNING">เช้า (session 1)</option>
+                                    <option value="AFTERNOON">บ่าย (session 2)</option>
+                                    <option value="EVENING">ค่ำ (พิเศษ)</option>
                                 </select>
                             </div>
                         </div>
@@ -439,7 +441,7 @@ function CourseCard({ course, onUpdated }) {
                         )}
                         {sc && (
                             <span className="flex items-center gap-1 text-[10px] font-black text-emerald-400/70 bg-emerald-500/5 px-2 py-1 rounded-full">
-                                {sc} session
+                                {sc} session ({course.days} วัน × {sc / course.days} session/วัน)
                             </span>
                         )}
                         {course.sessionType && <SessionBadge slot={course.sessionType} />}
