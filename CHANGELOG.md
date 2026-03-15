@@ -5,6 +5,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [v0.18.0] — 2026-03-16
+
+### Phase 18 — Production Hardening & API Optimization (by Antigravity)
+
+#### Infrastructure & Reliability
+- **`src/app/api/webhooks/facebook/route.js`**: Fixed race condition in Customer creation using atomic `try-catch` with Prisma `P2002` (Unique constraint) recovery. Moved hardcoded Page IDs to `KNOWN_PAGE_IDS` env-based array.
+- **`src/lib/redis.js`**: Improved safety with `JSON.parse` wrappers (auto-delete corrupted keys). Added 30s `_inflight` watchdog timeout to prevent memory leaks on hung promises. Implemented negative caching (30s) for failed fetchers.
+
+#### Performance & Scaling
+- **`src/app/api/marketing/sync-hourly/route.js`**: Added exponential backoff retry (1s, 2s, 4s) for Graph API 429 errors. Implemented concurrency batching (`BATCH_SIZE = 5`) for ad insights to speed up sync while respecting limits.
+- **`src/app/api/marketing/chat/conversations/route.js`**: Added cursor-based pagination (`limit`, `cursor`). Optimized database load by restricting messages include to `take: 1`.
+
+#### Null Safety & UX
+- **Chat Conversations**: Implemented null-safe Display Name mapping (firstName > facebookName > participantId) and safe message snippet slicing to prevent 500 errors on incomplete data.
+- **Token Expiry**: Added proactive detection of `OAuthException` (code 190) in hourly sync, returning 401 early to prompt env-var renewal.
+
 ## [v0.16.0] — 2026-03-15
 
 ### Phase 16 — Recipe + Package + Real-time Stock Deduction

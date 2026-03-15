@@ -17,8 +17,10 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released (tagged) |
 | `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
-| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released ← HEAD |
-| `v0.15.0` | Production Hardening + Testing | 🔲 planned (Phase 14) |
+| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
+| `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released |
+| `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released |
+| `v0.18.0` | Production Hardening & API Optimization | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
@@ -127,12 +129,11 @@ try { ... } catch (error) {
 ## Architecture Phases
 
 ```
-Phase 1-10: [DONE]    Foundation → Identity → RBAC → FB Messaging → Member Self-Reg
-Phase 11:   [DONE]    UI Component Wiring — APIs + components connected to real data
-                      → tagged v0.12.0 (includes Sidebar, TopBar, Charts, Animations)
-Phase 12:   [DONE]    Unified Inbox — รวม FB + LINE inbox + Redis Cache → tagged v0.13.0
-Phase 13:   [DONE]    NotificationRules + LINE Messaging → tagged v0.14.0
-Phase 14:   [NEXT]    Production Hardening + Testing (→ v0.15.0)
+Phase 13-16: [DONE]    NotificationRules → Asset/PR/Kitchen → Recipe/Package
+Phase 18:   [DONE]    Production Hardening & API Optimization — (by Antigravity)
+                      → Redis resilience, Sync Retry/Batching, Chat Pagination
+Phase 14:   [NEXT]    Production Testing (E2E Playwright)
+Phase 17:   [NEXT]    Repository Refactor (Marketing/Inbox)
 ```
 
 ---

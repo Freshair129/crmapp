@@ -37,6 +37,8 @@
 | Phase 14 | Production Hardening + Testing | 🔲 Planned | 0/? |
 | Phase 15 | Asset + Kitchen Ops + Course Enrollment | ✅ Done | 50/50 |
 | Phase 16 | Recipe + Package + Real-time Stock Deduction | ✅ Done | 8/8 |
+| Phase 17 | Repository Layer Refactor (Marketing/Inbox) | 🔲 Planned | 0/? |
+| Phase 18 | Production Hardening & API Optimization | ✅ Done | 4/4 |
 
 ---
 
@@ -250,3 +252,15 @@
 | `prisma/schema.prisma` | Database schema (Phase 1) |
 | `docs/adr/` | Architecture Decision Records |
 | `CHANGELOG.md` | Version history |
+---
+
+## ✅ Phase 18: Production Hardening & API Optimization
+> **Goal:** Fix reliability issues (race conditions, rate limits) and optimize chat performance (pagination)
+> **Implemented by:** Antigravity (Senior Agent)
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 18.1 | [FB Webhook] Race condition recovery for Customer creation + Env-based Page IDs | 🤖 Antigravity | ✅ |
+| 18.2 | [Hourly Sync] 429 Retry/Backoff + Concurrency Batching (Batch Size 5) | 🤖 Antigravity | ✅ |
+| 18.3 | [Chat API] Cursor-based pagination + Null-safe display mapping | 🤖 Antigravity | ✅ |
+| 18.4 | [Redis] JSON.parse safety + _inflight watchdog timeout + Negative caching | 🤖 Antigravity | ✅ |

@@ -29,7 +29,14 @@ class RedisCache {
     async get(key) {
         try {
             const data = await this.client.get(key);
-            return data ? JSON.parse(data) : null;
+            if (!data) return null;
+            try {
+                return JSON.parse(data);
+            } catch (parseError) {
+                logger.warn('[Redis]', `Corrupted cache for key ${key} — deleting`);
+                await this.client.del(key).catch(() => {});
+                return null;
+            }
         } catch (error) {
             logger.error('[Redis]', `GET failed for ${key}`, error);
             return null;
@@ -64,14 +71,26 @@ class RedisCache {
         }
 
         logger.info('[Redis]', `Cache MISS: ${key}. Fetching fresh data...`);
+        
+        const timeoutId = setTimeout(() => {
+            if (this._inflight.has(key)) {
+                this._inflight.delete(key);
+                logger.warn('[Redis]', `_inflight timeout for key ${key}`);
+            }
+        }, 30_000); // 30s max
+
         const promise = fetcher()
             .then(async freshData => {
+                clearTimeout(timeoutId);
                 await this.set(key, freshData, ttlSeconds);
                 this._inflight.delete(key);
                 return freshData;
             })
-            .catch(err => {
+            .catch(async err => {
+                clearTimeout(timeoutId);
                 this._inflight.delete(key);
+                // Cache a null sentinel for 30s to prevent thundering herd on DB errors
+                await this.set(key, null, 30).catch(() => {});
                 throw err;
             });
 

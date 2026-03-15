@@ -5,7 +5,10 @@ import { getPrisma } from '@/lib/db';
 import { eventBus } from '@/lib/eventBus';
 import { notificationEngine } from '@/lib/notificationEngine';
 
-const PAGE_ID = process.env.FB_PAGE_ID;
+const KNOWN_PAGE_IDS = [
+    process.env.FB_PAGE_ID,
+    ...(process.env.FB_KNOWN_PAGE_IDS || '').split(',').map(s => s.trim()).filter(Boolean)
+].filter(Boolean);
 
 // ── GET: Webhook verification ────────────────────────────────────────────────
 export async function GET(request) {
@@ -53,8 +56,7 @@ async function processEvent(event) {
 
     // Handle FB read-receipt: admin read in Business Suite → reset unreadCount in DB
     if (read && !message) {
-        const knownPageIds = [PAGE_ID, '113042456073167', '170707786504'];
-        const isFromPage    = knownPageIds.includes(sender.id);
+        const isFromPage    = KNOWN_PAGE_IDS.includes(sender.id);
         const customerPsid  = isFromPage ? recipient.id : sender.id;
         const threadId      = `t_${customerPsid}`;
         const prisma = await getPrisma();
@@ -70,8 +72,7 @@ async function processEvent(event) {
 
     if (!message || (message.is_echo === true && !message.text && !message.attachments)) return;
 
-    const knownPageIds = [PAGE_ID, '113042456073167', '170707786504'];
-    const isFromPage  = knownPageIds.includes(sender.id) || message?.is_echo === true;
+    const isFromPage  = KNOWN_PAGE_IDS.includes(sender.id) || message?.is_echo === true;
     const customerPsid = isFromPage ? recipient.id : sender.id;
     const threadId     = `t_${customerPsid}`;   // FB thread convention
 
@@ -88,17 +89,30 @@ async function processEvent(event) {
         if (!customer) {
             const { randomUUID } = await import('crypto');
             const customerId = `TVS-CUS-FB-26-${randomUUID().slice(-4).toUpperCase()}`;
-            customer = await tx.customer.create({
-                data: {
-                    customerId,
-                    status: 'Active',
-                    membershipTier: 'MEMBER',
-                    lifecycleStage: 'Lead',
-                    facebookId: customerPsid,
-                    joinDate: new Date(),
-                },
-                select: { id: true },
-            });
+            try {
+                customer = await tx.customer.create({
+                    data: {
+                        customerId,
+                        status: 'Active',
+                        membershipTier: 'MEMBER',
+                        lifecycleStage: 'Lead',
+                        facebookId: customerPsid,
+                        joinDate: new Date(),
+                    },
+                    select: { id: true },
+                });
+            } catch (err) {
+                if (err.code === 'P2002') {
+                    logger.info('FacebookWebhook', `Race condition recovered for PSID ${customerPsid}`);
+                    customer = await tx.customer.findFirst({
+                        where: { facebookId: customerPsid },
+                        select: { id: true },
+                    });
+                    if (!customer) throw err; // real error
+                } else {
+                    throw err;
+                }
+            }
         }
 
         // Upsert conversation
@@ -124,7 +138,7 @@ async function processEvent(event) {
         // 2. Upsert message
         if (message.mid) {
             const attach = (message.attachments || [])[0];
-            const isEcho = message.is_echo === true || knownPageIds.includes(sender.id);
+            const isEcho = message.is_echo === true || KNOWN_PAGE_IDS.includes(sender.id);
             
             await tx.message.upsert({
                 where: { messageId: message.mid },

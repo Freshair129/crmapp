@@ -23,8 +23,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
 | `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
 | `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released |
-| `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released ← HEAD |
-| `v1.0.0` | Production Hardening + Production Ready | 🔲 planned |
+| `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released |
+| `v0.18.0` | Production Hardening & API Optimization | ✅ released ← HEAD |
+| `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
@@ -103,6 +104,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > ⚠️ **Known Gotcha — Phase 16 Stock Deduction**: ตัดสต็อกจาก `RecipeIngredient` (qty × studentCount) + `RecipeEquipment` (qtyRequired per session, ไม่คูณนักเรียน)
 > ⚠️ **Known Gotcha — Package swap**: `swapUsedAt` ใน PackageEnrollment — ถ้า non-null = ใช้สิทธิ์ไปแล้ว → 409 response
 > ⚠️ **Known Gotcha — PackageEnrollment ID format**: PENR-[YYYY]-[SERIAL] (ไม่ใช่ ENR)
+
+### v0.18.0 — สิ่งที่ทำแล้ว (Phase 18) ✅ — by Antigravity
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/app/api/webhooks/facebook/route.js` | ✅ updated | Customer race condition fix (tx try-catch P2002) + env Page IDs |
+| `src/app/api/marketing/sync-hourly/route.js` | ✅ updated | Exponential backoff retry (429) + batch processing (batchSize=5) |
+| `src/app/api/marketing/chat/conversations/route.js` | ✅ updated | Pagination (limit/cursor) + Null-safe display mapping |
+| `src/lib/redis.js` | ✅ updated | JSON.parse safety + _inflight timeout + Negative cache |
+
+> ⚠️ **Known Gotcha — FB Webhook Race**: `findFirst` -> `create` is NOT atomic. ต้องใช้ `try-catch` ครอบ `create` แล้วเช็ค `err.code === 'P2002'` (Prisma unique constraint) เสมอ
+> ⚠️ **Known Gotcha — Redis Leaks**: ถ้าใช้ `_inflight` pattern ต้องมี watchdog timeout เสมอ ไม่งั้นถ้า Promise แขวนจะดึง RAM ไปเรื่อยๆ
 
 ---
 
