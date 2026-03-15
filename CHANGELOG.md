@@ -7,10 +7,29 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased] — 2026-03-15
 
-### Phase 15 (Planned) — Asset + Kitchen Ops + Course Enrollment
-- **Architecture Decision**: ใช้ `Product` model เดิมเป็น Course catalog (ไม่สร้าง Course model ใหม่)
-- **Architecture Decision**: Google Sheets เป็น SSOT สำหรับ master data — sync to DB via CRM UI
-- **Planned models**: Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset
+### Phase 15 (In Progress) — Asset + Kitchen Ops + Course Enrollment
+
+#### 15a — Schema ✅
+- `prisma/schema.prisma`: 9 new models — Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset
+- Back-relations added to Customer, Product, Employee models
+- DB synced via `prisma db push` to Supabase
+
+#### 15b — Repository Layer ✅
+- `enrollmentRepo.js`: createEnrollment (package expand), hours tracking, certLevel thresholds 30h/111h/201h
+- `scheduleRepo.js`: CRUD + upcoming schedules filter
+- `kitchenRepo.js`: stock mgmt, BOM, calculateStockNeeded, auto PurchaseRequest
+- `assetRepo.js`: CRUD + AST-[CAT]-[YYYY]-[SERIAL] ID generation
+
+#### 15c — API Routes ✅
+- 10 routes: enrollments, schedules, kitchen/ingredients, kitchen/purchase, assets (GET/POST/PATCH)
+
+#### Tooling
+- `.claude/skills/plan-phase.md`: workflow skill สำหรับ ADR + implement plan + version control ก่อน implement ทุก phase
+
+#### 15d/15e — Planned
+- UI Components: CourseEnrollmentPanel, KitchenStockPanel, AssetPanel, ScheduleCalendar
+- POS upgrade: inline customer create + Enrollment on checkout
+- Google Sheets sync (4 tabs), Excel export
 
 ### Auth Cleanup (2026-03-15)
 - **`src/app/api/auth/[...nextauth]/route.js`**: ลบ FacebookProvider ออก — Facebook ซ่อน admin PSID ทำให้ attribution ไม่ทำงานจริง. Login เหลือแค่ email+password

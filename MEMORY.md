@@ -28,6 +28,39 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-15 16:00] Claude — Phase 15a/b/c Implementation
+
+- **สิ่งที่ทำ**:
+  - Phase 15a: เพิ่ม 9 Prisma models + `prisma db push` to Supabase
+  - Phase 15b: สร้าง 4 repository files (enrollmentRepo, scheduleRepo, kitchenRepo, assetRepo)
+  - Phase 15c: สร้าง 10 API routes (enrollments, schedules, kitchen/*, assets)
+  - สร้าง `plan-phase` skill — workflow สำหรับ ADR + implement plan + version control
+  - ใช้ Gemini CLI generate boilerplate (Google quota) → Claude review + fix bugs
+
+- **ไฟล์ที่เปลี่ยน**:
+  - `prisma/schema.prisma` — +200 lines, 9 models ใหม่
+  - `src/lib/repositories/enrollmentRepo.js` (new)
+  - `src/lib/repositories/scheduleRepo.js` (new)
+  - `src/lib/repositories/kitchenRepo.js` (new)
+  - `src/lib/repositories/assetRepo.js` (new)
+  - `src/app/api/enrollments/` route.js + [id]/route.js (new)
+  - `src/app/api/schedules/` route.js + [id]/route.js (new)
+  - `src/app/api/kitchen/ingredients/` route.js + [id]/route.js (new)
+  - `src/app/api/kitchen/purchase/` route.js + [id]/route.js (new)
+  - `src/app/api/assets/` route.js + [id]/route.js (new)
+  - `.claude/skills/plan-phase.md` (new)
+
+- **Breaking Changes**: ไม่มี — เพิ่มใหม่ทั้งหมด
+
+- **ต้อง review**:
+  - Gemini bugs ที่ Claude fix: `prisma.schedule` → `prisma.courseSchedule`, PurchaseRequestItem field names, certLevel บน EnrollmentItem ไม่ใช่ Enrollment
+  - `prisma db push` ใช้แทน migrate เพราะ DB drift (facebook_sub column) — ถ้า production ต้องทำ proper migration
+
+- **ทำต่อ**:
+  - Phase 15d: UI Components (CourseEnrollmentPanel, KitchenStockPanel, AssetPanel, ScheduleCalendar)
+  - Phase 15e: POS upgrade (สร้างลูกค้าใหม่ + Enrollment on checkout), Google Sheets sync, Excel export
+  - Sidebar: เพิ่ม nav items สำหรับ Kitchen, Assets, Schedules
+
 ### [2026-03-15 13:00] Claude — Architecture Review + Phase 15 Design
 
 - **สิ่งที่ทำ**:
