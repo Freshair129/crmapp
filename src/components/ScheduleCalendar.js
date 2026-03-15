@@ -303,7 +303,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <input
                     required
                     type="date"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                     value={addForm.scheduledDate}
                     onChange={e => setAddForm({...addForm, scheduledDate: e.target.value})}
                   />
@@ -326,7 +326,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <input
                     required
                     type="time"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                     value={addForm.startTime}
                     onChange={e => setAddForm({...addForm, startTime: e.target.value})}
                   />
@@ -336,7 +336,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <input
                     required
                     type="time"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                     value={addForm.endTime}
                     onChange={e => setAddForm({...addForm, endTime: e.target.value})}
                   />
