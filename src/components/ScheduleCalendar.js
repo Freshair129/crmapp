@@ -462,7 +462,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                                   >
                                     {/* Row 1: Course name (large) + DAY indicator */}
                                     <div className="flex items-start justify-between gap-1 mb-0.5">
-                                      <p className={`text-[11px] font-black leading-tight break-words flex-1 ${isCancelled ? 'line-through' : ''}`}>
+                                      <p className={`text-[20px] font-black leading-tight break-words flex-1 ${isCancelled ? 'line-through' : ''}`}>
                                         {s.productName}
                                       </p>
                                       {s._totalDays > 1 && (
