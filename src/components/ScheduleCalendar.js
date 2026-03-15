@@ -1,13 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Plus, ChevronLeft, ChevronRight, Grid, List, Loader2, MapPin, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, ChevronLeft, ChevronRight, Grid, List, Loader2, MapPin, CheckCircle2, X } from 'lucide-react';
 
 export default function ScheduleCalendar({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('LIST');
   const [schedules, setSchedules] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [instructors, setInstructors] = useState([]);
+  const [addForm, setAddForm] = useState({
+    productId: '',
+    scheduledDate: '',
+    startTime: '09:00',
+    endTime: '13:00',
+    maxStudents: 10,
+    instructorId: '',
+    notes: ''
+  });
+  const [saving, setSaving] = useState(false);
 
   const t = {
     TH: {
@@ -46,6 +58,26 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     fetchSchedules();
   }, []);
 
+  useEffect(() => {
+    if (showAddModal) {
+      // Fetch Products
+      fetch('/api/products')
+        .then(r => r.json())
+        .then(data => {
+          const list = data.data || data;
+          setProducts(Array.isArray(list) ? list.filter(p => p.isActive !== false) : []);
+        });
+      
+      // Fetch Instructors
+      fetch('/api/employees')
+        .then(r => r.json())
+        .then(data => {
+          const list = data.data || data;
+          setInstructors(Array.isArray(list) ? list : []);
+        });
+    }
+  }, [showAddModal]);
+
   const fetchSchedules = async () => {
     try {
       setLoading(true);
@@ -56,6 +88,41 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateSchedule = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      const res = await fetch('/api/schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...addForm,
+          maxStudents: parseInt(addForm.maxStudents),
+          instructorId: addForm.instructorId || undefined,
+          notes: addForm.notes || undefined,
+        })
+      });
+
+      if (res.ok) {
+        await fetchSchedules();
+        setShowAddModal(false);
+        setAddForm({
+          productId: '',
+          scheduledDate: '',
+          startTime: '09:00',
+          endTime: '13:00',
+          maxStudents: 10,
+          instructorId: '',
+          notes: ''
+        });
+      }
+    } catch (err) {
+      alert('Error creating schedule');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -191,6 +258,118 @@ export default function ScheduleCalendar({ language = 'TH' }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative animate-scale-up shadow-3xl">
+            <button 
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-6 right-6 text-white/40 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
+              <Calendar className="text-[#C9A34E]" size={28} /> สร้างรอบเรียนใหม่
+            </h3>
+
+            <form onSubmit={handleCreateSchedule} className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
+                <select
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={addForm.productId}
+                  onChange={e => setAddForm({...addForm, productId: e.target.value})}
+                >
+                  <option value="">เลือกหลักสูตร...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่สอน</label>
+                  <input
+                    required
+                    type="date"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.scheduledDate}
+                    onChange={e => setAddForm({...addForm, scheduledDate: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนนักเรียนสูงสุด</label>
+                  <input
+                    required
+                    type="number"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.maxStudents}
+                    onChange={e => setAddForm({...addForm, maxStudents: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาเริ่ม</label>
+                  <input
+                    required
+                    type="time"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.startTime}
+                    onChange={e => setAddForm({...addForm, startTime: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาสิ้นสุด</label>
+                  <input
+                    required
+                    type="time"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.endTime}
+                    onChange={e => setAddForm({...addForm, endTime: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">อาจารย์ผู้สอน (ถ้ามี)</label>
+                <select
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={addForm.instructorId}
+                  onChange={e => setAddForm({...addForm, instructorId: e.target.value})}
+                >
+                  <option value="">ไม่ระบุ / ค่อยกำหนดภายหลัง</option>
+                  {instructors.map(e => (
+                    <option key={e.id} value={e.id}>{e.nickName || e.firstName} {e.lastName || ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หมายเหตุ</label>
+                <textarea
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 h-24 resize-none"
+                  value={addForm.notes}
+                  onChange={e => setAddForm({...addForm, notes: e.target.value})}
+                  placeholder="เช่น ห้องเรียน A, เตรียมอุปกรณ์พิเศษ..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl shadow-amber-900/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+              >
+                {saving ? 'กำลังสร้าง...' : 'สร้างรอบเรียน'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2 } from 'lucide-react';
+import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2, Plus } from 'lucide-react';
 
 export default function KitchenStockPanel({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
@@ -12,6 +12,16 @@ export default function KitchenStockPanel({ language = 'TH' }) {
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    ingredientId: '',
+    name: '',
+    unit: '',
+    category: 'OTHER',
+    currentStock: 0,
+    minStock: 0,
+    costPerUnit: ''
+  });
 
   const t = {
     TH: {
@@ -98,6 +108,42 @@ export default function KitchenStockPanel({ language = 'TH' }) {
     }
   };
 
+  const handleAddIngredient = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      const res = await fetch('/api/kitchen/ingredients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...addForm,
+          currentStock: parseFloat(addForm.currentStock) || 0,
+          minStock: parseFloat(addForm.minStock) || 0,
+          costPerUnit: addForm.costPerUnit ? parseFloat(addForm.costPerUnit) : undefined
+        })
+      });
+
+      if (res.ok) {
+        const created = await res.json();
+        setIngredients(prev => [...prev, created]);
+        setShowAddModal(false);
+        setAddForm({
+          ingredientId: '',
+          name: '',
+          unit: '',
+          category: 'OTHER',
+          currentStock: 0,
+          minStock: 0,
+          costPerUnit: ''
+        });
+      }
+    } catch (err) {
+      alert('Error creating ingredient');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const filtered = ingredients.filter(ing => {
     const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filter === 'ALL' || ing.category === filter;
@@ -120,6 +166,12 @@ export default function KitchenStockPanel({ language = 'TH' }) {
         <div>
           <h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
             <Package className="text-[#C9A34E]" size={36} /> {t.title}
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="ml-4 bg-[#C9A34E] text-[#0A1A2F] p-2 rounded-2xl hover:scale-110 transition-all font-black"
+            >
+              <Plus size={24} />
+            </button>
           </h2>
           <div className="flex gap-4 mt-4">
             <div className="bg-white/5 px-6 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
@@ -238,6 +290,117 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           </tbody>
         </table>
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative animate-scale-up">
+            <button 
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-6 right-6 text-white/40 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
+              <Plus className="text-[#C9A34E]" size={28} /> เพิ่มวัตถุดิบใหม่
+            </h3>
+
+            <form onSubmit={handleAddIngredient} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ID วัตถุดิบ (ING-XXX)</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="ING-001"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    value={addForm.ingredientId}
+                    onChange={e => setAddForm({...addForm, ingredientId: e.target.value.toUpperCase()})}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หมวดหมู่</label>
+                  <select
+                    className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.category}
+                    onChange={e => setAddForm({...addForm, category: e.target.value})}
+                  >
+                    <option value="PROTEIN">PROTEIN</option>
+                    <option value="VEGETABLE">VEG</option>
+                    <option value="CONDIMENT">CONDIMENT</option>
+                    <option value="DRY_GOODS">DRY GOODS</option>
+                    <option value="OTHER">OTHER</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชื่อวัตถุดิบ</label>
+                <input
+                  required
+                  type="text"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={addForm.name}
+                  onChange={e => setAddForm({...addForm, name: e.target.value})}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หน่วย (เช่น kg)</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="kg"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    value={addForm.unit}
+                    onChange={e => setAddForm({...addForm, unit: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">สต็อกปัจจุบัน</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.currentStock}
+                    onChange={e => setAddForm({...addForm, currentStock: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">สต็อกต่ำสุด</label>
+                  <input
+                    type="number"
+                    step="1"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={addForm.minStock}
+                    onChange={e => setAddForm({...addForm, minStock: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ต้นทุนต่อหน่วย (ถ้ามี)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={addForm.costPerUnit}
+                  onChange={e => setAddForm({...addForm, costPerUnit: e.target.value})}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl shadow-amber-900/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+              >
+                {saving ? 'กำลังสร้าง...' : 'สร้างวัตถุดิบใหม่'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
