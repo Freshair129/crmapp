@@ -41,7 +41,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       students: 'นักเรียน',
       upcoming: 'รอบที่จะถึง',
       full: 'เต็มแล้ว',
-      open: 'เปิดรับสมัคร',
+      open: 'เปิดสอน',
       cancelled: 'ยกเลิก',
       completed: 'สอนเสร็จสิ้น',
       loading: 'กำลังเชื่อมต่อตาราง...',
@@ -421,11 +421,11 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                               {visible.map(s => (
                                 <div
                                   key={s.id}
-                                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border ${statusColors[s.status]}`}
+                                  className={`px-1.5 py-1 rounded-md border ${statusColors[s.status]} overflow-hidden`}
                                   title={`${s.productName} ${s.startTime}-${s.endTime}`}
                                 >
-                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot[s.status]}`} />
-                                  <span className="text-[9px] font-black truncate leading-tight">{s.productName}</span>
+                                  <p className="text-[9px] font-black leading-tight line-clamp-2 break-words">{s.productName}</p>
+                                  <p className="text-[8px] opacity-60 font-bold mt-0.5">{s.startTime}</p>
                                 </div>
                               ))}
                               {overflow > 0 && (
