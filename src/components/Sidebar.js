@@ -5,7 +5,7 @@ import {
     Users, MessageCircle, MessageSquare, Megaphone,
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
-    ChefHat, Monitor, CalendarDays
+    ChefHat, Monitor, CalendarDays, BookOpen, Gift
 } from 'lucide-react';
 
 const menuGroups = [
@@ -45,6 +45,8 @@ const menuGroups = [
         label: 'OPERATIONS',
         items: [
             { id: 'schedules', icon: CalendarDays, label: 'ตารางคลาส' },
+            { id: 'recipes', icon: BookOpen, label: 'เมนูสูตร' },
+            { id: 'packages', icon: Gift, label: 'แพ็กเกจ' },
             { id: 'kitchen-stock', icon: ChefHat, label: 'สต็อกครัว' },
             { id: 'assets', icon: Monitor, label: 'อุปกรณ์' }
         ]

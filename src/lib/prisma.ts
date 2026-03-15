@@ -13,19 +13,10 @@ function createPrismaClient(): PrismaClient {
   })
   const adapter = new PrismaPg(pool)
   
-  const client = new PrismaClient({ 
+  const client = new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' 
-      ? ['query', 'info', 'warn', 'error'] 
-      : ['error']
+    log: ['warn', 'error']  // query log ปิดไว้ — เปิดเมื่อ debug เท่านั้น
   })
-
-  // @ts-ignore - type mismatch with generated client but works at runtime
-  if (process.env.NODE_ENV === 'development') {
-    client.$on('query', (e: any) => {
-      console.log(`Query: ${e.query} - ${e.duration}ms`)
-    })
-  }
 
   return client
 }

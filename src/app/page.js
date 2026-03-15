@@ -36,6 +36,8 @@ import TopBar from "@/components/TopBar";
 import ScheduleCalendar from "@/components/ScheduleCalendar";
 import KitchenStockPanel from "@/components/KitchenStockPanel";
 import AssetPanel from "@/components/AssetPanel";
+import RecipePage from "@/components/RecipePage";
+import PackagePage from "@/components/PackagePage";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -290,6 +292,14 @@ export default function Home() {
 
                         {activeView === "schedules" && wrap("schedules",
                             <ScheduleCalendar language={language} />
+                        )}
+
+                        {activeView === "recipes" && wrap("recipes",
+                            <RecipePage language={language} />
+                        )}
+
+                        {activeView === "packages" && wrap("packages",
+                            <PackagePage language={language} />
                         )}
 
                         {activeView === "kitchen-stock" && wrap("kitchen-stock",

@@ -85,3 +85,98 @@ export async function updateScheduleStatus(id, status) {
         throw error;
     }
 }
+
+/**
+ * Complete a session and deduct stock from ingredients + recipe equipment.
+ * Phase 16: Real-time stock deduction when session is marked COMPLETED.
+ * @param {string} id - CourseSchedule UUID
+ * @param {number} studentCount - Actual number of students in session
+ */
+export async function completeSessionWithStockDeduction(id, studentCount) {
+    try {
+        const prisma = await getPrisma();
+
+        // Load schedule + product + course menus → recipes → ingredients + equipment
+        const schedule = await prisma.courseSchedule.findUnique({
+            where: { id },
+            include: {
+                product: {
+                    include: {
+                        courseMenus: {
+                            include: {
+                                recipe: {
+                                    include: {
+                                        ingredients: true,
+                                        equipment: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!schedule) throw new Error('Schedule not found');
+        if (schedule.status === 'COMPLETED') throw new Error('Session already completed');
+        if (schedule.status === 'CANCELLED') throw new Error('Cannot complete a cancelled session');
+
+        const count = Number(studentCount) || schedule.confirmedStudents || 1;
+
+        return prisma.$transaction(async (tx) => {
+            // Collect all deductions
+            const ingredientDeductions = new Map(); // ingredientId → totalQty
+            const equipmentDeductions = []; // { id, qtyRequired }
+
+            for (const menu of schedule.product.courseMenus) {
+                const { recipe } = menu;
+
+                // Ingredients: qty = qtyPerPerson × studentCount
+                for (const ri of recipe.ingredients) {
+                    const total = ri.qtyPerPerson * count;
+                    ingredientDeductions.set(
+                        ri.ingredientId,
+                        (ingredientDeductions.get(ri.ingredientId) || 0) + total
+                    );
+                }
+
+                // Special equipment: deduct qtyRequired (not per-person — equipment is per session)
+                for (const eq of recipe.equipment) {
+                    equipmentDeductions.push({ id: eq.id, qtyRequired: eq.qtyRequired });
+                }
+            }
+
+            // Deduct ingredients
+            for (const [ingredientId, totalQty] of ingredientDeductions) {
+                await tx.ingredient.update({
+                    where: { id: ingredientId },
+                    data: { currentStock: { decrement: totalQty } }
+                });
+            }
+
+            // Deduct recipe equipment stock
+            for (const eq of equipmentDeductions) {
+                await tx.recipeEquipment.update({
+                    where: { id: eq.id },
+                    data: { currentStock: { decrement: eq.qtyRequired } }
+                });
+            }
+
+            // Mark schedule as COMPLETED
+            const updated = await tx.courseSchedule.update({
+                where: { id },
+                data: { status: 'COMPLETED' },
+                include: {
+                    product: { select: { name: true } },
+                    instructor: { select: { nickName: true } }
+                }
+            });
+
+            logger.info('[ScheduleRepo]', `Session ${schedule.scheduleId} completed — deducted stock for ${count} students, ${ingredientDeductions.size} ingredients, ${equipmentDeductions.length} equipment items`);
+            return { schedule: updated, ingredientsDeducted: ingredientDeductions.size, equipmentDeducted: equipmentDeductions.length, studentCount: count };
+        });
+    } catch (error) {
+        logger.error('[ScheduleRepo]', 'Failed to complete session with stock deduction', error);
+        throw error;
+    }
+}

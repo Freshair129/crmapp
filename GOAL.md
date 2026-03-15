@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-15 (Phase 1–13 ✅ | Phase 15 ✅ Done)
+> Last updated: 2026-03-15 (Phase 1–13 ✅ | Phase 15 ✅ Done | Phase 16 ✅ Done)
 
 ---
 
@@ -36,6 +36,7 @@
 | Phase 13 | NotificationRules API + LINE Messaging | ✅ Done | 4/4 |
 | Phase 14 | Production Hardening + Testing | 🔲 Planned | 0/? |
 | Phase 15 | Asset + Kitchen Ops + Course Enrollment | ✅ Done | 50/50 |
+| Phase 16 | Recipe + Package + Real-time Stock Deduction | ✅ Done | 8/8 |
 
 ---
 

@@ -22,7 +22,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.12.0` | UI Enhanced | ✅ released |
 | `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
 | `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
-| `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released ← HEAD |
+| `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released |
+| `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released ← HEAD |
 | `v1.0.0` | Production Hardening + Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
@@ -77,7 +78,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > ⚠️ **Known Gotcha — Phase 15 DB**: ใช้ `prisma db push` แทน `migrate dev` เพราะ DB drift (facebook_sub column)
 > ⚠️ **Known Gotcha — Gemini scheduleRepo**: model name ต้องเป็น `prisma.courseSchedule` ไม่ใช่ `prisma.schedule`
-> ⚠️ **Backlog**: Repository pattern violations ใน marketing/inbox routes — flag Phase 16
+> ⚠️ **Backlog**: Repository pattern violations ใน marketing/inbox routes — flag Phase 17
+
+### v0.16.0 — สิ่งที่ทำแล้ว (Phase 16) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Recipe, CourseMenu, RecipeIngredient, RecipeEquipment | ✅ done | สูตรอาหาร + วัตถุดิบ + อุปกรณ์พิเศษ (tracked as stock) |
+| `prisma/schema.prisma` → Package, PackageCourse, PackageGift, PackageEnrollment, PackageEnrollmentCourse | ✅ done | แพ็กเกจ + เงื่อนไข swap (1 ครั้ง/enrollment) + ของแถม |
+| `prisma/schema.prisma` → Product.hours, Product.sessionType | ✅ done | ชั่วโมงเรียน + ช่วงเวลา (MORNING/AFTERNOON/EVENING) |
+| `prisma/schema.prisma` → CourseSchedule.sessionType | ✅ done | ระบุ session เช้า-บ่าย-ค่ำ ต่อ schedule |
+| `src/lib/repositories/recipeRepo.js` | ✅ done | CRUD recipes, CourseMenu junction, getMenusByProduct |
+| `src/lib/repositories/packageRepo.js` | ✅ done | CRUD packages, createPackageEnrollment, swapCourseInEnrollment (transaction) |
+| `src/lib/repositories/scheduleRepo.js` | ✅ updated | เพิ่ม completeSessionWithStockDeduction() — ตัดสต็อกใน prisma.$transaction |
+| `src/app/api/recipes/route.js` + `[id]/route.js` | ✅ done | GET+POST / GET+PATCH |
+| `src/app/api/packages/route.js` + `[id]/route.js` | ✅ done | GET+POST / GET+PATCH |
+| `src/app/api/packages/[id]/swap/route.js` | ✅ done | POST — swap course ใน enrollment (1 ครั้ง, 409 ถ้าใช้แล้ว) |
+| `src/app/api/packages/enrollments/route.js` | ✅ done | GET(by customerId)+POST |
+| `src/app/api/schedules/[id]/complete/route.js` | ✅ done | POST — complete session + real-time stock deduction |
+| `src/components/RecipePage.js` | ✅ done | list สูตร, expand วัตถุดิบ+อุปกรณ์, low-stock badge, add modal |
+| `src/components/PackagePage.js` | ✅ done | list แพ็กเกจ, expand courses+gifts+swap groups, add modal (auto-calc originalPrice) |
+| `src/components/Sidebar.js` | ✅ updated | เพิ่ม "เมนูสูตร" (BookOpen) + "แพ็กเกจ" (Gift) ใน OPERATIONS group |
+| `src/app/page.js` | ✅ updated | imports + view cases for recipes/packages |
+
+> ⚠️ **Known Gotcha — Phase 16 Stock Deduction**: ตัดสต็อกจาก `RecipeIngredient` (qty × studentCount) + `RecipeEquipment` (qtyRequired per session, ไม่คูณนักเรียน)
+> ⚠️ **Known Gotcha — Package swap**: `swapUsedAt` ใน PackageEnrollment — ถ้า non-null = ใช้สิทธิ์ไปแล้ว → 409 response
+> ⚠️ **Known Gotcha — PackageEnrollment ID format**: PENR-[YYYY]-[SERIAL] (ไม่ใช่ ENR)
 
 ---
 

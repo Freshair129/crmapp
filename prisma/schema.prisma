@@ -40,13 +40,14 @@ model Customer {
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
-  cart           CartItem[]
-  conversations  Conversation[]
-  inventory      InventoryItem[]
-  orders         Order[]
-  tasks          Task[]
-  timeline       TimelineEvent[]
-  enrollments    Enrollment[]
+  cart               CartItem[]
+  conversations      Conversation[]
+  inventory          InventoryItem[]
+  orders             Order[]
+  tasks              Task[]
+  timeline           TimelineEvent[]
+  enrollments        Enrollment[]
+  packageEnrollments PackageEnrollment[]
 
   @@index([status])
   @@index([phonePrimary])
@@ -237,8 +238,9 @@ model Employee {
   closedOrders          Order[]          @relation("OrderCloser")
   soldEnrollments       Enrollment[]     @relation("EnrollmentSeller")
   instructedSchedules   CourseSchedule[] @relation("ScheduleInstructor")
-  approvedRequests      PurchaseRequest[] @relation("PRApprover")
-  assignedAssets        Asset[]          @relation("AssetAssignee")
+  approvedRequests         PurchaseRequest[]  @relation("PRApprover")
+  assignedAssets           Asset[]            @relation("AssetAssignee")
+  packageEnrollmentsSold   PackageEnrollment[] @relation("PackageEnrollmentSeller")
 
   @@index([status])
   @@index([department])
@@ -259,6 +261,8 @@ model Product {
   basePrice           Float?     @map("base_price")
   image               String?
   category            String     @default("course")
+  hours               Float?                                          // Phase 16: ชั่วโมงเรียนต่อคอร์ส
+  sessionType         String?    @map("session_type")                 // Phase 16: MORNING|AFTERNOON|EVENING
   duration            Int?
   durationUnit        String?    @map("duration_unit")
   linkedMenuIds       String[]   @default([]) @map("linked_menu_ids") // id_standards: COURSE-TO-MENU link
@@ -269,11 +273,14 @@ model Product {
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")
 
-  cartItems       CartItem[]
-  enrollments     Enrollment[]
-  enrollmentItems EnrollmentItem[]
-  schedules       CourseSchedule[]
-  bom             CourseBOM[]
+  cartItems                 CartItem[]
+  enrollments               Enrollment[]
+  enrollmentItems           EnrollmentItem[]
+  schedules                 CourseSchedule[]
+  bom                       CourseBOM[]
+  courseMenus               CourseMenu[]
+  packageCourses            PackageCourse[]
+  packageEnrollmentCourses  PackageEnrollmentCourse[]
 
   @@index([category])
   @@index([isActive])
@@ -621,6 +628,7 @@ model CourseSchedule {
   scheduledDate     DateTime          @map("scheduled_date")
   startTime         String?           @map("start_time")
   endTime           String?           @map("end_time")
+  sessionType       String?           @map("session_type")    // Phase 16: MORNING|AFTERNOON|EVENING
   maxStudents       Int?              @map("max_students")
   confirmedStudents Int               @default(0) @map("confirmed_students")
   status            String            @default("OPEN")
@@ -668,8 +676,9 @@ model Ingredient {
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
-  bom           CourseBOM[]
-  purchaseItems PurchaseRequestItem[]
+  bom              CourseBOM[]
+  purchaseItems    PurchaseRequestItem[]
+  recipeIngredients RecipeIngredient[]
 
   @@index([category])
   @@index([name])
@@ -750,4 +759,174 @@ model Asset {
   @@index([category])
   @@index([status])
   @@map("assets")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Recipe + Menu (Phase 16)
+// ─────────────────────────────────────────────
+
+model Recipe {
+  id            String   @id @default(uuid())
+  recipeId      String   @unique @map("recipe_id")     // RCP-[YYYY]-[SERIAL]
+  name          String
+  description   String?
+  sellingPrice  Float?   @map("selling_price")         // ราคาขาย per menu (optional reference)
+  estimatedCost Float?   @map("estimated_cost")        // ต้นทุนรวม (computed from RecipeIngredient or manual)
+  category      String?                                // ประเภทอาหาร e.g. JP, TH, PASTRY
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  courseMenus CourseMenu[]
+  ingredients RecipeIngredient[]
+  equipment   RecipeEquipment[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("recipes")
+}
+
+// Junction: Course (Product) ↔ Recipe (many-to-many)
+// หนึ่งคอร์สมีได้หลาย recipe; หนึ่ง recipe ใช้ได้ในหลายคอร์ส
+model CourseMenu {
+  id        String @id @default(uuid())
+  productId String @map("product_id")
+  recipeId  String @map("recipe_id")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  recipe  Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, recipeId])
+  @@map("course_menus")
+}
+
+// วัตถุดิบที่ใช้ใน recipe (ตัดสต็อกจาก Ingredient)
+model RecipeIngredient {
+  id           String @id @default(uuid())
+  recipeId     String @map("recipe_id")
+  ingredientId String @map("ingredient_id")
+  qtyPerPerson Float  @map("qty_per_person")  // ปริมาณต่อ 1 นักเรียน
+  unit         String                          // หน่วยวัด (อาจต่างจาก Ingredient.unit หากแปลงหน่วย)
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+// อุปกรณ์พิเศษที่ต้องใช้ใน recipe (ไม่ใช่เครื่องครัวปกติ) — นับเป็น stock
+// e.g. "แม่พิมพ์รูปดาวขนาด 10 นิ้ว", "ใบบัว 10cm"
+model RecipeEquipment {
+  id           String   @id @default(uuid())
+  recipeId     String   @map("recipe_id")
+  name         String                          // ชื่ออุปกรณ์
+  unit         String   @default("piece")     // หน่วย
+  qtyRequired  Int      @map("qty_required")  // จำนวนที่ต้องใช้ต่อ session
+  currentStock Int      @default(0) @map("current_stock")
+  minStock     Int      @default(0) @map("min_stock")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@map("recipe_equipment")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Package (Phase 16)
+// ─────────────────────────────────────────────
+
+model Package {
+  id            String   @id @default(uuid())
+  packageId     String   @unique @map("package_id")    // PKG-[YYYY]-[SERIAL]
+  name          String
+  description   String?
+  originalPrice Float    @map("original_price")        // ราคารวมก่อนลด (sum ของ course.price ทุกตัว)
+  packagePrice  Float    @map("package_price")         // ราคาขายจริง (หลังลด)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  courses     PackageCourse[]
+  gifts       PackageGift[]
+  enrollments PackageEnrollment[]
+
+  @@index([isActive])
+  @@map("packages")
+}
+
+// คอร์สที่รวมอยู่ใน package
+model PackageCourse {
+  id           String  @id @default(uuid())
+  packageId    String  @map("package_id")
+  productId    String  @map("product_id")
+  isRequired   Boolean @default(true) @map("is_required")   // ต้องเรียน (ไม่สามารถตัดออกได้)
+  isLocked     Boolean @default(false) @map("is_locked")    // ห้าม swap แม้อยู่ใน swapGroup
+  swapGroup    String? @map("swap_group")                   // ชื่อกลุ่ม swap เช่น "GROUP_A" (null = ไม่มีตัวเลือก)
+  swapGroupMax Int?    @map("swap_group_max")               // เลือกได้สูงสุดกี่คอร์สจากกลุ่มนี้ (null = ทั้งหมด)
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([packageId, productId])
+  @@map("package_courses")
+}
+
+// ของแถมหรือสิทธิพิเศษที่รวมอยู่ใน package
+model PackageGift {
+  id            String  @id @default(uuid())
+  packageId     String  @map("package_id")
+  name          String                        // ชื่อของแถม e.g. "ผ้ากันเปื้อน V School"
+  qty           Int     @default(1)
+  estimatedCost Float?  @map("estimated_cost")
+  notes         String?
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@map("package_gifts")
+}
+
+// การลงทะเบียน package ของลูกค้า
+model PackageEnrollment {
+  id           String    @id @default(uuid())
+  enrollmentId String    @unique @map("enrollment_id")  // PENR-[YYYY]-[SERIAL]
+  packageId    String    @map("package_id")
+  customerId   String    @map("customer_id")
+  soldById     String?   @map("sold_by_id")
+  totalPrice   Float     @map("total_price")
+  status       String    @default("ACTIVE")              // ACTIVE|COMPLETED|CANCELLED
+  swapUsedAt   DateTime? @map("swap_used_at")            // null = ยังไม่ได้ swap, non-null = ใช้สิทธิ์ไปแล้ว
+  enrolledAt   DateTime  @default(now()) @map("enrolled_at")
+  notes        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  package         Package                   @relation(fields: [packageId], references: [id])
+  customer        Customer                  @relation(fields: [customerId], references: [id])
+  soldBy          Employee?                 @relation("PackageEnrollmentSeller", fields: [soldById], references: [id])
+  selectedCourses PackageEnrollmentCourse[]
+
+  @@index([status])
+  @@index([customerId])
+  @@index([enrolledAt])
+  @@map("package_enrollments")
+}
+
+// คอร์สที่นักเรียนเลือกจริงๆ ใน package enrollment (รองรับ swap group)
+model PackageEnrollmentCourse {
+  id                  String  @id @default(uuid())
+  packageEnrollmentId String  @map("package_enrollment_id")
+  productId           String  @map("product_id")
+  wasSwapped          Boolean @default(false) @map("was_swapped")  // true = course นี้เป็นผลจากการ swap
+
+  packageEnrollment PackageEnrollment @relation(fields: [packageEnrollmentId], references: [id], onDelete: Cascade)
+  product           Product           @relation(fields: [productId], references: [id])
+
+  @@unique([packageEnrollmentId, productId])
+  @@map("package_enrollment_courses")
 }
