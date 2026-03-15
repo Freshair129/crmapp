@@ -222,6 +222,7 @@ model Employee {
   passwordHash String    @map("password_hash")
   role         String    @default("AGENT") // ADR-026: Developer|Manager|Supervisor|Admin|Agent|Guest
   status       String    @default("ACTIVE")
+  facebookSub  String?   @unique @map("facebook_sub") // Facebook App-Scoped User ID (ASID) จาก OAuth login
   identities   Json?     @default("{}") // { facebook: { psid, name }, line: { id } }
   settings     Json?     @default("{}")
   permissions  Json?     @default("[]") // granular overrides, e.g. ["edit_orders"]

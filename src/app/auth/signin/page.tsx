@@ -11,8 +11,19 @@ function SignInForm() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [error, setError] = useState(
+        searchParams.get("error") === "NotRegistered"
+            ? "Facebook account ไม่พบในระบบ กรุณาให้ Admin ลงทะเบียนก่อน"
+            : ""
+    );
     const [isLoading, setIsLoading] = useState(false);
+    const [isFbLoading, setIsFbLoading] = useState(false);
+
+    const handleFacebookSignIn = async () => {
+        setIsFbLoading(true);
+        setError("");
+        await signIn("facebook", { callbackUrl });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,6 +121,33 @@ function SignInForm() {
                         )}
                     </button>
                 </form>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-6">
+                    <div className="flex-1 h-px bg-[#233554]" />
+                    <span className="text-[#495670] text-xs uppercase tracking-widest">หรือ</span>
+                    <div className="flex-1 h-px bg-[#233554]" />
+                </div>
+
+                {/* Facebook Login — FR1.1 */}
+                <button
+                    type="button"
+                    onClick={handleFacebookSignIn}
+                    disabled={isFbLoading || isLoading}
+                    className="w-full py-3 flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold rounded-lg transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isFbLoading ? (
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                    )}
+                    เข้าสู่ระบบด้วย Facebook
+                </button>
 
                 {/* Footer */}
                 <div className="mt-8 pt-6 border-t border-[#233554] text-center">
