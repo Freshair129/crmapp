@@ -4,8 +4,33 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, CalendarDays, Clock, Users, Plus, ChevronLeft, ChevronRight, Grid, List, Loader2, CheckCircle2, X } from 'lucide-react';
 
-const DOW_TH = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-const DOW_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+// Monday-first
+const DOW_TH = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'];
+const DOW_EN = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+// Color palette — assigned per course by hash
+const COURSE_PALETTE = [
+  'bg-emerald-600 text-white',
+  'bg-blue-600 text-white',
+  'bg-purple-600 text-white',
+  'bg-pink-500 text-white',
+  'bg-cyan-600 text-white',
+  'bg-indigo-600 text-white',
+  'bg-teal-600 text-white',
+  'bg-orange-500 text-white',
+  'bg-rose-600 text-white',
+  'bg-lime-500 text-black',
+  'bg-sky-600 text-white',
+  'bg-violet-600 text-white',
+  'bg-amber-500 text-black',
+  'bg-fuchsia-600 text-white',
+];
+
+function hashColor(str) {
+  let h = 0;
+  for (let i = 0; i < (str || '').length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return COURSE_PALETTE[Math.abs(h) % COURSE_PALETTE.length];
+}
 
 export default function ScheduleCalendar({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
@@ -46,7 +71,8 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       completed: 'สอนเสร็จสิ้น',
       loading: 'กำลังเชื่อมต่อตาราง...',
       dow: DOW_TH,
-      mon: 'จันทร์', tue: 'อังคาร', wed: 'พุธ', thu: 'พฤหัส', fri: 'ศุกร์', sat: 'เสาร์', sun: 'อาทิตย์'
+      mon: 'จันทร์', tue: 'อังคาร', wed: 'พุธ', thu: 'พฤหัส', fri: 'ศุกร์', sat: 'เสาร์', sun: 'อาทิตย์',
+      dayUnit: 'วัน'
     },
     EN: {
       title: 'COURSE SCHEDULES',
@@ -63,7 +89,8 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       completed: 'COMPLETED',
       loading: 'SYNCING SCHEDULE...',
       dow: DOW_EN,
-      mon: 'MON', tue: 'TUE', wed: 'WED', thu: 'THU', fri: 'FRI', sat: 'SAT', sun: 'SUN'
+      mon: 'MON', tue: 'TUE', wed: 'WED', thu: 'THU', fri: 'FRI', sat: 'SAT', sun: 'SUN',
+      dayUnit: 'day'
     }
   }[language];
 
@@ -72,13 +99,6 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     FULL: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     CANCELLED: 'bg-red-500/10 text-red-400 border-red-500/20',
     COMPLETED: 'bg-white/5 text-white/40 border-white/10'
-  };
-
-  const statusDot = {
-    OPEN: 'bg-emerald-500',
-    FULL: 'bg-amber-500',
-    CANCELLED: 'bg-red-500',
-    COMPLETED: 'bg-white/30'
   };
 
   const fetchSchedules = useCallback(async () => {
@@ -97,7 +117,6 @@ export default function ScheduleCalendar({ language = 'TH' }) {
   const fetchCalendarSchedules = useCallback(async () => {
     try {
       setLoading(true);
-      // Fetch all schedules; filter by month client-side
       const res = await fetch('/api/schedules');
       const data = await res.json();
       setCalSchedules(Array.isArray(data) ? data : []);
@@ -108,14 +127,10 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchSchedules();
-  }, [fetchSchedules]);
+  useEffect(() => { fetchSchedules(); }, [fetchSchedules]);
 
   useEffect(() => {
-    if (view === 'CALENDAR') {
-      fetchCalendarSchedules();
-    }
+    if (view === 'CALENDAR') fetchCalendarSchedules();
   }, [view, currentMonth, fetchCalendarSchedules]);
 
   useEffect(() => {
@@ -162,14 +177,14 @@ export default function ScheduleCalendar({ language = 'TH' }) {
   };
 
   // ──────────────────────────────────────────
-  // Calendar helpers
+  // Calendar helpers — Monday-first
   // ──────────────────────────────────────────
   const buildCalendarCells = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    const firstDOW = new Date(year, month, 1).getDay(); // 0=Sun
+    // Convert Sun=0 → Mon=0 by shifting: (DOW + 6) % 7
+    const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const cells = [];
     for (let i = 0; i < firstDOW; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
@@ -177,16 +192,22 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     return cells;
   };
 
+  // Expand multi-day courses across consecutive days
   const buildDayMap = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const map = {};
     calSchedules.forEach(s => {
-      const d = new Date(s.scheduledDate);
-      if (d.getFullYear() === year && d.getMonth() === month) {
-        const day = d.getDate();
-        if (!map[day]) map[day] = [];
-        map[day].push(s);
+      const startDate = new Date(s.scheduledDate);
+      const totalDays = Math.ceil(s.product?.days || s.days || 1);
+      for (let offset = 0; offset < totalDays; offset++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + offset);
+        if (date.getFullYear() === year && date.getMonth() === month) {
+          const day = date.getDate();
+          if (!map[day]) map[day] = [];
+          map[day].push({ ...s, _offset: offset, _totalDays: totalDays });
+        }
       }
     });
     return map;
@@ -203,7 +224,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     today.getDate() === day;
 
   // ──────────────────────────────────────────
-  // Grouping for list view
+  // List grouping
   // ──────────────────────────────────────────
   const groupedSchedules = schedules.reduce((groups, schedule) => {
     const date = new Date(schedule.scheduledDate).toLocaleDateString('th-TH', {
@@ -223,6 +244,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
   return (
     <div className="bg-[#0A1A2F]/30 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8">
+
       {/* ── Header ── */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12">
         <div className="flex items-center gap-6">
@@ -231,37 +253,26 @@ export default function ScheduleCalendar({ language = 'TH' }) {
           </div>
           <div>
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter">{t.title}</h2>
-            <div className="flex items-center gap-4 mt-2">
-              <span className="text-xs font-black text-[#C9A34E] uppercase tracking-widest">{t.upcoming} ({schedules.length})</span>
-            </div>
+            <span className="text-xs font-black text-[#C9A34E] uppercase tracking-widest">{t.upcoming} ({schedules.length})</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/10">
-          <button
-            onClick={() => setView('LIST')}
-            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-              view === 'LIST' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white'
-            }`}
-          >
-            <List size={15} /> {t.listView}
-          </button>
-          <button
-            onClick={() => setView('WEEK')}
-            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-              view === 'WEEK' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white'
-            }`}
-          >
-            <Grid size={15} /> {t.weekView}
-          </button>
-          <button
-            onClick={() => setView('CALENDAR')}
-            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-              view === 'CALENDAR' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white'
-            }`}
-          >
-            <CalendarDays size={15} /> {t.calView}
-          </button>
+          {[
+            { id: 'LIST', icon: <List size={15} />, label: t.listView },
+            { id: 'WEEK', icon: <Grid size={15} />, label: t.weekView },
+            { id: 'CALENDAR', icon: <CalendarDays size={15} />, label: t.calView },
+          ].map(v => (
+            <button
+              key={v.id}
+              onClick={() => setView(v.id)}
+              className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                view === v.id ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white'
+              }`}
+            >
+              {v.icon} {v.label}
+            </button>
+          ))}
           <div className="w-px h-6 bg-white/10 mx-1" />
           <button
             onClick={() => setShowAddModal(true)}
@@ -325,24 +336,28 @@ export default function ScheduleCalendar({ language = 'TH' }) {
       {/* ── WEEK VIEW ── */}
       {view === 'WEEK' && (
         <div className="grid grid-cols-7 gap-4 min-h-[500px]">
-          {['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].map((day, idx) => (
-            <div key={day} className="flex flex-col gap-4">
-              <div className="text-center py-4 bg-white/5 rounded-2xl border border-white/10">
-                <span className="text-[10px] font-black text-[#C9A34E] uppercase tracking-[0.2em]">{t[day]}</span>
-              </div>
-              <div className="flex-1 space-y-3">
-                {schedules.filter(s => new Date(s.scheduledDate).getDay() === idx).map(s => (
-                  <div key={s.id} className={`p-3 rounded-xl border ${statusColors[s.status]} cursor-pointer hover:scale-105 transition-all shadow-lg`}>
-                    <p className="text-[10px] font-black uppercase truncate mb-1">{s.productName}</p>
-                    <div className="flex justify-between items-center text-[8px] font-black opacity-60">
-                      <span>{s.startTime}</span>
-                      <span>{s.confirmedStudents}/{s.maxStudents}</span>
+          {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((day, idx) => {
+            // Monday=1 Tue=2 ... Sun=0
+            const dowIndex = idx === 6 ? 0 : idx + 1;
+            return (
+              <div key={day} className="flex flex-col gap-4">
+                <div className="text-center py-4 bg-white/5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] font-black text-[#C9A34E] uppercase tracking-[0.2em]">{t[day]}</span>
+                </div>
+                <div className="flex-1 space-y-3">
+                  {schedules.filter(s => new Date(s.scheduledDate).getDay() === dowIndex).map(s => (
+                    <div key={s.id} className={`p-3 rounded-xl border ${statusColors[s.status]} cursor-pointer hover:scale-105 transition-all shadow-lg`}>
+                      <p className="text-[10px] font-black uppercase truncate mb-1">{s.productName}</p>
+                      <div className="flex justify-between items-center text-[8px] font-black opacity-60">
+                        <span>{s.startTime}</span>
+                        <span>{s.confirmedStudents}/{s.maxStudents}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -352,35 +367,31 @@ export default function ScheduleCalendar({ language = 'TH' }) {
         const dayMap = buildDayMap();
         const weeks = [];
         for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+        // Sunday is column index 6 (Mon-first)
+        const sunIdx = 6;
 
         return (
           <div>
-            {/* Month navigation */}
-            <div className="flex items-center justify-between mb-8">
-              <button
-                onClick={prevMonth}
-                className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-[#C9A34E]/40 transition-all"
-              >
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={prevMonth} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-[#C9A34E]/40 transition-all">
                 <ChevronLeft size={20} />
               </button>
               <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
                 {currentMonth.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
               </h3>
-              <button
-                onClick={nextMonth}
-                className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-[#C9A34E]/40 transition-all"
-              >
+              <button onClick={nextMonth} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-[#C9A34E]/40 transition-all">
                 <ChevronRight size={20} />
               </button>
             </div>
 
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            {/* DOW headers */}
+            <div className="grid grid-cols-7 border border-white/10 rounded-t-2xl overflow-hidden">
               {(language === 'TH' ? DOW_TH : DOW_EN).map((label, i) => (
                 <div
                   key={label}
-                  className={`text-center text-[10px] font-black uppercase tracking-widest py-2 ${
-                    i === 0 ? 'text-red-400/70' : i === 6 ? 'text-blue-400/70' : 'text-white/30'
+                  className={`text-center text-xs font-black uppercase tracking-widest py-3 border-r last:border-r-0 border-white/10 ${
+                    i === sunIdx ? 'text-red-400 bg-red-500/5' : 'text-white/50 bg-white/[0.03]'
                   }`}
                 >
                   {label}
@@ -388,67 +399,74 @@ export default function ScheduleCalendar({ language = 'TH' }) {
               ))}
             </div>
 
-            {/* Week rows */}
-            <div className="space-y-2">
+            {/* Calendar grid */}
+            <div className="border-l border-b border-r border-white/10 rounded-b-2xl overflow-hidden">
               {weeks.map((week, wi) => (
-                <div key={wi} className="grid grid-cols-7 gap-2">
+                <div key={wi} className="grid grid-cols-7 border-t border-white/10">
                   {week.map((day, di) => {
                     const items = day ? (dayMap[day] || []) : [];
-                    const visible = items.slice(0, 3);
-                    const overflow = items.length - visible.length;
+                    const isSun = di === sunIdx;
 
                     return (
                       <div
                         key={di}
-                        className={`min-h-[96px] rounded-2xl p-2 transition-all ${
-                          day
-                            ? isToday(day)
-                              ? 'bg-[#C9A34E]/10 border border-[#C9A34E]/50'
-                              : items.length > 0
-                                ? 'bg-white/5 border border-white/10 hover:border-white/20'
-                                : 'bg-white/[0.02] border border-white/5'
-                            : 'bg-transparent'
+                        className={`min-h-[130px] p-1.5 border-r last:border-r-0 border-white/10 align-top ${
+                          !day ? 'bg-black/20' :
+                          isToday(day) ? 'bg-[#C9A34E]/8' :
+                          isSun ? 'bg-red-500/[0.03]' :
+                          'bg-transparent'
                         }`}
                       >
                         {day && (
                           <>
-                            <span className={`text-xs font-black block mb-1.5 ${
-                              isToday(day) ? 'text-[#C9A34E]' : 'text-white/40'
+                            {/* Day number */}
+                            <div className={`text-xs font-black mb-1.5 w-6 h-6 flex items-center justify-center rounded-full ${
+                              isToday(day)
+                                ? 'bg-[#C9A34E] text-[#0A1A2F]'
+                                : isSun
+                                  ? 'text-red-400'
+                                  : 'text-white/50'
                             }`}>
                               {day}
-                            </span>
+                            </div>
+
+                            {/* Events */}
                             <div className="space-y-1">
-                              {visible.map(s => (
-                                <div
-                                  key={s.id}
-                                  className={`px-1.5 py-1 rounded-md border ${statusColors[s.status]} overflow-hidden`}
-                                  title={`${s.productName} ${s.startTime}-${s.endTime}`}
-                                >
-                                  <p className="text-[9px] font-black leading-tight line-clamp-2 break-words">{s.productName}</p>
-                                  <p className="text-[8px] opacity-60 font-bold mt-0.5">{s.startTime}</p>
-                                </div>
-                              ))}
-                              {overflow > 0 && (
-                                <div className="text-[9px] font-black text-white/30 px-1">+{overflow} อื่นๆ</div>
-                              )}
+                              {items.map((s, si) => {
+                                const isCancelled = s.status === 'CANCELLED';
+                                const isCompleted = s.status === 'COMPLETED';
+                                const colorClass = isCancelled
+                                  ? 'bg-red-900/50 text-red-300'
+                                  : isCompleted
+                                    ? 'bg-white/10 text-white/40'
+                                    : hashColor(s.productId || s.productName || String(si));
+
+                                return (
+                                  <div
+                                    key={`${s.id}-${s._offset}`}
+                                    className={`rounded-md px-1.5 py-1 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60 line-through' : ''}`}
+                                    title={`${s.productName}\n${s.startTime}–${s.endTime}\nนักเรียน: ${s.confirmedStudents}/${s.maxStudents}`}
+                                  >
+                                    <p className="text-[10px] font-black leading-snug break-words">
+                                      {s.productName}
+                                    </p>
+                                    {s._totalDays > 1 && (
+                                      <p className="text-[9px] opacity-80 font-bold">
+                                        ({s._totalDays} {t.dayUnit}{language === 'TH' ? '' : ' course'})
+                                      </p>
+                                    )}
+                                    <p className="text-[9px] opacity-75 font-bold">
+                                      {s.startTime}–{s.endTime}
+                                    </p>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </>
                         )}
                       </div>
                     );
                   })}
-                </div>
-              ))}
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center gap-6 mt-8 pt-6 border-t border-white/5">
-              {Object.entries(statusDot).map(([status, dotClass]) => (
-                <div key={status} className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${dotClass}`} />
-                  <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                    {t[status.toLowerCase()]}
-                  </span>
                 </div>
               ))}
             </div>
@@ -465,10 +483,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
               <h3 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
                 <Calendar className="text-[#C9A34E]" size={24} /> สร้างรอบเรียนใหม่
               </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-              >
+              <button onClick={() => setShowAddModal(false)} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors">
                 <X size={22} />
               </button>
             </div>
@@ -484,9 +499,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     onChange={e => setAddForm({ ...addForm, productId: e.target.value })}
                   >
                     <option value="">เลือกหลักสูตร...</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
 
@@ -494,8 +507,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <div>
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่สอน</label>
                     <input
-                      required
-                      type="date"
+                      required type="date"
                       className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                       value={addForm.scheduledDate}
                       onChange={e => setAddForm({ ...addForm, scheduledDate: e.target.value })}
@@ -504,8 +516,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <div>
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนนักเรียนสูงสุด</label>
                     <input
-                      required
-                      type="number"
+                      required type="number"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
                       value={addForm.maxStudents}
                       onChange={e => setAddForm({ ...addForm, maxStudents: e.target.value })}
@@ -517,8 +528,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <div>
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาเริ่ม</label>
                     <input
-                      required
-                      type="time"
+                      required type="time"
                       className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                       value={addForm.startTime}
                       onChange={e => setAddForm({ ...addForm, startTime: e.target.value })}
@@ -527,8 +537,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   <div>
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาสิ้นสุด</label>
                     <input
-                      required
-                      type="time"
+                      required type="time"
                       className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                       value={addForm.endTime}
                       onChange={e => setAddForm({ ...addForm, endTime: e.target.value })}
