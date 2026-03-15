@@ -5,6 +5,10 @@ const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 class RedisCache {
     constructor() {
+        // Promise sharing map — ป้องกัน Cache Stampede
+        // ถ้า 2 requests ขอ key เดียวกันพร้อมกัน, request ที่ 2 จะรอ promise ของ request แรก
+        this._inflight = new Map();
+
         this.client = new Redis(redisUrl, {
             maxRetriesPerRequest: 3,
             retryStrategy(times) {
@@ -43,7 +47,8 @@ class RedisCache {
     }
 
     /**
-     * Get or Set pattern for expensive queries
+     * Get or Set pattern with Promise sharing (anti-stampede)
+     * ถ้า 2 requests ขอ key เดียวกันพร้อมกัน → share promise เดียว → DB query แค่ 1 ครั้ง
      */
     async getOrSet(key, fetcher, ttlSeconds = 300) {
         const cached = await this.get(key);
@@ -52,10 +57,26 @@ class RedisCache {
             return cached;
         }
 
+        // ถ้ามี request อื่นกำลัง fetch อยู่แล้ว → รอ promise เดิม
+        if (this._inflight.has(key)) {
+            logger.info('[Redis]', `Cache MISS (shared): ${key}`);
+            return this._inflight.get(key);
+        }
+
         logger.info('[Redis]', `Cache MISS: ${key}. Fetching fresh data...`);
-        const freshData = await fetcher();
-        await this.set(key, freshData, ttlSeconds);
-        return freshData;
+        const promise = fetcher()
+            .then(async freshData => {
+                await this.set(key, freshData, ttlSeconds);
+                this._inflight.delete(key);
+                return freshData;
+            })
+            .catch(err => {
+                this._inflight.delete(key);
+                throw err;
+            });
+
+        this._inflight.set(key, promise);
+        return promise;
     }
 
     async del(key) {
