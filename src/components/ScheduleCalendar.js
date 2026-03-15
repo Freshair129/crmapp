@@ -263,7 +263,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
 
             {/* Header — ติดด้านบนเสมอ ไม่ scroll ตาม body */}
             <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
@@ -279,7 +279,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
             </div>
 
             {/* Body — scroll ได้อิสระ */}
-            <div className="overflow-y-auto px-8 py-6 flex-1">
+            <div className="overflow-y-auto px-8 py-6 flex-1 min-h-0">
             <form onSubmit={handleCreateSchedule} className="space-y-6">
               <div>
                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
