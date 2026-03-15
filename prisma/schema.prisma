@@ -46,6 +46,7 @@ model Customer {
   orders         Order[]
   tasks          Task[]
   timeline       TimelineEvent[]
+  enrollments    Enrollment[]
 
   @@index([status])
   @@index([phonePrimary])
@@ -230,10 +231,14 @@ model Employee {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  assignedTasks         Task[]         @relation("AgentTasks")
-  respondedMessages     Message[]      @relation("MessageResponder")
-  assignedConversations Conversation[] @relation("ConversationAssignee")
-  closedOrders          Order[]        @relation("OrderCloser")
+  assignedTasks         Task[]           @relation("AgentTasks")
+  respondedMessages     Message[]        @relation("MessageResponder")
+  assignedConversations Conversation[]   @relation("ConversationAssignee")
+  closedOrders          Order[]          @relation("OrderCloser")
+  soldEnrollments       Enrollment[]     @relation("EnrollmentSeller")
+  instructedSchedules   CourseSchedule[] @relation("ScheduleInstructor")
+  approvedRequests      PurchaseRequest[] @relation("PRApprover")
+  assignedAssets        Asset[]          @relation("AssetAssignee")
 
   @@index([status])
   @@index([department])
@@ -264,7 +269,11 @@ model Product {
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")
 
-  cartItems CartItem[]
+  cartItems       CartItem[]
+  enrollments     Enrollment[]
+  enrollmentItems EnrollmentItem[]
+  schedules       CourseSchedule[]
+  bom             CourseBOM[]
 
   @@index([category])
   @@index([isActive])
@@ -554,4 +563,190 @@ model NotificationRule {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("notification_rules")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Course Enrollment + Kitchen Ops + Assets (Phase 15)
+// ─────────────────────────────────────────────
+
+model Enrollment {
+  id           String           @id @default(uuid())
+  enrollmentId String           @unique @map("enrollment_id")
+  customerId   String           @map("customer_id")
+  productId    String           @map("product_id")
+  soldById     String?          @map("sold_by_id")
+  totalPrice   Float            @map("total_price")
+  status       String           @default("ACTIVE")
+  enrolledAt   DateTime         @default(now()) @map("enrolled_at")
+  notes        String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  customer Customer         @relation(fields: [customerId], references: [id])
+  product  Product          @relation(fields: [productId], references: [id])
+  soldBy   Employee?        @relation("EnrollmentSeller", fields: [soldById], references: [id])
+  items    EnrollmentItem[]
+
+  @@index([status])
+  @@index([customerId])
+  @@index([enrolledAt])
+  @@map("enrollments")
+}
+
+model EnrollmentItem {
+  id             String            @id @default(uuid())
+  enrollmentId   String            @map("enrollment_id")
+  productId      String            @map("product_id")
+  status         String            @default("PENDING")
+  hoursCompleted Float             @default(0) @map("hours_completed")
+  certLevel      Int?              @map("cert_level")
+  completedAt    DateTime?         @map("completed_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  enrollment  Enrollment        @relation(fields: [enrollmentId], references: [id])
+  product     Product           @relation(fields: [productId], references: [id])
+  attendances ClassAttendance[]
+
+  @@unique([enrollmentId, productId])
+  @@index([status])
+  @@index([enrollmentId])
+  @@map("enrollment_items")
+}
+
+model CourseSchedule {
+  id                String            @id @default(uuid())
+  scheduleId        String            @unique @map("schedule_id")
+  productId         String            @map("product_id")
+  scheduledDate     DateTime          @map("scheduled_date")
+  startTime         String?           @map("start_time")
+  endTime           String?           @map("end_time")
+  maxStudents       Int?              @map("max_students")
+  confirmedStudents Int               @default(0) @map("confirmed_students")
+  status            String            @default("OPEN")
+  instructorId      String?           @map("instructor_id")
+  notes             String?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  product          Product           @relation(fields: [productId], references: [id])
+  instructor       Employee?         @relation("ScheduleInstructor", fields: [instructorId], references: [id])
+  attendances      ClassAttendance[]
+  purchaseRequests PurchaseRequest[]
+
+  @@index([scheduledDate])
+  @@index([status])
+  @@index([productId])
+  @@map("course_schedules")
+}
+
+model ClassAttendance {
+  id               String         @id @default(uuid())
+  enrollmentItemId String         @map("enrollment_item_id")
+  scheduleId       String         @map("schedule_id")
+  attendedAt       DateTime       @default(now()) @map("attended_at")
+  hoursAttended    Float          @map("hours_attended")
+  note             String?
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  enrollmentItem EnrollmentItem @relation(fields: [enrollmentItemId], references: [id])
+  schedule       CourseSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@unique([enrollmentItemId, scheduleId])
+  @@map("class_attendances")
+}
+
+model Ingredient {
+  id           String                @id @default(uuid())
+  ingredientId String                @unique @map("ingredient_id")
+  name         String
+  unit         String
+  currentStock Float                 @default(0) @map("current_stock")
+  minStock     Float                 @default(0) @map("min_stock")
+  category     String                @default("OTHER")
+  costPerUnit  Float?                @map("cost_per_unit")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  bom           CourseBOM[]
+  purchaseItems PurchaseRequestItem[]
+
+  @@index([category])
+  @@index([name])
+  @@map("ingredients")
+}
+
+model CourseBOM {
+  id           String     @id @default(uuid())
+  productId    String     @map("product_id")
+  ingredientId String     @map("ingredient_id")
+  qtyPerPerson Float      @map("qty_per_person")
+  unit         String
+
+  product    Product    @relation(fields: [productId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([productId, ingredientId])
+  @@map("course_bom")
+}
+
+model PurchaseRequest {
+  id           String                @id @default(uuid())
+  requestId    String                @unique @map("request_id")
+  scheduleId   String?               @map("schedule_id")
+  status       String                @default("DRAFT")
+  approvedById String?               @map("approved_by_id")
+  notes        String?
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  schedule   CourseSchedule?       @relation(fields: [scheduleId], references: [id])
+  approvedBy Employee?             @relation("PRApprover", fields: [approvedById], references: [id])
+  items      PurchaseRequestItem[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestItem {
+  id                String          @id @default(uuid())
+  purchaseRequestId String          @map("purchase_request_id")
+  ingredientId      String          @map("ingredient_id")
+  qtyNeeded         Float           @map("qty_needed")
+  qtyInStock        Float           @map("qty_in_stock")
+  qtyToBuy          Float           @map("qty_to_buy")
+  unit              String
+  estimatedCost     Float?          @map("estimated_cost")
+
+  purchaseRequest PurchaseRequest @relation(fields: [purchaseRequestId], references: [id])
+  ingredient      Ingredient      @relation(fields: [ingredientId], references: [id])
+
+  @@unique([purchaseRequestId, ingredientId])
+  @@map("purchase_request_items")
+}
+
+model Asset {
+  id              String    @id @default(uuid())
+  assetId         String    @unique @map("asset_id")
+  name            String
+  category        String    @default("GENERAL")
+  status          String    @default("ACTIVE")
+  location        String?
+  assignedToId    String?   @map("assigned_to_id")
+  purchaseDate    DateTime? @map("purchase_date")
+  purchasePrice   Float?    @map("purchase_price")
+  vendor          String?
+  serialNumber    String?   @map("serial_number")
+  warrantyExpiry  DateTime? @map("warranty_expiry")
+  lastServiceDate DateTime? @map("last_service_date")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  assignedTo Employee? @relation("AssetAssignee", fields: [assignedToId], references: [id])
+
+  @@index([category])
+  @@index([status])
+  @@map("assets")
 }
