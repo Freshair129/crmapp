@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
+import { CalendarDays } from 'lucide-react';
 
 export default function DailyReport({ dailyData }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -111,7 +112,7 @@ export default function DailyReport({ dailyData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <i className="fas fa-calendar-day text-white text-xl"></i>
+                        <CalendarDays className="text-white w-6 h-6" />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">Daily Ad Performance</h1>

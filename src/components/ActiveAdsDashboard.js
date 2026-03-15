@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { ToggleRight } from 'lucide-react';
 
 export default function ActiveAdsDashboard({ dailyData }) {
     // Default to show data ending at the latest available date
@@ -104,7 +105,7 @@ export default function ActiveAdsDashboard({ dailyData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <i className="fas fa-toggle-on text-white text-xl"></i>
+                        <ToggleRight className="text-white" size={24} />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">Active Ads Monitor</h1>

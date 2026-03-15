@@ -1,5 +1,7 @@
 'use client';
 
+import { UserCog, Store } from 'lucide-react';
+
 export default function Settings() {
     return (
         <div className="animate-fade-in space-y-8">
@@ -13,7 +15,7 @@ export default function Settings() {
                 <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
                     <div className="flex items-center gap-4 mb-2">
                         <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-500 flex items-center justify-center border border-blue-500/30">
-                            <i className="fas fa-user-cog"></i>
+                            <UserCog size={20} />
                         </div>
                         <h3 className="font-black text-white text-lg tracking-tight">Admin Profile</h3>
                     </div>
@@ -42,7 +44,7 @@ export default function Settings() {
                 <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
                     <div className="flex items-center gap-4 mb-2">
                         <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-500 flex items-center justify-center border border-orange-500/30">
-                            <i className="fas fa-store-alt"></i>
+                            <Store size={20} />
                         </div>
                         <h3 className="font-black text-white text-lg tracking-tight">Store Preferences</h3>
                     </div>

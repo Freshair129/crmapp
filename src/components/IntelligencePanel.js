@@ -1,6 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { 
+    Brain, 
+    AlertTriangle, 
+    Megaphone, 
+    Facebook, 
+    ThumbsUp, 
+    MessageSquare, 
+    Share2, 
+    ShoppingCart, 
+    BadgeDollarSign, 
+    Star, 
+    Lightbulb 
+} from 'lucide-react';
 
 export default function IntelligencePanel({ intel, profile, products = [] }) {
     const [campaigns, setCampaigns] = useState([]);
@@ -41,7 +54,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center shadow-sm">
-                            <i className="fas fa-brain text-orange-500 text-sm"></i>
+                            <Brain className="text-orange-500 w-3.5 h-3.5" />
                         </div>
                         <h3 className="font-extrabold text-white text-lg tracking-tight">AI Engagement Insights</h3>
                     </div>
@@ -73,7 +86,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                 {(intel.pain_points_th?.length > 0 || intel.pain_points?.length > 0) && (
                     <div className="mb-5 p-4 bg-red-500/10 rounded-xl border border-red-500/20">
                         <div className="flex items-center gap-2 mb-3">
-                            <i className="fas fa-exclamation-triangle text-red-400 text-[10px]"></i>
+                            <AlertTriangle className="text-red-400 w-2.5 h-2.5" />
                             <h4 className="text-[8px] font-black text-red-500 uppercase tracking-widest">Active Pain Points</h4>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -92,7 +105,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                     <div className="p-6 bg-indigo-50/10 rounded-2xl border border-white/10 flex flex-col justify-between backdrop-blur-md">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <i className="fas fa-ad text-indigo-400 text-xs"></i>
+                                <Megaphone className="text-indigo-400 w-3 h-3" />
                                 <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Marketing Attribution</h4>
                             </div>
                             <div className="space-y-3">
@@ -121,7 +134,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                     <div className="p-6 bg-blue-50/10 rounded-2xl border border-white/10 flex flex-col justify-between backdrop-blur-md">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <i className="fab fa-facebook text-blue-400 text-xs"></i>
+                                <Facebook className="text-blue-400 w-3 h-3" />
                                 <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Social Engagement</h4>
                             </div>
                             <div className="flex items-end justify-between">
@@ -131,13 +144,13 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                                 </div>
                                 <div className="flex -space-x-2">
                                     <div className="w-6 h-6 rounded-full bg-blue-900/40 border-2 border-white/20 flex items-center justify-center">
-                                        <i className="fas fa-thumbs-up text-[8px] text-blue-400"></i>
+                                        <ThumbsUp className="w-2 h-2 text-blue-400" />
                                     </div>
                                     <div className="w-6 h-6 rounded-full bg-blue-900/40 border-2 border-white/20 flex items-center justify-center">
-                                        <i className="fas fa-comment text-[8px] text-blue-400"></i>
+                                        <MessageSquare className="w-2 h-2 text-blue-400" />
                                     </div>
                                     <div className="w-6 h-6 rounded-full bg-blue-900/40 border-2 border-white/20 flex items-center justify-center">
-                                        <i className="fas fa-share text-[8px] text-blue-400"></i>
+                                        <Share2 className="w-2 h-2 text-blue-400" />
                                     </div>
                                 </div>
                             </div>
@@ -153,11 +166,11 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                 {profile?.intelligence?.attribution?.smart_detected_ad && (
                     <div className="mb-8 p-6 bg-amber-500/10 rounded-[2rem] border border-amber-500/20 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-6 opacity-5 transform group-hover:scale-110 transition-transform">
-                            <i className="fas fa-shopping-cart text-7xl text-amber-500"></i>
+                            <ShoppingCart className="w-[72px] h-[72px] text-amber-500" />
                         </div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-2 mb-4">
-                                <i className="fas fa-search-dollar text-amber-500 text-xs"></i>
+                                <BadgeDollarSign className="text-amber-500 w-3 h-3" />
                                 <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Commercial Intent Analysis</h4>
                             </div>
                             <div className="flex flex-col md:flex-row gap-6">
@@ -177,7 +190,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                                         <div key={p.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-all cursor-pointer">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-500 text-[10px]">
-                                                    <i className="fas fa-star"></i>
+                                                    <Star className="w-2.5 h-2.5" />
                                                 </div>
                                                 <span className="text-[10px] font-black text-white">{p.name}</span>
                                             </div>
@@ -199,7 +212,7 @@ export default function IntelligencePanel({ intel, profile, products = [] }) {
                 {/* Strategic Recommendation - Compact */}
                 <div className="p-8 bg-[#0A1A2F] rounded-[2.5rem] relative overflow-hidden group shadow-2xl">
                     <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
-                        <i className="fas fa-lightbulb text-[120px] text-white"></i>
+                        <Lightbulb className="w-[120px] h-[120px] text-white" />
                     </div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-3">

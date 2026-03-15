@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import BusinessIntelligence from './BusinessIntelligence';
+import {
+    Lightbulb, Wand2, AreaChart, ArrowUp, Clock, UserMinus, Phone,
+    CheckSquare, CalendarDays, Users2, Banknote, CalendarCheck, BarChart,
+    Trees, Radio, Package, ImageOff, Trophy, Tags, Search, X, Pencil,
+    Trash2, ChessKnight, PieChart, Users, Coins, Filter, Bell, DollarSign,
+    Brain, UserCog, Network
+} from 'lucide-react';
 
 export default function Analytics({ customers, products }) {
     const [rankingPeriod, setRankingPeriod] = useState('month');
@@ -759,17 +766,17 @@ export default function Analytics({ customers, products }) {
                 {/* Tab Navigation */}
                 <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
                     {[
-                        { id: 'strategic', label: 'Strategic Advisor', icon: 'fa-chess' },
-                        { id: 'market', label: 'Market & Sales', icon: 'fa-chart-pie' },
-                        { id: 'customer', label: 'Customer & CLV', icon: 'fa-users' },
-                        { id: 'financial', label: 'Financial Overview', icon: 'fa-coins' },
-                        { id: 'lead', label: 'Lead Funnel', icon: 'fa-filter' },
-                        { id: 'retention', label: 'Retention & Follow-up', icon: 'fa-bell' },
-                        { id: 'roi', label: 'Channel ROI', icon: 'fa-sack-dollar' },
-                        { id: 'vinsight', label: 'V-Insight AI', icon: 'fa-brain' },
-                        { id: 'event', label: 'Event Calendar', icon: 'fa-calendar-check' },
-                        { id: 'team', label: 'Sales Team', icon: 'fa-user-tie' },
-                        { id: 'mapping', label: 'Mapping Matrix', icon: 'fa-sitemap' }
+                        { id: 'strategic', label: 'Strategic Advisor', Icon: ChessKnight },
+                        { id: 'market', label: 'Market & Sales', Icon: PieChart },
+                        { id: 'customer', label: 'Customer & CLV', Icon: Users },
+                        { id: 'financial', label: 'Financial Overview', Icon: Coins },
+                        { id: 'lead', label: 'Lead Funnel', Icon: Filter },
+                        { id: 'retention', label: 'Retention & Follow-up', Icon: Bell },
+                        { id: 'roi', label: 'Channel ROI', Icon: DollarSign },
+                        { id: 'vinsight', label: 'V-Insight AI', Icon: Brain },
+                        { id: 'event', label: 'Event Calendar', Icon: CalendarCheck },
+                        { id: 'team', label: 'Sales Team', Icon: UserCog },
+                        { id: 'mapping', label: 'Mapping Matrix', Icon: Network }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -779,7 +786,7 @@ export default function Analytics({ customers, products }) {
                                 : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95'
                                 }`}
                         >
-                            <i className={`fas ${tab.icon}`}></i>
+                            <tab.Icon size={16} />
                             {tab.label}
                         </button>
                     ))}
@@ -1002,7 +1009,7 @@ export default function Analytics({ customers, products }) {
                         <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/5">
                             <div className="flex items-start gap-3">
                                 <div className="p-2 bg-[#C9A34E]/20 rounded-lg text-[#C9A34E]">
-                                    <i className="fas fa-lightbulb"></i>
+                                    <Lightbulb size={14} />
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">INSIGHT</p>
@@ -1073,7 +1080,7 @@ export default function Analytics({ customers, products }) {
                     <div className="lg:col-span-6 bg-gradient-to-br from-[#162A47] to-[#0A1A2F] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A34E]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                         <h3 className="font-black text-white text-xl tracking-tight mb-6 flex items-center gap-3 relative z-10">
-                            <i className="fas fa-magic text-[#C9A34E]"></i>
+                            <Wand2 size={14} className="text-[#C9A34E]" />
                             Actionable Recommendations
                         </h3>
                         <div className="space-y-4 relative z-10">
@@ -1222,7 +1229,7 @@ export default function Analytics({ customers, products }) {
                         ].map((stat, i) => (
                             <div key={i} className="p-6 bg-[#0A1A2F]/50 rounded-[2rem] border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all">
                                 <div className={`absolute top-0 right-0 p-4 opacity-10 ${stat.color}`}>
-                                    <i className="fas fa-chart-area text-4xl"></i>
+                                    <AreaChart size={36} />
                                 </div>
                                 <div className="space-y-1 relative z-10">
                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{stat.label}</p>
@@ -1230,7 +1237,7 @@ export default function Analytics({ customers, products }) {
                                         {typeof stat.val === 'number' ? formatCurrency(stat.val) : stat.val}
                                     </p>
                                     <div className="inline-flex items-center gap-1 bg-green-500/10 px-2 py-0.5 rounded text-[10px] font-bold text-green-400">
-                                        <i className="fas fa-arrow-up text-[8px]"></i> {stat.diff}
+                                        <ArrowUp size={8} /> {stat.diff}
                                     </div>
                                 </div>
                             </div>
@@ -1301,17 +1308,17 @@ export default function Analytics({ customers, products }) {
                     {/* KPI Cards */}
                     <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><i className="fas fa-clock text-rose-400 mr-2"></i>Expiring Soon</h4>
+                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><Clock size={12} className="text-rose-400 mr-2" />Expiring Soon</h4>
                             <p className="text-3xl font-black text-white">{expiringCourses.length} Users</p>
                             <p className="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-1 rounded inline-block mt-2">Action Required</p>
                         </div>
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><i className="fas fa-user-minus text-amber-400 mr-2"></i>Churn Risk (&gt;60 Days)</h4>
+                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><UserMinus size={12} className="text-amber-400 mr-2" />Churn Risk (&gt;60 Days)</h4>
                             <p className="text-3xl font-black text-white">{rfmSegments['At Risk'].length} Users</p>
                             <p className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-1 rounded inline-block mt-2">+5 from last week</p>
                         </div>
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><i className="fas fa-phone text-blue-400 mr-2"></i>Pending Follow-ups</h4>
+                            <h4 className="text-xs font-bold text-white/60 mb-2 uppercase tracking-wider"><Phone size={12} className="text-blue-400 mr-2" />Pending Follow-ups</h4>
                             <p className="text-3xl font-black text-white">{salesTasks.length} Tasks</p>
                             <p className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded inline-block mt-2">Sales Team</p>
                         </div>
@@ -1357,7 +1364,7 @@ export default function Analytics({ customers, products }) {
                     {/* Sales To-Do List */}
                     <div className="lg:col-span-12 bg-white/5 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-6 flex items-center gap-2">
-                            <i className="fas fa-check-square text-green-500"></i> To-Do List (Sales)
+                            <CheckSquare size={14} className="text-green-500" /> To-Do List (Sales)
                         </h3>
                         <div className="space-y-1">
                             {salesTasks.map((task, i) => (
@@ -1461,16 +1468,16 @@ export default function Analytics({ customers, products }) {
                     {/* KPI Cards */}
                     <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><i className="fas fa-calendar-alt text-rose-500"></i> Events This Month</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><CalendarDays size={12} className="text-rose-500" /> Events This Month</h4>
                             <p className="text-4xl font-black text-slate-800">{eventStats.count} Events</p>
                         </div>
                         <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><i className="fas fa-user-friends text-blue-500"></i> Leads from Events</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Users2 size={12} className="text-blue-500" /> Leads from Events</h4>
                             <p className="text-4xl font-black text-slate-800">{eventStats.leads} People</p>
                             <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-md">+25%</span>
                         </div>
                         <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><i className="fas fa-money-bill-wave text-[#C9A34E]"></i> Sales from Events</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Banknote size={12} className="text-[#C9A34E]" /> Sales from Events</h4>
                             <p className="text-4xl font-black text-slate-800">฿{formatCurrency(eventStats.sales)}</p>
                         </div>
                     </div>
@@ -1478,7 +1485,7 @@ export default function Analytics({ customers, products }) {
                     {/* Upcoming Events Table */}
                     <div className="lg:col-span-12 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8">
                         <h3 className="flex items-center gap-2 font-black text-slate-800 text-xl tracking-tight mb-6">
-                            <i className="fas fa-calendar-check text-slate-400"></i> Upcoming Events
+                            <CalendarCheck size={14} className="text-slate-400" /> Upcoming Events
                         </h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
@@ -1517,7 +1524,7 @@ export default function Analytics({ customers, products }) {
                     {/* Past Performance */}
                     <div className="lg:col-span-12">
                         <h3 className="flex items-center gap-2 font-black text-slate-800 text-xl tracking-tight mb-6">
-                            <i className="fas fa-chart-bar text-green-600"></i> Past Event Performance
+                            <BarChart size={14} className="text-green-600" /> Past Event Performance
                         </h3>
                         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
                             <table className="w-full text-left">
@@ -1535,7 +1542,7 @@ export default function Analytics({ customers, products }) {
                                     {pastEvents.map((evt, i) => (
                                         <tr key={i} className="hover:bg-slate-50 transition-colors">
                                             <td className="p-4 pl-6 flex items-center gap-2">
-                                                <i className="fas fa-tree text-green-500"></i> {evt.name}
+                                                <Trees size={14} className="text-green-500" /> {evt.name}
                                             </td>
                                             <td className="p-4 text-slate-500">{evt.date}</td>
                                             <td className="p-4 text-right">{evt.leads}</td>
@@ -1561,7 +1568,7 @@ export default function Analytics({ customers, products }) {
                     <div className="lg:col-span-12 space-y-8">
                         <div className="bg-gradient-to-br from-indigo-900/40 via-[#0A1A2F]/80 to-[#0A1A2F]/50 border border-indigo-500/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-10 opacity-10">
-                                <i className="fas fa-broadcast-tower text-8xl text-indigo-400 animate-pulse"></i>
+                                <Radio size={96} className="text-indigo-400 animate-pulse" />
                             </div>
 
                             <div className="relative z-10">
@@ -1592,7 +1599,7 @@ export default function Analytics({ customers, products }) {
                                                 ))}
                                                 {(!teamAnalytics?.summary?.liveDelivery?.productsRunning || teamAnalytics.summary.liveDelivery.productsRunning?.length === 0) && (
                                                     <div className="col-span-2 py-10 flex flex-col items-center justify-center text-white/10">
-                                                        <i className="fas fa-box-open text-3xl mb-3"></i>
+                                                        <Package size={32} className="mb-3" />
                                                         <span className="text-[10px] font-bold uppercase tracking-widest">No products currently promoted</span>
                                                     </div>
                                                 )}
@@ -1609,7 +1616,7 @@ export default function Analytics({ customers, products }) {
                                                             <img src={ad.thumbnail} alt="" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-white/10">
-                                                                <i className="fas fa-image text-xs"></i>
+                                                                <ImageOff size={12} />
                                                             </div>
                                                         )}
                                                     </div>
@@ -1662,7 +1669,7 @@ export default function Analytics({ customers, products }) {
                                 return topAgents.map((agent, i) => (
                                     <div key={i} className="bg-white/5 border border-white/5 rounded-3xl p-6 relative overflow-hidden group hover:bg-white/10 transition-all">
                                         <div className="absolute top-0 right-0 p-4 opacity-5 text-white">
-                                            <i className="fas fa-trophy text-6xl"></i>
+                                            <Trophy size={60} />
                                         </div>
 
                                         <div className="relative z-10">
@@ -1706,7 +1713,7 @@ export default function Analytics({ customers, products }) {
                     {/* Ad-Product Attribution Table */}
                     <div className="lg:col-span-12 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8">
                         <h3 className="font-black text-slate-800 text-xl tracking-tight mb-6 flex items-center gap-2">
-                            <i className="fas fa-tags text-indigo-500"></i> Product x Ad Attribution
+                            <Tags size={14} className="text-indigo-500" /> Product x Ad Attribution
                         </h3>
                         <p className="text-sm text-slate-500 mb-6">See which ads are selling which products.</p>
 
@@ -1799,7 +1806,7 @@ export default function Analytics({ customers, products }) {
                                     onClick={handleAiAutoMap}
                                     className="bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors"
                                 >
-                                    <i className="fas fa-magic mr-2"></i> AI Auto-Map
+                                    <Wand2 size={14} className="mr-2" /> AI Auto-Map
                                 </button>
                                 <button className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors">
                                     Add New Mapping
@@ -1810,7 +1817,7 @@ export default function Analytics({ customers, products }) {
                         {/* Mapping keyword filter */}
                         <div className="flex items-center gap-3 mb-8">
                             <div className="relative flex-1 max-w-xs">
-                                <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs"></i>
+                                <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />
                                 <input
                                     type="text"
                                     value={mappingFilter}
@@ -1820,7 +1827,7 @@ export default function Analytics({ customers, products }) {
                                 />
                                 {mappingFilter && (
                                     <button onClick={() => setMappingFilter('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
-                                        <i className="fas fa-times text-xs"></i>
+                                        <X size={12} />
                                     </button>
                                 )}
                             </div>
@@ -1843,8 +1850,8 @@ export default function Analytics({ customers, products }) {
                                     {(adMapping.campaign_mappings || []).filter(m => !mappingFilter || (m.campaign_name + ' ' + m.product_name).toLowerCase().includes(mappingFilter.toLowerCase())).map((m, i) => (
                                         <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl relative group overflow-hidden">
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="text-white/40 hover:text-white mr-2"><i className="fas fa-edit"></i></button>
-                                                <button className="text-white/40 hover:text-rose-400"><i className="fas fa-trash"></i></button>
+                                                <button className="text-white/40 hover:text-white mr-2"><Pencil size={12} /></button>
+                                                <button className="text-white/40 hover:text-rose-400"><Trash2 size={12} /></button>
                                             </div>
                                             <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Campaign</p>
                                             <p className="text-sm font-bold text-white mb-4 truncate">{m.campaign_name}</p>
@@ -1864,8 +1871,8 @@ export default function Analytics({ customers, products }) {
                                     {(adMapping.ad_mappings || []).filter(m => !mappingFilter || (m.ad_name + ' ' + m.product_name).toLowerCase().includes(mappingFilter.toLowerCase())).map((m, i) => (
                                         <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl relative group">
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="text-white/40 hover:text-white mr-2"><i className="fas fa-edit"></i></button>
-                                                <button className="text-white/40 hover:text-rose-400"><i className="fas fa-trash"></i></button>
+                                                <button className="text-white/40 hover:text-white mr-2"><Pencil size={12} /></button>
+                                                <button className="text-white/40 hover:text-rose-400"><Trash2 size={12} /></button>
                                             </div>
                                             <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Ad Creative</p>
                                             <p className="text-sm font-bold text-white mb-4 truncate">{m.ad_name}</p>
@@ -1883,7 +1890,7 @@ export default function Analytics({ customers, products }) {
                         <div className="mt-12 p-6 bg-gradient-to-r from-[#C9A34E]/10 to-transparent border border-[#C9A34E]/20 rounded-3xl">
                             <div className="flex items-start gap-4">
                                 <div className="p-3 bg-[#C9A34E]/20 rounded-2xl text-[#C9A34E]">
-                                    <i className="fas fa-lightbulb text-xl"></i>
+                                    <Lightbulb size={20} />
                                 </div>
                                 <div className="flex-1">
                                     <h4 className="font-black text-white text-lg tracking-tight mb-1">Why use Mapping Matrix?</h4>

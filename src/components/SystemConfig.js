@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Settings, Globe, Bell, ShieldCheck, Info } from 'lucide-react';
 
 export default function SystemConfig({ language = 'TH', setLanguage }) {
     const labels = {
@@ -12,7 +13,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
         <div className="p-10 max-w-4xl mx-auto animate-fade-in space-y-12">
             <div className="flex items-center gap-6">
                 <div className="w-16 h-16 bg-[#C9A34E] text-[#0A1A2F] rounded-[1.5rem] flex items-center justify-center text-3xl shadow-2xl rotate-[-6deg]">
-                    <i className="fas fa-cog"></i>
+                    <Settings size={32} />
                 </div>
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
@@ -26,7 +27,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
-                                <i className="fas fa-globe"></i>
+                                <Globe size={24} />
                             </div>
                             <div>
                                 <h3 className="font-black text-[#F8F8F6] text-lg uppercase tracking-tight">{labels.lang}</h3>
@@ -55,7 +56,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                 <div className="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] flex items-center justify-between group hover:bg-white/10 transition-all shadow-2xl">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
-                            <i className="fas fa-bell"></i>
+                            <Bell size={24} />
                         </div>
                         <div>
                             <h3 className="font-black text-[#F8F8F6] text-lg uppercase tracking-tight">{labels.notify}</h3>
@@ -72,7 +73,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] flex items-center gap-6 hover:bg-white/10 transition-all cursor-pointer shadow-lg animate-slide-up">
                         <div className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center shadow-inner border border-rose-500/20">
-                            <i className="fas fa-shield-alt"></i>
+                            <ShieldCheck size={24} />
                         </div>
                         <div>
                             <h4 className="font-black text-white text-md uppercase tracking-tight italic">Audit Security</h4>
@@ -81,7 +82,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     </div>
                     <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] flex items-center gap-6 hover:bg-white/10 transition-all cursor-pointer shadow-lg animate-slide-up">
                         <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center shadow-inner border border-blue-500/20">
-                            <i className="fas fa-info-circle"></i>
+                            <Info size={24} />
                         </div>
                         <div>
                             <h4 className="font-black text-white text-md uppercase tracking-tight italic">System Meta</h4>

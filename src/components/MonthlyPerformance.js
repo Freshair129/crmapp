@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Table } from 'lucide-react';
 
 export default function MonthlyPerformance({ dailyData }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -96,7 +97,7 @@ export default function MonthlyPerformance({ dailyData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center shadow-lg shadow-[#C9A34E]/20">
-                        <i className="fas fa-table text-white text-xl"></i>
+                        <Table className="text-white w-6 h-6" />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">Monthly Report (Summary)</h1>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 
 export default function RegistrationModal({ isOpen, onClose, onRegister, nextId, nextMemberId }) {
     const [formData, setFormData] = useState({
@@ -105,7 +106,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <h2 className="text-3xl font-black tracking-tight">Register New Customer</h2>
                         </div>
                         <button onClick={onClose} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors">
-                            <i className="fas fa-times"></i>
+                            <X size={20} />
                         </button>
                     </div>
                 </div>

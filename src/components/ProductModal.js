@@ -1,4 +1,5 @@
 'use client';
+import { X, Package, HandMetal, Check, CheckCircle2, Gift, ClipboardCheck, ShoppingCart } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 
@@ -105,7 +106,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                         onClick={onClose}
                         className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
                     >
-                        <i className="fas fa-times"></i>
+                        <X size={14} />
                     </button>
                 </div>
 
@@ -148,7 +149,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                         {fullData?.courses && (
                             <div>
                                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <i className="fas fa-box text-slate-400"></i>
+                                    <Package size={14} className="text-slate-400" />
                                     Core Curriculum (Fixed)
                                 </h3>
                                 <div className="space-y-3">
@@ -185,7 +186,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                             <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-2xl border border-amber-200 shadow-inner">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-sm font-black text-amber-900 uppercase tracking-widest flex items-center gap-2">
-                                        <i className="fas fa-hand-pointer text-amber-600 animate-bounce-short"></i>
+                                        <HandMetal size={14} className="text-amber-600 animate-bounce-short" />
                                         Select Your Free Bonus
                                     </h3>
                                     <span className="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full shadow-sm border border-amber-200">
@@ -209,7 +210,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                                             >
                                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'border-amber-500 bg-amber-500 text-white' : 'border-slate-300 bg-white'
                                                     }`}>
-                                                    {isSelected && <i className="fas fa-check text-[10px]"></i>}
+                                                    {isSelected && <Check size={10} />}
                                                 </div>
                                                 <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-100">
                                                     <img src={course.image} alt={course.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -217,7 +218,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`font-bold text-sm truncate ${isSelected ? 'text-amber-900' : 'text-slate-700'}`}>{course.name}</p>
                                                     <p className="text-xs text-amber-600 font-bold mt-0.5">Value: ฿{course.price?.toLocaleString()}</p>
-                                                    {isSelected && <p className="text-[10px] text-green-600 font-bold mt-1 flex items-center gap-1"><i className="fas fa-check-circle"></i> Selected</p>}
+                                                    {isSelected && <p className="text-[10px] text-green-600 font-bold mt-1 flex items-center gap-1"><CheckCircle2 size={10} /> Selected</p>}
                                                 </div>
                                             </div>
                                         );
@@ -230,7 +231,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                         {fullData?.free_courses && fullData.free_courses.length > 0 && (
                             <div className="bg-green-50 p-6 rounded-2xl border border-green-200 shadow-inner">
                                 <h3 className="text-sm font-black text-green-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <i className="fas fa-gift text-green-600"></i>
+                                    <Gift size={14} className="text-green-600" />
                                     Automatic Bonus Included
                                 </h3>
                                 <div className="space-y-3">
@@ -245,7 +246,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                                                     <p className="font-bold text-sm text-slate-700 truncate">{course.name}</p>
                                                     <p className="text-xs text-green-600 font-bold mt-0.5">Value: ฿{course.price?.toLocaleString()}</p>
                                                     <p className="text-[10px] text-green-600 font-black mt-1 uppercase tracking-widest flex items-center gap-1">
-                                                        <i className="fas fa-check-circle"></i> Added to Package
+                                                        <CheckCircle2 size={12} /> Added to Package
                                                     </p>
                                                 </div>
                                             </div>
@@ -257,7 +258,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                         {product.type === 'bundle' && (
                             <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl">
                                 <h3 className="text-sm font-black text-white/90 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <i className="fas fa-clipboard-check text-orange-500"></i>
+                                    <ClipboardCheck size={14} className="text-orange-500" />
                                     Package Price Breakdown
                                 </h3>
 
@@ -336,7 +337,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                         return false;
                     }) ? (
                         <div className="w-full py-4 rounded-xl font-black text-lg bg-green-100 text-green-600 flex items-center justify-center gap-2 border-2 border-green-200">
-                            <i className="fas fa-check-circle text-xl"></i>
+                            <CheckCircle2 size={20} />
                             ALREADY OWNED
                         </div>
                     ) : (
@@ -348,7 +349,7 @@ export default function ProductModal({ product, allProducts, activeCustomer, onC
                                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                                 }`}
                         >
-                            <i className="fas fa-cart-plus text-xl"></i>
+                            <ShoppingCart size={20} />
                             {isReadyToCart() ? `ADD TO CART • ฿${(product.price || 0).toLocaleString()}` : 'Please complete selection'}
                         </button>
                     )}

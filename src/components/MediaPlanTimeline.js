@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
 
 export default function MediaPlanTimeline({ campaigns }) {
     // Current viewed month (defaults to current month)
@@ -67,13 +68,13 @@ export default function MediaPlanTimeline({ campaigns }) {
                 {/* Month Navigation */}
                 <div className="flex items-center gap-4 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
                     <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all font-black">
-                        <i className="fas fa-chevron-left text-xs"></i>
+                        <ChevronLeft size={12} />
                     </button>
                     <div className="w-32 text-center text-sm font-black text-slate-700">
                         {monthName}
                     </div>
                     <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all font-black">
-                        <i className="fas fa-chevron-right text-xs"></i>
+                        <ChevronRight size={12} />
                     </button>
                 </div>
             </div>
@@ -122,7 +123,7 @@ export default function MediaPlanTimeline({ campaigns }) {
                         {monthCampaigns.length === 0 ? (
                             <tr>
                                 <td colSpan={10} className="p-8 text-center text-slate-400 font-bold text-sm bg-slate-50">
-                                    <i className="fas fa-folder-open block text-2xl mb-2 text-slate-300"></i>
+                                    <FolderOpen size={24} className="block mx-auto mb-2 text-slate-300" />
                                     No campaigns running in {monthName}
                                 </td>
                             </tr>

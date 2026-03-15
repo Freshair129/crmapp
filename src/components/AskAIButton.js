@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Sparkles, Bot, Loader2 } from 'lucide-react';
 
-export default function AskAIButton({ context, icon = 'fa-sparkles', size = 'sm', className = '' }) {
+export default function AskAIButton({ context, icon: Icon = Sparkles, size = 'sm', className = '' }) {
     const [isOpen, setIsOpen] = useState(false);
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
@@ -69,7 +70,7 @@ Related Data: ${JSON.stringify(context.data || {})}
                 className={`text-[#C9A34E] hover:text-[#E0C06E] transition-colors ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}
                 title="Ask AI about this"
             >
-                <i className={`fas ${icon}`}></i>
+                <Icon size={size === 'sm' ? 10 : 12} />
             </button>
 
             {/* Popover */}
@@ -80,7 +81,7 @@ Related Data: ${JSON.stringify(context.data || {})}
 
                     {/* Header */}
                     <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
-                        <i className="fas fa-robot text-[#C9A34E]"></i>
+                        <Bot size={14} className="text-[#C9A34E]" />
                         <span className="text-xs font-bold text-white">AI Context: {context.label}</span>
                     </div>
 
@@ -102,7 +103,7 @@ Related Data: ${JSON.stringify(context.data || {})}
                                 disabled={loading || !question.trim()}
                                 className="w-full bg-[#C9A34E] text-black text-xs font-bold py-1.5 rounded-lg hover:bg-[#E0C06E] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                             >
-                                {loading && <i className="fas fa-spinner fa-spin"></i>}
+                                {loading && <Loader2 size={14} className="animate-spin" />}
                                 {loading ? 'Analyzing...' : 'Ask AI'}
                             </button>
                         </form>

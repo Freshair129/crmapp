@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion';
+import { Key, Loader2, RefreshCw, Coins, GraduationCap, TrendingUp, UserMinus, Target, Megaphone, Clock, Lightbulb } from 'lucide-react';
 
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
     const count = useMotionValue(0);
@@ -99,12 +100,12 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
     const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
 
     const stats = [
-        { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: 'fa-coins', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: 'fa-user-graduate', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Avg. Lifetime Value', value: Math.round(avgLTV), prefix: '฿', subValue: `Avg. Lifespan: ${avgLifespanText}`, icon: 'fa-chart-line', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, icon: 'fa-user-minus', color: 'text-rose-500', bg: 'bg-rose-500/10' },
-        { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: 'fa-ads-click', color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { label: 'Marketing Reach', value: Number(insights.reach || 0), icon: 'fa-bullhorn', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+        { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Avg. Lifetime Value', value: Math.round(avgLTV), prefix: '฿', subValue: `Avg. Lifespan: ${avgLifespanText}`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, icon: UserMinus, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: Target, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Marketing Reach', value: Number(insights.reach || 0), icon: Megaphone, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
 
     // --- AI Insight Calculations ---
@@ -128,7 +129,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                 <div className="flex items-center gap-4">
                     {isTokenExpired && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/30 rounded-xl animate-pulse">
-                            <i className="fas fa-key text-rose-500 text-xs shadow-[0_0_10px_rgba(244,63,94,0.3)]"></i>
+                            <Key className="w-3 h-3 text-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]" />
                             <div>
                                 <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Token Expired</p>
                                 <p className="text-[8px] text-rose-500/70 font-bold leading-tight uppercase">Live Ads Sync Paused</p>
@@ -140,7 +141,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                         disabled={syncing}
                         className={`bg-white/5 border border-white/10 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        <i className={`fas ${syncing ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-[#C9A34E]`}></i>
+                        {syncing ? <Loader2 className="w-4 h-4 animate-spin text-[#C9A34E]" /> : <RefreshCw className="w-4 h-4 text-[#C9A34E]" />}
                         {syncing ? 'Syncing...' : 'Sync Messenger Leads'}
                     </button>
                 </div>
@@ -151,8 +152,8 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                 {stats.map((stat, i) => (
                     <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-all duration-300 group relative">
                         <div className="flex items-center justify-between mb-4">
-                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center text-xl shadow-lg`}>
-                                <i className={`fas ${stat.icon}`}></i>
+                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center shadow-lg`}>
+                                <stat.icon className="w-6 h-6" />
                             </div>
                             <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">Live Sync</span>
                         </div>
@@ -167,7 +168,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                         </p>
                         {stat.subValue && (
                             <p className="text-[10px] font-bold text-white/40 mt-1 flex items-center gap-1">
-                                <i className="fas fa-clock text-[#C9A34E]"></i>
+                                <Clock className="w-3 h-3 text-[#C9A34E]" />
                                 {stat.subValue}
                             </p>
                         )}
@@ -226,7 +227,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                     <div className="relative z-10 h-full flex flex-col">
                         <div className="mb-8">
                             <div className="w-12 h-12 bg-[#0A1A2F] text-[#C9A34E] rounded-2xl flex items-center justify-center text-xl mb-4 shadow-xl">
-                                <i className="fas fa-lightbulb"></i>
+                                <Lightbulb className="w-6 h-6" />
                             </div>
                             <h3 className="font-black text-2xl tracking-tight leading-tight">AI Insights Peak Performance</h3>
                         </div>

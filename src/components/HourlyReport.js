@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { Clock } from 'lucide-react';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
@@ -101,7 +102,7 @@ export default function HourlyReport() {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                        <i className="fas fa-clock text-white text-xl"></i>
+                        <Clock className="text-white" size={20} />
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-3">

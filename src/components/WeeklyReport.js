@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
+import { CalendarDays, Calendar } from 'lucide-react';
 
 export default function WeeklyReport({ dailyData }) {
     // Helper to get ISO Week string from date
@@ -121,7 +122,7 @@ export default function WeeklyReport({ dailyData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <i className="fas fa-calendar-week text-white text-xl"></i>
+                        <CalendarDays className="text-white text-xl" />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">Weekly Report</h1>
@@ -132,7 +133,7 @@ export default function WeeklyReport({ dailyData }) {
                 {/* Week Picker */}
                 <div className="relative group">
                     <div className="flex items-center gap-3 bg-[#0A1A2F] border border-white/20 rounded-xl px-4 py-2 transition-all group-hover:border-indigo-500">
-                        <i className="fas fa-calendar-alt text-indigo-400"></i>
+                        <Calendar className="text-indigo-400" />
                         <input
                             type="date"
                             onChange={(e) => {

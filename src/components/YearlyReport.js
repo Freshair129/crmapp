@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { Layers } from 'lucide-react';
 
 export default function YearlyReport({ dailyData }) {
     const fmt = (val, decimals = 0) => (Number(val) || 0).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -81,7 +82,7 @@ export default function YearlyReport({ dailyData }) {
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                        <i className="fas fa-layer-group text-white text-xl"></i>
+                        <Layers className="text-white w-5 h-5" />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">ตาราง Performance รายปี</h1>

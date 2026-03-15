@@ -1,7 +1,7 @@
-
 'use client';
 
 import React, { useState } from 'react';
+import { Plus, Settings, RotateCw, Zap, MessageSquare, Bell, Trash2 } from 'lucide-react';
 
 export default function NotificationCenter({ language = 'TH' }) {
     const [isSyncing, setIsSyncing] = useState(false);
@@ -104,7 +104,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                     <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
                 </div>
                 <button className="bg-white/5 border border-white/10 text-white/40 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white/10 transition-all flex items-center gap-3">
-                    <i className="fas fa-plus"></i>
+                    <Plus size={16} />
                     {labels.add}
                 </button>
             </div>
@@ -114,7 +114,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col">
                     <div className="flex justify-between items-start mb-10">
                         <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
-                            <i className="fas fa-cog"></i>
+                            <Settings size={20} />
                         </div>
                         <div className="flex gap-2">
                             <button 
@@ -167,7 +167,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                 >
                     <div className="flex justify-between items-start mb-10">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl border ${isSyncing ? 'bg-amber-500 text-white animate-spin' : 'bg-[#C9A34E] text-[#0A1A2F] border-white/10'}`}>
-                            <i className={`fas ${isSyncing ? 'fa-sync-alt' : 'fa-bolt'}`}></i>
+                            {isSyncing ? <RotateCw size={20} /> : <Zap size={20} />}
                         </div>
                         {syncResult === 'success' && (
                             <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-500/30">
@@ -190,7 +190,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                     
                     {/* Background Icon Watermark */}
                     <div className="absolute -bottom-6 -right-6 text-white/5 text-8xl transform -rotate-12 pointer-events-none group-hover:scale-110 transition-transform">
-                        <i className="fab fa-line"></i>
+                        <MessageSquare size={96} />
                     </div>
                 </div>
 
@@ -198,7 +198,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                     <div key={i} className={`bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:bg-white/10 ${!rule.active ? 'opacity-50 grayscale' : ''}`}>
                         <div className="flex justify-between items-start mb-10">
                             <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
-                                <i className="fas fa-bell"></i>
+                                <Bell size={20} />
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={`w-3 h-3 rounded-full ${rule.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`}></span>
@@ -216,7 +216,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                             <div>
                                 <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">Notification Path</p>
                                 <div className="flex items-center gap-2 text-[#06C755] font-black text-xs">
-                                    <i className="fab fa-line"></i>
+                                    <MessageSquare size={14} />
                                     {rule.target}
                                 </div>
                             </div>
@@ -225,7 +225,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                         <div className="flex gap-3">
                             <button className="flex-1 py-3 bg-white/5 border border-white/5 rounded-xl text-white/40 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">Edit</button>
                             <button className="w-12 h-12 bg-white/5 border border-white/5 rounded-xl text-white/40 hover:text-red-500 transition-all flex items-center justify-center">
-                                <i className="fas fa-trash-alt"></i>
+                                <Trash2 size={18} />
                             </button>
                         </div>
                     </div>
@@ -234,7 +234,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                 {/* Automation Add Card (Minimized) */}
                 <div className="border-4 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-[#C9A34E]/30 transition-all gap-4">
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-white/20 group-hover:bg-[#C9A34E]/10 group-hover:text-[#C9A34E] transition-all text-2xl">
-                        <i className="fas fa-plus"></i>
+                        <Plus size={32} />
                     </div>
                     <p className="font-black text-[10px] uppercase tracking-[0.3em] text-white/20 group-hover:text-white transition-all">Define Automation</p>
                 </div>

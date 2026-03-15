@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { AlertCircle, Mail, Lock, Loader2, LogIn } from 'lucide-react';
 
 export default function LoginPage({ onLogin, error: externalError }) {
     const [email, setEmail] = useState('');
@@ -65,7 +66,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
                             <p className="text-red-400 text-sm font-bold flex items-center gap-2">
-                                <i className="fas fa-exclamation-circle"></i>
+                                <AlertCircle className="w-4 h-4" />
                                 {error}
                             </p>
                         </div>
@@ -76,7 +77,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Email Address</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i className="fas fa-envelope text-white/20"></i>
+                                    <Mail className="w-5 h-5 text-white/20" />
                                 </div>
                                 <input
                                     required
@@ -93,7 +94,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i className="fas fa-lock text-white/20"></i>
+                                    <Lock className="w-5 h-5 text-white/20" />
                                 </div>
                                 <input
                                     required
@@ -113,12 +114,12 @@ export default function LoginPage({ onLogin, error: externalError }) {
                         >
                             {isLoading ? (
                                 <>
-                                    <i className="fas fa-spinner animate-spin"></i>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
                                     Signing In...
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-sign-in-alt"></i>
+                                    <LogIn className="w-4 h-4" />
                                     Sign In
                                 </>
                             )}

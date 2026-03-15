@@ -1,6 +1,32 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { 
+    AlertTriangle, 
+    CheckCircle2, 
+    ShieldCheck, 
+    Loader2, 
+    Zap, 
+    List, 
+    TrendingUp, 
+    Flame, 
+    ArrowDownWideNarrow, 
+    ArrowDown, 
+    ArrowUp, 
+    RefreshCw, 
+    Megaphone, 
+    Coins, 
+    DollarSign, 
+    EyeOff, 
+    Eye, 
+    Images, 
+    Image, 
+    Layers, 
+    ChevronUp, 
+    ChevronDown, 
+    UserCircle, 
+    ShoppingCart 
+} from 'lucide-react';
 import AskAIButton from './AskAIButton';
 import CampaignCalendar from './CampaignCalendar';
 
@@ -35,13 +61,13 @@ const VerifyMetric = ({ value, base, comparison, type = 'ctr' }) => {
 
     if (!isVerified) return (
         <span className="ml-1 text-[8px] text-rose-500 cursor-help" title={`Mismatch! API: ${fmt(value * (type === 'ctr' ? 100 : 1), 2)}${type === 'ctr' ? '%' : ''} vs Calc: ${fmt(calculated * (type === 'ctr' ? 100 : 1), 2)}${type === 'ctr' ? '%' : ''}`}>
-            <i className="fas fa-exclamation-triangle"></i>
+            <AlertTriangle size={8} />
         </span>
     );
 
     return (
         <span className="ml-1 text-[7px] text-emerald-500/40 cursor-help" title="Verified: Math matches raw data">
-            <i className="fas fa-check-circle"></i>
+            <CheckCircle2 size={7} />
         </span>
     );
 };
@@ -61,7 +87,7 @@ const DataIntegrityHeader = ({ syncTime, healthScore, onForceSync, isSyncing }) 
             </div>
             <div className="h-4 w-[1px] bg-white/10"></div>
             <div className="flex items-center gap-2">
-                <i className="fas fa-shield-check text-emerald-400 text-xs"></i>
+                <ShieldCheck className="text-emerald-400 w-3 h-3" />
                 <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Reconciliation: Active</span>
             </div>
             <div className="h-4 w-[1px] bg-white/10"></div>
@@ -71,9 +97,9 @@ const DataIntegrityHeader = ({ syncTime, healthScore, onForceSync, isSyncing }) 
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isSyncing ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 border border-blue-500/30'}`}
             >
                 {isSyncing ? (
-                    <><i className="fas fa-circle-notch animate-spin"></i> Syncing via Live API...</>
+                    <><Loader2 className="animate-spin w-3 h-3" /> Syncing via Live API...</>
                 ) : (
-                    <><i className="fas fa-bolt"></i> Force Sync Now</>
+                    <><Zap className="w-3 h-3" /> Force Sync Now</>
                 )}
             </button>
         </div>
@@ -310,13 +336,13 @@ export default function CampaignTracking({ customers }) {
                                 }}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'timeline' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                             >
-                                <i className="fas fa-tasks mr-2"></i> Timeline
+                                <List className="mr-2 w-4 h-4" /> Timeline
                             </button>
                             <button
                                 onClick={() => setViewMode('performance')}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'performance' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                             >
-                                <i className="fas fa-chart-line mr-2"></i> Performance
+                                <TrendingUp className="mr-2 w-4 h-4" /> Performance
                             </button>
                         </div>
                     </div>
@@ -351,7 +377,7 @@ export default function CampaignTracking({ customers }) {
                                     onClick={() => setStatusFilter('DELIVERING')}
                                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'DELIVERING' ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                                 >
-                                    <i className="fas fa-fire text-[#C9A34E] mr-1"></i> Delivering
+                                    <Flame className="text-[#C9A34E] mr-1 w-3 h-3" /> Delivering
                                 </button>
                                 <button
                                     onClick={() => setStatusFilter('ACTIVE')}
@@ -368,7 +394,7 @@ export default function CampaignTracking({ customers }) {
                             </div>
 
                             <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-3 py-1">
-                                <i className="fas fa-sort-amount-down text-white/20 text-[10px] mr-2"></i>
+                                <ArrowDownWideNarrow className="text-white/20 w-3 h-3 mr-2" />
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
@@ -386,7 +412,7 @@ export default function CampaignTracking({ customers }) {
                                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
                                     className="ml-3 text-white/40 hover:text-[#C9A34E] transition-colors"
                                 >
-                                    <i className={`fas ${sortOrder === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up'} text-[10px]`}></i>
+                                    {sortOrder === 'desc' ? <ArrowDown size={10} /> : <ArrowUp size={10} />}
                                 </button>
                             </div>
 
@@ -404,7 +430,7 @@ export default function CampaignTracking({ customers }) {
                                 onClick={loadMarketingData}
                                 className="p-2 w-10 h-10 bg-white/5 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors"
                             >
-                                <i className="fas fa-sync-alt text-xs"></i>
+                                <RefreshCw className="w-3 h-3" />
                             </button>
                         </>
                     )}
@@ -437,21 +463,21 @@ export default function CampaignTracking({ customers }) {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
                                     <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <i className="fas fa-bullhorn text-indigo-400"></i> Active Campaigns
+                                        <Megaphone className="text-indigo-400 w-3 h-3" /> Active Campaigns
                                     </div>
                                     <p className="text-2xl font-black text-white">{activeCampaigns}</p>
                                     <span className="text-[10px] text-white/30 font-bold">of {processedCampaigns.length} total</span>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
                                     <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <i className="fas fa-coins text-amber-400"></i> Total Spend
+                                        <Coins className="text-amber-400 w-3 h-3" /> Total Spend
                                     </div>
                                     <p className="text-2xl font-black text-white">฿{fmt(totalSpend)}</p>
                                     <span className="text-[10px] text-white/30 font-bold">Budget: ฿{fmt(totalBudget)}</span>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl relative overflow-hidden">
                                     <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <i className="fas fa-fire text-orange-400"></i> Burn Rate
+                                        <Flame className="text-orange-400 w-3 h-3" /> Burn Rate
                                     </div>
                                     <p className="text-2xl font-black text-white">{burnRate.toFixed(1)}%</p>
                                     <div className="w-full bg-white/5 h-1 mt-2 rounded-full overflow-hidden">
@@ -460,7 +486,7 @@ export default function CampaignTracking({ customers }) {
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
                                     <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <i className="fas fa-sack-dollar text-[#C9A34E]"></i> Revenue Generated
+                                        <DollarSign className="text-[#C9A34E] w-3 h-3" /> Revenue Generated
                                     </div>
                                     <p className="text-2xl font-black text-white">฿{fmt(totalRevenue)}</p>
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${overallRoas >= 1 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -486,369 +512,4 @@ export default function CampaignTracking({ customers }) {
                                             <div className="flex items-center gap-3 mb-2">
                                                 <button
                                                     onClick={() => toggleVisibility(campaign.id, campaign.isVisible !== false)}
-                                                    className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${campaign.isVisible === false ? 'bg-white/10 text-white/40 hover:text-white' : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/40'}`}
-                                                    title={campaign.isVisible === false ? "Show Campaign" : "Hide Campaign"}
-                                                >
-                                                    <i className={`fas ${campaign.isVisible === false ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
-                                                </button>
-                                                <span className={`w-2 h-2 rounded-full ${campaign.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-white/20'}`}></span>
-                                                <h3 className={`text-xl font-black ${campaign.isVisible === false ? 'text-white/60 line-through' : 'text-white'}`}>{campaign.name}</h3>
-                                                <span className="text-[9px] px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full font-black uppercase tracking-widest">
-                                                    {campaign.metrics.duration} Days Running
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">
-                                                ID: {campaign.id} • Started: {new Date(campaign.start_time).toLocaleDateString()}
-                                            </p>
-                                            <div className="mt-2 flex items-center gap-2">
-                                                <span className="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/60 rounded font-black uppercase tracking-widest">
-                                                    {campaign.objective}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-1">
-                                                {campaign.metrics.profit >= 0 ? 'Estimated Profit' : 'Total Loss'}
-                                            </p>
-                                            <p className={`text-2xl font-black ${campaign.metrics.profit >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                                                {campaign.metrics.profit < 0 ? '-' : ''}฿{fmt(Math.abs(campaign.metrics.profit))}
-                                            </p>
-                                            <p className="text-[10px] text-white/20 font-bold">Revenue: ฿{fmt(totalRevenue)} <MetricSource source="CRM" type="internal" /></p>
-                                        </div>
-                                        <div className="text-right border-l border-white/10 pl-6 ml-6">
-                                            <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-1">
-                                                Attribution Gap
-                                            </p>
-                                            <p className={`text-xl font-black ${Math.abs(campaign.metrics.revenueGap) < 20 ? 'text-[#C9A34E]' : 'text-rose-500'}`}>
-                                                {campaign.metrics.revenueGap > 0 ? '+' : ''}{campaign.metrics.revenueGap.toFixed(1)}%
-                                            </p>
-                                            <p className="text-[9px] text-white/20 font-bold" title="Revenue recorded by FB Pixel">FB Val: ฿{fmt(campaign.metrics.fbRevenue)} <MetricSource source="FB" /></p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-4 gap-6">
-                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Total Spend <MetricSource source="FB" /></p>
-                                            <p className="text-lg font-black text-white">฿{fmt(campaign.spend)}</p>
-                                        </div>
-                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
-                                            <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                                CRM ROAS
-                                                <MetricSource source="CRM" type="internal" />
-                                                <AskAIButton
-                                                    context={{
-                                                        label: `Campaign ROAS: ${campaign.name}`,
-                                                        value: `${fmt(roas, 2)}x`,
-                                                        data: { spend: campaign.spend, revenue: totalRevenue, orders: campaignOrders.length }
-                                                    }}
-                                                />
-                                            </div>
-                                            <p className={`text-lg font-black ${roas >= 2 ? 'text-[#C9A34E]' : 'text-white/60'}`}>{fmt(roas, 2)}x</p>
-                                        </div>
-                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Orders <MetricSource source="CRM" type="internal" /></p>
-                                            <p className="text-lg font-black text-white">{campaignOrders.length}</p>
-                                        </div>
-                                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Avg. Ticket</p>
-                                            <p className="text-lg font-black text-white">฿{fmt(campaignOrders.length > 0 ? totalRevenue / campaignOrders.length : 0)}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="px-8 pt-6 pb-0">
-                                    <h4 className="text-xs font-black text-white/60 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                        <i className="fas fa-images text-purple-400"></i> Visual Context
-                                    </h4>
-                                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                                        {ads.filter(a => String(a.campaign_id) === String(campaign.id)).length > 0 ? (
-                                            ads.filter(a => String(a.campaign_id) === String(campaign.id)).map((ad, i) => (
-                                                <div key={i} className="flex-shrink-0 w-32 group relative">
-                                                    <div className="aspect-square rounded-xl overflow-hidden bg-black/20 border border-white/5 relative">
-                                                        {ad.thumbnail || ad.image ? (
-                                                            <img
-                                                                src={ad.thumbnail || ad.image}
-                                                                alt={ad.name}
-                                                                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                                                                onError={(e) => e.target.style.display = 'none'}
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-white/5">
-                                                                <i className="fas fa-image text-xl mb-1"></i>
-                                                                <span className="text-[8px] uppercase font-bold">No Image</span>
-                                                            </div>
-                                                        )}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                                                            <p className="text-[9px] text-white font-bold truncate w-full">{ad.name}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-1 flex justify-between items-center text-[9px] text-white/40 font-mono">
-                                                        <span>CTR: {fmt(ad.ctr * 100, 1)}%</span>
-                                                        <span>{ad.status === 'ACTIVE' ? '🟢' : '⚫️'}</span>
-                                                    </div>
-                                                    {ad.created_by && (
-                                                        <div className="mt-0.5 text-[8px] text-white/30 truncate text-right">
-                                                            By: {ad.created_by.split(' ')[0]}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-white/20 text-xs font-mono py-4 px-2">
-                                                <i className="fas fa-eye-slash"></i> No visual creatives found
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Ad Set Breakdown */}
-                                <div className="px-8 pt-8 pb-0">
-                                    <h4 className="text-xs font-black text-white/60 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                        <i className="fas fa-layer-group text-blue-400"></i> Ad Set Breakdown
-                                    </h4>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="text-[10px] font-black text-white/20 uppercase tracking-widest border-b border-white/5">
-                                                    <th className="pb-3 px-2">Ad Set Name</th>
-                                                    <th className="pb-3 px-2">Status</th>
-                                                    <th className="pb-3 px-2 text-right">Spend</th>
-                                                    <th className="pb-3 px-2 text-right">Reach</th>
-                                                    <th className="pb-3 px-2 text-right">Impressions</th>
-                                                    <th className="pb-3 px-2 text-right">Clicks</th>
-                                                    <th className="pb-3 px-2 text-right">CTR</th>
-                                                    <th className="pb-3 px-2 text-right">CPC</th>
-                                                    <th className="pb-3 px-2 text-right">CPM</th>
-                                                    <th className="pb-3 px-2 text-right pr-4">ROAS (FB)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/5">
-                                                {campaignAdsets.map((adset, idx) => {
-                                                    const fbPurchaseValue = adset.action_values?.filter(v => ['purchase', 'omni_purchase', 'offsite_conversion.fb_pixel_purchase'].includes(v.action_type)).map(v => parseFloat(v.value)).reduce((a, b) => Math.max(a, b), 0) || 0;
-                                                    const fbRoas = adset.spend > 0 ? (fbPurchaseValue / adset.spend) : 0;
-                                                    const isExpanded = expandedAdset === adset.id;
-                                                    const adsetAds = ads.filter(a => String(a.adset_id) === String(adset.id));
-
-                                                    return (
-                                                        <React.Fragment key={idx}>
-                                                            <tr
-                                                                onClick={() => setExpandedAdset(isExpanded ? null : adset.id)}
-                                                                className="hover:bg-white/5 transition-colors group cursor-pointer"
-                                                            >
-                                                                <td className="py-3 px-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px] text-white/30 group-hover:text-white/60 transition-colors w-4`}></i>
-                                                                        <p className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">{adset.name}</p>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="py-3 px-2">
-                                                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${adset.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
-                                                                        {adset.status}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/60">฿{fmt(adset.spend)}</td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/60">{fmt(adset.reach)}</td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/40">{fmt(adset.impressions)}</td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/40">{fmt(adset.clicks)}</td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/60">
-                                                                    {fmt(adset.ctr * 100, 2)}%
-                                                                    <MetricSource source="FB" />
-                                                                    <VerifyMetric value={adset.ctr} base={adset.impressions} comparison={adset.clicks} type="ctr" />
-                                                                </td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/60">
-                                                                    ฿{fmt(adset.cpc, 2)}
-                                                                    <MetricSource source="FB" />
-                                                                    <VerifyMetric value={adset.cpc} base={adset.clicks} comparison={adset.spend} type="cpc" />
-                                                                </td>
-                                                                <td className="py-3 px-2 text-right text-xs text-white/60">฿{fmt(adset.cpm, 2)}</td>
-                                                                <td className="py-3 px-2 text-right pr-4">
-                                                                    <div className="flex items-center justify-end gap-1">
-                                                                        <span className="text-xs font-bold text-[#C9A34E]">{fmt(fbRoas, 2)}x</span>
-                                                                        <MetricSource source="FB PIXEL" />
-                                                                        <AskAIButton
-                                                                            context={{
-                                                                                label: `Ad Set ROAS: ${adset.name}`,
-                                                                                value: `${fmt(fbRoas, 2)}x`,
-                                                                                data: { spend: adset.spend, revenue_fb: fbPurchaseValue, campaign: campaign.name }
-                                                                            }}
-                                                                            icon="fa-sparkles"
-                                                                        />
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-
-                                                            {/* Expanded Ad Details */}
-                                                            {isExpanded && (
-                                                                <tr className="bg-black/20 animate-fade-in">
-                                                                    <td colSpan="8" className="p-4 pl-10 border-t border-white/5 shadow-inner">
-                                                                        <div className="bg-white/5 rounded-xl border border-white/5 overflow-hidden">
-                                                                            <table className="w-full text-left">
-                                                                                <thead>
-                                                                                    <tr className="text-[9px] font-black text-white/20 uppercase tracking-widest border-b border-white/5 bg-white/5">
-                                                                                        <th className="py-2 px-4 w-12">Visual</th>
-                                                                                        <th className="py-2 px-4">Ad Name</th>
-                                                                                        <th className="py-2 px-4">Status</th>
-                                                                                        <th className="py-2 px-4 text-right">Spend</th>
-                                                                                        <th className="py-2 px-4 text-right">Impr.</th>
-                                                                                        <th className="py-2 px-4 text-right">Clicks</th>
-                                                                                        <th className="py-2 px-4 text-right">CPM</th>
-                                                                                        <th className="py-2 px-4 text-right">CTR</th>
-                                                                                        <th className="py-2 px-4 text-right">Results</th>
-                                                                                        <th className="py-2 px-4 text-right">ROAS</th>
-                                                                                        <th className="py-2 px-4 text-right">Creator</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody className="divide-y divide-white/5">
-                                                                                    {adsetAds.length > 0 ? adsetAds.map((ad, i) => {
-                                                                                        const adPurchaseValue = ad.action_values?.filter(v => ['purchase', 'omni_purchase', 'offsite_conversion.fb_pixel_purchase'].includes(v.action_type)).map(v => parseFloat(v.value)).reduce((a, b) => Math.max(a, b), 0) || 0;
-                                                                                        const adRoas = ad.spend > 0 ? (adPurchaseValue / ad.spend) : 0;
-                                                                                        const results = ad.actions?.filter(a => ['purchase', 'omni_purchase', 'lead', 'onsite_conversion.lead_grouped'].includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value), 0) || 0;
-
-                                                                                        return (
-                                                                                            <tr key={i} className="hover:bg-white/5 transition-colors">
-                                                                                                <td className="py-2 px-4">
-                                                                                                    <div className="w-8 h-8 rounded bg-white/10 overflow-hidden relative group/img">
-                                                                                                        {ad.thumbnail || ad.image ? (
-                                                                                                            <img src={ad.thumbnail || ad.image} alt="" className="w-full h-full object-cover" />
-                                                                                                        ) : (
-                                                                                                            <div className="w-full h-full flex items-center justify-center"><i className="fas fa-image text-white/20 text-[10px]"></i></div>
-                                                                                                        )}
-                                                                                                        {(ad.thumbnail || ad.image) && (
-                                                                                                            <div className="absolute top-0 left-10 hidden group-hover/img:block w-32 h-32 rounded-lg border-2 border-[#C9A34E] overflow-hidden z-10 shadow-xl">
-                                                                                                                <img src={ad.thumbnail || ad.image} alt="" className="w-full h-full object-cover" />
-                                                                                                            </div>
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                </td>
-                                                                                                <td className="py-2 px-4">
-                                                                                                    <p className="text-[10px] font-bold text-white/80 truncate max-w-[200px]" title={ad.name}>{ad.name}</p>
-                                                                                                    <p className="text-[8px] text-white/30 font-mono">ID: {ad.id}</p>
-                                                                                                </td>
-                                                                                                <td className="py-2 px-4">
-                                                                                                    <div className="flex flex-col items-start gap-1">
-                                                                                                        <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${ad.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/30'}`}>
-                                                                                                            {ad.status}
-                                                                                                        </span>
-                                                                                                        {ad.deliveryStatus && ad.deliveryStatus !== ad.status && (
-                                                                                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-tighter">
-                                                                                                                {ad.deliveryStatus}
-                                                                                                            </span>
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                </td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/60">฿{fmt(ad.spend)}</td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/60">{fmt(ad.impressions)}</td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/40">{fmt(ad.clicks)}</td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/60">฿{fmt(ad.cpm, 0)}</td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/60">
-                                                                                                    {fmt(ad.ctr * 100, 2)}%
-                                                                                                    <MetricSource source="FB" />
-                                                                                                    <VerifyMetric value={ad.ctr} base={ad.impressions} comparison={ad.clicks} type="ctr" />
-                                                                                                </td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/80 font-bold">{results}</td>
-                                                                                                <td className="py-2 px-4 text-right">
-                                                                                                    <div className="flex items-center justify-end gap-1">
-                                                                                                        <span className="text-[10px] text-[#C9A34E] font-bold">{fmt(adRoas, 2)}x</span>
-                                                                                                        <MetricSource source="FB PIXEL" />
-                                                                                                        <AskAIButton
-                                                                                                            context={{
-                                                                                                                label: `Ad ROAS: ${ad.name}`,
-                                                                                                                value: `${fmt(adRoas, 2)}x`,
-                                                                                                                data: { spend: ad.spend, revenue_fb: adPurchaseValue, campaign: campaign.name, adset: adset.name }
-                                                                                                            }}
-                                                                                                        />
-                                                                                                    </div>
-                                                                                                </td>
-                                                                                                <td className="py-2 px-4 text-right text-[10px] text-white/40">
-                                                                                                    {ad.created_by ? (
-                                                                                                        <span className="flex items-center justify-end gap-1">
-                                                                                                            <i className="fas fa-user-circle"></i> {ad.created_by.split(' ')[0]}
-                                                                                                        </span>
-                                                                                                    ) : '-'}
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        );
-                                                                                    }) : (
-                                                                                        <tr>
-                                                                                            <td colSpan="10" className="py-4 text-center text-[10px] text-white/30 italic">No ads found in this ad set</td>
-                                                                                        </tr>
-                                                                                    )}
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            )}
-                                                        </React.Fragment>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* Order Details */}
-                                <div className="p-8">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h4 className="text-xs font-black text-white/60 uppercase tracking-[0.2em]">Closed Sales / Ad conversion</h4>
-                                        <div className="h-[1px] flex-1 mx-6 bg-white/5"></div>
-                                    </div>
-
-                                    {campaignOrders.length > 0 ? (
-                                        <div className="space-y-4">
-                                            <table className="w-full text-left">
-                                                <thead>
-                                                    <tr className="text-[10px] font-black text-white/20 uppercase tracking-widest border-b border-white/5">
-                                                        <th className="pb-3 px-2">Date</th>
-                                                        <th className="pb-3 px-2">Customer</th>
-                                                        <th className="pb-3 px-2">Product / Items</th>
-                                                        <th className="pb-3 px-2 text-right">Amount</th>
-                                                        <th className="pb-3 px-2 text-right pr-4">Admin/Agent</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-white/5">
-                                                    {campaignOrders.map((order, idx) => (
-                                                        <tr key={idx} className="hover:bg-white/5 transition-colors group">
-                                                            <td className="py-4 px-2 text-xs font-mono text-white/40">
-                                                                {new Date(order.date).toLocaleDateString()}
-                                                            </td>
-                                                            <td className="py-4 px-2">
-                                                                <p className="text-xs font-black text-white group-hover:text-[#C9A34E] transition-colors">{order.customerName}</p>
-                                                            </td>
-                                                            <td className="py-4 px-2">
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {(order.details?.items || []).map((item, i) => (
-                                                                        <span key={i} className="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 rounded text-white/60">
-                                                                            {item}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </td>
-                                                            <td className="py-4 px-2 text-right font-bold text-white/80">
-                                                                ฿{fmt(order.details?.total || order.details?.amount || 0)}
-                                                            </td>
-                                                            <td className="py-4 px-2 text-right pr-4">
-                                                                <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-lg">
-                                                                    {order.agent}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="py-12 text-center bg-white/5 rounded-3xl border border-white/5 border-dashed">
-                                            <i className="fas fa-shopping-cart text-2xl text-white/10 mb-3 block"></i>
-                                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">No attributed orders found for this campaign</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </>
-            )}
-        </div >
-    );
-}
+                                                    className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${campaign.isVisible === false ? 'bg-white/10 text-white/40 hover:text-white' : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/4

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Brain, Crosshair, ShieldAlert, AlertTriangle, Send } from 'lucide-react';
 
 export default function BusinessIntelligence() {
     const [analysis, setAnalysis] = useState(null);
@@ -73,7 +74,7 @@ export default function BusinessIntelligence() {
             {/* Header */}
             <div className="flex items-center gap-6">
                 <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/20">
-                    <i className="fas fa-brain text-white text-4xl"></i>
+                    <Brain className="text-white w-10 h-10" />
                 </div>
                 <div>
                     <h2 className="text-3xl font-black text-white tracking-tight">V-Insight Business Brain</h2>
@@ -110,7 +111,7 @@ export default function BusinessIntelligence() {
                     <div className="bg-gradient-to-br from-[#0F172A] to-[#1E293B] border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                         <h3 className="font-black text-white text-xl mb-6 flex items-center gap-3 relative z-10">
-                            <i className="fas fa-crosshairs text-emerald-500"></i> Opportunity Radar
+                            <Crosshair className="text-emerald-500 w-5 h-5" /> Opportunity Radar
                         </h3>
                         <div className="space-y-4 relative z-10">
                             {analysis.opportunities.map((opp, i) => (
@@ -136,14 +137,14 @@ export default function BusinessIntelligence() {
                     <div className="bg-gradient-to-br from-[#0F172A] to-[#1E293B] border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                         <h3 className="font-black text-white text-xl mb-6 flex items-center gap-3 relative z-10">
-                            <i className="fas fa-shield-alt text-rose-500"></i> Risk Detection
+                            <ShieldAlert className="text-rose-500 w-5 h-5" /> Risk Detection
                         </h3>
                         <div className="space-y-4 relative z-10">
                             {analysis.risks.length > 0 ? analysis.risks.map((risk, i) => (
                                 <div key={i} className="bg-white/5 border border-white/5 p-5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-500">
-                                            <i className="fas fa-exclamation-triangle"></i>
+                                            <AlertTriangle className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <p className="font-bold text-white text-sm">{risk.type} Alert</p>
@@ -222,7 +223,7 @@ export default function BusinessIntelligence() {
                                 }}
                             />
                             <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-[#C9A34E] rounded-lg text-[#0A1A2F] shadow-lg hover:scale-110 transition-transform">
-                                <i className="fas fa-paper-plane text-xs"></i>
+                                <Send className="w-3 h-3" />
                             </button>
                         </div>
                     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Search, Receipt, Eye } from 'lucide-react';
 
 export default function AuditHistory({ language = 'TH' }) {
     const [orders, setOrders] = useState([]);
@@ -44,7 +45,7 @@ export default function AuditHistory({ language = 'TH' }) {
                     <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Financial Integrity & Audit Trail</p>
                 </div>
                 <div className="relative w-80 mt-6 md:mt-0">
-                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-white/20"></i>
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input
                         type="text"
                         placeholder="Search Order ID..."
@@ -71,7 +72,7 @@ export default function AuditHistory({ language = 'TH' }) {
                             <tr key={order.id} className="hover:bg-white/5 transition-all group">
                                 <td className="px-8 py-6 flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/20 shadow-inner">
-                                        <i className="fas fa-receipt"></i>
+                                        <Receipt size={18} />
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="font-bold text-[#F8F8F6] tracking-tight">{order.orderId}</span>
@@ -95,7 +96,7 @@ export default function AuditHistory({ language = 'TH' }) {
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <button className="w-10 h-10 bg-white/5 hover:bg-[#C9A34E] hover:text-[#0A1A2F] text-white/20 rounded-xl transition-all flex items-center justify-center group-hover:scale-110">
-                                        <i className="fas fa-eye"></i>
+                                        <Eye size={18} />
                                     </button>
                                 </td>
                             </tr>
@@ -115,4 +116,3 @@ export default function AuditHistory({ language = 'TH' }) {
         </div>
     );
 }
-

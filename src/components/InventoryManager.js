@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X } from 'lucide-react';
 
 export default function InventoryManager({ language = 'TH' }) {
     const [products, setProducts] = useState([]);
@@ -113,7 +113,7 @@ export default function InventoryManager({ language = 'TH' }) {
 
             {/* Search */}
             <div className="relative mb-10 max-w-xl">
-                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-white/20"></i>
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20" size={20} />
                 <input
                     type="text"
                     placeholder="Search products..."
@@ -161,13 +161,13 @@ export default function InventoryManager({ language = 'TH' }) {
                                                 onClick={() => handleOpenModal(p)}
                                                 className="w-10 h-10 bg-white/5 hover:bg-[#C9A34E] hover:text-[#0A1A2F] text-white/40 rounded-xl transition-all flex items-center justify-center"
                                             >
-                                                <i className="fas fa-edit"></i>
+                                                <Edit size={18} />
                                             </button>
                                             <button
                                                 onClick={() => { setDeletingId(p.id); setIsDeleteModalOpen(true); }}
                                                 className="w-10 h-10 bg-white/5 hover:bg-red-500 hover:text-white text-white/40 rounded-xl transition-all flex items-center justify-center"
                                             >
-                                                <i className="fas fa-trash"></i>
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </td>
@@ -186,7 +186,9 @@ export default function InventoryManager({ language = 'TH' }) {
                             <h2 className="text-3xl font-black text-[#0A1A2F] italic tracking-tight uppercase leading-none">
                                 {editingProduct ? 'Update Product' : 'Provision Asset'}
                             </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="w-12 h-12 bg-white rounded-full shadow-md flex items-center justify-center text-slate-400 hover:text-[#0A1A2F] transition-all"><i className="fas fa-times"></i></button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-12 h-12 bg-white rounded-full shadow-md flex items-center justify-center text-slate-400 hover:text-[#0A1A2F] transition-all">
+                                <X size={24} />
+                            </button>
                         </div>
                         <form onSubmit={handleSave} className="p-10 grid grid-cols-2 gap-8">
                             <div className="col-span-2 space-y-2">
@@ -228,7 +230,9 @@ export default function InventoryManager({ language = 'TH' }) {
             {isDeleteModalOpen && (
                 <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#0A1A2F]/90 backdrop-blur-xl p-6">
                     <div className="bg-white rounded-[3rem] p-12 text-center max-w-md animate-scale-up">
-                        <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner"><i className="fas fa-trash"></i></div>
+                        <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                            <Trash2 size={40} />
+                        </div>
                         <h3 className="text-3xl font-black text-[#0A1A2F] italic uppercase mb-2">Eliminate?</h3>
                         <p className="text-slate-400 font-bold text-sm mb-10 leading-relaxed uppercase tracking-widest">Are you sure you want to remove this asset? This action is permanent.</p>
                         <div className="flex gap-4">
@@ -241,4 +245,3 @@ export default function InventoryManager({ language = 'TH' }) {
         </div>
     );
 }
-

@@ -1,6 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { 
+  RefreshCw, 
+  Timer, 
+  CheckCircle2, 
+  MessageSquareMore, 
+  UserCog, 
+  Loader2, 
+  Inbox, 
+  Clock 
+} from 'lucide-react';
 
 export default function AdminPerformance() {
     const [performanceData, setPerformanceData] = useState([]);
@@ -91,7 +101,7 @@ export default function AdminPerformance() {
                         onClick={fetchPerformance}
                         className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#C9A34E] hover:bg-white/10 transition-all"
                     >
-                        <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </div>
@@ -99,16 +109,16 @@ export default function AdminPerformance() {
             {/* Global Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-emerald-400"><i className="fas fa-stopwatch text-6xl"></i></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-emerald-400"><Timer size={64} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Team Avg. Response</p>
                     <p className="text-4xl font-black text-emerald-400">{(summary?.avgResponseTimeMinutes || 0).toFixed(1)} <span className="text-lg">min</span></p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-400">
-                        <i className="fas fa-check-circle"></i>
+                        <CheckCircle2 size={12} />
                         <span>First-reply speed</span>
                     </div>
                 </div>
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><i className="fas fa-comment-dots text-6xl"></i></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><MessageSquareMore size={64} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total System Messages</p>
                     <p className="text-4xl font-black text-white">{(summary?.totalMessages || 0).toLocaleString()}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/20">
@@ -116,7 +126,7 @@ export default function AdminPerformance() {
                     </div>
                 </div>
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><i className="fas fa-users-cog text-6xl"></i></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><UserCog size={64} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Unique Convs Handled</p>
                     <p className="text-4xl font-black text-[#C9A34E]">{(summary?.totalConversations || 0).toLocaleString()}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/20">
@@ -129,12 +139,14 @@ export default function AdminPerformance() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {loading ? (
                     <div className="col-span-1 lg:col-span-2 py-20 flex justify-center items-center">
-                        <div className="text-[#C9A34E] text-2xl animate-pulse"><i className="fas fa-spinner fa-spin"></i> Loading Data...</div>
+                        <div className="text-[#C9A34E] text-2xl animate-pulse flex items-center gap-2">
+                            <Loader2 size={24} className="animate-spin" /> Loading Data...
+                        </div>
                     </div>
                 ) : sortedData.length === 0 ? (
                     <div className="col-span-1 lg:col-span-2 py-20 flex justify-center items-center bg-white/5 border border-dashed border-white/10 rounded-[2.5rem]">
                         <div className="text-white/30 text-sm font-black uppercase tracking-widest text-center">
-                            <i className="fas fa-inbox text-4xl mb-4 block"></i>
+                            <Inbox size={40} className="mb-4 mx-auto block" />
                             No admin activity found for this period.
                         </div>
                     </div>
@@ -179,7 +191,7 @@ export default function AdminPerformance() {
                                     </div>
                                     <div className="text-right">
                                         <div className="flex items-center gap-2 justify-end mb-1">
-                                            <i className="fas fa-clock text-white/30 text-xs"></i>
+                                            <Clock size={16} className="text-white/30" />
                                             <span className={`text-xl font-black ${rtColor}`}>{admin.stats.avgResponseTimeMinutes > 0 ? admin.stats.avgResponseTimeMinutes.toFixed(1) : 'N/A'} <span className="text-xs">min</span></span>
                                         </div>
                                         <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Avg Response Time</p>

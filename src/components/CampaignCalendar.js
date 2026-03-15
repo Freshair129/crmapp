@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { 
+    ChevronLeft, 
+    ChevronRight, 
+    Satellite, 
+    Megaphone, 
+    Eye, 
+    Flame, 
+    List 
+} from 'lucide-react';
 
 export default function CampaignCalendar() {
     const [viewDate, setViewDate] = useState(new Date());
@@ -169,11 +178,11 @@ export default function CampaignCalendar() {
                 </div>
                 <div className="flex items-center gap-4 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
                     <button onClick={prevMonth} disabled={loading} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all font-black disabled:opacity-50">
-                        <i className="fas fa-chevron-left text-sm"></i>
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
                     <div className="w-40 text-center text-lg font-black text-slate-700">{monthName}</div>
                     <button onClick={nextMonth} disabled={loading} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all font-black disabled:opacity-50">
-                        <i className="fas fa-chevron-right text-sm"></i>
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -182,7 +191,7 @@ export default function CampaignCalendar() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 {/* Delivering Now */}
                 <div className="bg-gradient-to-br from-emerald-50 to-slate-50 p-5 rounded-[1.5rem] border border-emerald-200 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><i className="fas fa-satellite-dish text-5xl"></i></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Satellite className="w-12 h-12" /></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Delivering Now</p>
                     <div className="flex items-end gap-2">
                         <p className="text-3xl font-black text-emerald-600">{loading ? '...' : deliveringCount}</p>
@@ -195,7 +204,7 @@ export default function CampaignCalendar() {
 
                 {/* Total Ads */}
                 <div className="bg-gradient-to-br from-indigo-50 to-slate-50 p-5 rounded-[1.5rem] border border-indigo-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><i className="fas fa-bullhorn text-5xl"></i></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Megaphone className="w-12 h-12" /></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Ads with Spend</p>
                     <p className="text-3xl font-black text-slate-800">{loading ? '...' : processedAds.length}</p>
                     <span className="text-[9px] text-slate-400 font-bold">Unique ads in {viewDate.toLocaleString('default', { month: 'short' })}</span>
@@ -203,7 +212,7 @@ export default function CampaignCalendar() {
 
                 {/* Total Impressions */}
                 <div className="bg-gradient-to-br from-amber-50 to-slate-50 p-5 rounded-[1.5rem] border border-amber-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><i className="fas fa-eye text-5xl"></i></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Eye className="w-12 h-12" /></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-1">Impressions</p>
                     <p className="text-3xl font-black text-slate-800">{loading ? '...' : fmt(summaryImpressions)}</p>
                     <span className="text-[9px] text-slate-400 font-bold">Total views this month</span>
@@ -211,7 +220,7 @@ export default function CampaignCalendar() {
 
                 {/* Total Spend */}
                 <div className="bg-gradient-to-br from-rose-50 to-slate-50 p-5 rounded-[1.5rem] border border-rose-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><i className="fas fa-fire text-5xl"></i></div>
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Flame className="w-12 h-12" /></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">Actual Spend</p>
                     <p className="text-3xl font-black text-slate-800">฿{loading ? '...' : fmt(summarySpend)}</p>
                     <span className="text-[9px] text-slate-400 font-bold">Facebook billing data</span>
@@ -302,116 +311,3 @@ export default function CampaignCalendar() {
                                                 const ringClass = ad.isDelivering ? DELIVERING_PULSE : '';
 
                                                 return (
-                                                    <div
-                                                        key={ad.ad_id}
-                                                        title={`${ad.name}\nStatus: ${ad.status}${ad.deliveryStatus ? ` (${ad.deliveryStatus})` : ''}${ad.isDelivering ? ' (DELIVERING)' : ''}\nSpend: ฿${fmtDec(ad.totalSpend)}\nImpressions: ${fmt(ad.totalImpressions)}\nClicks: ${fmt(ad.totalClicks)}\nActive ${ad.daysActive} day(s)`}
-                                                        className={`h-[16px] relative flex items-center px-1 text-[8px] font-bold text-white shadow-sm cursor-help transition-all hover:brightness-110 ${colorClass} ${roundClass} ${ringClass}`}
-                                                        style={{ zIndex: 10 - sIdx }}
-                                                    >
-                                                        {isStart && (
-                                                            <span className="truncate w-full drop-shadow-sm leading-none">
-                                                                {ad.name}
-                                                            </span>
-                                                        )}
-                                                        {isEnd && !isStart && (
-                                                            <span className="text-[7px] text-white/70 ml-auto whitespace-nowrap">
-                                                                ฿{fmt(ad.totalSpend)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                            {hiddenCount > 0 && (
-                                                <div className="text-[8px] font-black text-slate-400 w-full text-right pr-1 mt-0.5">
-                                                    +{hiddenCount} more
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Ad Summary Table */}
-            {!loading && processedAds.length > 0 && (
-                <div className="mt-8 border border-slate-200 rounded-2xl overflow-hidden">
-                    <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                        <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest">
-                            <i className="fas fa-list-ul mr-2 text-indigo-400"></i>
-                            Ad Delivery Summary • {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                        </h4>
-                    </div>
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-slate-50/80 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                <th className="p-3 pl-6"></th>
-                                <th className="p-3">Ad Name</th>
-                                <th className="p-3 text-center">Status</th>
-                                <th className="p-3 text-center">Days Active</th>
-                                <th className="p-3 text-right">Spend</th>
-                                <th className="p-3 text-right">Impressions</th>
-                                <th className="p-3 text-right pr-6">Clicks</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-                            {processedAds.map((ad, i) => {
-                                const hash = (ad.ad_id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-                                const dotColor = ad.isDelivering ? 'bg-emerald-500 animate-pulse' : COLORS[hash % COLORS.length].replace('bg-', 'bg-');
-                                return (
-                                    <tr key={ad.ad_id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="p-3 pl-6">
-                                            <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
-                                        </td>
-                                        <td className="p-3 max-w-[250px]">
-                                            <p className="truncate font-black text-slate-800">{ad.name}</p>
-                                            <p className="text-[9px] text-slate-400 font-bold">
-                                                {ad.firstDayNum}–{ad.lastDayNum} {viewDate.toLocaleString('default', { month: 'short' })}
-                                            </p>
-                                        </td>
-                                        <td className="p-3 text-center">
-                                            {ad.isDelivering ? (
-                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-                                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                                    {ad.deliveryStatus || 'Delivering'}
-                                                </span>
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-0.5">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${ad.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {ad.status}
-                                                    </span>
-                                                    {ad.deliveryStatus && ad.deliveryStatus !== ad.status && (
-                                                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">
-                                                            {ad.deliveryStatus}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-3 text-center text-slate-500">{ad.daysActive}d</td>
-                                        <td className="p-3 text-right font-black text-slate-800">฿{fmtDec(ad.totalSpend)}</td>
-                                        <td className="p-3 text-right text-slate-600">{fmt(ad.totalImpressions)}</td>
-                                        <td className="p-3 text-right pr-6 text-slate-500">{fmt(ad.totalClicks)}</td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                        <tfoot className="bg-slate-50 border-t-2 border-slate-200">
-                            <tr className="text-xs font-black">
-                                <td className="p-3 pl-6"></td>
-                                <td className="p-3 text-slate-800 uppercase tracking-widest">Total</td>
-                                <td className="p-3"></td>
-                                <td className="p-3"></td>
-                                <td className="p-3 text-right text-slate-800">฿{fmtDec(summarySpend)}</td>
-                                <td className="p-3 text-right text-slate-600">{fmt(summaryImpressions)}</td>
-                                <td className="p-3 text-right pr-6 text-slate-500">{fmt(processedAds.reduce((s, a) => s + (a.totalClicks || 0), 0))}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            )}
-        </div>
-    );
-}
