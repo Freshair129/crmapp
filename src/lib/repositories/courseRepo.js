@@ -1,0 +1,186 @@
+import { getPrisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
+
+// ──────────────────────────────────────────
+// ID generation
+// ──────────────────────────────────────────
+async function generateCourseId() {
+    const prisma = await getPrisma();
+    const yy = String(new Date().getFullYear()).slice(-2);
+    const prefix = `TVS-CRS-${yy}-`;
+    const last = await prisma.product.findFirst({
+        where: { productId: { startsWith: prefix } },
+        orderBy: { productId: 'desc' }
+    });
+    const next = last ? parseInt(last.productId.split('-').pop(), 10) + 1 : 1;
+    return `${prefix}${next.toString().padStart(4, '0')}`;
+}
+
+// ──────────────────────────────────────────
+// Queries
+// ──────────────────────────────────────────
+export async function listCourses({ isActive } = {}) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.product.findMany({
+            where: {
+                category: 'course',
+                ...(isActive !== undefined ? { isActive } : {})
+            },
+            include: {
+                courseMenus: {
+                    include: { recipe: true },
+                    orderBy: [{ dayNumber: 'asc' }, { sortOrder: 'asc' }]
+                },
+                courseEquipment: { orderBy: { name: 'asc' } }
+            },
+            orderBy: { name: 'asc' }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'listCourses failed', error);
+        throw error;
+    }
+}
+
+export async function getCourse(id) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.product.findFirst({
+            where: {
+                OR: [{ id }, { productId: id }],
+                category: 'course'
+            },
+            include: {
+                courseMenus: {
+                    include: {
+                        recipe: {
+                            include: {
+                                ingredients: { include: { ingredient: true } },
+                                equipment: true
+                            }
+                        }
+                    },
+                    orderBy: [{ dayNumber: 'asc' }, { sortOrder: 'asc' }]
+                },
+                courseEquipment: { orderBy: { name: 'asc' } }
+            }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'getCourse failed', error);
+        throw error;
+    }
+}
+
+// ──────────────────────────────────────────
+// Mutations — Course
+// ──────────────────────────────────────────
+export async function createCourse({ name, description, price, hours, days, sessionType }) {
+    try {
+        const prisma = await getPrisma();
+        const productId = await generateCourseId();
+
+        return prisma.product.create({
+            data: {
+                productId,
+                name,
+                description,
+                price: parseFloat(price),
+                category: 'course',
+                hours: hours ? parseFloat(hours) : null,
+                days: days ? parseFloat(days) : null,
+                sessionType: sessionType || null,
+                isActive: true
+            },
+            include: {
+                courseMenus: { include: { recipe: true } },
+                courseEquipment: true
+            }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'createCourse failed', error);
+        throw error;
+    }
+}
+
+export async function updateCourse(id, data) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.product.update({
+            where: { id },
+            data: {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.description !== undefined && { description: data.description }),
+                ...(data.price !== undefined && { price: parseFloat(data.price) }),
+                ...(data.hours !== undefined && { hours: data.hours ? parseFloat(data.hours) : null }),
+                ...(data.days !== undefined && { days: data.days ? parseFloat(data.days) : null }),
+                ...(data.sessionType !== undefined && { sessionType: data.sessionType || null }),
+                ...(data.isActive !== undefined && { isActive: data.isActive })
+            },
+            include: {
+                courseMenus: { include: { recipe: true }, orderBy: [{ dayNumber: 'asc' }, { sortOrder: 'asc' }] },
+                courseEquipment: { orderBy: { name: 'asc' } }
+            }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'updateCourse failed', error);
+        throw error;
+    }
+}
+
+// ──────────────────────────────────────────
+// Mutations — CourseMenu (menus/recipes per course)
+// ──────────────────────────────────────────
+export async function addCourseMenu(productId, { recipeId, dayNumber = 1, sessionSlot, sortOrder = 0 }) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.courseMenu.create({
+            data: { productId, recipeId, dayNumber: parseInt(dayNumber), sessionSlot: sessionSlot || null, sortOrder: parseInt(sortOrder) },
+            include: { recipe: true }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'addCourseMenu failed', error);
+        throw error;
+    }
+}
+
+export async function removeCourseMenu(courseMenuId) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.courseMenu.delete({ where: { id: courseMenuId } });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'removeCourseMenu failed', error);
+        throw error;
+    }
+}
+
+// ──────────────────────────────────────────
+// Mutations — CourseEquipment (aprons, etc.)
+// ──────────────────────────────────────────
+export async function addCourseEquipment(productId, { name, qty = 1, isIncluded = true, estimatedCost, notes }) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.courseEquipment.create({
+            data: {
+                productId,
+                name,
+                qty: parseInt(qty),
+                isIncluded: isIncluded !== false,
+                estimatedCost: estimatedCost ? parseFloat(estimatedCost) : null,
+                notes: notes || null
+            }
+        });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'addCourseEquipment failed', error);
+        throw error;
+    }
+}
+
+export async function removeCourseEquipment(equipmentId) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.courseEquipment.delete({ where: { id: equipmentId } });
+    } catch (error) {
+        logger.error('[CourseRepo]', 'removeCourseEquipment failed', error);
+        throw error;
+    }
+}

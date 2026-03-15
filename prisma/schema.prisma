@@ -262,6 +262,7 @@ model Product {
   image               String?
   category            String     @default("course")
   hours               Float?                                          // Phase 16: ชั่วโมงเรียนต่อคอร์ส
+  days                Float?                                          // Phase 17: จำนวนวัน (0.5=ครึ่งวัน, 1=เต็มวัน, 2=2วัน)
   sessionType         String?    @map("session_type")                 // Phase 16: MORNING|AFTERNOON|EVENING
   duration            Int?
   durationUnit        String?    @map("duration_unit")
@@ -279,6 +280,7 @@ model Product {
   schedules                 CourseSchedule[]
   bom                       CourseBOM[]
   courseMenus               CourseMenu[]
+  courseEquipment           CourseEquipment[]
   packageCourses            PackageCourse[]
   packageEnrollmentCourses  PackageEnrollmentCourse[]
 
@@ -767,9 +769,10 @@ model Asset {
 
 model Recipe {
   id            String   @id @default(uuid())
-  recipeId      String   @unique @map("recipe_id")     // RCP-[YYYY]-[SERIAL]
+  recipeId      String   @unique @map("recipe_id")     // RCP-[CHEF]-[CAT]-[SERIAL] e.g. RCP-AOI-JP-001
   name          String
   description   String?
+  chef          String?                                // ตัวย่อเชฟ 3 ตัว เช่น AOI, FAH, BKK
   sellingPrice  Float?   @map("selling_price")         // ราคาขาย per menu (optional reference)
   estimatedCost Float?   @map("estimated_cost")        // ต้นทุนรวม (computed from RecipeIngredient or manual)
   category      String?                                // ประเภทอาหาร e.g. JP, TH, PASTRY
@@ -789,16 +792,34 @@ model Recipe {
 // Junction: Course (Product) ↔ Recipe (many-to-many)
 // หนึ่งคอร์สมีได้หลาย recipe; หนึ่ง recipe ใช้ได้ในหลายคอร์ส
 model CourseMenu {
-  id        String @id @default(uuid())
-  productId String @map("product_id")
-  recipeId  String @map("recipe_id")
-  sortOrder Int    @default(0) @map("sort_order")
+  id          String  @id @default(uuid())
+  productId   String  @map("product_id")
+  recipeId    String  @map("recipe_id")
+  dayNumber   Int     @default(1) @map("day_number")    // วันที่ (1, 2) ใน multi-day course
+  sessionSlot String? @map("session_slot")              // MORNING|AFTERNOON|EVENING
+  sortOrder   Int     @default(0) @map("sort_order")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   recipe  Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([productId, recipeId])
   @@map("course_menus")
+}
+
+// อุปกรณ์ระดับคอร์ส (เช่น ผ้ากันเปื้อน) — แยกจาก RecipeEquipment ที่เป็นอุปกรณ์พิเศษต่อสูตร
+model CourseEquipment {
+  id            String  @id @default(uuid())
+  productId     String  @map("product_id")
+  name          String                                  // เช่น "ผ้ากันเปื้อน V School"
+  qty           Int     @default(1)                    // จำนวนต่อนักเรียน 1 คน
+  isIncluded    Boolean @default(true) @map("is_included")  // true = แถมฟรี, false = ต้องซื้อเพิ่ม
+  estimatedCost Float?  @map("estimated_cost")
+  notes         String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("course_equipment")
 }
 
 // วัตถุดิบที่ใช้ใน recipe (ตัดสต็อกจาก Ingredient)

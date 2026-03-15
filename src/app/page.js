@@ -38,6 +38,7 @@ import KitchenStockPanel from "@/components/KitchenStockPanel";
 import AssetPanel from "@/components/AssetPanel";
 import RecipePage from "@/components/RecipePage";
 import PackagePage from "@/components/PackagePage";
+import CoursePage from "@/components/CoursePage";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -292,6 +293,10 @@ export default function Home() {
 
                         {activeView === "schedules" && wrap("schedules",
                             <ScheduleCalendar language={language} />
+                        )}
+
+                        {activeView === "courses" && wrap("courses",
+                            <CoursePage language={language} />
                         )}
 
                         {activeView === "recipes" && wrap("recipes",
