@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'standalone',
+    // output: 'standalone',  // Docker only — Vercel uses serverless (auto-detected)
     serverExternalPackages: [
         'pg', 'pg-connection-string', 'pg-native', 'pgpass', 'split2',
         '@prisma/adapter-pg', '@prisma/client',
