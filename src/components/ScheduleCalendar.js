@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar, Clock, Users, Plus, ChevronLeft, ChevronRight, Grid, List, Loader2, MapPin, CheckCircle2, X } from 'lucide-react';
 
 export default function ScheduleCalendar({ language = 'TH' }) {
@@ -261,7 +262,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
         </div>
       )}
 
-      {showAddModal && (
+      {showAddModal && typeof window !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
 
@@ -376,7 +377,8 @@ export default function ScheduleCalendar({ language = 'TH' }) {
             </form>
             </div>{/* end scrollable body */}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
