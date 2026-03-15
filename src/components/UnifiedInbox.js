@@ -29,11 +29,19 @@ export default function UnifiedInbox({ language = 'TH' }) {
     useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
     useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
-    // Real-time SSE Connection
+    // Real-time SSE Connection + Polling Fallback
     useEffect(() => {
         let eventSource;
         let retryCount = 0;
         let reconnectTimeout;
+        let sseActive = false;
+        // Polling fallback: refresh every 30s when SSE not receiving real events
+        // (e.g. local dev where FB cannot reach localhost webhook)
+        const pollingInterval = setInterval(() => {
+            if (!sseActive) {
+                fetchConversations(1, true);
+            }
+        }, 30000);
 
         const connect = () => {
             console.log('[UnifiedInbox] Establishing Real-time connection...');
@@ -50,6 +58,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
                     if (payload.channel === 'chat-updates') {
                         console.log('[UnifiedInbox] Real-time event received:', payload.data);
+                        sseActive = true; // SSE is delivering real events — polling not needed
                         fetchConversations(1, true);
 
                         const currentId = selectedIdRef.current;
@@ -66,6 +75,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
             eventSource.onerror = (err) => {
                 console.warn('[UnifiedInbox] SSE Connection lost. Retrying...');
+                sseActive = false;
                 eventSource.close();
                 const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
                 retryCount++;
@@ -79,6 +89,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
             console.log('[UnifiedInbox] Terminating Real-time connection');
             if (eventSource) eventSource.close();
             if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            clearInterval(pollingInterval);
         };
     }, []);
 

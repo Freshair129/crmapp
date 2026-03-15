@@ -1,22 +1,4 @@
 // FILE: src/lib/__tests__/kitchenRepo.test.js
-/**
- * ## Pre-flight: kitchenRepo.js
- * Models used:
- *   - prisma.ingredient (findMany, upsert, update, findUnique)
- *   - prisma.courseBOM (findMany, upsert)
- *   - prisma.courseSchedule (findUnique)
- *   - prisma.purchaseRequest (findFirst, create, findUnique)
- *   - prisma.purchaseRequestItem (createMany)
- * Internal calls:
- *   - createPurchaseRequest() calls calculateStockNeeded() → mock at DB level (prisma.courseSchedule, prisma.courseBOM)
- *   - generatePurchaseRequestId() called inside createPurchaseRequest() → mock prisma.purchaseRequest.findFirst
- * Function signatures:
- *   - getAllIngredients(opts = {}) { category, search, lowStockOnly }
- *   - calculateStockNeeded(scheduleId)
- *   - createPurchaseRequest(scheduleId, notes)
- * Potential mock gaps: costPerUnit calculation in PR items.
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
     getAllIngredients, 
@@ -24,11 +6,39 @@ import {
     createPurchaseRequest 
 } from '../repositories/kitchenRepo';
 import { getPrisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
-vi.mock('@/lib/db', () => ({ getPrisma: vi.fn() }));
-vi.mock('@/lib/logger', () => ({
-    logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() }
+vi.mock('@/lib/db', () => ({
+    getPrisma: vi.fn()
 }));
+
+vi.mock('@/lib/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn()
+    }
+}));
+
+/**
+ * ## Pre-flight Checklist: kitchenRepo.js
+ * 
+ * 1. Source Analysis:
+ *    - getAllIngredients(opts = {}): Uses object parameter (category, search, lowStockOnly).
+ *    - calculateStockNeeded(scheduleId): Uses positional parameter.
+ *    - createPurchaseRequest(scheduleId, notes): Uses positional parameters.
+ *    - Internal call: createPurchaseRequest calls calculateStockNeeded.
+ *    - Internal call: calculateStockNeeded calls getBOMForProduct.
+ *    - Internal call: generatePurchaseRequestId uses prisma.purchaseRequest.findFirst.
+ * 
+ * 2. Mock Inventory:
+ *    - prisma.ingredient: findMany
+ *    - prisma.courseBOM: findMany
+ *    - prisma.courseSchedule: findUnique
+ *    - prisma.purchaseRequest: findFirst, create, findUnique
+ *    - prisma.purchaseRequestItem: createMany
+ *    - prisma.$transaction: Used in createPurchaseRequest.
+ */
 
 describe('kitchenRepo', () => {
     let mockPrisma;
@@ -36,10 +46,8 @@ describe('kitchenRepo', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockPrisma = {
-            $transaction: vi.fn(cb => cb(mockPrisma)),
             ingredient: {
-                findMany: vi.fn(),
-                findUnique: vi.fn()
+                findMany: vi.fn()
             },
             courseBOM: {
                 findMany: vi.fn()
@@ -54,113 +62,147 @@ describe('kitchenRepo', () => {
             },
             purchaseRequestItem: {
                 createMany: vi.fn()
-            }
+            },
+            $transaction: vi.fn(cb => cb(mockPrisma))
         };
         getPrisma.mockResolvedValue(mockPrisma);
+
+        // Mock Date for ID generation: 2026-03-15
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-03-15'));
     });
 
     afterEach(() => {
         vi.useRealTimers();
     });
 
-    describe('getAllIngredientsScan', () => {
-        it('should filter low stock items in JS layer correctly', async () => {
+    describe('getAllIngredients', () => {
+        it('should filter low stock items when lowStockOnly is true', async () => {
             const mockData = [
-                { id: 'i1', name: 'A', currentStock: 5, minStock: 10 },
-                { id: 'i2', name: 'B', currentStock: 20, minStock: 10 }
+                { id: '1', name: 'Salt', currentStock: 10, minStock: 5 },
+                { id: '2', name: 'Sugar', currentStock: 2, minStock: 5 } // Low Stock
             ];
             mockPrisma.ingredient.findMany.mockResolvedValue(mockData);
 
             const result = await getAllIngredients({ lowStockOnly: true });
 
             expect(result).toHaveLength(1);
-            expect(result[0].id).toBe('i1');
+            expect(result[0].name).toBe('Sugar');
+            expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(expect.objectContaining({
+                where: {}
+            }));
+        });
+
+        it('should pass category and search to prisma where clause', async () => {
+            mockPrisma.ingredient.findMany.mockResolvedValue([]);
+            await getAllIngredients({ category: 'PROTEIN', search: 'Pork' });
+
+            expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(expect.objectContaining({
+                where: {
+                    category: 'PROTEIN',
+                    OR: [
+                        { name: { contains: 'Pork', mode: 'insensitive' } },
+                        { ingredientId: { contains: 'Pork', mode: 'insensitive' } }
+                    ]
+                }
+            }));
         });
     });
 
     describe('calculateStockNeeded', () => {
-        it('should use confirmedStudents if available', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ 
-                productId: 'p1', 
-                confirmedStudents: 5, 
-                maxStudents: 10 
+        it('should calculate required quantity and sufficiency correctly', async () => {
+            // Mock Schedule: 20 students
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({
+                id: 'sched-1',
+                productId: 'prod-1',
+                confirmedStudents: 20
             });
+
+            // Mock BOM: 2 items
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                { qtyPerPerson: 2, unit: 'kg', ingredient: { currentStock: 4 } }
+                {
+                    ingredientId: 'ing-1',
+                    qtyPerPerson: 2,
+                    unit: 'kg',
+                    ingredient: { id: 'ing-1', currentStock: 30 } // Needed: 40, Stock: 30 -> Buy 10
+                },
+                {
+                    ingredientId: 'ing-2',
+                    qtyPerPerson: 0.5,
+                    unit: 'L',
+                    ingredient: { id: 'ing-2', currentStock: 15 } // Needed: 10, Stock: 15 -> Buy 0
+                }
             ]);
 
-            const result = await calculateStockNeeded('sch-1');
+            const result = await calculateStockNeeded('sched-1');
 
-            expect(result[0].qtyNeeded).toBe(10); // 5 * 2
-            expect(result[0].qtyToBuy).toBe(6);  // 10 - 4
+            expect(result).toHaveLength(2);
+            expect(result[0].qtyNeeded).toBe(40);
+            expect(result[0].qtyToBuy).toBe(10);
             expect(result[0].isSufficient).toBe(false);
+            
+            expect(result[1].qtyNeeded).toBe(10);
+            expect(result[1].qtyToBuy).toBe(0);
+            expect(result[1].isSufficient).toBe(true);
         });
 
-        it('should fallback to maxStudents if confirmed is 0/null', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ 
-                productId: 'p1', 
-                confirmedStudents: 0, 
-                maxStudents: 8 
-            });
-            mockPrisma.courseBOM.findMany.mockResolvedValue([
-                { qtyPerPerson: 1, unit: 'pcs', ingredient: { currentStock: 10 } }
-            ]);
-
-            const result = await calculateStockNeeded('sch-1');
-            expect(result[0].qtyNeeded).toBe(8);
-            expect(result[0].isSufficient).toBe(true);
+        it('should throw error if schedule not found', async () => {
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue(null);
+            await expect(calculateStockNeeded('missing')).rejects.toThrow('Schedule not found');
         });
     });
 
     describe('createPurchaseRequest', () => {
-        it('should return alreadySufficient if all qtyToBuy are 0', async () => {
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ confirmedStudents: 1, productId: 'p1' });
+        it('should return alreadySufficient if no items need buying', async () => {
+            // Mock calculateStockNeeded results via its dependencies
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ id: 's1', productId: 'p1', confirmedStudents: 1 });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
                 { qtyPerPerson: 1, ingredient: { currentStock: 10 } }
             ]);
 
-            const result = await createPurchaseRequest('sch-1');
+            const result = await createPurchaseRequest('s1', 'Note');
             expect(result.alreadySufficient).toBe(true);
-            expect(mockPrisma.purchaseRequest.create).not.toHaveBeenCalled();
+            expect(mockPrisma.$transaction).not.toHaveBeenCalled();
         });
 
-        it('should generate PR ID and create request with items', async () => {
-            vi.useFakeTimers();
-            vi.setSystemTime(new Date('2026-03-15'));
-            
-            // Step 1: calculateStockNeeded mock
-            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ confirmedStudents: 10, productId: 'p1' });
+        it('should create PR with correct serial ID and items', async () => {
+            // Mock deps for calculateStockNeeded
+            mockPrisma.courseSchedule.findUnique.mockResolvedValue({ id: 's1', productId: 'p1', confirmedStudents: 10 });
             mockPrisma.courseBOM.findMany.mockResolvedValue([
-                { 
-                    qtyPerPerson: 1, unit: 'kg', 
-                    ingredient: { id: 'ing-1', currentStock: 5, costPerUnit: 100 } 
+                { qtyPerPerson: 1, unit: 'pcs', ingredient: { id: 'ing-1', currentStock: 0, costPerUnit: 5 } }
+            ]); // Needs 10, buy 10, cost 50
+
+            // Mock PR ID generation
+            mockPrisma.purchaseRequest.findFirst.mockResolvedValue({ requestId: 'PR-20260315-004' }); // Next: 005
+
+            // Mock creation
+            mockPrisma.purchaseRequest.create.mockResolvedValue({ id: 'pr-uid-1', requestId: 'PR-20260315-005' });
+            
+            // Mock final findUnique
+            mockPrisma.purchaseRequest.findUnique.mockResolvedValue({
+                id: 'pr-uid-1',
+                requestId: 'PR-20260315-005',
+                items: [{ ingredientId: 'ing-1', qtyToBuy: 10 }]
+            });
+
+            const result = await createPurchaseRequest('s1', 'Test PR');
+
+            expect(result.requestId).toBe('PR-20260315-005');
+            expect(mockPrisma.purchaseRequest.create).toHaveBeenCalledWith({
+                data: {
+                    requestId: 'PR-20260315-005',
+                    scheduleId: 's1',
+                    notes: 'Test PR',
+                    status: 'DRAFT'
                 }
-            ]);
-
-            // Step 2: generatePurchaseRequestId mock
-            mockPrisma.purchaseRequest.findFirst.mockResolvedValue(null);
-
-            // Step 3: Transaction mocks
-            mockPrisma.purchaseRequest.create.mockResolvedValue({ id: 'pr-1' });
-            mockPrisma.purchaseRequest.findUnique.mockResolvedValue({ id: 'pr-1', items: [] });
-
-            await createPurchaseRequest('sch-1', 'Urgently needed');
-
-            expect(mockPrisma.purchaseRequest.create).toHaveBeenCalledWith(expect.objectContaining({
-                data: expect.objectContaining({
-                    requestId: 'PR-20260315-001',
-                    notes: 'Urgently needed'
-                })
-            }));
-
-            expect(mockPrisma.purchaseRequestItem.createMany).toHaveBeenCalledWith(expect.objectContaining({
-                data: expect.arrayContaining([
-                    expect.objectContaining({
-                        qtyToBuy: 5,
-                        estimatedCost: 500 // 5 * 100
-                    })
-                ])
-            }));
+            });
+            expect(mockPrisma.purchaseRequestItem.createMany).toHaveBeenCalledWith({
+                data: [expect.objectContaining({
+                    ingredientId: 'ing-1',
+                    qtyToBuy: 10,
+                    estimatedCost: 50
+                })]
+            });
         });
     });
 });

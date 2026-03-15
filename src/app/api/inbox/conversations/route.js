@@ -48,7 +48,8 @@ export async function GET(request) {
                     select: {
                         content: true,
                         createdAt: true,
-                        fromId: true
+                        fromId: true,
+                        fromName: true
                     }
                 }
             },
@@ -67,7 +68,11 @@ export async function GET(request) {
             updatedAt: c.updatedAt,
             customer: c.customer ? {
                 customerId: c.customer.customerId,
-                firstName: c.customer.firstName || 'Unknown',
+                // Fallback chain: firstName → participantName → fromName in last msg → FB ID suffix
+                firstName: c.customer.firstName
+                    || c.participantName
+                    || c.messages[0]?.fromName
+                    || (c.customer.facebookId ? `FB-${c.customer.facebookId.slice(-6)}` : 'ผู้ใช้ Facebook'),
                 lastName: c.customer.lastName || '',
                 channel: (c.channel || 'facebook').toUpperCase(),
                 phonePrimary: c.customer.phonePrimary,
@@ -78,7 +83,9 @@ export async function GET(request) {
                 intelligence: c.customer.intelligence
             } : {
                 customerId: null,
-                firstName: c.participantName || (c.messages[0]?.fromName) || 'Unknown',
+                firstName: c.participantName
+                    || c.messages[0]?.fromName
+                    || (c.participantId ? `FB-${c.participantId.slice(-6)}` : 'ผู้ใช้ Facebook'),
                 lastName: '',
                 channel: (c.channel || 'facebook').toUpperCase(),
                 phonePrimary: null,

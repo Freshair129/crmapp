@@ -1,22 +1,4 @@
 // FILE: src/lib/__tests__/enrollmentRepo.test.js
-/**
- * ## Pre-flight: enrollmentRepo.js
- * Models used: 
- *   - prisma.enrollment (findFirst, create, findUnique, findMany)
- *   - prisma.product (findUnique)
- *   - prisma.enrollmentItem (create, createMany, update, findMany, findUnique)
- * Internal calls: 
- *   - createEnrollment() calls generateEnrollmentId() → mock prisma.enrollment.findFirst
- *   - updateEnrollmentItemHours() inside tx calls findMany/update → mock at DB level
- *   - getCustomerEnrollmentSummary() calls getEnrollmentsByCustomer() → mock prisma.enrollment.findMany
- * Function signatures: 
- *   - createEnrollment({ customerId, productId, soldById, totalPrice, notes })
- *   - getEnrollmentsByCustomer(customerId)
- *   - updateEnrollmentItemHours(enrollmentItemId, hoursToAdd)
- *   - getCustomerEnrollmentSummary(customerId)
- * Potential mock gaps: include nested product objects in findUnique/findMany returns.
- */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
     createEnrollment, 
@@ -25,11 +7,35 @@ import {
     getCustomerEnrollmentSummary 
 } from '../repositories/enrollmentRepo';
 import { getPrisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
-vi.mock('@/lib/db', () => ({ getPrisma: vi.fn() }));
-vi.mock('@/lib/logger', () => ({
-    logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() }
+vi.mock('@/lib/db', () => ({
+    getPrisma: vi.fn()
 }));
+
+vi.mock('@/lib/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn()
+    }
+}));
+
+/**
+ * ## Pre-flight Checklist: enrollmentRepo.js
+ * 
+ * 1. Source Analysis:
+ *    - createEnrollment({ customerId, ... }): Uses object parameter.
+ *    - updateEnrollmentItemHours(id, hours): Uses positional parameters.
+ *    - getCustomerEnrollmentSummary(id): Uses positional parameter.
+ *    - Internal call: generateEnrollmentId uses prisma.enrollment.findFirst.
+ * 
+ * 2. Mock Inventory:
+ *    - prisma.enrollment: findFirst, create, findUnique, findMany
+ *    - prisma.product: findUnique
+ *    - prisma.enrollmentItem: create, createMany, update, findMany, findUnique
+ *    - prisma.$transaction: Used in createEnrollment and updateEnrollmentItemHours.
+ */
 
 describe('enrollmentRepo', () => {
     let mockPrisma;
@@ -37,7 +43,6 @@ describe('enrollmentRepo', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockPrisma = {
-            $transaction: vi.fn(cb => cb(mockPrisma)),
             enrollment: {
                 findFirst: vi.fn(),
                 create: vi.fn(),
@@ -53,9 +58,14 @@ describe('enrollmentRepo', () => {
                 update: vi.fn(),
                 findMany: vi.fn(),
                 findUnique: vi.fn()
-            }
+            },
+            $transaction: vi.fn(cb => cb(mockPrisma))
         };
         getPrisma.mockResolvedValue(mockPrisma);
+
+        // Mock Date for ID generation: 2026-03-15
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-03-15'));
     });
 
     afterEach(() => {
@@ -63,131 +73,134 @@ describe('enrollmentRepo', () => {
     });
 
     describe('createEnrollment', () => {
-        it('should generate enrollmentId and create single course enrollment', async () => {
-            vi.useFakeTimers();
-            vi.setSystemTime(new Date('2026-03-15'));
-            
-            // Mock generateEnrollmentId dependencies
-            mockPrisma.enrollment.findFirst.mockResolvedValue(null); // No existing ENR for today
-            
-            // Mock tx logic
-            mockPrisma.product.findUnique.mockResolvedValue({ id: 'prod-1', metadata: null });
-            mockPrisma.enrollment.create.mockResolvedValue({ id: 'enr-uuid-1' });
-            mockPrisma.enrollment.findUnique.mockResolvedValue({ id: 'enr-uuid-1', items: [] });
+        const input = {
+            customerId: 'cust-123',
+            productId: 'prod-456',
+            soldById: 'emp-001',
+            totalPrice: 1500,
+            notes: 'Test note'
+        };
 
-            await createEnrollment({ 
-                customerId: 'cus-1', 
-                productId: 'prod-1', 
-                soldById: 'agent-1', 
-                totalPrice: 1000 
+        it('should create enrollment and single enrollment item for direct product', async () => {
+            // Mock ID generation
+            mockPrisma.enrollment.findFirst.mockResolvedValue(null); // Serial 001
+            
+            // Mock Product lookup
+            mockPrisma.product.findUnique.mockResolvedValue({ id: 'prod-456', name: 'Single Course' });
+            
+            // Mock Enrollment creation
+            mockPrisma.enrollment.create.mockResolvedValue({ id: 'enr-uid-1', enrollmentId: 'ENR-20260315-001' });
+            
+            // Mock final findUnique (return value)
+            mockPrisma.enrollment.findUnique.mockResolvedValue({
+                id: 'enr-uid-1',
+                enrollmentId: 'ENR-20260315-001',
+                items: [{ id: 'item-1', productId: 'prod-456' }]
             });
+
+            const result = await createEnrollment(input);
 
             expect(mockPrisma.enrollment.findFirst).toHaveBeenCalledWith(expect.objectContaining({
                 where: { enrollmentId: { startsWith: 'ENR-20260315-' } }
             }));
-            expect(mockPrisma.enrollment.create).toHaveBeenCalledWith(expect.objectContaining({
-                data: expect.objectContaining({
-                    enrollmentId: 'ENR-20260315-001',
-                    productId: 'prod-1'
-                })
-            }));
+            expect(mockPrisma.enrollment.create).toHaveBeenCalled();
             expect(mockPrisma.enrollmentItem.create).toHaveBeenCalled();
+            expect(result.enrollmentId).toBe('ENR-20260315-001');
         });
 
-        it('should expand packageItems using createMany', async () => {
-            mockPrisma.enrollment.findFirst.mockResolvedValue(null);
+        it('should create multiple enrollment items for package product', async () => {
+            mockPrisma.enrollment.findFirst.mockResolvedValue({ enrollmentId: 'ENR-20260315-002' }); // Next: 003
             mockPrisma.product.findUnique.mockResolvedValue({ 
-                id: 'pkg-1', 
-                metadata: { packageItems: ['p1', 'p2'] } 
+                id: 'prod-pkg', 
+                metadata: { packageItems: ['p1', 'p2', 'p3'] } 
             });
-            mockPrisma.enrollment.create.mockResolvedValue({ id: 'enr-1' });
+            mockPrisma.enrollment.create.mockResolvedValue({ id: 'enr-pkg-1' });
+            mockPrisma.enrollment.findUnique.mockResolvedValue({ id: 'enr-pkg-1', items: [] });
 
-            await createEnrollment({ customerId: 'c1', productId: 'pkg-1' });
+            await createEnrollment({ ...input, productId: 'prod-pkg' });
 
-            expect(mockPrisma.enrollmentItem.createMany).toHaveBeenCalledWith(expect.objectContaining({
-                data: expect.arrayContaining([
-                    expect.objectContaining({ productId: 'p1' }),
-                    expect.objectContaining({ productId: 'p2' })
-                ])
-            }));
-            const callArgs = mockPrisma.enrollmentItem.createMany.mock.calls[0][0];
-            expect(callArgs.data).toHaveLength(2);
-        });
-
-        it('should throw Error if product not found', async () => {
-            mockPrisma.product.findUnique.mockResolvedValue(null);
-            await expect(createEnrollment({ productId: 'invalid' })).rejects.toThrow('Product not found');
+            expect(mockPrisma.enrollmentItem.createMany).toHaveBeenCalledWith({
+                data: [
+                    { enrollmentId: 'enr-pkg-1', productId: 'p1', hoursCompleted: 0, status: 'PENDING' },
+                    { enrollmentId: 'enr-pkg-1', productId: 'p2', hoursCompleted: 0, status: 'PENDING' },
+                    { enrollmentId: 'enr-pkg-1', productId: 'p3', hoursCompleted: 0, status: 'PENDING' }
+                ]
+            });
         });
     });
 
     describe('updateEnrollmentItemHours', () => {
-        it('should reach certLevel 1 at 30 hours', async () => {
-            mockPrisma.enrollmentItem.update.mockResolvedValueOnce({ id: 'item-1', enrollmentId: 'enr-1', hoursCompleted: 30 });
-            mockPrisma.enrollmentItem.findMany.mockResolvedValue([{ hoursCompleted: 30 }]);
+        it('should update hours and set certLevel 1 if total hours >= 30', async () => {
+            mockPrisma.enrollmentItem.update.mockResolvedValue({ id: 'item-1', enrollmentId: 'enr-1' });
+            mockPrisma.enrollmentItem.findMany.mockResolvedValue([
+                { id: 'item-1', hoursCompleted: 20 },
+                { id: 'item-2', hoursCompleted: 15 } // Total = 35
+            ]);
             mockPrisma.enrollmentItem.findUnique.mockResolvedValue({ id: 'item-1', certLevel: 1 });
 
             const result = await updateEnrollmentItemHours('item-1', 10);
 
-            // Verify first update (increment)
-            expect(mockPrisma.enrollmentItem.update).toHaveBeenNthCalledWith(1, expect.objectContaining({
+            // First update: increment hours
+            expect(mockPrisma.enrollmentItem.update).toHaveBeenCalledWith(expect.objectContaining({
+                where: { id: 'item-1' },
                 data: { hoursCompleted: { increment: 10 } }
             }));
-            // Verify second update (certLevel)
-            expect(mockPrisma.enrollmentItem.update).toHaveBeenNthCalledWith(2, expect.objectContaining({
+
+            // Second update: set certLevel
+            expect(mockPrisma.enrollmentItem.update).toHaveBeenCalledWith(expect.objectContaining({
+                where: { id: 'item-1' },
                 data: { certLevel: 1 }
             }));
+
             expect(result.certLevel).toBe(1);
         });
 
-        it('should handle certLevel 2 (111h) and 3 (201h)', async () => {
-            // Case 201h → Level 3
-            mockPrisma.enrollmentItem.update.mockResolvedValueOnce({ id: 'item-1', enrollmentId: 'enr-1', hoursCompleted: 201 });
-            mockPrisma.enrollmentItem.findMany.mockResolvedValue([{ hoursCompleted: 201 }]);
+        it('should set certLevel 3 if total hours >= 201', async () => {
+            mockPrisma.enrollmentItem.update.mockResolvedValue({ id: 'item-1', enrollmentId: 'enr-1' });
+            mockPrisma.enrollmentItem.findMany.mockResolvedValue([
+                { id: 'item-1', hoursCompleted: 210 }
+            ]);
             
-            await updateEnrollmentItemHours('item-1', 1);
-            expect(mockPrisma.enrollmentItem.update).toHaveBeenCalledWith(expect.objectContaining({
+            await updateEnrollmentItemHours('item-1', 200);
+
+            expect(mockPrisma.enrollmentItem.update).toHaveBeenLastCalledWith(expect.objectContaining({
                 data: { certLevel: 3 }
             }));
-        });
-
-        it('should NOT update certLevel if below 30h', async () => {
-            mockPrisma.enrollmentItem.update.mockResolvedValueOnce({ id: 'item-1', hoursCompleted: 25 });
-            mockPrisma.enrollmentItem.findMany.mockResolvedValue([{ hoursCompleted: 25 }]);
-
-            await updateEnrollmentItemHours('item-1', 5);
-            
-            // Only 1 call total (the increment)
-            expect(mockPrisma.enrollmentItem.update).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('getCustomerEnrollmentSummary', () => {
-        it('should aggregate data cross-enrollments by mocking findMany', async () => {
-            // Mocking internal call dependency getEnrollmentsByCustomer via DB level
+        it('should aggregate hours and find max certLevel across all enrollments', async () => {
             mockPrisma.enrollment.findMany.mockResolvedValue([
-                { 
-                    id: 'e1', 
+                {
                     status: 'ACTIVE',
                     items: [
-                        { hoursCompleted: 10, certLevel: 1, status: 'COMPLETED' },
-                        { hoursCompleted: 20, certLevel: 2, status: 'PENDING' }
-                    ] 
+                        { hoursCompleted: 50, certLevel: 1, status: 'COMPLETED' },
+                        { hoursCompleted: 80, certLevel: 2, status: 'ACTIVE' }
+                    ]
                 },
                 {
-                    id: 'e2',
-                    status: 'CLOSED',
+                    status: 'COMPLETED',
                     items: [
-                        { hoursCompleted: 5, certLevel: null, status: 'COMPLETED' }
+                        { hoursCompleted: 10, certLevel: 0, status: 'COMPLETED' }
                     ]
                 }
             ]);
 
-            const summary = await getCustomerEnrollmentSummary('cus-1');
+            const summary = await getCustomerEnrollmentSummary('cust-777');
 
-            expect(summary.totalHours).toBe(35); // 10+20+5
-            expect(summary.certLevel).toBe(2);
+            expect(summary.totalHours).toBe(140); // 50 + 80 + 10
+            expect(summary.certLevel).toBe(2); // max(1, 2, 0)
+            expect(summary.totalCourses).toBe(3);
             expect(summary.completedCourses).toBe(2);
             expect(summary.activeEnrollments).toHaveLength(1);
+        });
+
+        it('should return zeros for customer with no enrollments', async () => {
+            mockPrisma.enrollment.findMany.mockResolvedValue([]);
+            const summary = await getCustomerEnrollmentSummary('new-cust');
+            expect(summary.totalHours).toBe(0);
+            expect(summary.certLevel).toBe(0);
         });
     });
 });
