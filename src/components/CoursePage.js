@@ -41,18 +41,74 @@ function SessionBadge({ slot }) {
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
 
+const MENU_COUNT_OPTIONS = [1,2,3,4,5,6,7,8,9,10];
+
 function AddCourseModal({ onClose, onCreated }) {
     const [form, setForm] = useState({
-        name: '', description: '', price: '', hours: '', days: '', sessionType: ''
+        name: '', description: '', price: '', hours: '', days: ''
     });
+    // sessions = Set of selected keys e.g. new Set(['MORNING','AFTERNOON'])
+    const [selectedSessions, setSelectedSessions] = useState(new Set());
+    // menus = array of { recipeId, dayNumber, sessionSlot }
+    const [menuCount, setMenuCount] = useState('');
+    const [menuRows, setMenuRows] = useState([]);
+    // instructors
+    const [selectedInstructors, setSelectedInstructors] = useState(new Set());
+    const [employees, setEmployees] = useState([]);
+    const [recipes, setRecipes] = useState([]);
+    const [dataLoading, setDataLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        Promise.all([
+            fetch('/api/employees').then(r => r.json()),
+            fetch('/api/recipes').then(r => r.json())
+        ]).then(([empData, recData]) => {
+            setEmployees(Array.isArray(empData.data ?? empData) ? (empData.data ?? empData) : []);
+            const recs = Array.isArray(recData) ? recData : (recData.data ?? []);
+            setRecipes(recs);
+            setDataLoading(false);
+        });
+    }, []);
+
+    // When menuCount changes, resize the menuRows array
+    function handleMenuCountChange(val) {
+        const n = parseInt(val) || 0;
+        setMenuCount(val);
+        setMenuRows(prev => {
+            const next = [...prev];
+            while (next.length < n) next.push({ recipeId: '', dayNumber: 1, sessionSlot: '' });
+            return next.slice(0, n);
+        });
+    }
+
+    function toggleSession(key) {
+        setSelectedSessions(prev => {
+            const next = new Set(prev);
+            next.has(key) ? next.delete(key) : next.add(key);
+            return next;
+        });
+    }
+
+    function toggleInstructor(id) {
+        setSelectedInstructors(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    }
+
+    function updateMenuRow(idx, field, val) {
+        setMenuRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: val } : row));
+    }
 
     async function handleSubmit(e) {
         e.preventDefault();
         setSaving(true);
         setError('');
         try {
+            const validMenus = menuRows.filter(m => m.recipeId);
             const res = await fetch('/api/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -62,22 +118,27 @@ function AddCourseModal({ onClose, onCreated }) {
                     price: parseFloat(form.price),
                     hours: form.hours ? parseFloat(form.hours) : undefined,
                     days: form.days ? parseFloat(form.days) : undefined,
-                    sessionType: form.sessionType || undefined
+                    sessionType: selectedSessions.size > 0 ? [...selectedSessions].join(',') : undefined,
+                    instructorIds: [...selectedInstructors],
+                    menus: validMenus
                 })
             });
             if (!res.ok) throw new Error(await res.text());
-            const course = await res.json();
-            onCreated(course);
-        } catch (err) {
+            onCreated(await res.json());
+        } catch {
             setError('สร้างคอร์สไม่สำเร็จ กรุณาลองใหม่');
         } finally {
             setSaving(false);
         }
     }
 
+    const maxDays = form.days ? Math.max(1, Math.ceil(parseFloat(form.days))) : 1;
+    const inputCls = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-[#C9A34E]/50';
+
     return createPortal(
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-lg flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl flex flex-col shadow-2xl overflow-hidden">
+                {/* Header */}
                 <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
                     <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
                         <BookMarked size={22} className="text-[#C9A34E]" /> สร้างคอร์สเรียนใหม่
@@ -88,111 +149,145 @@ function AddCourseModal({ onClose, onCreated }) {
                 </div>
 
                 <div className="overflow-y-auto px-8 py-6 flex-1 min-h-0">
-                    <form onSubmit={handleSubmit} id="create-course-form" className="space-y-5">
-                        <div>
-                            <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชื่อคอร์ส *</label>
-                            <input
-                                required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
-                                placeholder="เช่น คอร์สซูชิระดับต้น"
-                                value={form.name}
-                                onChange={e => setForm({ ...form, name: e.target.value })}
-                            />
-                        </div>
+                    <form onSubmit={handleSubmit} id="create-course-form" className="space-y-6">
 
-                        <div>
-                            <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">คำอธิบาย</label>
-                            <textarea
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 h-20 resize-none"
-                                placeholder="รายละเอียดคอร์ส..."
-                                value={form.description}
-                                onChange={e => setForm({ ...form, description: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
+                        {/* ── Section 1: Basic info ── */}
+                        <div className="space-y-4">
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">ข้อมูลพื้นฐาน</p>
                             <div>
-                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ราคา (฿) *</label>
-                                <input
-                                    required type="number" min="0"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
-                                    placeholder="4500"
-                                    value={form.price}
-                                    onChange={e => setForm({ ...form, price: e.target.value })}
-                                />
+                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชื่อคอร์ส *</label>
+                                <input required className={inputCls} placeholder="เช่น คอร์สซูชิระดับต้น"
+                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชั่วโมง</label>
-                                <input
-                                    type="number" min="0" step="0.5"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
-                                    placeholder="6"
-                                    value={form.hours}
-                                    onChange={e => setForm({ ...form, hours: e.target.value })}
-                                />
+                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">คำอธิบาย</label>
+                                <textarea className={`${inputCls} h-16 resize-none`} placeholder="รายละเอียดคอร์ส..."
+                                    value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วัน</label>
-                                <select
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
-                                    value={form.days}
-                                    onChange={e => setForm({ ...form, days: e.target.value })}
-                                >
-                                    <option value="">-</option>
-                                    <option value="0.5">ครึ่งวัน</option>
-                                    <option value="1">1 วัน</option>
-                                    <option value="2">2 วัน</option>
-                                    <option value="3">3 วัน</option>
-                                </select>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ราคา (฿) *</label>
+                                    <input required type="number" min="0" className={inputCls} placeholder="4500"
+                                        value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชั่วโมง</label>
+                                    <input type="number" min="0" step="0.5" className={inputCls} placeholder="6"
+                                        value={form.hours} onChange={e => setForm({ ...form, hours: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วัน</label>
+                                    <select className={inputCls} value={form.days} onChange={e => setForm({ ...form, days: e.target.value })}>
+                                        <option value="">-</option>
+                                        <option value="0.5">ครึ่งวัน</option>
+                                        <option value="1">1 วัน</option>
+                                        <option value="2">2 วัน</option>
+                                        <option value="3">3 วัน</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
+                        {/* ── Section 2: Sessions (multi-select) ── */}
                         <div>
-                            <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ช่วงเวลาหลัก</label>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">ช่วงเวลาที่สอน (เลือกได้มากกว่า 1)</p>
                             <div className="flex gap-2">
                                 {Object.entries(SESSION_LABELS).map(([key, cfg]) => {
                                     const Icon = cfg.icon;
+                                    const active = selectedSessions.has(key);
                                     return (
-                                        <button
-                                            key={key} type="button"
-                                            onClick={() => setForm({ ...form, sessionType: form.sessionType === key ? '' : key })}
-                                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1.5 border transition-all ${form.sessionType === key ? `${cfg.color} border-current` : 'border-white/10 text-white/30 hover:text-white/60'}`}
-                                        >
+                                        <button key={key} type="button" onClick={() => toggleSession(key)}
+                                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1.5 border transition-all ${active ? `${cfg.color} border-current` : 'border-white/10 text-white/20 hover:text-white/60'}`}>
                                             <Icon size={13} /> {cfg.label}
                                         </button>
                                     );
                                 })}
                             </div>
+                            {selectedSessions.size > 0 && (
+                                <p className="text-[10px] text-white/30 mt-2">
+                                    เลือกแล้ว: {[...selectedSessions].map(k => SESSION_LABELS[k]?.label).join(' + ')}
+                                </p>
+                            )}
                         </div>
 
-                        {/* Preview computed fields */}
-                        {(form.hours || form.days) && (
-                            <div className="bg-white/3 rounded-xl p-4 border border-white/5 text-xs text-white/50 space-y-1">
-                                {form.hours && form.days && (
-                                    <p>
-                                        <span className="text-white/30">Sessions: </span>
-                                        <span className="text-[#C9A34E] font-black">
-                                            {sessionCount(parseFloat(form.hours), parseFloat(form.days))} session
-                                        </span>
-                                        <span className="ml-1">
-                                            ({parseFloat(form.hours) / parseFloat(form.days) > 6 ? 'เต็มวัน — เช้า + บ่าย' : 'ครึ่งวัน — 1 session'})
-                                        </span>
-                                    </p>
-                                )}
-                                {form.hours && <p><span className="text-white/30">ชั่วโมงทั้งหมด: </span>{form.hours} ชม.</p>}
+                        {/* ── Section 3: Menus ── */}
+                        <div>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">รายการเมนูในคอร์ส</p>
+                            <div className="mb-3">
+                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนเมนู</label>
+                                <select className={`${inputCls} w-32`} value={menuCount} onChange={e => handleMenuCountChange(e.target.value)}>
+                                    <option value="">ไม่ระบุ</option>
+                                    {MENU_COUNT_OPTIONS.map(n => (
+                                        <option key={n} value={n}>{n} เมนู</option>
+                                    ))}
+                                </select>
                             </div>
-                        )}
+
+                            {menuRows.length > 0 && (
+                                <div className="space-y-2">
+                                    {dataLoading ? (
+                                        <p className="text-white/20 text-xs">กำลังโหลดสูตร...</p>
+                                    ) : menuRows.map((row, idx) => (
+                                        <div key={idx} className="grid grid-cols-[1.5rem_1fr_auto_auto] items-center gap-2 bg-white/3 rounded-xl px-3 py-2 border border-white/5">
+                                            <span className="text-[10px] font-black text-white/25 text-center">{idx + 1}</span>
+                                            <select className="bg-transparent text-white text-xs font-bold focus:outline-none truncate"
+                                                value={row.recipeId} onChange={e => updateMenuRow(idx, 'recipeId', e.target.value)}>
+                                                <option value="">เลือกสูตร...</option>
+                                                {recipes.map(r => (
+                                                    <option key={r.id} value={r.id}>{r.name}{r.chef ? ` (${r.chef})` : ''}</option>
+                                                ))}
+                                            </select>
+                                            {maxDays > 1 && (
+                                                <select className="bg-white/5 text-white text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none"
+                                                    value={row.dayNumber} onChange={e => updateMenuRow(idx, 'dayNumber', parseInt(e.target.value))}>
+                                                    {Array.from({ length: maxDays }, (_, i) => (
+                                                        <option key={i+1} value={i+1}>วัน {i+1}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                            <select className="bg-white/5 text-white text-xs font-bold rounded-lg px-2 py-1.5 focus:outline-none"
+                                                value={row.sessionSlot} onChange={e => updateMenuRow(idx, 'sessionSlot', e.target.value)}>
+                                                <option value="">session?</option>
+                                                <option value="MORNING">เช้า</option>
+                                                <option value="AFTERNOON">บ่าย</option>
+                                                <option value="EVENING">ค่ำ</option>
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Section 4: Instructors (multi-select) ── */}
+                        <div>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">เชฟ / อาจารย์ที่สอนได้</p>
+                            {dataLoading ? (
+                                <p className="text-white/20 text-xs">กำลังโหลด...</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {employees.map(emp => {
+                                        const active = selectedInstructors.has(emp.id);
+                                        const name = emp.nickName || emp.firstName || emp.employeeId;
+                                        return (
+                                            <button key={emp.id} type="button" onClick={() => toggleInstructor(emp.id)}
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${active ? 'bg-[#C9A34E]/20 border-[#C9A34E]/50 text-[#C9A34E]' : 'border-white/10 text-white/30 hover:text-white/60'}`}>
+                                                {name}
+                                            </button>
+                                        );
+                                    })}
+                                    {employees.length === 0 && <p className="text-white/20 text-xs italic">ไม่มีพนักงาน</p>}
+                                </div>
+                            )}
+                        </div>
 
                         {error && <p className="text-red-400 text-xs font-bold">{error}</p>}
                     </form>
                 </div>
 
                 <div className="px-8 pb-7 pt-4 border-t border-white/10 shrink-0">
-                    <button
-                        type="submit" form="create-course-form" disabled={saving}
-                        className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                    >
-                        {saving ? 'กำลังสร้าง...' : 'สร้างคอร์ส'}
+                    <button type="submit" form="create-course-form" disabled={saving}
+                        className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+                        {saving ? 'กำลังสร้าง...' : `สร้างคอร์ส${menuRows.filter(m=>m.recipeId).length > 0 ? ` + ${menuRows.filter(m=>m.recipeId).length} เมนู` : ''}`}
                     </button>
                 </div>
             </div>
@@ -444,13 +539,21 @@ function CourseCard({ course, onUpdated }) {
                                 {sc} session ({course.days} วัน × {sc / course.days} session/วัน)
                             </span>
                         )}
-                        {course.sessionType && <SessionBadge slot={course.sessionType} />}
+                        {/* multi-session badges */}
+                        {course.sessionType && course.sessionType.split(',').map(s => (
+                            <SessionBadge key={s} slot={s.trim()} />
+                        ))}
                         <span className="flex items-center gap-1 text-[10px] font-black text-white/30 bg-white/5 px-2 py-1 rounded-full">
                             <Utensils size={10} /> {menus.length} เมนู
                         </span>
                         {equipment.length > 0 && (
                             <span className="flex items-center gap-1 text-[10px] font-black text-white/30 bg-white/5 px-2 py-1 rounded-full">
                                 <Package size={10} /> {equipment.length} อุปกรณ์
+                            </span>
+                        )}
+                        {course.instructorIds?.length > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] font-black text-white/30 bg-white/5 px-2 py-1 rounded-full">
+                                👨‍🍳 {course.instructorIds.length} เชฟ
                             </span>
                         )}
                     </div>

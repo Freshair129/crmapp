@@ -16,11 +16,11 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { name, description, price, hours, days, sessionType } = body;
+        const { name, description, price, hours, days, sessionType, instructorIds, menus } = body;
         if (!name || price === undefined) {
             return NextResponse.json({ error: 'name and price are required' }, { status: 400 });
         }
-        const course = await createCourse({ name, description, price, hours, days, sessionType });
+        const course = await createCourse({ name, description, price, hours, days, sessionType, instructorIds, menus });
         return NextResponse.json(course, { status: 201 });
     } catch (error) {
         console.error('[CoursesAPI] POST error', error);

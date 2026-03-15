@@ -263,7 +263,8 @@ model Product {
   category            String     @default("course")
   hours               Float?                                          // Phase 16: ชั่วโมงเรียนต่อคอร์ส
   days                Float?                                          // Phase 17: จำนวนวัน (0.5=ครึ่งวัน, 1=เต็มวัน, 2=2วัน)
-  sessionType         String?    @map("session_type")                 // Phase 16: MORNING|AFTERNOON|EVENING
+  sessionType         String?    @map("session_type")                 // Phase 17: comma-sep "MORNING,AFTERNOON"
+  instructorIds       String[]   @default([]) @map("instructor_ids") // Phase 17: employeeId[] ที่สอนคอร์สนี้ได้
   duration            Int?
   durationUnit        String?    @map("duration_unit")
   linkedMenuIds       String[]   @default([]) @map("linked_menu_ids") // id_standards: COURSE-TO-MENU link

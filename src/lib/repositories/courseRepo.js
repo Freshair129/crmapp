@@ -74,7 +74,7 @@ export async function getCourse(id) {
 // ──────────────────────────────────────────
 // Mutations — Course
 // ──────────────────────────────────────────
-export async function createCourse({ name, description, price, hours, days, sessionType }) {
+export async function createCourse({ name, description, price, hours, days, sessionType, instructorIds = [], menus = [] }) {
     try {
         const prisma = await getPrisma();
         const productId = await generateCourseId();
@@ -88,11 +88,20 @@ export async function createCourse({ name, description, price, hours, days, sess
                 category: 'course',
                 hours: hours ? parseFloat(hours) : null,
                 days: days ? parseFloat(days) : null,
-                sessionType: sessionType || null,
-                isActive: true
+                sessionType: sessionType || null,       // comma-sep: "MORNING,AFTERNOON"
+                instructorIds: instructorIds || [],
+                isActive: true,
+                courseMenus: menus.length > 0 ? {
+                    create: menus.map((m, i) => ({
+                        recipeId: m.recipeId,
+                        dayNumber: parseInt(m.dayNumber) || 1,
+                        sessionSlot: m.sessionSlot || null,
+                        sortOrder: i
+                    }))
+                } : undefined
             },
             include: {
-                courseMenus: { include: { recipe: true } },
+                courseMenus: { include: { recipe: true }, orderBy: [{ dayNumber: 'asc' }, { sortOrder: 'asc' }] },
                 courseEquipment: true
             }
         });
@@ -114,7 +123,8 @@ export async function updateCourse(id, data) {
                 ...(data.hours !== undefined && { hours: data.hours ? parseFloat(data.hours) : null }),
                 ...(data.days !== undefined && { days: data.days ? parseFloat(data.days) : null }),
                 ...(data.sessionType !== undefined && { sessionType: data.sessionType || null }),
-                ...(data.isActive !== undefined && { isActive: data.isActive })
+                ...(data.isActive !== undefined && { isActive: data.isActive }),
+                ...(data.instructorIds !== undefined && { instructorIds: data.instructorIds })
             },
             include: {
                 courseMenus: { include: { recipe: true }, orderBy: [{ dayNumber: 'asc' }, { sortOrder: 'asc' }] },
