@@ -263,18 +263,23 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative animate-scale-up shadow-3xl">
-            <button 
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-6 right-6 text-white/40 hover:text-white"
-            >
-              <X size={24} />
-            </button>
+          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl">
 
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
-              <Calendar className="text-[#C9A34E]" size={28} /> สร้างรอบเรียนใหม่
-            </h3>
+            {/* Header — ติดด้านบนเสมอ ไม่ scroll ตาม body */}
+            <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                <Calendar className="text-[#C9A34E]" size={24} /> สร้างรอบเรียนใหม่
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={22} />
+              </button>
+            </div>
 
+            {/* Body — scroll ได้อิสระ */}
+            <div className="overflow-y-auto px-8 py-6 flex-1">
             <form onSubmit={handleCreateSchedule} className="space-y-6">
               <div>
                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
@@ -369,6 +374,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                 {saving ? 'กำลังสร้าง...' : 'สร้างรอบเรียน'}
               </button>
             </form>
+            </div>{/* end scrollable body */}
           </div>
         </div>
       )}
