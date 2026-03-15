@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-14)
+## Version Status (อัพเดท: 2026-03-15)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -21,9 +21,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.11.0` | Revenue Split | ✅ released |
 | `v0.12.0` | UI Enhanced | ✅ released |
 | `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
-| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released ← HEAD |
-| `v0.15.0` | Production Hardening + Testing | 🔲 planned (Phase 14) |
-| `v1.0.0` | Production Ready | 🔲 planned |
+| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
+| `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released ← HEAD |
+| `v1.0.0` | Production Hardening + Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
@@ -51,6 +51,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `src/lib/__tests__/notificationEngine.test.js` | ✅ done | Vitest — 4 test cases |
 | `prisma/schema.prisma` → NotificationRule | ✅ done | model + ruleId format NOT-[YYYYMMDD]-[SERIAL] |
 | FB+LINE webhooks | ✅ updated | integrated notificationEngine.evaluateRules() |
+
+### v0.15.0 — สิ่งที่ทำแล้ว (Phase 15) ✅ — by Claude + Gemini CLI
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → 9 new models | ✅ done | Enrollment, EnrollmentItem, CourseSchedule, Ingredient, CourseBOM, PurchaseRequest, PurchaseRequestItem, Asset, AssetAssignment |
+| `src/lib/repositories/enrollmentRepo.js` | ✅ done | createEnrollment + package expansion, updateHours + cert threshold (30/111/201h) |
+| `src/lib/repositories/scheduleRepo.js` | ✅ done | CRUD for CourseSchedule (prisma.courseSchedule) |
+| `src/lib/repositories/kitchenRepo.js` | ✅ done | upsertIngredient, upsertBOM, calculateStockNeeded, createPurchaseRequest (PR-YYYYMMDD-SERIAL) |
+| `src/lib/repositories/assetRepo.js` | ✅ done | generateAssetId (AST-[CAT3]-[YYYY]-[SERIAL]), CRUD |
+| `src/app/api/enrollments/route.js` + `[id]/route.js` | ✅ done | GET+POST / GET+PATCH(hoursToAdd) |
+| `src/app/api/schedules/route.js` + `[id]/route.js` | ✅ done | GET(upcoming/days)+POST / GET+PATCH |
+| `src/app/api/kitchen/ingredients/route.js` + `[id]/route.js` | ✅ done | GET(lowStockOnly)+POST / PATCH |
+| `src/app/api/kitchen/purchase/route.js` + `[id]/route.js` | ✅ done | GET+POST(auto-generate) / PATCH |
+| `src/app/api/assets/route.js` + `[id]/route.js` | ✅ done | GET(category/status/search)+POST / GET+PATCH |
+| `src/app/api/sheets/sync-master-data/route.js` | ✅ done | POST — CSV sync courses/ingredients/BOM/assets from Google Sheets |
+| `src/components/CourseEnrollmentPanel.js` | ✅ done | hours bar, cert badge, expandable items |
+| `src/components/KitchenStockPanel.js` | ✅ done | ingredient table, low-stock filter, inline edit |
+| `src/components/AssetPanel.js` | ✅ done | asset grid, category/status filter, create+edit modal |
+| `src/components/ScheduleCalendar.js` | ✅ done | list/week view, create schedule modal |
+| `src/components/PremiumPOS.js` | ✅ upgraded | inline customer creation + enrollment on checkout + success modal |
+| `src/components/Sidebar.js` | ✅ updated | OPERATIONS nav group (ตารางคลาส, สต็อกครัว, อุปกรณ์) |
+| `src/app/page.js` | ✅ updated | imports + view cases for schedules/kitchen-stock/assets |
+| ADR-035, 036, 037 | ✅ done | Remove FB Login / Google Sheets SSOT / Product-as-Course-Catalog |
+
+> ⚠️ **Known Gotcha — Phase 15 DB**: ใช้ `prisma db push` แทน `migrate dev` เพราะ DB drift (facebook_sub column)
+> ⚠️ **Known Gotcha — Gemini scheduleRepo**: model name ต้องเป็น `prisma.courseSchedule` ไม่ใช่ `prisma.schedule`
+> ⚠️ **Backlog**: Repository pattern violations ใน marketing/inbox routes — flag Phase 16
 
 ---
 
@@ -120,6 +147,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-030 | Revenue Channel Split: conversationId → Ads vs Store classification |
 | ADR-031 | Icon-Only Sidebar: w-20, Lucide migration ออกจาก FontAwesome CDN |
 | ADR-032 | UI Enhancement (A): Recharts charts, Framer Motion animations |
+| ADR-035 | Remove Facebook Login: CredentialsOnly auth (FB hides admin PSID) |
+| ADR-036 | Google Sheets as SSOT: master data sync via CSV URL, 4 env vars |
+| ADR-037 | Product-as-Course-Catalog: reuse Product model, certLevel 30/111/201h |
 
 ---
 
