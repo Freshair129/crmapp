@@ -135,11 +135,12 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
   useEffect(() => {
     if (!showAddModal) return;
-    fetch('/api/products')
+    // Fetch courses (has `days` field) instead of generic products
+    fetch('/api/courses?isActive=true')
       .then(r => r.json())
       .then(data => {
-        const list = data.data || data;
-        setProducts(Array.isArray(list) ? list.filter(p => p.isActive !== false) : []);
+        const list = Array.isArray(data) ? data : (data.data || []);
+        setProducts(list);
       });
     fetch('/api/employees')
       .then(r => r.json())
@@ -489,7 +490,19 @@ export default function ScheduleCalendar({ language = 'TH' }) {
             </div>
 
             <div className="overflow-y-auto px-8 py-6 flex-1 min-h-0">
+              {(() => {
+                const selectedCourse = products.find(p => p.id === addForm.productId);
+                const courseDays = selectedCourse ? Math.ceil(selectedCourse.days || 1) : null;
+                const endDate = (() => {
+                  if (!addForm.scheduledDate || !courseDays) return null;
+                  const d = new Date(addForm.scheduledDate);
+                  d.setDate(d.getDate() + courseDays - 1);
+                  return d.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                })();
+
+                return (
               <form onSubmit={handleCreateSchedule} className="space-y-6">
+                {/* Course selector */}
                 <div>
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
                   <select
@@ -499,19 +512,43 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     onChange={e => setAddForm({ ...addForm, productId: e.target.value })}
                   >
                     <option value="">เลือกหลักสูตร...</option>
-                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.days ? ` (${Math.ceil(p.days)} วัน)` : ''}
+                      </option>
+                    ))}
                   </select>
+
+                  {/* Course info banner — shown after selection */}
+                  {selectedCourse && (
+                    <div className="mt-2 flex items-center gap-3 px-3 py-2 bg-[#C9A34E]/10 border border-[#C9A34E]/20 rounded-xl">
+                      <span className="text-[#C9A34E] text-xs font-black uppercase tracking-widest">
+                        {courseDays} วัน
+                      </span>
+                      <span className="w-px h-4 bg-[#C9A34E]/30" />
+                      <span className="text-white/60 text-xs font-bold">
+                        {selectedCourse.hours ? `${selectedCourse.hours} ชม.` : ''}
+                        {selectedCourse.sessionType ? ` · ${selectedCourse.sessionType.replace(',', ' + ')}` : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
+                {/* Date — start only, end auto-computed */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่สอน</label>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่เริ่มสอน</label>
                     <input
                       required type="date"
                       className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 [color-scheme:dark]"
                       value={addForm.scheduledDate}
                       onChange={e => setAddForm({ ...addForm, scheduledDate: e.target.value })}
                     />
+                    {endDate && courseDays > 1 && (
+                      <p className="mt-1.5 text-[10px] text-[#C9A34E] font-bold px-1">
+                        จบ: {endDate}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนนักเรียนสูงสุด</label>
@@ -577,6 +614,8 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   {saving ? 'กำลังสร้าง...' : 'สร้างรอบเรียน'}
                 </button>
               </form>
+                );
+              })()}
             </div>
           </div>
         </div>,
