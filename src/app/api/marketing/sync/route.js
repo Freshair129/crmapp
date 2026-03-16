@@ -6,17 +6,31 @@ const GRAPH_API = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
 const ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN;
 
-async function graphGet(path, params = {}) {
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function graphGet(path, params = {}, retries = 4) {
     const url = new URL(`${GRAPH_API}${path}`);
     url.searchParams.set('access_token', ACCESS_TOKEN);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
-    const res = await fetch(url.toString());
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `Graph API ${res.status}`);
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        const res = await fetch(url.toString());
+        const data = await res.json().catch(() => ({}));
+        if (data.error) {
+            const code = data.error.code;
+            const msg  = data.error.message || '';
+            // Rate limit codes: 4, 17, 32, 613 + "limit" in message
+            const isRateLimit = [4, 17, 32, 613].includes(code) || msg.toLowerCase().includes('limit');
+            if (isRateLimit && attempt < retries) {
+                const wait = Math.pow(2, attempt + 1) * 30000; // 60s, 120s, 240s, 480s
+                logger.warn('[MarketingSync]', `Rate limit (code ${code}) — waiting ${wait/1000}s (attempt ${attempt+1}/${retries})`);
+                await sleep(wait);
+                continue;
+            }
+            throw new Error(data.error.message || `Graph API error ${code}`);
+        }
+        return data;
     }
-    return res.json();
 }
 
 async function paginate(path, params) {
