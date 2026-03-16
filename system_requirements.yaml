@@ -1,260 +1,596 @@
-system_name: "The V School CRM"
-version: "0.1.0"
-description: "A comprehensive Hybrid CRM system integrating Meta Ads, Messenger, AI (Gemini), and Automated Bank Slip Verification."
+# V SCHOOL CRM v2 — SYSTEM REQUIREMENTS
+# โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ
+# Last updated: 2026-03-16 (v0.18.0)
+# ─────────────────────────────────────────────────────────
 
-# ---------------------------------------------------------
+system_name: "The V School CRM v2"
+version: "0.18.0"
+description: |
+  Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
+  รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,
+  Course Enrollment, Asset Management, Recipe & Package management
+
+tech_stack:
+  framework: "Next.js 14 App Router"
+  database: "PostgreSQL (Supabase) via Prisma ORM"
+  queue: "Redis + BullMQ"
+  ai: "Google Gemini"
+  styling: "TailwindCSS"
+  marketing_api: "Meta Graph API v19.0"
+  auth: "NextAuth.js (CredentialsOnly — ADR-035)"
+
+# ─────────────────────────────────────────────────────────
 # FUNCTIONAL REQUIREMENTS
-# ---------------------------------------------------------
+# ─────────────────────────────────────────────────────────
+
 functional_requirements:
+
+  # ── MODULE 1: AUTH & RBAC ──────────────────────────────
 
   - module: "Authentication & RBAC"
     ui_tab: "LoginPage"
-    status: "Partially Working"
-    description: "Access control for CRM administrators and marketing agents."
-    dependencies: ["PostgreSQL (Agent/Employee Tables)"]
+    status: "✅ Working"
+    adr: "ADR-026, ADR-035"
+    description: "Email+Password login, 6-tier RBAC, server-side guard"
     features:
-      - name: "FR1.1: Facebook Graph API Login"
-        description: "ระบบต้องอนุญาตให้พนักงานเข้าสู่ระบบผ่าน Facebook Graph API (Meta Login) ได้"
-        status: "Broken (Awaiting PSID mapping recovery)"
-      - name: "FR1.2: Facebook / Agent Mapping"
-        description: "ระบบต้องตรวจสอบว่า Facebook ID ที่ล็อคอินเข้ามา ถูกผูกกับ agent_code หรือ id ในระบบ Registry หรือไม่ หากไม่พบต้องปฏิเสธการเข้าใช้งาน"
-        status: "Working (Logic implemented, missing database mapping)"
+      - name: "FR1.1: Email & Password Login"
+        status: "✅ Working"
+        description: "NextAuth CredentialsProvider — bcrypt hash verify"
+        note: "Facebook Login ถูกลบออกแล้ว (ADR-035) เพราะ Facebook ซ่อน Admin PSID"
+
+      - name: "FR1.2: Employee-to-Identity Mapping"
+        status: "✅ Working"
+        description: |
+          Employee.identities JSONB เก็บ { facebook: { psid, name }, line: { id } }
+          ใช้ระบุว่าพนักงานคนไหนตอบข้อความนั้น (responder attribution)
+
       - name: "FR1.3: Role-Based Access Control (RBAC)"
-        description: "ระบบต้องจำกัดสิทธิ์การเข้าถึงเมนู (Authorization) โดยแยกเป็น Developer (full access), Manager, Supervisor, Admin, Agent, Guest"
-        status: "Pending Implementation"
-      - name: "Email and Password Login"
-        description: "ระบบล็อคอินด้วยอีเมลและรหัสผ่านแบบดั้งเดิม"
-        status: "Working"
+        status: "✅ Working"
+        description: |
+          6-tier role hierarchy (server-side guard via middleware.js):
+          Developer > Manager > Supervisor > Admin > Agent > Guest
+          Granular overrides ใน Employee.permissions JSONB
+
+  # ── MODULE 2: MESSAGING & WEBHOOK ─────────────────────
 
   - module: "Messaging & Webhook"
-    ui_tab: ["facebook-chat"]
-    status: "Awaiting Migration"
-    description: "Integration with Meta Messenger for proactive support, sales, and auto-labeling."
-    dependencies: ["Meta Graph API v19.0", "Redis", "BullMQ"]
+    ui_tab: ["UnifiedInbox"]
+    status: "✅ Working"
+    adr: "ADR-028, ADR-033"
+    dependencies: ["Meta Graph API v19.0", "LINE Messaging API", "Redis", "BullMQ"]
     features:
-      - name: "FR2.1: Receive Meta Webhooks"
-        description: "ระบบต้องสามารถรับ Webhook (Messages, Postbacks, Opt-ins) จาก Meta ได้"
-        status: "Pending Migration (Exist in v1 only)"
-      - name: "FR2.2: Idempotency (Prevent Duplicates)"
-        description: "ระบบต้องป้องกันการบันทึกข้อความซ้ำโดยใช้ fb_mid"
-        status: "Pending Migration (Logic in v1)"
-      - name: "FR2.3: Referral & Attribution"
-        description: "ระบบต้องสามารถดึงข้อมูล referral (เช่น ad_id) จาก Webhook เพื่อบันทึกที่มาของแชทได้"
-        status: "Pending Migration (Logic in v1)"
-      - name: "FR2.4: Message Text Attribution (Fallback)"
-        description: "เมื่อพบปัญหา ID Namespace Mismatch (เช่น threadID จาก Scraper ไม่ตรงกับ PSID ใน DB) ระบบต้องใช้การค้นหาข้อความ (Message Text Search) เพื่อระบุตัวตน Admin สำรอง โดยใช้เงื่อนไขข้อความความยาว 15 ตัวอักษรขึ้นไปเพื่อป้องกัน False Positive"
-        status: "Working (As defined in ADR-022)"
+      - name: "FR2.1: Receive Facebook Webhooks"
+        status: "✅ Working"
+        description: "รับ Message/Postback/Opt-in events จาก Meta < 200ms (NFR1)"
+        implementation: "src/app/api/webhooks/facebook/route.js"
+        note: "P2002 race condition fixed — try-catch create + findFirst fallback"
+
+      - name: "FR2.2: Receive LINE Webhooks"
+        status: "✅ Working"
+        description: "รับข้อความ LINE, verify X-Line-Signature"
+        implementation: "src/app/api/webhooks/line/route.js"
+
+      - name: "FR2.3: Idempotency (Prevent Duplicates)"
+        status: "✅ Working"
+        description: "ป้องกันข้อความซ้ำด้วย Message.messageId (fb_mid) unique constraint"
+
+      - name: "FR2.4: Referral & Ad Attribution"
+        status: "✅ Working"
+        description: "บันทึก ad_id จาก Webhook referral → Customer.originId"
+
+      - name: "FR2.5: Unified Inbox (FB + LINE)"
+        status: "✅ Working"
+        description: "หน้า inbox รวม FB + LINE พร้อม pagination, reply, customer card"
+        implementation: "src/components/UnifiedInbox.js"
+
+      - name: "FR2.6: Notification Engine"
+        status: "✅ Working"
+        description: |
+          evaluateRules() ตรวจ keyword/tier/VIP conditions
+          → BullMQ queue → LINE push via pushMessage()
+        implementation: "src/lib/notificationEngine.js, src/workers/notificationWorker.mjs"
+
+  # ── MODULE 3: IDENTITY RESOLUTION ─────────────────────
 
   - module: "Identity Resolution"
     ui_tab: ["customers"]
-    status: "Planned"
-    description: "Cross-platform identity mapping and normalization."
+    status: "✅ Partially Working"
+    adr: "ADR-025"
     features:
-      - name: "FR3.1: Phone Number Normalization"
-        description: "ระบบต้องนำเบอร์โทรศัพท์ที่ได้จากแชท มาทำ Normalization (E.164) ทุกครั้ง"
-        status: "Pending Implementation"
-      - name: "FR3.2: Identity Merge"
-        description: "ระบบต้องสามารถรวมบัญชีลูกค้า (Merge) ที่ทักมาจากหลายเพจ (หลาย PSID) ให้เป็น global_user_id เดียวกันได้ หากเบอร์โทรศัพท์ตรงกัน"
-        status: "Pending Implementation"
-      - name: "FR3.3: Scraper Agent Identity Mapping (Heuristic)"
-        description: "ระบบต้องนำชื่อ Admin ที่ได้จาก Scraper (Sent by [Name]) มาเทียบกับ id-mapping.yaml หรือ Database เพื่อหา agent_id ที่แท้จริง และบันทึกเป็นผู้ตอบ (responder_id) ของข้อความนั้น"
-        status: "In Progress (Scripts exist, needing service integration)"
+      - name: "FR3.1: Phone Number Normalization (E.164)"
+        status: "✅ Working"
+        description: "normalizePhone() แปลงเบอร์ → E.164 ก่อน upsert"
+
+      - name: "FR3.2: Cross-platform Identity Merge"
+        status: "✅ Working"
+        description: "merge FB + LINE ผ่าน phone match → single global_user_id (UUID)"
+        implementation: "src/lib/identityService.js"
+
+      - name: "FR3.3: Scraper Agent Attribution (Heuristic)"
+        status: "✅ Working"
+        description: |
+          แปลง 'Sent by [Name]' prefix → responder_id
+          ใช้ ADR-022: message text search fallback (min 15 chars)
+
       - name: "FR3.4: Admin PSID Permanent Mapping"
-        description: "เมื่อเข้าเงื่อนไข FR3.3 สำเร็จ ระบบต้องทำการบันทึก PSID ลงในฟิลด์ facebookId ของ Agent โดยอัตโนมัติ (Discovery) และใช้ PSID เป็นกุญแจหลักในการยืนยันตัวตนในครั้งต่อๆ ไป"
-        status: "In Progress (Integration required)"
+        status: "✅ Working"
+        description: "บันทึก PSID ใน Employee.identities.facebook.psid อัตโนมัติ"
 
-  - module: "Marketing & AI"
-    ui_tab: ["dashboard", "analytics", "facebook-ads"]
-    status: "Pending Implementation"
-    description: "AI-driven insights and marketing attribution."
-    dependencies: ["Gemini AI", "Meta Marketing API"]
+  # ── MODULE 4: MARKETING & ADS ─────────────────────────
+
+  - module: "Marketing & Ads"
+    ui_tab: ["facebook-ads", "ExecutiveAnalytics"]
+    status: "✅ Working"
+    adr: "ADR-024, ADR-030"
+    dependencies: ["Meta Graph API v19.0", "Redis"]
     features:
-      - name: "FR4.1: Ad Spend Syncing"
-        description: "ระบบ (Python Worker) ต้องสามารถซิงค์ข้อมูล Ad Spend และนำมา Join กับยอดขายผ่าน Conversation ได้"
-        status: "Pending Migration (Script in v1)"
-      - name: "FR4.2: AI Intent Analysis"
-        description: "ระบบต้องส่งประวัติการแชทให้ Gemini AI วิเคราะห์ และสรุป Customer Intent เก็บลง Database"
-        status: "Pending Migration (BusinessAnalyst in v1)"
-      - name: "FR4.3: Hourly Marketing Metrics Sync"
-        description: "ระบบต้องซิงค์ข้อมูล Marketing (Ad Spend, Impressions, Clicks) แบบ Hourly Breakdown ทุกๆ นาทีที่ 5 ของชั่วโมง และใช้ Database เป็น Single Source of Truth แทนไฟล์ JSON (ADR-013)"
-        status: "In Progress (Service logic defined, fetching missing)"
-      - name: "FR4.4: Automated LINE Reporting"
+      - name: "FR4.1: Hourly Ad Sync"
+        status: "✅ Working"
         description: |
-          ระบบต้องส่งรายงานอัตโนมัติเข้ากลุ่ม LINE ตามที่กำหนด:
-          1. Daily Report: สรุปภาพรวมรายวัน (Revenue, Spend, ROAS)
-          2. Live Ad Report: รายงานสถานะแอดปัจจุบัน (จำนวนแอดที่กำลังรัน, จำนวนแอดที่เพิ่มขึ้น/ลดลง เมื่อเทียบกับข้อมูลจากวันที่ผ่านมา)
-        status: "Pending Implementation"
-      - name: "FR4.5: Derived Marketing Metrics"
-        description: "ระบบต้องคำนวณ Attribution Metrics จากค่าย่อยระดับ Transaction (CON = Transaction Count / CPR Ratio) เพื่อวัดประสิทธิภาพการปิดการขายต่อต้นทุนการทักแชท"
-        status: "Pending Implementation"
-      - name: "FR4.6: Hierarchical Bottom-Up Aggregation"
+          Sync Ad metrics จาก Meta Graph API ทุกชั่วโมง
+          Exponential backoff retry (429) · Batch-of-5 concurrency
+          ACCESS_TOKEN_EXPIRED sentinel → 401 response
+        implementation: "src/app/api/marketing/sync-hourly/route.js"
+
+      - name: "FR4.2: Bottom-Up Aggregation"
+        status: "✅ Working"
         description: |
-          ระบบต้องทำการคำนวณผลลัพธ์เป็นระดับชั้นแบบ Bottom-Up:
-          - (L1) Ad Level: คำนวณจากยอดรายตัว
-          - (L2) Ad Set Level: ผลรวมของ Ads ภายใต้ Ad Set
-          - (L3) Campaign Level: ผลรวมของ Ad Sets ภายใต้ Campaign
-        status: "Pending Implementation"
-      - name: "FR4.7: Hourly Persistence for Visuals"
-        description: "ทุกครั้งหลังจากการซิงค์รายชั่วโมงเสร็จสิ้น (Cron Job) ระบบต้องบันทึกค่า Summary ลงใน Ledger/Log แยกตามชั่วโมง เพื่อใช้ในการทำกราฟแสดงผลรายชั่วโมง (Hourly Metrics Persistence)"
-        status: "Pending Implementation"
-      - name: "FR4.8: Data Integrity Audit (Checksum)"
-        description: "ระบบต้องมีการทำ Checksum Verification: ผลรวมของ Ads ในระดับชั้นล่างสุด เมื่อนำมารวมกัน (Sum) ต้องมียอดเท่ากับค่า Campaign Total ที่ได้รับจาก Meta API หากไม่เท่ากัน ระบบต้องบันทึกเป็น Error Log (Data Mismatch) เพื่อตรวจสอบความผิดพลาดของ Logic"
-        status: "Pending Implementation"
-      - name: "FR4.9: Intelligent Differential Sync (Rate Limit Optimization)"
+          Campaign metrics คำนวณ Bottom-Up จาก Ad level เสมอ (ADR-024 D2)
+          Campaign ไม่เก็บ aggregate — คำนวณใน app layer
+
+      - name: "FR4.3: Revenue Channel Split"
+        status: "✅ Working"
+        description: "conversationId → Ads vs Store classification (ADR-030)"
+
+      - name: "FR4.4: Hourly Ledger (Append-Only)"
+        status: "✅ Working"
+        description: "AdHourlyLedger — บันทึกเมื่อ delta ≠ 0 เท่านั้น"
+        implementation: "model AdHourlyLedger in schema.prisma"
+
+      - name: "FR4.5: Data Integrity Checksum"
+        status: "✅ Working"
+        description: "Sum(Ads.Metrics) == Campaign.Metrics — log mismatch เป็น error"
+
+      - name: "FR4.6: Differential Sync (Rate Limit Optimization)"
+        status: "✅ Working"
         description: |
-          ระบบประหยัดการเรียก API (Rate Limit) และพื้นที่จัดเก็บ โดยใช้กลยุทธ์ Differential Sync:
-          - (Fetch Strategy): ใช้แนวทาง **'Ad-Level First'** (ดึงข้อมูลระดับ Ad เป็นหลัก) เพื่อให้สามารถทำ Product Attribution และคำนวณ Checksum ย้อนกลับไปหาระดับ Campaign ได้อย่างแม่นยำ
-          - (Read Optimization): ใช้พารามิเตอร์ `filtering` ร่วมกับ `updated_time` (Unix Timestamp) และ `effective_status: ['ACTIVE']` เพื่อดึงข้อมูลเฉพาะแอดที่มีการเคลื่อนไหวหรือเปลี่ยนแปลงล่าสุดจาก Facebook เท่านั้น
-          - (Write Optimization): เปรียบเทียบค่าที่ดึงมาใหม่กับค่าล่าสุดใน DB (Baseline) หากไม่มีการเปลี่ยนแปลง (Delta = 0) ให้ข้ามการบันทึก Record รายชั่วโมงนั้นเพื่อประหยัดพื้นที่
-          - (First-Sync Baseline): ทุกต้นวัน (00:00 - 01:00) ต้องทำการ Full Sync เพื่อล้าง Baseline และตั้งค่าเริ่มต้นใหม่สำหรับวันนั้นๆ
-        status: "Pending Implementation"
+          Ad-Level First fetch · updated_time filtering
+          Delta = 0 → ข้ามการเขียน record รายชั่วโมง
+          Full Sync ทุกต้นวัน (00:00-01:00)
 
-  - category: "Data Integrity & Verification Rules"
-    description: "กฎการตรวจสอบความถูกต้องของข้อมูล (Audit Logic)"
-    rules:
-      - name: "Aggregation Checksum"
-        logic: "Sum(Ads.Metrics) == Campaign.Metrics"
-        description: "ใช้ตรวจสอบหาช่องว่างของข้อมูล (Gaps) หรือการซิงค์ข้อมูลที่ไม่ครบถ้วน"
-      - name: "Hourly Sync Continuity"
-        logic: "Next_Sync_Hour == Current_Sync_Hour + 1"
-        description: "ตรวจสอบความต่อเนื่องของข้อมูลรายชั่วโมง ป้องกันข้อมูลหาย (Data Gap) ระหว่างช่วงเวลา"
-      - name: "Differential Delta Rule"
-        logic: "Delta = Current_Total - Previous_Total"
-        description: "บันทึกเฉพาะค่าผลต่างลงใน Ledger รายชั่วโมง หาก Delta เป็น 0 ไม่ต้องสร้าง Record ใหม่"
+      - name: "FR4.7: Executive Analytics Dashboard"
+        status: "✅ Working"
+        description: "Recharts charts + KPI cards + Framer Motion"
+        implementation: "src/components/ExecutiveAnalytics.js"
 
-  - category: "Reporting Calculation Formulas"
-    description: "สูตรการคำนวณมาตรฐานสำหรับรายงาน (Calculated from Granular Data)"
-    formulas:
-      - name: "CON (Conversion Efficiency)"
-        logic: "Total Transactions / Cost Per Result (CPR)"
-        description: "ใช้วัดว่าเงินที่เสียไปกับการทักแชท 1 ครั้ง (CPR) สามารถสร้างรายการซื้อขายได้กี่รายการ (ยิ่งสูงยิ่งดี)"
-      - name: "CPA (Cost Per Acquisition)"
-        logic: "Total Spend / Total Transactions"
-        description: "ต้นทุนเฉลี่ยเพื่อให้ได้ 1 ออเดอร์ (Transaction)"
-      - name: "ROAS (Return on Ad Spend)"
-        logic: "Total Revenue / Total Spend"
-        description: "ผลตอบแทนจากยอดขายเทียบกับค่าโฆษณา"
+      - name: "FR4.8: AI Intent Analysis (Gemini)"
+        status: "✅ Working"
+        description: "ส่ง chat history ให้ Gemini วิเคราะห์ Customer Intent → Customer.intelligence"
 
-  - module: "UI & Dashboard"
-    ui_tab: ["dashboard", "facebook-chat"]
-    status: "Pending Implementation (v2 UI not started)"
-    description: "Real-time user interface and executive reporting."
-    dependencies: ["Socket.io / SSE"]
-    features:
-      - name: "FR5.1: Real-time Revenue & Chat Queue"
-        description: "หน้า Dashboard ต้องแสดงสรุปยอดขาย (Revenue) และจำนวนแชทค้างตอบแบบ Real-time"
-        status: "Partially Working (UI built, needing socket integration for revenue)"
-      - name: "FR5.2: Real-time Chat UI"
-        description: "หน้าจอ Chat ของ Agent ต้องมีการอัปเดตข้อความใหม่ทันทีโดยไม่ต้อง Refresh"
-        status: "Working (Via SSE)"
+  # ── MODULE 5: CUSTOMER DATABASE ───────────────────────
 
   - module: "Customer Database"
-    ui_tab: ["customers", "inventory"]
-    status: "Pending Implementation (Service layer only)"
-    description: "Centralized database for student/customer profiles, timelines, and course inventory."
+    ui_tab: ["customers"]
+    status: "✅ Working"
     features:
-      - name: "Customer Index (List view & intelligent search)"
-        status: "Pending Implementation"
-      - name: "Customer 360 Profile (Timeline, Wallet, Tags)"
-        status: "Pending Implementation"
-      - name: "Customer Registration Form"
-        status: "Pending Implementation"
-      - name: "Inventory Management (Learning Courses / Packages Tracking)"
-        status: "Pending Implementation"
+      - name: "Customer Index (List + Search)"
+        status: "✅ Working"
+        implementation: "src/components/CustomerList.js"
+        description: "tier filter, search, FB/LINE deep links"
+
+      - name: "Customer 360 Profile"
+        status: "✅ Working"
+        description: "Timeline, Wallet, Tags, Enrollment history, Intelligence"
+
+      - name: "Customer Registration"
+        status: "✅ Working"
+        description: "inline creation จาก POS + inbox"
+
+      - name: "Membership Tiers"
+        status: "✅ Working"
+        values: ["MEMBER", "SILVER", "GOLD", "PLATINUM", "VIP", "DIAMOND"]
+
+  # ── MODULE 6: STORE & ORDER ───────────────────────────
 
   - module: "Store & Order Management"
     ui_tab: ["store", "orders"]
-    status: "Pending Implementation"
-    description: "Product catalog, shopping cart, and checkout processing."
+    status: "✅ Working"
     features:
-      - name: "Product & Bundle Selection Modal"
-        status: "Pending Implementation"
-      - name: "Shopping Cart & Checkout Engine"
-        status: "Pending Implementation"
-      - name: "Payment Method Selection (Wallet vs. Transfer)"
-        status: "Pending Implementation"
+      - name: "PremiumPOS (Point of Sale)"
+        status: "✅ Working"
+        implementation: "src/components/PremiumPOS.js"
+        description: "inline customer creation + enrollment on checkout + success modal"
 
-  - module: "Payment Verification"
-    status: "Removed"
-    description: "Slip OCR verification — removed from scope."
+      - name: "Shopping Cart"
+        status: "✅ Working"
+        description: "CartItem model — unique per customer+product"
 
+      - name: "Order & Transaction Tracking"
+        status: "✅ Working"
+        description: "Order → Transaction[] (slip + payment records)"
 
-# ---------------------------------------------------------
+  # ── MODULE 7: COURSE ENROLLMENT ───────────────────────
+
+  - module: "Course Enrollment"
+    ui_tab: ["CourseEnrollmentPanel"]
+    status: "✅ Working"
+    adr: "ADR-037"
+    features:
+      - name: "FR7.1: Course Enrollment"
+        status: "✅ Working"
+        description: "createEnrollment + package expansion"
+        implementation: "src/lib/repositories/enrollmentRepo.js"
+
+      - name: "FR7.2: Hours Tracking & Certification"
+        status: "✅ Working"
+        description: |
+          updateHours() + cert threshold:
+          30h → Basic Cert · 111h → Professional · 201h → Master
+        cert_levels: [30, 111, 201]
+
+      - name: "FR7.3: Class Attendance"
+        status: "✅ Working"
+        description: "ClassAttendance model — เชื่อม EnrollmentItem กับ CourseSchedule"
+
+      - name: "FR7.4: Package Enrollment"
+        status: "✅ Working"
+        description: |
+          PackageEnrollment + course swap (1 ครั้ง/enrollment)
+          swapUsedAt non-null = ใช้สิทธิ์ไปแล้ว → 409
+        implementation: "src/lib/repositories/packageRepo.js"
+
+  # ── MODULE 8: SCHEDULE CALENDAR ───────────────────────
+
+  - module: "Course Schedule Calendar"
+    ui_tab: ["ScheduleCalendar"]
+    status: "✅ Working"
+    features:
+      - name: "FR8.1: Schedule CRUD"
+        status: "✅ Working"
+        implementation: "src/lib/repositories/scheduleRepo.js"
+
+      - name: "FR8.2: Calendar View"
+        status: "✅ Working"
+        description: "List + Week + Calendar views, multi-day course spanning"
+        implementation: "src/components/ScheduleCalendar.js"
+
+      - name: "FR8.3: Complete Session + Stock Deduction"
+        status: "✅ Working"
+        description: |
+          completeSessionWithStockDeduction() — prisma.$transaction
+          ตัดสต็อก RecipeIngredient × studentCount
+          ตัดสต็อก RecipeEquipment per session (ไม่คูณ)
+        implementation: "src/app/api/schedules/[id]/complete/route.js"
+
+  # ── MODULE 9: KITCHEN OPS ─────────────────────────────
+
+  - module: "Kitchen Operations"
+    ui_tab: ["KitchenStockPanel"]
+    status: "✅ Working"
+    features:
+      - name: "FR9.1: Ingredient Stock Management"
+        status: "✅ Working"
+        description: "CRUD ingredients, low-stock filter, inline edit"
+        implementation: "src/lib/repositories/kitchenRepo.js"
+
+      - name: "FR9.2: Bill of Materials (BOM)"
+        status: "✅ Working"
+        description: "CourseBOM — qty per person per course"
+
+      - name: "FR9.3: Purchase Request (Auto-Generate)"
+        status: "✅ Working"
+        description: "Auto-generate PR จาก BOM เมื่อสต็อกต่ำกว่า min"
+        id_format: "PR-YYYYMMDD-SERIAL"
+
+      - name: "FR9.4: Recipe Management"
+        status: "✅ Working"
+        description: "Recipe + RecipeIngredient + RecipeEquipment (stock-tracked)"
+        implementation: "src/components/RecipePage.js"
+
+  # ── MODULE 10: ASSET MANAGEMENT ───────────────────────
+
+  - module: "Asset Management"
+    ui_tab: ["AssetPanel"]
+    status: "✅ Working"
+    features:
+      - name: "FR10.1: Asset CRUD"
+        status: "✅ Working"
+        description: "Asset grid, category/status filter, create+edit modal"
+        implementation: "src/lib/repositories/assetRepo.js"
+        categories: ["KITCHEN", "EQUIPMENT", "VEHICLE", "BUILDING", "IT", "GENERAL"]
+        statuses: ["ACTIVE", "MAINTENANCE", "RETIRED"]
+
+      - name: "FR10.2: Asset Assignment"
+        status: "✅ Working"
+        description: "Asset.assignedToId → Employee"
+
+  # ── MODULE 11: PACKAGE MANAGEMENT ─────────────────────
+
+  - module: "Package Management"
+    ui_tab: ["PackagePage"]
+    status: "✅ Working"
+    features:
+      - name: "FR11.1: Package CRUD"
+        status: "✅ Working"
+        description: "Package + PackageCourse (swap groups) + PackageGift"
+        implementation: "src/components/PackagePage.js"
+
+      - name: "FR11.2: Package Enrollment + Swap"
+        status: "✅ Working"
+        description: "createPackageEnrollment, swapCourseInEnrollment (1 ครั้ง)"
+        endpoint: "POST /api/packages/[id]/swap"
+
+  # ── MODULE 12: GOOGLE SHEETS SYNC ─────────────────────
+
+  - module: "Google Sheets Integration"
+    status: "✅ Working"
+    adr: "ADR-036"
+    description: "Google Sheets เป็น SSOT สำหรับ master data"
+    features:
+      - name: "FR12.1: Master Data Sync (CSV)"
+        status: "✅ Working"
+        description: "Sync courses/ingredients/BOM/assets จาก Sheets CSV URL"
+        implementation: "src/app/api/sheets/sync-master-data/route.js"
+        env_vars:
+          - SHEET_COURSES_URL
+          - SHEET_INGREDIENTS_URL
+          - SHEET_BOM_URL
+          - SHEET_ASSETS_URL
+
+  # ── MODULE 13: NOTIFICATION RULES ─────────────────────
+
+  - module: "Notification Rules"
+    status: "✅ Working"
+    features:
+      - name: "FR13.1: Rule Management"
+        status: "✅ Working"
+        description: "GET/POST/DELETE notification rules"
+        implementation: "src/app/api/notifications/rules/route.js"
+        events: ["MESSAGE_RECEIVED", "CONVERSATION_CLOSED", "INACTIVITY"]
+
+      - name: "FR13.2: LINE Push via BullMQ"
+        status: "✅ Working"
+        description: "notificationWorker → pushMessage() → LINE Messaging API"
+        implementation: "src/workers/notificationWorker.mjs"
+
+  # ── MODULE 14: TASK MANAGEMENT ────────────────────────
+
+  - module: "Task Management"
+    status: "✅ Working"
+    features:
+      - name: "Task CRUD"
+        status: "✅ Working"
+        description: "Follow-up, Call, Email, Meeting tasks — Assignee + Due Date"
+        types: ["FOLLOW_UP", "CALL", "EMAIL", "MEETING", "DEMO"]
+        priorities: ["LOW", "MEDIUM", "HIGH", "URGENT"]
+
+# ─────────────────────────────────────────────────────────
 # NON-FUNCTIONAL REQUIREMENTS
-# ---------------------------------------------------------
+# ─────────────────────────────────────────────────────────
+
 non_functional_requirements:
 
   - category: "Performance & Latency"
     requirements:
-      - name: "NFR1 - Webhook Latency"
-        description: "API `/api/webhooks/messenger` ต้องตอบกลับ Facebook ด้วย HTTP 200 OK ภายในเวลา < 200ms เสมอ"
-      - name: "NFR2 - UI Performance"
-        description: "API ของหน้า Dashboard ต้องตอบสนองภายในเวลา < 500ms โดยใช้กลยุทธ์ Local JSON Caching"
+      - name: "NFR1 — Webhook Latency"
+        description: "Webhook ตอบ Facebook < 200ms เสมอ — processEvent() fire-and-forget"
+        endpoint: "/api/webhooks/facebook"
+        status: "✅ Enforced"
+
+      - name: "NFR2 — Dashboard API Latency"
+        description: "Dashboard API < 500ms — Redis cache (ADR-034)"
+        status: "✅ Enforced"
 
   - category: "Reliability & Integrity"
     requirements:
-      - name: "NFR3 - Reliability (Queueing)"
-        description: "งานที่เกี่ยวกับการเขียน Database หรือยิง External API (Gemini/Meta) ต้องทำผ่าน BullMQ และต้องมี Exponential Backoff Retry อย่างน้อย 5 ครั้งเมื่อเกิด Error"
-      - name: "NFR5 - Data Integrity"
-        description: "การ Update หรือ Insert ข้อมูล Identity ต้องทำงานอยู่ภายใต้ `prisma.$transaction` เสมอ"
-      - name: "Data Reconciliation (Cron Jobs)"
-        description: "มีการทำ Cron Job รายชั่วโมงเพื่อประสานข้อมูลระหว่าง Meta Ads และ Database ให้ตรงกัน"
+      - name: "NFR3 — BullMQ Retry"
+        description: "BullMQ retry ≥ 5 ครั้ง, exponential backoff"
+        status: "✅ Enforced"
 
-  - category: "Architecture & Security"
+      - name: "NFR4 — Webhook Signature Validation"
+        description: "X-Hub-Signature-256 verify ทุก Facebook request"
+        status: "✅ Enforced"
+
+      - name: "NFR5 — Identity Upsert Transaction"
+        description: "Identity upsert ต้องอยู่ใน prisma.$transaction เสมอ"
+        status: "✅ Enforced"
+
+      - name: "NFR6 — Race Condition Guard"
+        description: |
+          FB Webhook: findFirst → create ต้องครอบด้วย try-catch P2002
+          ถ้า P2002 → retry findFirst เพื่อ recover
+        status: "✅ Enforced (v0.18.0)"
+
+  - category: "Code Quality"
     requirements:
-      - name: "NFR4 - Security (Webhook Validation)"
-        description: "ทุก Request ที่มาจาก Facebook ต้องผ่านการตรวจสอบ X-Hub-Signature-256 ก่อนประมวลผล"
-      - name: "Hybrid Database Strategy"
-        description: "แอปพลิเคชันใช้ PostgreSQL เป็นหลัก แต่รองรับเงื่อนไข Graceful Fallback ไปยัง Local JSON Files"
+      - name: "Error Logging"
+        description: "ห้าม catch(e) {} เงียบ — ต้อง log ทุกครั้ง"
+        format: "console.error('[ModuleName] message', error)"
 
+      - name: "Repository Pattern"
+        description: "ทุก DB operation ต้องผ่าน src/lib/repositories/ เท่านั้น"
 
-# ---------------------------------------------------------
-# API SPECIFICATION (RESTful API Routes)
-# ---------------------------------------------------------
+      - name: "Icon Standard (ADR-031)"
+        description: "ใช้ Lucide React เท่านั้น — ห้าม FontAwesome"
+
+  - category: "Data Integrity Rules"
+    rules:
+      - name: "Aggregation Checksum"
+        logic: "Sum(Ads.Metrics) == Campaign.Metrics"
+        description: "ตรวจ data gap จาก Meta sync"
+
+      - name: "Hourly Sync Continuity"
+        logic: "Next_Sync_Hour == Current_Sync_Hour + 1"
+
+      - name: "Differential Delta Rule"
+        logic: "Delta = Current_Total - Previous_Total; if Delta == 0 → skip write"
+
+  - category: "Reporting Calculation Formulas"
+    formulas:
+      - name: "ROAS"
+        logic: "Total Revenue / Total Spend"
+      - name: "CPA"
+        logic: "Total Spend / Total Transactions"
+      - name: "CON (Conversion Efficiency)"
+        logic: "Total Transactions / Cost Per Result (CPR)"
+
+# ─────────────────────────────────────────────────────────
+# API SPECIFICATION (RESTful — Next.js App Router)
+# ─────────────────────────────────────────────────────────
+
 api_specification:
 
-  - module: "Webhook & Ingestion"
+  - module: "Auth"
     endpoints:
-      - name: "Verify Webhook"
-        method: "GET"
-        endpoint: "/api/webhooks/messenger"
-        purpose: "ใช้สำหรับยืนยัน URL กับ Facebook App Dashboard"
-        parameters: ["hub.mode", "hub.verify_token", "hub.challenge"]
-        response: "HTTP 200 พร้อมส่ง hub.challenge กลับไป (Text plain)"
-      
-      - name: "Receive Events"
-        method: "POST"
-        endpoint: "/api/webhooks/messenger"
-        purpose: "รับข้อมูลการแชทจาก Meta"
-        headers: ["X-Hub-Signature-256 (Required)"]
-        body: "Meta Webhook Payload (JSON)"
-        action: "ส่ง Payload ลง BullMQ fb-events"
-        response: "HTTP 200 EVENT_RECEIVED (ตอบทันที < 200ms)"
+      - method: "GET/POST"
+        path: "/api/auth/[...nextauth]"
+        purpose: "NextAuth session management (CredentialsOnly)"
+      - method: "GET"
+        path: "/api/agent/me"
+        purpose: "ดึงข้อมูลพนักงานที่ login อยู่"
 
-  - module: "Authentication & Session"
+  - module: "Webhooks"
     endpoints:
-      - name: "NextAuth Routes"
-        method: "GET/POST"
-        endpoint: "/api/auth/[...nextauth]"
-        purpose: "จัดการ Flow ของ Facebook Login และสร้าง Session Cookie"
-        action: "ตรวจสอบ Meta IDs กับฐานข้อมูล Agent"
-      
-      - name: "Get Current User Profile"
-        method: "GET"
-        endpoint: "/api/agent/me"
-        purpose: "ดึงข้อมูลพนักงานหรือตัวแทนที่กำลัง Login อยู่"
-        response: |
-          {
-            "agent_id": "uuid",
-            "agent_code": "AGT-26-001",
-            "employee_id": "TVS-MKT-001",
-            "role": "ADMIN",
-            "full_name": "John Doe"
-          }
-      
-# ---------------------------------------------------------
-# ID FORMATTING, NAMING CONVENTIONS & DATA STANDARDS
-# ---------------------------------------------------------
-# มาตรฐานการตั้งชื่อ ID และข้อกำหนดทางเทคนิคถูกแยกไปไว้ที่ไฟล์เฉพาะ
-# See: [id_standards.yaml](file:///Users/ideab/Desktop/data_hub/crm-app/docs/id_standards.yaml)
-# ---------------------------------------------------------
+      - method: "GET/POST"
+        path: "/api/webhooks/facebook"
+        purpose: "Facebook Messenger webhook — verify + receive events"
+      - method: "POST"
+        path: "/api/webhooks/line"
+        purpose: "LINE Messaging API webhook"
+
+  - module: "Marketing"
+    endpoints:
+      - method: "GET"
+        path: "/api/marketing/campaigns"
+        purpose: "List campaigns from DB"
+      - method: "GET"
+        path: "/api/marketing/adsets"
+        purpose: "List ad sets from DB"
+      - method: "GET"
+        path: "/api/marketing/ads"
+        purpose: "List ads from DB"
+      - method: "GET"
+        path: "/api/marketing/daily"
+        purpose: "Daily metrics aggregated"
+      - method: "POST"
+        path: "/api/marketing/sync-hourly"
+        purpose: "Trigger hourly sync from Meta Graph API"
+      - method: "GET"
+        path: "/api/marketing/chat/conversations"
+        purpose: "Paginated conversation list (cursor-based)"
+      - method: "GET"
+        path: "/api/marketing/chat/messages"
+        purpose: "Messages by conversation_id"
+
+  - module: "Inbox"
+    endpoints:
+      - method: "GET"
+        path: "/api/inbox/conversations"
+        purpose: "Unified FB+LINE inbox (enriched customer data)"
+      - method: "GET/POST"
+        path: "/api/inbox/conversations/[id]/messages"
+        purpose: "Paginated messages + reply"
+
+  - module: "Customers"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/customers"
+        purpose: "List + create customers"
+      - method: "GET/PATCH"
+        path: "/api/customers/[id]"
+        purpose: "Customer detail + update"
+
+  - module: "Enrollments"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/enrollments"
+        purpose: "List + create enrollments"
+      - method: "GET/PATCH"
+        path: "/api/enrollments/[id]"
+        purpose: "Detail + add hours"
+
+  - module: "Schedules"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/schedules"
+        purpose: "List (upcoming/days) + create schedule"
+      - method: "GET/PATCH"
+        path: "/api/schedules/[id]"
+        purpose: "Detail + update"
+      - method: "POST"
+        path: "/api/schedules/[id]/complete"
+        purpose: "Complete session + real-time stock deduction"
+
+  - module: "Kitchen"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/kitchen/ingredients"
+        purpose: "List (lowStockOnly filter) + create ingredient"
+      - method: "PATCH"
+        path: "/api/kitchen/ingredients/[id]"
+        purpose: "Update ingredient / stock"
+      - method: "GET/POST"
+        path: "/api/kitchen/purchase"
+        purpose: "List + create purchase requests"
+      - method: "PATCH"
+        path: "/api/kitchen/purchase/[id]"
+        purpose: "Update PR status"
+
+  - module: "Assets"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/assets"
+        purpose: "List (category/status/search) + create"
+      - method: "GET/PATCH"
+        path: "/api/assets/[id]"
+        purpose: "Detail + update"
+
+  - module: "Recipes"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/recipes"
+        purpose: "List + create recipes"
+      - method: "GET/PATCH"
+        path: "/api/recipes/[id]"
+        purpose: "Detail + update"
+
+  - module: "Packages"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/packages"
+        purpose: "List + create packages"
+      - method: "GET/PATCH"
+        path: "/api/packages/[id]"
+        purpose: "Detail + update"
+      - method: "POST"
+        path: "/api/packages/[id]/swap"
+        purpose: "Swap course in enrollment (1 ครั้ง, 409 ถ้าใช้แล้ว)"
+      - method: "GET/POST"
+        path: "/api/packages/enrollments"
+        purpose: "List by customerId + create package enrollment"
+
+  - module: "Notifications"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/notifications/rules"
+        purpose: "List + create/upsert notification rules"
+      - method: "DELETE"
+        path: "/api/notifications/rules/[id]"
+        purpose: "Delete rule by UUID or ruleId"
+
+  - module: "Sheets Sync"
+    endpoints:
+      - method: "POST"
+        path: "/api/sheets/sync-master-data"
+        purpose: "Sync courses/ingredients/BOM/assets from Google Sheets CSV"
+
+# ─────────────────────────────────────────────────────────
+# REFERENCE
+# ─────────────────────────────────────────────────────────
+
+reference:
+  id_standards: "id_standards.yaml"
+  schema: "prisma/schema.prisma"
+  adr_directory: "docs/adr/"
+  changelog: "CHANGELOG.md"
+  goal: "GOAL.md"
