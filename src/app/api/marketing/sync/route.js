@@ -105,114 +105,135 @@ export async function GET(request) {
             });
         }
 
-        // 3. Sync Ads with insights
+        // 3. Sync Ads with insights — Batch API (50 ads/batch, ~10× faster)
         const fbAds = await paginate(`/${AD_ACCOUNT_ID}/ads`, {
             fields: `id,name,status,effective_status,adset_id,creative{id}`,
             limit: '100',
         });
 
         const insightFields = 'spend,impressions,clicks,actions,action_values';
+        const until = new Date().toISOString().split('T')[0];
+        const BATCH_SIZE = 50;
+        const BATCH_DELAY = 1500; // ms between batches
         let adsUpdated = 0;
+        let insightErrors = 0;
 
-        for (const ad of fbAds) {
-            const adSet = await prisma.adSet.findUnique({ where: { adSetId: ad.adset_id } });
-            if (!adSet) continue;
+        // Build adSet lookup map (avoid N+1 DB queries)
+        const adSetRows = await prisma.adSet.findMany({ select: { id: true, adSetId: true } });
+        const adSetMap = new Map(adSetRows.map(a => [a.adSetId, a.id]));
 
-            let spend = 0, impressions = 0, clicks = 0, revenue = 0;
+        // Build creative upsert helper (batch later)
+        const creativeIds = [...new Set(fbAds.map(a => a.creative?.id).filter(Boolean))];
+        for (const cid of creativeIds) {
+            await prisma.adCreative.upsert({
+                where: { creativeId: cid },
+                update: {},
+                create: { creativeId: cid, name: `Creative ${cid}` }
+            });
+        }
+        const creativeRows = await prisma.adCreative.findMany({ select: { id: true, creativeId: true } });
+        const creativeMap = new Map(creativeRows.map(c => [c.creativeId, c.id]));
+
+        // Fetch insights in batches of 50
+        const insightMap = new Map(); // adId → { spend, impressions, clicks, revenue, dailyRows[] }
+        for (let i = 0; i < fbAds.length; i += BATCH_SIZE) {
+            const chunk = fbAds.slice(i, i + BATCH_SIZE);
+            const batchReqs = chunk.map(ad => ({
+                method: 'GET',
+                relative_url: `${ad.id}/insights?fields=${insightFields}&time_range=${encodeURIComponent(JSON.stringify({ since, until }))}&time_increment=1&limit=100`,
+            }));
+
             try {
-                const insights = await graphGet(`/${ad.id}/insights`, {
-                    fields: insightFields,
-                    time_range: JSON.stringify({ since, until: new Date().toISOString().split('T')[0] }),
-                    time_increment: 1,
-                });
+                const body = new URLSearchParams();
+                body.set('access_token', ACCESS_TOKEN);
+                body.set('batch', JSON.stringify(batchReqs));
+                body.set('include_headers', 'false');
+                const res = await fetch(`${GRAPH_API}/`, { method: 'POST', body });
+                const results = await res.json();
 
-                for (const day of (insights.data || [])) {
-                    const dSpend = parseFloat(day.spend || 0);
-                    const dImpressions = parseInt(day.impressions || 0, 10);
-                    const dClicks = parseInt(day.clicks || 0, 10);
-                    
-                    const purchaseValue = (day.action_values || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
-                    const dRevenue = purchaseValue ? parseFloat(purchaseValue.value || 0) : 0;
-                    
-                    const purchaseAction = (day.actions || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
-                    const dPurchases = purchaseAction ? parseInt(purchaseAction.value || 0) : 0;
-                    
-                    const leadAction = (day.actions || []).find(a => a.action_type === 'lead');
-                    const dLeads = leadAction ? parseInt(leadAction.value || 0) : 0;
+                if (!Array.isArray(results)) { insightErrors += chunk.length; continue; }
 
-                    spend += dSpend;
-                    impressions += dImpressions;
-                    clicks += dClicks;
-                    revenue += dRevenue;
+                for (let j = 0; j < chunk.length; j++) {
+                    const r = results[j];
+                    const ad = chunk[j];
+                    if (!r || r.code !== 200) { insightErrors++; continue; }
 
-                    await prisma.adDailyMetric.upsert({
-                        where: { adId_date: { adId: ad.id, date: new Date(day.date_start) } },
-                        update: {
-                            spend: dSpend,
-                            impressions: dImpressions,
-                            clicks: dClicks,
-                            revenue: dRevenue,
-                            leads: dLeads,
-                            purchases: dPurchases,
+                    const parsed = JSON.parse(r.body);
+                    const days = parsed.data || [];
+                    let spend = 0, impressions = 0, clicks = 0, revenue = 0;
+                    const dailyRows = [];
+
+                    for (const day of days) {
+                        const dSpend       = parseFloat(day.spend || 0);
+                        const dImpressions = parseInt(day.impressions || 0, 10);
+                        const dClicks      = parseInt(day.clicks || 0, 10);
+                        const dRevenue     = (day.action_values || [])
+                            .filter(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))
+                            .reduce((s, a) => s + parseFloat(a.value || 0), 0);
+                        const dPurchases   = (day.actions || [])
+                            .filter(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))
+                            .reduce((s, a) => s + parseInt(a.value || 0), 0);
+                        const dLeads       = (day.actions || [])
+                            .filter(a => a.action_type === 'lead')
+                            .reduce((s, a) => s + parseInt(a.value || 0), 0);
+
+                        spend += dSpend; impressions += dImpressions;
+                        clicks += dClicks; revenue += dRevenue;
+
+                        dailyRows.push({
+                            adId: ad.id, date: new Date(day.date_start),
+                            spend: dSpend, impressions: dImpressions, clicks: dClicks,
+                            revenue: dRevenue, leads: dLeads, purchases: dPurchases,
                             roas: dSpend > 0 ? dRevenue / dSpend : 0,
-                        },
-                        create: {
-                            adId: ad.id,
-                            date: new Date(day.date_start),
-                            spend: dSpend,
-                            impressions: dImpressions,
-                            clicks: dClicks,
-                            revenue: dRevenue,
-                            leads: dLeads,
-                            purchases: dPurchases,
-                            roas: dSpend > 0 ? dRevenue / dSpend : 0,
-                        },
-                    });
+                        });
+                    }
+                    insightMap.set(ad.id, { spend, impressions, clicks, revenue, dailyRows });
                 }
             } catch (err) {
-                logger.error('[MarketingSync]', `Insights fetch failed for ad ${ad.id}`, err);
+                logger.error('[MarketingSync]', `Batch insights error at chunk ${i}`, err);
+                insightErrors += chunk.length;
             }
 
-            let creativeDbId = null;
-            if (ad.creative?.id) {
-                const creative = await prisma.adCreative.upsert({
-                    where: { creativeId: ad.creative.id },
-                    update: {},
-                    create: {
-                        creativeId: ad.creative.id,
-                        name: `Creative ${ad.creative.id}`,
-                    }
-                });
-                creativeDbId = creative.id;
-            }
+            if (i + BATCH_SIZE < fbAds.length) await new Promise(r => setTimeout(r, BATCH_DELAY));
+            logger.info('[MarketingSync]', `Insights batch ${Math.floor(i/BATCH_SIZE)+1}/${Math.ceil(fbAds.length/BATCH_SIZE)} done`);
+        }
+
+        // Upsert ads + daily metrics
+        for (const ad of fbAds) {
+            const adSetDbId = adSetMap.get(ad.adset_id);
+            if (!adSetDbId) continue;
+
+            const ins = insightMap.get(ad.id) || { spend: 0, impressions: 0, clicks: 0, revenue: 0, dailyRows: [] };
 
             await prisma.ad.upsert({
                 where: { adId: ad.id },
                 update: {
-                    name: ad.name,
-                    status: ad.status,
+                    name: ad.name, status: ad.status,
                     deliveryStatus: ad.effective_status ?? null,
-                    spend,
-                    impressions,
-                    clicks,
-                    revenue,
-                    roas: spend > 0 ? revenue / spend : 0,
-                    creativeId: creativeDbId,
+                    spend: ins.spend, impressions: ins.impressions,
+                    clicks: ins.clicks, revenue: ins.revenue,
+                    roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
+                    creativeId: creativeMap.get(ad.creative?.id) ?? null,
                 },
                 create: {
-                    adId: ad.id,
-                    name: ad.name,
-                    status: ad.status,
+                    adId: ad.id, name: ad.name, status: ad.status,
                     deliveryStatus: ad.effective_status ?? null,
-                    adSetId: adSet.id,
-                    spend,
-                    impressions,
-                    clicks,
-                    revenue,
-                    roas: spend > 0 ? revenue / spend : 0,
-                    creativeId: creativeDbId,
+                    adSetId: adSetDbId,
+                    spend: ins.spend, impressions: ins.impressions,
+                    clicks: ins.clicks, revenue: ins.revenue,
+                    roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
+                    creativeId: creativeMap.get(ad.creative?.id) ?? null,
                 },
             });
+
+            // Upsert daily metrics
+            for (const row of ins.dailyRows) {
+                await prisma.adDailyMetric.upsert({
+                    where: { adId_date: { adId: ad.id, date: row.date } },
+                    update: { spend: row.spend, impressions: row.impressions, clicks: row.clicks, revenue: row.revenue, leads: row.leads, purchases: row.purchases, roas: row.roas },
+                    create: row,
+                });
+            }
             adsUpdated++;
         }
 
@@ -222,6 +243,7 @@ export async function GET(request) {
                 campaigns: fbCampaigns.length,
                 adSets: fbAdSets.length,
                 ads: adsUpdated,
+                insightErrors,
             },
             syncedAt: new Date().toISOString(),
         });
