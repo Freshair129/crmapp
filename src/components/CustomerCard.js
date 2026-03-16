@@ -2,24 +2,24 @@
 
 import React, { useState } from 'react';
 import { 
-  Award, 
-  Medal, 
-  Crown, 
-  Gem, 
-  Flame, 
-  Search, 
-  Check, 
-  ShoppingCart, 
-  HelpCircle, 
-  AlertTriangle, 
-  MessageSquare, 
-  UserRound, 
-  Save, 
-  Loader2, 
-  MessageCircle, 
-  Mail, 
-  Phone,
-  UserRoundPen
+    UserPen, 
+    Search, 
+    Check, 
+    UserCog, 
+    Loader2, 
+    Save, 
+    MessageCircle, 
+    Award, 
+    Medal, 
+    Crown, 
+    Gem, 
+    Flame, 
+    ShoppingCart, 
+    HelpCircle, 
+    AlertTriangle, 
+    MessageSquare, 
+    Mail, 
+    Phone 
 } from 'lucide-react';
 import IntelligencePanel from './IntelligencePanel';
 import InventoryPanel from './InventoryPanel';
@@ -42,11 +42,11 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
     const timeline = customer.timeline || [];
 
     const tierConfig = {
-        L1: { label: 'General Member (L1)', color: 'bg-slate-400', nextTier: 'L2', threshold: 15000, hourThreshold: 0, icon: Award, textColor: 'text-slate-100' },
-        L2: { label: 'Silver (L2)', color: 'bg-zinc-300', nextTier: 'L3', threshold: 50000, hourThreshold: 0, icon: Medal, textColor: 'text-zinc-800' },
-        L3: { label: 'Gold (L3)', color: 'bg-amber-400', nextTier: 'L4', threshold: 125000, hourThreshold: 30, icon: Crown, textColor: 'text-amber-950' },
-        L4: { label: 'Platinum (L4)', color: 'bg-cyan-400', nextTier: 'L5', threshold: 250000, hourThreshold: 100, icon: Gem, textColor: 'text-cyan-950' },
-        L5: { label: 'Elite (L5)', color: 'bg-rose-500', nextTier: null, threshold: Infinity, hourThreshold: Infinity, icon: Flame, textColor: 'text-white' }
+        L1: { label: 'General Member (L1)', color: 'bg-slate-400', nextTier: 'L2', threshold: 15000, hourThreshold: 0, Icon: Award, textColor: 'text-slate-100' },
+        L2: { label: 'Silver (L2)', color: 'bg-zinc-300', nextTier: 'L3', threshold: 50000, hourThreshold: 0, Icon: Medal, textColor: 'text-zinc-800' },
+        L3: { label: 'Gold (L3)', color: 'bg-amber-400', nextTier: 'L4', threshold: 125000, hourThreshold: 30, Icon: Crown, textColor: 'text-amber-950' },
+        L4: { label: 'Platinum (L4)', color: 'bg-cyan-400', nextTier: 'L5', threshold: 250000, hourThreshold: 100, Icon: Gem, textColor: 'text-cyan-950' },
+        L5: { label: 'Elite (L5)', color: 'bg-rose-500', nextTier: null, threshold: Infinity, hourThreshold: Infinity, Icon: Flame, textColor: 'text-white' }
     };
 
     const totalSpend = intel.metrics?.total_spend || 0;
@@ -92,7 +92,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                     {
                         date: new Date().toISOString(),
                         type: 'STATUS_CHANGE',
-                        icon: 'UserRoundPen',
+                        Icon: UserPen,
                         title: 'Profile Updated',
                         details: `Assigned Agent: ${editAgent}, Status: ${editStatus}`
                     },
@@ -153,7 +153,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                 <div className="flex-1 max-w-xs mx-auto hidden lg:block">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="w-3 h-3 text-slate-400 group-focus-within:text-[#0A1A2F] transition-colors" />
+                            <Search className="text-slate-400 text-xs group-focus-within:text-[#0A1A2F] transition-colors" />
                         </div>
                         <input
                             type="text"
@@ -203,7 +203,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                         />
                                     </div>
                                     <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-[#162A47] rounded-full flex items-center justify-center shadow-md">
-                                        <Check className="text-white w-2.5 h-2.5" />
+                                        <Check className="text-white text-[9px]" />
                                     </div>
                                 </div>
 
@@ -214,7 +214,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
 
                                 {/* Membership Badge */}
                                 <div className={`flex items-center gap-2 px-4 py-1.5 ${currentTier.color} rounded-full mb-6 shadow-lg shadow-black/20 border border-white/20 transition-all hover:scale-105 cursor-default`}>
-                                    <currentTier.icon className={`${currentTier.textColor} w-3 h-3`} />
+                                    <currentTier.Icon className={`${currentTier.textColor} text-xs`} />
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${currentTier.textColor}`}>
                                         {currentTier.label}
                                     </span>
@@ -227,4 +227,262 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                             {/* Lead Score Circle */}
                                             <div className="relative w-12 h-12 flex items-center justify-center">
                                                 <svg className="w-full h-full -rotate-90">
-                                                    <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(255,255,2
+                                                    <circle cx="24" cy="24" r="20" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
+                                                    <circle
+                                                        cx="24" cy="24" r="20" fill="transparent"
+                                                        stroke={intel.score > 70 ? '#4ade80' : intel.score > 40 ? '#fbbf24' : '#f87171'}
+                                                        strokeWidth="4"
+                                                        strokeDasharray={125.6}
+                                                        strokeDashoffset={125.6 * (1 - intel.score / 100)}
+                                                        strokeLinecap="round"
+                                                        className="transition-all duration-1000 ease-out"
+                                                    />
+                                                </svg>
+                                                <span className="absolute text-[10px] font-black text-white">{intel.score}%</span>
+                                            </div>
+
+                                            {/* Intent Badge */}
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">AI Intent</span>
+                                                <div className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30 text-[9px] font-black uppercase tracking-tighter shadow-glow-blue flex items-center gap-1">
+                                                    {(() => {
+                                                        const IntentIcon = intel.intent === 'Purchase' ? ShoppingCart :
+                                                                         intel.intent === 'Question' ? HelpCircle :
+                                                                         intel.intent === 'Complaint' ? AlertTriangle : MessageSquare;
+                                                        return <IntentIcon className="w-[8px] h-[8px]" />;
+                                                    })()}
+                                                    {intel.intent || 'Analyzing...'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {intel.main_interest && (
+                                            <p className="text-[9px] font-bold text-[#C9A34E] italic">
+                                                Interest: {intel.main_interest}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Membership Progress */}
+                                {nextTier && (
+                                    <div className="w-full max-w-[240px] mb-6 p-4 bg-white/5 rounded-2xl border border-white/5 shadow-inner">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Next Tier: {nextTier.label.split(' ')[0]}</span>
+                                            <div className="flex gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${spendProgress >= 100 ? 'bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.5)]' : 'bg-slate-600'}`}></div>
+                                                {nextTier.hourThreshold > 0 && (
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${hourProgress >= 100 ? 'bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.5)]' : 'bg-slate-600'}`}></div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Spending Progress Bar */}
+                                        <div className="space-y-3">
+                                            <div>
+                                                <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-1 px-1">
+                                                    <span>SPEND</span>
+                                                    <span>{totalSpend.toLocaleString()} / {nextTier.threshold.toLocaleString()}</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-amber-400 to-amber-200 rounded-full transition-all duration-1000 ease-out"
+                                                        style={{ width: `${spendProgress}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Hours Progress Bar (if applicable) */}
+                                            {nextTier.hourThreshold > 0 && (
+                                                <div>
+                                                    <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-1 px-1">
+                                                        <span>HOURS</span>
+                                                        <span>{learningHours} / {nextTier.hourThreshold} HRS</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-blue-400 to-blue-200 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(96,165,250,0.3)]"
+                                                            style={{ width: `${hourProgress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Wallet Section - 2-Row Grid with Actions */}
+                                <div className="w-full max-w-[240px] bg-[#162A47] rounded-2xl p-5 mb-6 border border-white/10 relative overflow-hidden">
+                                    <div className="space-y-4 relative z-10">
+                                        {/* Row 1: Wallet */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">W. Wallet</span>
+                                                <div className="text-xl font-black text-white flex items-baseline gap-1">
+                                                    <span className="text-xs text-slate-500 font-bold">฿</span>
+                                                    {wallet.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setIsTopUpModalOpen(true)}
+                                                className="px-4 py-1.5 bg-[#D9381E] hover:bg-[#b92b14] text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg shadow-red-900/20 border border-white/10 transition-all active:scale-95"
+                                            >
+                                                Top Up
+                                            </button>
+                                        </div>
+
+                                        {/* Divider */}
+                                        <div className="h-px w-full bg-white/5"></div>
+
+                                        {/* Row 2: VP Points */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">P. VP</span>
+                                                <div className="text-xl font-black text-[#C9A34E] flex items-baseline gap-1">
+                                                    <span className="text-xs text-[#C9A34E]/60 font-bold">VP</span>
+                                                    {wallet.points?.toLocaleString()}
+                                                </div>
+                                            </div>
+                                            <button className="px-4 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/10 transition-all active:scale-95">
+                                                Transfer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap justify-center gap-2 max-w-full px-2">
+                                    {intel.tags?.map((tag, i) => (
+                                        <span key={i} className="px-3 py-1 bg-[#C9A34E]/10 text-[#C9A34E] text-[10px] font-bold uppercase tracking-wider rounded-lg border border-[#C9A34E]/20 whitespace-nowrap shadow-sm">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full mb-4 p-3 bg-[#162A47] rounded-xl border border-white/10 shadow-inner">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                {nextTier ? `Next: ${nextTier.label.split(' ')[0]}` : 'Tier: Elite (Max)'}
+                            </span>
+                        </div>
+                        <div className="space-y-2">
+                            <div>
+                                <div className="flex justify-between text-[8px] font-bold text-slate-500 mb-0.5 px-0.5 uppercase tracking-tighter">
+                                    <span>Spend</span>
+                                    <span>{totalSpend.toLocaleString()} / {nextTier?.threshold?.toLocaleString() || 'MAX'}</span>
+                                </div>
+                                <div className="h-1 w-full bg-black/20 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-amber-400 to-amber-200 rounded-full transition-all duration-1000" style={{ width: `${spendProgress}%` }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sales Agent & Status Editor */}
+                    <div className="bg-[#162A47]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
+                        <div className="px-5 pt-4 pb-4 border-t border-white/5 bg-white/5">
+                            <p className="text-[9px] font-black text-[#C9A34E] uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <UserCog className="w-2.5 h-2.5" /> Sales Assignment
+                            </p>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[8px] font-bold text-white/30 uppercase block mb-1">Assigned Agent</label>
+                                    <input
+                                        type="text"
+                                        value={editAgent}
+                                        onChange={(e) => setEditAgent(e.target.value)}
+                                        placeholder="Sales Representative Name"
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#C9A34E]/50 transition-all font-inter"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[8px] font-bold text-white/30 uppercase block mb-1">Follow-up Status</label>
+                                    <select
+                                        value={editStatus}
+                                        onChange={(e) => setEditStatus(e.target.value)}
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="New Lead">New Lead</option>
+                                        <option value="Interested">Interested</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="No Answer">No Answer</option>
+                                        <option value="Lost">Lost</option>
+                                        <option value="Won / Enrolled">Won / Enrolled</option>
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={handleSaveProfile}
+                                    disabled={isSaving}
+                                    className="w-full bg-[#C9A34E] text-[#0A1A2F] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                                >
+                                    {isSaving ? <Loader2 className="animate-spin text-[10px]" /> : <Save className="text-[10px]" />}
+                                    {isSaving ? 'SAVING...' : 'UPDATE SALES INFO'}
+                                </button>
+
+                                <button
+                                    onClick={() => onGoToChat && onGoToChat(customer)}
+                                    className="w-full bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/30 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#1877F2]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <MessageCircle className="w-3 h-3" />
+                                    OPEN FACEBOOK CHAT
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="px-[15px] pt-4 pb-6">
+                            <div className="w-full bg-black/20 rounded-xl p-4 space-y-2.5">
+                                {[
+                                    { Icon: Mail, label: 'E-mail', val: contact.email || profile.email || '-', color: 'text-blue-400' },
+                                    { Icon: Phone, label: 'Phone', val: contact.phone_primary || profile.phone_primary || '-', color: 'text-green-400' },
+                                    { Icon: MessageSquare, label: 'Line ID', val: contact.line_id || '-', color: 'text-emerald-400' },
+                                    { Icon: UserCog, label: 'Current Agent', val: profile.agent || 'Unassigned', color: 'text-[#C9A34E]' }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
+                                            <item.Icon className="text-[10px]" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mb-0">{item.label}</p>
+                                            <p className="text-[11px] font-bold text-[#F8F8F6] truncate">{item.val}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-9 space-y-6">
+                    <IntelligencePanel intel={intel} profile={profile} />
+                    <InventoryPanel
+                        inventory={inventory}
+                        searchTerm={searchTerm}
+                        currentUser={currentUser}
+                        onUpdateInventory={(newInventory, redeemedItem) => {
+                            let updatedCustomer = { ...customer, inventory: newInventory };
+                            if (redeemedItem) {
+                                const logEntry = {
+                                    id: `RED-${Date.now()}`,
+                                    date: new Date().toISOString(),
+                                    type: 'REDEEM',
+                                    summary: `Redeemed ${redeemedItem.type}: ${redeemedItem.name}`,
+                                    details: {
+                                        item_id: redeemedItem.coupon_id || redeemedItem.course_id || redeemedItem.bundle_id,
+                                        name: redeemedItem.name,
+                                        timestamp: new Date().toLocaleTimeString()
+                                    }
+                                };
+                                updatedCustomer.timeline = [logEntry, ...(customer.timeline || [])];
+                            }
+                            onUpdateInventory(updatedCustomer);
+                        }}
+                    />
+                    <Timeline timeline={timeline} />
+                </div>
+            </div>
+
+        </div>
+    );
+}
+

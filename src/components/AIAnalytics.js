@@ -128,13 +128,13 @@ export default function AIAnalytics({ campaigns }) {
                 <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                     <div className="flex items-center gap-5">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 relative">
-                            <Brain className="text-white w-8 h-8" />
+                            <Brain className="text-white" size={30} />
                             <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-[#0F172A] animate-pulse"></div>
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-white tracking-tight">AI Marketing Intelligence</h2>
                             <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">
-                                <Zap className="text-amber-400 mr-2 w-3 h-3" /> Real-time Facebook Data Analysis
+                                <Zap className="text-amber-400 mr-2" size={12} /> Real-time Facebook Data Analysis
                             </p>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ export default function AIAnalytics({ campaigns }) {
                         {report.badPoints?.length > 0 && (
                             <div className="space-y-4">
                                 <h3 className="text-rose-400 font-black text-xs uppercase tracking-widest pl-2 flex items-center gap-2">
-                                    <Flame className="w-4 h-4" /> จุดที่ต้องแก้ไข
+                                    <Flame size={14} /> จุดที่ต้องแก้ไข
                                 </h3>
                                 <div className="space-y-3">
                                     {report.badPoints.map((point, i) => {
@@ -196,4 +196,80 @@ export default function AIAnalytics({ campaigns }) {
                                         return (
                                             <div key={i} className="bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 rounded-2xl p-5 transition-all group">
                                                 <div className="flex gap-4">
-                                                    <div className="w-8 h
+                                                    <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-500 shrink-0 group-hover:scale-110 transition-transform">
+                                                        <XCircle size={12} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-black text-sm mb-1">{title}</p>
+                                                        <p className="text-xs text-white/40 font-medium leading-relaxed">{desc}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. Strength / Good Points */}
+                        {report.goodPoints?.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-emerald-400 font-black text-xs uppercase tracking-widest pl-2 flex items-center gap-2">
+                                    <Medal size={14} /> จุดแข็งที่ทำได้ดี
+                                </h3>
+                                <div className="space-y-3">
+                                    {report.goodPoints.map((point, i) => {
+                                        const [title, desc] = point.split(':');
+                                        return (
+                                            <div key={i} className="bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-2xl p-5 transition-all group">
+                                                <div className="flex gap-4">
+                                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0 group-hover:scale-110 transition-transform">
+                                                        <CheckCircle2 size={12} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-black text-sm mb-1">{title}</p>
+                                                        <p className="text-xs text-white/40 font-medium leading-relaxed">{desc}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 4. Recommendation */}
+                    {report.advice && (
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative bg-[#1E293B] border border-white/10 rounded-3xl p-8 overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                                    <div className="flex items-start gap-6">
+                                        <div className="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center text-white text-xl shadow-xl shadow-indigo-500/40 shrink-0">
+                                            <Lightbulb size={14} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-indigo-400 font-black text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                Next Best Action
+                                            </h3>
+                                            <p className="text-white font-bold text-xl lg:text-2xl leading-tight">{report.advice}</p>
+                                            <p className="text-white/30 text-xs font-bold mt-2 italic">ควรปรับเปลี่ยนตามคำแนะนำเพื่อให้ได้ยอดที่สูงขึ้นครับ!</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                                        className="bg-white text-black px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-400 hover:text-white transition-all whitespace-nowrap"
+                                    >
+                                        ดูรายละเอียดเพิ่มเติม
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

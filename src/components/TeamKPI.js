@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { RefreshCw, Coins, Users, Percent, Trophy, X, Database, Facebook, Search, ShieldCheck, ChevronLeft, ChevronRight, Antenna, Megaphone, Eye, Flame, List } from 'lucide-react';
 import { getDateRange, TIMEFRAME_LABELS } from '@/lib/timeframes';
-import { RefreshCw, Coins, Users, Percent, ChevronUp, Trophy, X, Database, Facebook, Search, Shield } from 'lucide-react';
 
 export default function TeamKPI({ customers = [] }) {
     const [stats, setStats] = useState([]);
@@ -126,7 +126,7 @@ export default function TeamKPI({ customers = [] }) {
                         onClick={fetchStats}
                         className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#C9A34E] hover:bg-white/10 transition-all"
                     >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={loading ? 'animate-spin' : ''} size={14} />
                     </button>
                 </div>
             </div>
@@ -134,16 +134,16 @@ export default function TeamKPI({ customers = [] }) {
             {/* Summary Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Coins className="w-16 h-16" /></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Coins size={60} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{TIMEFRAME_LABELS[timeframe] || timeframe} Revenue</p>
                     <p className="text-4xl font-black text-[#C9A34E]">฿{formatCurrency(summary.totalRevenue)}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-400">
-                        <ChevronUp className="w-3 h-3" />
+                        ▲
                         <span>Target: ฿{(summary.marketingSpend * 3).toLocaleString()}</span>
                     </div>
                 </div>
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Users className="w-16 h-16" /></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Users size={60} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Leads Managed</p>
                     <p className="text-4xl font-black text-white">{summary.totalLeads}</p>
                     <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/20">
@@ -151,7 +151,7 @@ export default function TeamKPI({ customers = [] }) {
                     </div>
                 </div>
                 <div className="bg-[#0A1A2F]/50 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Percent className="w-16 h-16" /></div>
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-white"><Percent size={60} /></div>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Avg. Conversion Rate</p>
                     <p className="text-4xl font-black text-emerald-400">
                         {summary.totalLeads > 0 ? ((summary.totalCustomers / summary.totalLeads) * 100).toFixed(1) : 0}%
@@ -167,7 +167,7 @@ export default function TeamKPI({ customers = [] }) {
                 {/* Visual Ranking (8 Units) */}
                 <div className="lg:col-span-8 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8 relative">
                     <h3 className="font-black text-white text-xl tracking-tight mb-10 flex items-center gap-3">
-                        <Trophy className="w-5 h-5 text-[#C9A34E]" /> Revenue Leaderboard
+                        <Trophy className="text-[#C9A34E]" size={14} /> Revenue Leaderboard
                     </h3>
 
                     <div className="space-y-8">
@@ -288,7 +288,7 @@ export default function TeamKPI({ customers = [] }) {
                             onClick={() => setSelectedAgentDetail(null)}
                             className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors"
                         >
-                            <X className="w-6 h-6" />
+                            <X size={24} />
                         </button>
 
                         <div className="mb-8">
@@ -309,4 +309,116 @@ export default function TeamKPI({ customers = [] }) {
                                                 <div>
                                                     <p className="text-sm font-bold text-white">{c.profile?.first_name} {c.profile?.last_name} {c.profile?.nick_name ? `(${c.profile.nick_name})` : ''}</p>
                                                     <p className="text-[9px] text-white/40 uppercase tracking-widest">{c.customer_id}</p>
-                                                
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-black text-[#C9A34E]">฿{(c.intelligence?.metrics?.total_spend || 0).toLocaleString()}</p>
+                                                    <p className="text-[9px] text-white/20 font-bold uppercase">{c.profile?.status || 'Active'}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-12 text-center text-white/20 italic">No assigned leads found for this agent in this period.</div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="space-y-6">
+                                    {/* CRM Section */}
+                                    <div>
+                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Database size={14} /> CRM Recorded Orders (฿{formatCurrency(selectedAgentDetail.agent.crmRevenue || 0)})
+                                        </p>
+                                        <div className="space-y-3">
+                                            {getLinkedData(selectedAgentDetail.agent.name).sales.length > 0 ? (
+                                                getLinkedData(selectedAgentDetail.agent.name).sales.sort((a, b) => new Date(b.date) - new Date(a.date)).map((s, idx) => (
+                                                    <div key={idx} className="p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-[#C9A34E]/30 transition-all">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest">{s.orderId}</p>
+                                                                <p className="text-[9px] text-white/20 font-bold uppercase">{new Date(s.date).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm font-black text-white">฿{s.totalAmount?.toLocaleString()}</p>
+                                                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${s.status === 'Completed' || s.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                                                                    }`}>
+                                                                    {s.status}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-[9px] text-white/40 leading-relaxed italic">
+                                                            {Array.isArray(s.items) ? s.items.join(', ') : 'Direct Item Purchase'}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="py-8 text-center text-white/10 text-xs italic bg-white/5 rounded-2xl border border-dashed border-white/10">No CRM sales in this period.</div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Attribution Section */}
+                                    <div>
+                                        <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Facebook size={14} /> Meta Ads Attribution (฿{formatCurrency(selectedAgentDetail.agent.attributed?.revenue || 0)})
+                                        </p>
+                                        <div className="space-y-3">
+                                            <>
+                                                {(selectedAgentDetail.agent.attributed?.ads || []).map((ad, idx) => (
+                                                    <div key={idx} className="p-5 bg-[#C9A34E]/5 rounded-2xl border border-[#C9A34E]/10 flex justify-between items-center group hover:bg-[#C9A34E]/10 transition-all">
+                                                        <div className="max-w-[70%]">
+                                                            <p className="text-[11px] font-black text-white group-hover:text-[#C9A34E] transition-colors">{ad.name}</p>
+                                                            <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">Source: Meta Ads Manager</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm font-black text-[#C9A34E]">฿{formatCurrency(ad.share)}</p>
+                                                            <p className="text-[8px] text-[#C9A34E]/40 font-black uppercase">Statistically Attributed</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {(selectedAgentDetail.agent.attributed?.ads || []).length === 0 && (
+                                                    <div className="py-8 text-center text-white/10 text-xs italic bg-white/5 rounded-2xl border border-dashed border-white/10">No marketing attribution available for this period.</div>
+                                                )}
+                                            </>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    const now = new Date();
+                                    let sd = '';
+                                    if (timeframe === 'today') sd = new Date(now.setHours(0, 0, 0, 0)).toISOString().split('T')[0];
+                                    else if (timeframe === 'this_week') {
+                                        const past = new Date(now);
+                                        past.setUTCDate(past.getUTCDate() - 7);
+                                        sd = past.toISOString().split('T')[0];
+                                    }
+                                    else if (timeframe === 'this_month') sd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split('T')[0];
+                                    else if (timeframe === 'last_month') sd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().split('T')[0];
+
+                                    onInvestigate && onInvestigate({
+                                        agent: selectedAgentDetail.agent.name,
+                                        startDate: sd,
+                                        endDate: ''
+                                    });
+                                    setSelectedAgentDetail(null);
+                                }}
+                                className="px-6 py-4 bg-[#C9A34E] text-[#0A1A2F] rounded-2xl font-black text-xs tracking-widest uppercase hover:scale-105 transition-all w-full flex justify-center items-center gap-3 shadow-[0_0_20px_rgba(201,163,78,0.2)]"
+                            >
+                                <Search size={14} /> Inspect these chats in CRM
+                            </button>
+                        </div>
+
+                        <div className="mt-6 p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 text-center">
+                            <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest leading-loose">
+                                <ShieldCheck className="mr-2" size={14} /> Hybrid attribution system: Direct CRM matches + Statistical Meta Ads distribution.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
 
 const ROLES = ['AGENT', 'SUPERVISOR', 'MANAGER', 'ADMIN', 'DEVELOPER', 'GUEST'];
 const DEPARTMENTS = ['marketing', 'sales', 'admin', 'manager', 'developer', 'support'];
@@ -126,7 +125,7 @@ export default function EmployeesPage() {
                         onClick={openAdd}
                         className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
                     >
-                        <Plus size={16} /> เพิ่มพนักงาน
+                        <i className="fa fa-plus" /> เพิ่มพนักงาน
                     </button>
                 </div>
 
@@ -178,4 +177,182 @@ export default function EmployeesPage() {
                                             >แก้ไข</button>
                                             {emp.status === 'ACTIVE' ? (
                                                 <button
-                                                    onClick={() => handleDeactivate(emp.
+                                                    onClick={() => handleDeactivate(emp.id)}
+                                                    className="text-red-500 hover:text-red-700 text-xs"
+                                                >ปิดใช้งาน</button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleReactivate(emp.id)}
+                                                    className="text-green-600 hover:text-green-800 text-xs"
+                                                >เปิดใช้งาน</button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {employees.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="text-center text-gray-400 py-12">
+                                            ยังไม่มีพนักงาน — กด "เพิ่มพนักงาน" เพื่อเริ่ม
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Modal */}
+            {showForm && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+                        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                {editTarget ? 'แก้ไขพนักงาน' : 'เพิ่มพนักงานใหม่'}
+                            </h2>
+                            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                                <i className="fa fa-times" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">ชื่อ *</label>
+                                    <input
+                                        required
+                                        value={form.firstName}
+                                        onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                        placeholder="ชื่อจริง"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">นามสกุล *</label>
+                                    <input
+                                        required
+                                        value={form.lastName}
+                                        onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                        placeholder="นามสกุล"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">ชื่อเล่น</label>
+                                    <input
+                                        value={form.nickName}
+                                        onChange={e => setForm(f => ({ ...f, nickName: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                        placeholder="ชื่อเล่น"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        ชื่อบน Facebook
+                                        <span className="ml-1 text-blue-500 font-normal">(ส่งโดย...)</span>
+                                    </label>
+                                    <input
+                                        value={form.facebookName}
+                                        onChange={e => setForm(f => ({ ...f, facebookName: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                        placeholder="ชื่อที่แสดงใน Business Suite"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">อีเมล *</label>
+                                <input
+                                    required
+                                    type="email"
+                                    value={form.email}
+                                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                                    disabled={!!editTarget}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-400"
+                                    placeholder="email@vschool.th"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">เบอร์โทร</label>
+                                <input
+                                    value={form.phone}
+                                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    placeholder="0812345678"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">แผนก</label>
+                                    <select
+                                        value={form.department}
+                                        onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    >
+                                        {DEPARTMENTS.map(d => (
+                                            <option key={d} value={d}>{d}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                                    <select
+                                        value={form.role}
+                                        onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    >
+                                        {ROLES.map(r => (
+                                            <option key={r} value={r}>{r}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    รหัสผ่าน {editTarget && <span className="text-gray-400">(เว้นว่างถ้าไม่เปลี่ยน)</span>}
+                                    {!editTarget && ' *'}
+                                </label>
+                                <input
+                                    type="password"
+                                    required={!editTarget}
+                                    value={form.password}
+                                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    placeholder="อย่างน้อย 8 ตัวอักษร"
+                                    minLength={editTarget ? 0 : 8}
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+                            )}
+
+                            <div className="flex gap-3 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {saving ? 'กำลังบันทึก...' : editTarget ? 'บันทึก' : 'เพิ่มพนักงาน'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

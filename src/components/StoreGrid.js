@@ -180,7 +180,7 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
 
                 {products.length === 0 && (
                     <div className="text-center py-20 text-slate-400 col-span-full">
-                        <PackageOpen className="w-10 h-10 mb-4 mx-auto opacity-20" />
+                        <PackageOpen className="w-10 h-10 mb-4 mx-auto" />
                         <p>Loading products...</p>
                     </div>
                 )}
@@ -211,7 +211,7 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
                                     onClick={() => setIsCartOpen(false)}
                                     className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex items-center justify-center transition-colors"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
 
@@ -237,4 +237,164 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
                                         </div>
 
                                         {/* Name & Tier */}
-                               
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-lg leading-tight">
+                                                    {activeCustomer.profile?.nick_name || activeCustomer.profile?.first_name || 'Customer'}
+                                                </p>
+                                                <span className="bg-white/10 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border border-white/5">
+                                                    {activeCustomer.profile?.membership_tier || 'MEMBER'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-white/40 font-mono tracking-tight mt-1">{activeCustomer.customer_id}</p>
+                                        </div>
+
+                                        {/* Wallet Summary */}
+                                        <div className="text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest leading-none">Wallet</span>
+                                                <span className="text-sm font-black text-white">฿{(activeCustomer.wallet?.balance || 0).toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-1 justify-end">
+                                                <Coins className="w-2.5 h-2.5 text-amber-400" />
+                                                <span className="text-[10px] font-bold text-white/60">{(activeCustomer.intelligence?.metrics?.total_point || activeCustomer.wallet?.points || 0).toLocaleString()} <span className="text-[8px] opacity-40">pts</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Cart Content - Scrollable Middle Area */}
+                        <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+                            {(cart || []).length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                                        <ShoppingBasket className="w-10 h-10 opacity-20" />
+                                    </div>
+                                    <p className="font-bold">Your cart is empty</p>
+                                    <button
+                                        onClick={() => setIsCartOpen(false)}
+                                        className="text-orange-600 text-sm font-black hover:underline"
+                                    >
+                                        CONTINUE SHOPPING
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 pr-2">
+                                    {cart.map((item, idx) => {
+                                        let breakdown = [];
+                                        let packageValue = 0;
+
+                                        if (item.type === 'bundle' && item.courses && allProducts) {
+                                            item.courses.forEach(cId => {
+                                                const targetId = item.swappedCourses && item.swappedCourses[cId] ? item.swappedCourses[cId].id : cId;
+                                                const course = allProducts.find(p => p.id === targetId);
+                                                if (course) {
+                                                    breakdown.push({ id: course.id, name: course.name, price: course.price, isSwapped: targetId !== cId });
+                                                    packageValue += (course.price || 0);
+                                                }
+                                            });
+                                            const freeCourseIds = item.selectedFreeCourses && item.selectedFreeCourses.length > 0 ? item.selectedFreeCourses : (item.free_courses || []);
+                                            freeCourseIds.forEach(cId => {
+                                                const course = allProducts.find(p => p.id === cId);
+                                                if (course) {
+                                                    breakdown.push({ id: course.id, name: course.name + " (Free)", price: course.price, isFree: true });
+                                                    packageValue += (course.price || 0);
+                                                }
+                                            });
+                                        }
+
+                                        const discount = item.type === 'bundle' ? packageValue - item.price : 0;
+
+                                        return (
+                                            <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group transition-all hover:bg-white hover:shadow-lg">
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${(item.type === 'bundle' || item.type === 'package') ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-600'}`}>
+                                                                {(item.type === 'bundle' || item.type === 'package') ? 'Package' : 'Course'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm font-black text-slate-800 leading-tight mb-2">{item.name}</p>
+                                                        <p className="text-xs text-slate-400 font-bold">
+                                                            {item.qty} × <span className="text-orange-600">฿{item.price?.toLocaleString()}</span>
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id, item.type)}
+                                                        className="w-8 h-8 bg-white text-slate-300 hover:bg-red-100 hover:text-red-500 hover:shadow-md rounded-lg flex items-center justify-center transition-all opacity-40 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+
+                                                {(item.type === 'bundle' || item.type === 'package') && breakdown.length > 0 && (
+                                                    <div className="mt-4 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Package Contents</p>
+                                                        <div className="space-y-2 mb-4">
+                                                            {breakdown.map((c, i) => (
+                                                                <div key={i} className="flex justify-between items-start text-[11px]">
+                                                                    <span className={`font-bold leading-tight flex-1 pr-4 ${c.isSwapped ? "text-blue-600" : c.isFree ? "text-slate-500" : "text-slate-600"}`}>
+                                                                        {c.name} {c.isFree && "(Free)"}
+                                                                    </span>
+                                                                    <span className="font-mono text-slate-400 whitespace-nowrap">฿{c.price?.toLocaleString()}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div className="pt-3 border-t border-slate-50 space-y-1">
+                                                            <div className="text-right"><span className="text-xs font-mono text-slate-400">{packageValue.toLocaleString()}</span></div>
+                                                            <div className="flex justify-between items-center text-green-600 font-bold">
+                                                                <span className="text-[10px] uppercase tracking-widest">Bundle Savings</span>
+                                                                <span className="text-sm font-mono">-฿{discount.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="flex justify-end pt-1"><span className="text-lg font-black text-slate-800 font-mono">฿{item.price?.toLocaleString()}</span></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Checkout Footer - Fixed at Bottom */}
+                        {cart.length > 0 && (
+                            <div className="p-6 border-t border-slate-100 bg-white flex-shrink-0">
+                                <div className="p-6 bg-[#0A1A2F] rounded-3xl text-white shadow-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                                    {/* Payment Method Selector - Only Wallet now */}
+                                    <div className="grid grid-cols-1 gap-3 mb-2">
+                                        <button
+                                            onClick={() => setPaymentMethod('wallet')}
+                                            className="p-3 rounded-2xl border bg-orange-500/20 border-orange-500 text-orange-400 flex flex-col items-center gap-1"
+                                        >
+                                            <Wallet className="w-4 h-4" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Wallet</span>
+                                        </button>
+                                    </div>
+
+                                    <div className="flex justify-between items-center px-4">
+                                        <span className="text-white/60 font-black uppercase tracking-widest text-xs">Final Amount</span>
+                                        <span className="text-3xl font-black text-orange-400">฿{cartTotal.toLocaleString()}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => onCheckout({
+                                            method: paymentMethod,
+                                            slip_url: null
+                                        })}
+                                        className="w-full py-4 rounded-xl font-black transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 group bg-orange-500 hover:bg-orange-400 text-white"
+                                    >
+                                        <span>PAY WITH WALLET</span>
+                                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -1,21 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Trash2, CheckCircle2, ChevronRight, Wallet, Plus, X, Loader2, Store, Pencil, PackageOpen, GraduationCap, Ticket, BookOpen } from 'lucide-react';
 import ProductModal from './ProductModal';
-import { 
-    Trash2, 
-    CheckCircle, 
-    ChevronRight, 
-    Package, 
-    GraduationCap, 
-    Ticket, 
-    Wallet, 
-    Plus, 
-    X, 
-    Loader2, 
-    Store, 
-    Edit3 
-} from 'lucide-react';
 
 export default function InventoryPanel({ inventory, searchTerm = '', currentUser, onUpdateInventory, activeCustomer }) {
     const [redeeming, setRedeeming] = useState(null);
@@ -248,12 +235,12 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                                     onClick={(e) => handleDelete(item, type, e)}
                                     className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/20 backdrop-blur-md"
                                 >
-                                    <Trash2 className="w-2.5 h-2.5" />
+                                    <Trash2 size={10} />
                                 </button>
                             )}
                             {isInactive && (
-                                <div className="bg-slate-900/60 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 backdrop-blur-md flex items-center">
-                                    <CheckCircle className="w-2 h-2 mr-1 text-green-400" /> REDEEMED
+                                <div className="bg-slate-900/60 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 backdrop-blur-md">
+                                    <CheckCircle2 className="mr-1 text-green-400" size={12} /> REDEEMED
                                 </div>
                             )}
                             <div className="text-right ml-auto">
@@ -278,16 +265,10 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                         {!isInactive && (
                             <div className="flex items-center gap-3">
                                 <div className="text-[9px] font-black flex items-center gap-1 group-hover:gap-2 transition-all drop-shadow-lg text-white/80">
-                                    VIEW <ChevronRight className="w-[7px] h-[7px]" />
+                                    VIEW <ChevronRight size={7} />
                                 </div>
                                 <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg">
-                                    {isBundle ? (
-                                        <Package className="w-3 h-3 text-white" />
-                                    ) : isCourse ? (
-                                        <GraduationCap className="w-3 h-3 text-white" />
-                                    ) : (
-                                        <Ticket className="w-3 h-3 text-white" />
-                                    )}
+                                    <i className={`fas ${isBundle ? 'fa-box-open' : (isCourse ? 'fa-graduation-cap' : 'fa-ticket-alt')} text-xs text-white`}></i>
                                 </div>
                             </div>
                         )}
@@ -303,7 +284,7 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-[#0A1A2F] shadow-xl flex items-center justify-center text-white ring-2 ring-white/5">
-                        <Wallet className="w-3.5 h-3.5" />
+                        <Wallet size={14} />
                     </div>
                     <div>
                         <h3 className="font-black text-white text-lg tracking-tight">Active Inventory</h3>
@@ -317,7 +298,7 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                         onClick={() => setIsAddModalOpen(true)}
                         className="bg-[#C9A34E] text-[#0A1A2F] px-6 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2 shadow-lg"
                     >
-                        <Plus className="w-2.5 h-2.5" />
+                        <Plus size={14} />
                         ADD ASSET
                     </button>
                 )}
@@ -377,7 +358,7 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                     {/* ... Existing Detail Modal structure ... */}
                     {/* I'm condensing the display logic here to save space, but keeping the core functionality */}
                     <div className="relative bg-[#F8F8F6] rounded-[2rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.4)] w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col animate-scale-up border border-white/20">
-                        <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 z-50 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-md"><X className="w-5 h-5" /></button>
+                        <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 z-50 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-md"><X size={16} /></button>
                         <div className="w-full bg-white flex-shrink-0 relative overflow-hidden flex items-center justify-center border-b border-slate-100 min-h-[220px] max-h-[450px]">
                             {/* ... Image Logic (Same as before) ... */}
                             <div className="w-full aspect-[5/3] flex flex-col items-center justify-center p-8 text-center bg-[#0A1A2F]">
@@ -388,7 +369,7 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                             {/* ... Details Logic (Same as before) ... */}
                             <div className="bg-[#0A1A2F] rounded-[2rem] p-6 shadow-2xl relative overflow-hidden mt-6">
                                 <button onClick={(e) => handleRedeem(selectedItem, selectedItem.type, e)} disabled={redeeming} className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-black transition-all shadow-lg flex items-center justify-center gap-3">
-                                    {redeeming ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>CONFIRM CHECK-IN</span>}
+                                    {redeeming ? <Loader2 className="animate-spin" size={20} /> : <span>CONFIRM CHECK-IN</span>}
                                 </button>
                             </div>
                         </div>
@@ -411,7 +392,7 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Select from Catalog or Provision Manually</p>
                             </div>
                             <button onClick={() => setIsAddModalOpen(false)} className="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-all">
-                                <X className="w-5 h-5" />
+                                <X size={14} />
                             </button>
                         </div>
 
@@ -419,15 +400,15 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                         <div className="flex px-8 border-b border-slate-100 bg-white shrink-0">
                             <button
                                 onClick={() => setAddTab('catalog')}
-                                className={`py-4 mr-6 text-xs font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${addTab === 'catalog' ? 'border-[#C9A34E] text-[#0A1A2F]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                                className={`py-4 mr-6 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${addTab === 'catalog' ? 'border-[#C9A34E] text-[#0A1A2F]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                             >
-                                <Store className="w-3 h-3 mr-2" /> Product Catalog
+                                <Store className="mr-2" size={14} /> Product Catalog
                             </button>
                             <button
                                 onClick={() => setAddTab('manual')}
-                                className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all flex items-center ${addTab === 'manual' ? 'border-[#C9A34E] text-[#0A1A2F]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                                className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${addTab === 'manual' ? 'border-[#C9A34E] text-[#0A1A2F]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
                             >
-                                <Edit3 className="w-3 h-3 mr-2" /> Manual Entry
+                                <Pencil className="mr-2" size={14} /> Manual Entry
                             </button>
                         </div>
 
@@ -436,11 +417,96 @@ export default function InventoryPanel({ inventory, searchTerm = '', currentUser
                                 <div className="space-y-8">
                                     {loadingCatalog ? (
                                         <div className="flex justify-center p-12">
-                                            <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
+                                            <Loader2 className="animate-spin text-slate-300" size={30} />
                                         </div>
                                     ) : (
                                         <>
                                             {/* Packages Section */}
                                             {catalog.packages.length > 0 && (
                                                 <div className="space-y-4">
-                                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 border
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 border-l-4 border-blue-500">Packages & Bundles</h4>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {catalog.packages.map(pkg => (
+                                                            <div
+                                                                key={pkg.id}
+                                                                onClick={() => setSelectedCatalogItem(pkg)}
+                                                                className="group bg-white rounded-xl p-4 shadow-sm hover:shadow-xl transition-all border border-slate-100 cursor-pointer relative overflow-hidden"
+                                                            >
+                                                                <div className="absolute top-0 right-0 p-2 opacity-50"><PackageOpen className="text-blue-100" size={40} /></div>
+                                                                <h5 className="font-bold text-slate-700 text-sm relative z-10">{pkg.name}</h5>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 relative z-10">{pkg.type}</p>
+                                                                <div className="mt-3 flex items-center justify-between relative z-10">
+                                                                    <span className="text-blue-600 font-black text-xs">฿{(pkg.price || 0).toLocaleString()}</span>
+                                                                    <span className="text-[9px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded uppercase group-hover:bg-blue-600 group-hover:text-white transition-colors">Select</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Courses Section */}
+                                            {catalog.courses.length > 0 && (
+                                                <div className="space-y-4">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 border-l-4 border-[#C9A34E]">Individual Courses</h4>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                        {catalog.courses.map(course => (
+                                                            <div
+                                                                key={course.id}
+                                                                onClick={() => setSelectedCatalogItem(course)}
+                                                                className="group bg-white rounded-xl p-4 shadow-sm hover:shadow-xl transition-all border border-slate-100 cursor-pointer relative overflow-hidden"
+                                                            >
+                                                                <div className="absolute top-0 right-0 p-2 opacity-50"><GraduationCap className="text-orange-100" size={40} /></div>
+                                                                <h5 className="font-bold text-slate-700 text-sm relative z-10">{course.name}</h5>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 relative z-10">{course.type}</p>
+                                                                <div className="mt-3 flex items-center justify-between relative z-10">
+                                                                    <span className="text-orange-600 font-black text-xs">฿{(course.price || 0).toLocaleString()}</span>
+                                                                    <span className="text-[9px] font-bold bg-orange-50 text-orange-600 px-2 py-1 rounded uppercase group-hover:bg-orange-600 group-hover:text-white transition-colors">Select</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Manual Form (Existing Logic) */
+                                <form onSubmit={handleAddManualItem} className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button type="button" onClick={() => setNewItem({ ...newItem, type: 'coupon' })} className={`py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 border-2 transition-all ${newItem.type === 'coupon' ? 'bg-red-500 border-red-500 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400'}`}>
+                                            <Ticket size={14} /> COUPON
+                                        </button>
+                                        <button type="button" onClick={() => setNewItem({ ...newItem, type: 'course' })} className={`py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 border-2 transition-all ${newItem.type === 'course' ? 'bg-[#C9A34E] border-[#C9A34E] text-white shadow-lg' : 'bg-white border-slate-200 text-slate-400'}`}>
+                                            <GraduationCap size={14} /> COURSE
+                                        </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <input required className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#C9A34E]/20 focus:border-[#C9A34E]/50" placeholder="Asset Name" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} />
+                                        <textarea required className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#C9A34E]/20 focus:border-[#C9A34E]/50 min-h-[80px]" placeholder="Description" value={newItem.description} onChange={e => setNewItem({ ...newItem, description: e.target.value })} />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input required className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none" placeholder={newItem.type === 'coupon' ? 'ID (COUP-XXX)' : 'ID (CRS-XXX)'} value={newItem.type === 'coupon' ? newItem.coupon_id : newItem.course_id} onChange={e => newItem.type === 'coupon' ? setNewItem({ ...newItem, coupon_id: e.target.value }) : setNewItem({ ...newItem, course_id: e.target.value })} />
+                                            <input required type={newItem.type === 'coupon' ? 'text' : 'number'} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none" placeholder={newItem.type === 'coupon' ? 'EXPIRY DATE' : 'SESSION CREDITS'} value={newItem.type === 'coupon' ? newItem.expiry_date : newItem.sessions} onChange={e => newItem.type === 'coupon' ? setNewItem({ ...newItem, expiry_date: e.target.value }) : setNewItem({ ...newItem, sessions: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full bg-[#0A1A2F] text-white py-4 rounded-xl font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform">PROVISION MANUALLY</button>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Product Configuration Modal */}
+            <ProductModal
+                product={selectedCatalogItem}
+                allProducts={[...catalog.courses, ...catalog.packages]}
+                activeCustomer={activeCustomer}
+                isOpen={!!selectedCatalogItem}
+                onClose={() => setSelectedCatalogItem(null)}
+                onAddToCart={handleAddFromCatalog}
+            />
+        </div>
+    );
+}
