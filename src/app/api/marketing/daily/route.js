@@ -30,17 +30,26 @@ export async function GET(request) {
             for (const m of metrics) {
                 const key = m.date.toISOString().split('T')[0];
                 if (!byDate[key]) {
-                    byDate[key] = { date: key, spend: 0, impressions: 0, clicks: 0, leads: 0, purchases: 0, revenue: 0 };
+                    byDate[key] = { date: key, spend: 0, impressions: 0, clicks: 0, reach: 0, leads: 0, purchases: 0, revenue: 0 };
                 }
-                byDate[key].spend += m.spend || 0;
+                byDate[key].spend       += m.spend       || 0;
                 byDate[key].impressions += m.impressions || 0;
-                byDate[key].clicks += m.clicks || 0;
-                byDate[key].leads += m.leads || 0;
-                byDate[key].purchases += m.purchases || 0;
-                byDate[key].revenue += m.revenue || 0;
+                byDate[key].clicks      += m.clicks      || 0;
+                byDate[key].reach       += m.reach       || 0;
+                byDate[key].leads       += m.leads       || 0;
+                byDate[key].purchases   += m.purchases   || 0;
+                byDate[key].revenue     += m.revenue     || 0;
             }
 
-            const data = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+            // Compute derived metrics per day
+            const data = Object.values(byDate)
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .map(d => ({
+                    ...d,
+                    ctr: d.impressions > 0 ? d.clicks / d.impressions * 100 : 0,
+                    cpc: d.clicks      > 0 ? d.spend  / d.clicks            : 0,
+                    roas: d.spend      > 0 ? d.revenue / d.spend            : 0,
+                }));
 
             return { success: true, data };
         }, 300); // 5 min TTL

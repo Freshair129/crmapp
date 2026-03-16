@@ -47,29 +47,27 @@ export default function DailyReport({ dailyData }) {
             })
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .map(day => {
-                const purchaseTypes = ['purchase', 'onsite_conversion.purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase'];
-                const purchaseValue = day.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || 0;
-                const purchaseCount = day.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || 0;
-                const costPerConv = purchaseCount > 0 ? (day.spend / purchaseCount) : 0;
-                const roas = day.spend > 0 ? (purchaseValue / day.spend) : 0;
-
-                // Count active ads (ads delivering impressions > 0)
-                const activeAds = day.campaigns?.reduce((sum, c) => sum + (c.ads?.filter(a => (a.impressions || 0) > 0).length || 0), 0) || 0;
+                // Use pre-aggregated DB fields (ADR-024 Bottom-Up)
+                // action_values/actions are raw FB format — not used in DB-backed API
+                const purchaseValue = day.revenue   || 0;
+                const purchaseCount = day.purchases || 0;
+                const costPerConv   = purchaseCount > 0 ? (day.spend / purchaseCount) : 0;
+                const roas          = day.roas ?? (day.spend > 0 ? purchaseValue / day.spend : 0);
 
                 return {
                     date: day.date,
                     displayDate: new Date(day.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
-                    spend: day.spend || 0,
-                    reach: day.reach || 0,
-                    clicks: day.clicks || 0,
+                    spend:       day.spend       || 0,
+                    reach:       day.reach       || 0,
+                    clicks:      day.clicks      || 0,
                     impressions: day.impressions || 0,
-                    ctr: day.ctr || 0,
-                    cpc: day.cpc || 0,
+                    ctr:         day.ctr         || 0,
+                    cpc:         day.cpc         || 0,
                     conversions: purchaseCount,
-                    revenue: purchaseValue,
+                    revenue:     purchaseValue,
                     costPerConv,
-                    roas: parseFloat(roas.toFixed(2)),
-                    activeAds
+                    roas:        parseFloat(roas.toFixed(2)),
+                    activeAds:   0 // no per-ad breakdown at daily aggregate level
                 };
             });
     }, [dailyData, selectedYear, selectedMonth]);
