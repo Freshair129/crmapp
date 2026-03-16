@@ -49,13 +49,10 @@ export default function MonthlyPerformance({ dailyData }) {
                     mObj.clicks += day.clicks || 0;
                     mObj.hasData = true;
 
-                    // Conversions logic (Purchases)
-                    const purchaseTypes = ['purchase', 'onsite_conversion.purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase'];
-                    const purchaseValue = day.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || 0;
-                    const purchaseCount = day.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || 0;
-
-                    mObj.conversions += purchaseCount;
-                    mObj.revenue += purchaseValue;
+                    // Use DB fields directly (revenue, purchases from AdDailyMetric)
+                    // action_values/actions are FB raw fields — not stored in DB
+                    mObj.conversions += day.purchases || 0;
+                    mObj.revenue += day.revenue || 0;
                 }
             }
         });

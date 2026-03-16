@@ -36,13 +36,9 @@ export default function YearlyReport({ dailyData }) {
             s.impressions += day.impressions || 0;
             s.days += 1;
 
-            // Deep conversions logic
-            const purchaseTypes = ['purchase'];
-            const purchaseValue = day.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || 0;
-            const purchaseCount = day.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || 0;
-
-            s.conversions += purchaseCount;
-            s.revenue += purchaseValue;
+            // Use DB fields directly (revenue, purchases from AdDailyMetric)
+            s.conversions += day.purchases || 0;
+            s.revenue += day.revenue || 0;
         });
 
         // Calculate averages

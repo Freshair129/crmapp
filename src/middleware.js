@@ -40,8 +40,22 @@ function hasPermission(userRole, requiredRole) {
   return (ROLE_LEVEL[userRole] ?? 0) >= (ROLE_LEVEL[requiredRole] ?? 0);
 }
 
+/** Sync routes that can be called by cron/script using CRON_SECRET header */
+const CRON_ROUTES = [
+  '/api/marketing/sync-hourly',
+  '/api/marketing/sync',
+];
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  // CRON_SECRET bypass — allows internal scripts/schedulers to call sync routes
+  // without a user session. Header: x-cron-secret: <CRON_SECRET>
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && CRON_ROUTES.some(r => pathname.startsWith(r))) {
+    const incoming = request.headers.get('x-cron-secret');
+    if (incoming === cronSecret) return NextResponse.next();
+  }
 
   // Find matching rule (first match wins)
   const rule = ROUTE_ROLES.find((r) => pathname.startsWith(r.prefix));

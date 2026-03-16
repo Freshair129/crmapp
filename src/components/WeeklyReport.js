@@ -63,9 +63,9 @@ export default function WeeklyReport({ dailyData }) {
                 };
             }
 
-            const purchaseTypes = ['purchase', 'onsite_conversion.purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase'];
-            const revenue = dayData.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || 0;
-            const conversions = dayData.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || 0;
+            // Use DB fields directly (revenue, purchases from AdDailyMetric)
+            const revenue = dayData.revenue || 0;
+            const conversions = dayData.purchases || 0;
 
             const activeAds = dayData.campaigns?.reduce((sum, c) => sum + (c.ads?.filter(a => (a.impressions || 0) > 0).length || 0), 0) || 0;
 
