@@ -16,12 +16,25 @@ async function generateScheduleId() {
     return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
 }
 
-export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes }) {
+async function generateClassId() {
+    const prisma = await getPrisma();
+    const now = new Date();
+    const yearMonth = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0');
+    const prefix = `CLS-${yearMonth}-`;
+    const last = await prisma.courseSchedule.findFirst({
+        where: { classId: { startsWith: prefix } },
+        orderBy: { classId: 'desc' }
+    });
+    const nextSerial = last ? parseInt(last.classId.split('-').pop(), 10) + 1 : 1;
+    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
+}
+
+export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId }) {
     try {
         const prisma = await getPrisma();
         const scheduleId = await generateScheduleId();
         return prisma.courseSchedule.create({
-            data: { scheduleId, productId, scheduledDate: new Date(scheduledDate), startTime, endTime, maxStudents, instructorId, notes, status: 'OPEN' },
+            data: { scheduleId, productId, scheduledDate: new Date(scheduledDate), startTime, endTime, maxStudents, instructorId, notes, classId: classId ?? null, status: 'OPEN' },
             include: {
                 product: true,
                 instructor: { select: { firstName: true, lastName: true, nickName: true } }
@@ -78,6 +91,24 @@ export async function getScheduleById(id) {
         });
     } catch (error) {
         logger.error('[ScheduleRepo]', 'Failed to get schedule by ID', error);
+        throw error;
+    }
+}
+
+export async function getSchedulesByClass(classId) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.courseSchedule.findMany({
+            where: { classId },
+            include: {
+                product: { select: { name: true, duration: true, days: true } },
+                instructor: { select: { firstName: true, lastName: true, nickName: true } },
+                _count: { select: { attendances: true } }
+            },
+            orderBy: { scheduledDate: 'asc' }
+        });
+    } catch (error) {
+        logger.error('[ScheduleRepo]', 'Failed to get schedules by class', error);
         throw error;
     }
 }

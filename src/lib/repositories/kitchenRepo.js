@@ -186,3 +186,116 @@ export async function getPurchaseRequests(opts = {}) {
         throw error;
     }
 }
+
+// ─────────────────────────────────────────────
+// LOT MANAGEMENT (Phase 20)
+// ─────────────────────────────────────────────
+
+async function generateLotId() {
+    const prisma = await getPrisma();
+    const today = new Date();
+    const dateStr = today.getFullYear().toString() +
+        (today.getMonth() + 1).toString().padStart(2, '0') +
+        today.getDate().toString().padStart(2, '0');
+    const prefix = `LOT-${dateStr}-`;
+    const last = await prisma.ingredientLot.findFirst({
+        where: { lotId: { startsWith: prefix } },
+        orderBy: { lotId: 'desc' }
+    });
+    const nextSerial = last ? parseInt(last.lotId.split('-').pop(), 10) + 1 : 1;
+    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
+}
+
+export async function createLot({ ingredientId, receivedQty, unit, expiresAt, costPerUnit, supplier, purchaseRequestId, notes }) {
+    try {
+        const prisma = await getPrisma();
+        const lotId = await generateLotId();
+        return prisma.ingredientLot.create({
+            data: {
+                lotId,
+                ingredientId,
+                receivedQty,
+                remainingQty: receivedQty,
+                unit,
+                expiresAt: expiresAt ? new Date(expiresAt) : null,
+                costPerUnit: costPerUnit ?? null,
+                supplier: supplier ?? null,
+                purchaseRequestId: purchaseRequestId ?? null,
+                notes: notes ?? null,
+                status: 'ACTIVE'
+            },
+            include: {
+                ingredient: { select: { name: true, unit: true } }
+            }
+        });
+    } catch (error) {
+        logger.error('[KitchenRepo]', 'Failed to create lot', error);
+        throw error;
+    }
+}
+
+export async function getLotsByIngredient(ingredientId) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.ingredientLot.findMany({
+            where: { ingredientId },
+            include: { ingredient: { select: { name: true, unit: true } } },
+            orderBy: [{ status: 'asc' }, { expiresAt: 'asc' }, { receivedAt: 'asc' }]
+        });
+    } catch (error) {
+        logger.error('[KitchenRepo]', 'Failed to get lots by ingredient', error);
+        throw error;
+    }
+}
+
+export async function getAllLots({ status, ingredientId } = {}) {
+    try {
+        const prisma = await getPrisma();
+        return prisma.ingredientLot.findMany({
+            where: {
+                ...(status ? { status } : {}),
+                ...(ingredientId ? { ingredientId } : {})
+            },
+            include: {
+                ingredient: { select: { ingredientId: true, name: true, unit: true } }
+            },
+            orderBy: [{ status: 'asc' }, { expiresAt: 'asc' }, { receivedAt: 'desc' }]
+        });
+    } catch (error) {
+        logger.error('[KitchenRepo]', 'Failed to get all lots', error);
+        throw error;
+    }
+}
+
+export async function getExpiringLots(daysAhead = 30) {
+    try {
+        const prisma = await getPrisma();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() + daysAhead);
+        return prisma.ingredientLot.findMany({
+            where: {
+                status: 'ACTIVE',
+                expiresAt: { lte: cutoff, not: null }
+            },
+            include: {
+                ingredient: { select: { ingredientId: true, name: true, unit: true } }
+            },
+            orderBy: { expiresAt: 'asc' }
+        });
+    } catch (error) {
+        logger.error('[KitchenRepo]', 'Failed to get expiring lots', error);
+        throw error;
+    }
+}
+
+export async function updateLotStatus(id, status) {
+    try {
+        const VALID = ['ACTIVE', 'CONSUMED', 'EXPIRED', 'RECALLED'];
+        if (!VALID.includes(status)) throw new Error(`Invalid lot status: ${status}`);
+        const prisma = await getPrisma();
+        return prisma.ingredientLot.update({ where: { id }, data: { status } });
+    } catch (error) {
+        logger.error('[KitchenRepo]', 'Failed to update lot status', error);
+        throw error;
+    }
+}

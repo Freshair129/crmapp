@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-15)
+## Version Status (อัพเดท: 2026-03-16)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -24,7 +24,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
 | `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released |
 | `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released |
-| `v0.18.0` | Production Hardening & API Optimization | ✅ released ← HEAD |
+| `v0.18.0` | Production Hardening & API Optimization | ✅ released |
+| `v0.19.0` | Schema Hardening (Phase 19 fixes) | ✅ released |
+| `v0.20.0` | Lot ID + Class ID (Stock Batches + Course Cohorts) | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
@@ -115,6 +117,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > ⚠️ **Known Gotcha — FB Webhook Race**: `findFirst` -> `create` is NOT atomic. ต้องใช้ `try-catch` ครอบ `create` แล้วเช็ค `err.code === 'P2002'` (Prisma unique constraint) เสมอ
 > ⚠️ **Known Gotcha — Redis Leaks**: ถ้าใช้ `_inflight` pattern ต้องมี watchdog timeout เสมอ ไม่งั้นถ้า Promise แขวนจะดึง RAM ไปเรื่อยๆ
+
+### v0.20.0 — สิ่งที่ทำแล้ว (Phase 20) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → IngredientLot | ✅ done | Lot tracking — LOT-YYYYMMDD-XXX, receivedQty, remainingQty, expiresAt, status (ACTIVE/CONSUMED/EXPIRED/RECALLED) |
+| `prisma/schema.prisma` → CourseSchedule.classId | ✅ done | Class cohort ID — CLS-YYYYMM-XXX, optional grouping field สำหรับ multi-day course |
+| `prisma/schema.prisma` → StockDeductionLog.lotId | ✅ done | Optional lot reference (human-readable, not FK) |
+| `src/lib/repositories/kitchenRepo.js` | ✅ updated | + generateLotId, createLot, getLotsByIngredient, getAllLots, getExpiringLots, updateLotStatus |
+| `src/lib/repositories/scheduleRepo.js` | ✅ updated | + generateClassId, getSchedulesByClass; createSchedule accepts optional classId |
+| `src/app/api/kitchen/lots/route.js` | ✅ done | GET (filter: status, ingredientId, expiring=30) + POST |
+| `src/app/api/kitchen/lots/[id]/route.js` | ✅ done | GET + PATCH (status, remainingQty, notes) |
+| `id_standards.yaml` | ✅ updated | + LOT-YYYYMMDD-XXX + CLS-YYYYMM-XXX |
+
+> ⚠️ **Known Gotcha — Lot vs currentStock**: `IngredientLot.remainingQty` ≠ `Ingredient.currentStock` — ทั้งสองต้องอัปเดตพร้อมกันเมื่อตัดสต็อก ใน Phase 21 ควร migrate `completeSessionWithStockDeduction` ให้ตัดจาก Lot FEFO ด้วย
+> ⚠️ **Known Gotcha — classId auto-generate**: `generateClassId()` ไม่ได้ถูกเรียกอัตโนมัติใน createSchedule — Boss ต้องส่ง classId มาเอง หรือ call generateClassId() ก่อน
 
 ---
 

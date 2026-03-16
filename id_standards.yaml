@@ -141,6 +141,15 @@ id_naming_conventions:
         description: "ตารางคลาส 1 session"
         generated_by: "scheduleRepo.js → generateScheduleId()"
 
+      - name: "Class ID"
+        model: "CourseSchedule"
+        format: "CLS-[YYYYMM]-[SERIAL]"
+        example: "CLS-202603-001"
+        serial_padding: 3
+        scope: "monthly (resets per month)"
+        generation: "scheduleRepo.generateClassId()"
+        description: "Class cohort ID — groups multiple schedule days (multi-day course) into one class run"
+
       - name: "Attendance ID"
         format: "ATT-[YYYYMMDD]-[SERIAL]"
         example: "ATT-20260316-001"
@@ -177,6 +186,15 @@ id_naming_conventions:
         example: "PR-20260316-001"
         description: "ใบขอซื้อวัตถุดิบ — auto-generated เมื่อ complete session"
         generated_by: "kitchenRepo.js → generatePurchaseRequestId()"
+
+      - name: "Lot ID"
+        model: "IngredientLot"
+        format: "LOT-[YYYYMMDD]-[SERIAL]"
+        example: "LOT-20260316-001"
+        serial_padding: 3
+        scope: "daily (resets per day)"
+        generation: "kitchenRepo.generateLotId()"
+        description: "Stock lot/batch ID — tracks individual received shipments for FEFO/FIFO inventory"
 
   # ─────────────────────────────────────────────
   # DOMAIN: Asset

@@ -636,6 +636,7 @@ model CourseSchedule {
   confirmedStudents Int               @default(0) @map("confirmed_students")
   status            String            @default("OPEN")
   instructorId      String?           @map("instructor_id")
+  classId           String?           @map("class_id")             // Phase 20: CLS-YYYYMM-XXX — cohort grouping multi-day schedules
   notes             String?
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
@@ -648,6 +649,7 @@ model CourseSchedule {
   @@index([scheduledDate])
   @@index([status])
   @@index([productId])
+  @@index([classId])
   @@map("course_schedules")
 }
 
@@ -682,6 +684,7 @@ model Ingredient {
   bom              CourseBOM[]
   purchaseItems    PurchaseRequestItem[]
   recipeIngredients RecipeIngredient[]
+  lots              IngredientLot[]
 
   @@index([category])
   @@index([name])
@@ -718,6 +721,7 @@ model PurchaseRequest {
   schedule   CourseSchedule?       @relation(fields: [scheduleId], references: [id])
   approvedBy Employee?             @relation("PRApprover", fields: [approvedById], references: [id])
   items      PurchaseRequestItem[]
+  lots       IngredientLot[]
 
   @@index([status])
   @@index([createdAt])
@@ -954,6 +958,7 @@ model StockDeductionLog {
   scheduleId   String   @map("schedule_id")       // อ้างอิง CourseSchedule.scheduleId (NOT UUID) เพื่อ human-readable
   ingredientId String?  @map("ingredient_id")     // UUID ของ Ingredient (null ถ้าเป็น equipment)
   equipmentId  String?  @map("equipment_id")      // UUID ของ RecipeEquipment (null ถ้าเป็น ingredient)
+  lotId        String?  @map("lot_id")              // Phase 20: optional link to IngredientLot.lotId (human-readable, not FK)
   itemName     String   @map("item_name")          // snapshot ชื่อ ณ เวลาตัด (ป้องกัน rename กระทบ history)
   qtyDeducted  Float    @map("qty_deducted")
   unit         String
@@ -964,6 +969,38 @@ model StockDeductionLog {
   @@index([ingredientId])
   @@index([deductedAt])
   @@map("stock_deduction_logs")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Stock Lots (Phase 20)
+// ─────────────────────────────────────────────
+
+// รับวัตถุดิบเข้าเป็น lot — รองรับ FEFO/FIFO, expiry tracking, ต้นทุนแยก lot
+model IngredientLot {
+  id                String           @id @default(uuid())
+  lotId             String           @unique @map("lot_id")              // LOT-YYYYMMDD-XXX
+  ingredientId      String           @map("ingredient_id")
+  purchaseRequestId String?          @map("purchase_request_id")         // link กลับไปที่ PR ที่สั่งซื้อ (optional)
+  receivedQty       Float            @map("received_qty")                // จำนวนที่รับเข้า
+  remainingQty      Float            @map("remaining_qty")               // จำนวนที่ยังเหลือ (ลดทุกครั้งที่ตัดสต็อก)
+  unit              String                                                // ควรตรงกับ Ingredient.unit
+  costPerUnit       Decimal?         @map("cost_per_unit") @db.Decimal(10, 2)
+  supplier          String?
+  expiresAt         DateTime?        @map("expires_at")                  // null = ไม่มีวันหมดอายุ
+  receivedAt        DateTime         @default(now()) @map("received_at")
+  status            String           @default("ACTIVE")                  // ACTIVE|CONSUMED|EXPIRED|RECALLED
+  notes             String?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  ingredient      Ingredient       @relation(fields: [ingredientId], references: [id])
+  purchaseRequest PurchaseRequest? @relation(fields: [purchaseRequestId], references: [id])
+
+  @@index([ingredientId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([ingredientId, status])
+  @@map("ingredient_lots")
 }
 
 // คอร์สที่นักเรียนเลือกจริงๆ ใน package enrollment (รองรับ swap group)

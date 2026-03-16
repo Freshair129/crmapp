@@ -5,6 +5,42 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [v0.20.0] — 2026-03-16
+
+### Phase 20 — Stock Lot Tracking + Course Class ID
+
+#### Schema
+- `IngredientLot` (new model): tracks stock batches with `lotId` (LOT-YYYYMMDD-XXX), `receivedQty`, `remainingQty`, `expiresAt`, `status` (ACTIVE/CONSUMED/EXPIRED/RECALLED), optional link to `PurchaseRequest`
+- `CourseSchedule`: + `classId String?` — cohort ID (CLS-YYYYMM-XXX) for grouping multi-day course sessions
+- `StockDeductionLog`: + `lotId String?` — optional human-readable lot reference for audit trail
+- `Ingredient`: + `lots IngredientLot[]` back-relation
+- `PurchaseRequest`: + `lots IngredientLot[]` back-relation
+
+#### Repository
+- `kitchenRepo.js`: + `generateLotId()`, `createLot()`, `getLotsByIngredient()`, `getAllLots({ status, ingredientId })`, `getExpiringLots(daysAhead)`, `updateLotStatus(id, status)`
+- `scheduleRepo.js`: + `generateClassId()`, `getSchedulesByClass(classId)`, `createSchedule` now accepts `classId`
+
+#### API
+- `GET|POST /api/kitchen/lots` — lot list (filterable by status/ingredientId/expiring window) + create new lot
+- `GET|PATCH /api/kitchen/lots/[id]` — single lot detail + update status/remainingQty
+
+#### Standards
+- `id_standards.yaml`: added `LOT-[YYYYMMDD]-[SERIAL]` (daily scope) and `CLS-[YYYYMM]-[SERIAL]` (monthly scope)
+
+---
+
+## [v0.19.0] — 2026-03-16
+
+### Phase 19 — Schema Hardening + Audit Trail
+
+- `CourseMenu`: `@@unique` now includes `dayNumber` — allows same recipe on Day1 + Day2 of multi-day course
+- `RecipeIngredient`: + `conversionFactor Float @default(1)` — enables unit conversion between recipe unit and ingredient master unit
+- `StockDeductionLog` (new model): append-only audit log of every stock deduction — `scheduleId`, `ingredientId`, `equipmentId`, `itemName` (snapshot), `qtyDeducted`, `unit`, `studentCount`
+- `scheduleRepo.js`: `completeSessionWithStockDeduction` now applies `conversionFactor` + writes `StockDeductionLog` entries inside the same `prisma.$transaction`
+- `redis.js`: `NULL_SENTINEL = '__NULL__'` — distinguishes negative cache hit from cache miss; `getOrSet` stores sentinel on fetcher failure
+
+---
+
 ## [v0.18.0] — 2026-03-16
 
 ### Phase 18 — Production Hardening & API Optimization (by Antigravity)
