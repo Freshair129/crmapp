@@ -279,7 +279,6 @@ model Product {
   enrollments               Enrollment[]
   enrollmentItems           EnrollmentItem[]
   schedules                 CourseSchedule[]
-  bom                       CourseBOM[]
   courseMenus               CourseMenu[]
   courseEquipment           CourseEquipment[]
   packageCourses            PackageCourse[]
@@ -681,7 +680,6 @@ model Ingredient {
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
-  bom              CourseBOM[]
   purchaseItems    PurchaseRequestItem[]
   recipeIngredients RecipeIngredient[]
   lots              IngredientLot[]
@@ -689,23 +687,6 @@ model Ingredient {
   @@index([category])
   @@index([name])
   @@map("ingredients")
-}
-
-// ⚠️ DEPRECATED (Phase 19): CourseBOM ถูก supersede โดย Recipe → RecipeIngredient path
-// ห้ามใช้ CourseBOM ร่วมกับ RecipeIngredient ในการตัดสต็อก — จะเกิด double-deduction
-// แผน Phase 20: migrate data → ลบตารางนี้ออก
-model CourseBOM {
-  id           String     @id @default(uuid())
-  productId    String     @map("product_id")
-  ingredientId String     @map("ingredient_id")
-  qtyPerPerson Float      @map("qty_per_person")
-  unit         String
-
-  product    Product    @relation(fields: [productId], references: [id])
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
-
-  @@unique([productId, ingredientId])
-  @@map("course_bom")
 }
 
 model PurchaseRequest {
