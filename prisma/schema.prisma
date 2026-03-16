@@ -688,6 +688,9 @@ model Ingredient {
   @@map("ingredients")
 }
 
+// ⚠️ DEPRECATED (Phase 19): CourseBOM ถูก supersede โดย Recipe → RecipeIngredient path
+// ห้ามใช้ CourseBOM ร่วมกับ RecipeIngredient ในการตัดสต็อก — จะเกิด double-deduction
+// แผน Phase 20: migrate data → ลบตารางนี้ออก
 model CourseBOM {
   id           String     @id @default(uuid())
   productId    String     @map("product_id")
@@ -803,7 +806,8 @@ model CourseMenu {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   recipe  Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, recipeId])
+  // Phase 19: เพิ่ม dayNumber เข้า unique constraint — อนุญาตให้ใช้ recipe เดิมซ้ำใน Day1 + Day2 ของคอร์สเดียวกันได้
+  @@unique([productId, recipeId, dayNumber])
   @@map("course_menus")
 }
 
@@ -825,11 +829,12 @@ model CourseEquipment {
 
 // วัตถุดิบที่ใช้ใน recipe (ตัดสต็อกจาก Ingredient)
 model RecipeIngredient {
-  id           String @id @default(uuid())
-  recipeId     String @map("recipe_id")
-  ingredientId String @map("ingredient_id")
-  qtyPerPerson Float  @map("qty_per_person")  // ปริมาณต่อ 1 นักเรียน
-  unit         String                          // หน่วยวัด (อาจต่างจาก Ingredient.unit หากแปลงหน่วย)
+  id               String @id @default(uuid())
+  recipeId         String @map("recipe_id")
+  ingredientId     String @map("ingredient_id")
+  qtyPerPerson     Float  @map("qty_per_person")      // ปริมาณต่อ 1 นักเรียน (หน่วยตาม unit field)
+  unit             String                              // หน่วยที่ใช้ใน recipe (อาจต่างจาก Ingredient.unit)
+  conversionFactor Float  @default(1) @map("conversion_factor") // Phase 19: conversion เทียบ Ingredient.unit, qty_deducted = qtyPerPerson × students × conversionFactor
 
   recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id])
@@ -937,6 +942,28 @@ model PackageEnrollment {
   @@index([customerId])
   @@index([enrolledAt])
   @@map("package_enrollments")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Stock Audit (Phase 19)
+// ─────────────────────────────────────────────
+
+// Append-only audit log ทุกครั้งที่ตัดสต็อก — ใช้ debug + reconcile
+model StockDeductionLog {
+  id           String   @id @default(uuid())
+  scheduleId   String   @map("schedule_id")       // อ้างอิง CourseSchedule.scheduleId (NOT UUID) เพื่อ human-readable
+  ingredientId String?  @map("ingredient_id")     // UUID ของ Ingredient (null ถ้าเป็น equipment)
+  equipmentId  String?  @map("equipment_id")      // UUID ของ RecipeEquipment (null ถ้าเป็น ingredient)
+  itemName     String   @map("item_name")          // snapshot ชื่อ ณ เวลาตัด (ป้องกัน rename กระทบ history)
+  qtyDeducted  Float    @map("qty_deducted")
+  unit         String
+  studentCount Int      @map("student_count")     // จำนวนนักเรียนที่ใช้คำนวณ
+  deductedAt   DateTime @default(now()) @map("deducted_at")
+
+  @@index([scheduleId])
+  @@index([ingredientId])
+  @@index([deductedAt])
+  @@map("stock_deduction_logs")
 }
 
 // คอร์สที่นักเรียนเลือกจริงๆ ใน package enrollment (รองรับ swap group)

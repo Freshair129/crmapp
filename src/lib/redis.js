@@ -57,8 +57,16 @@ class RedisCache {
      * Get or Set pattern with Promise sharing (anti-stampede)
      * ถ้า 2 requests ขอ key เดียวกันพร้อมกัน → share promise เดียว → DB query แค่ 1 ครั้ง
      */
+    // Phase 19: Sentinel string สำหรับ negative cache (แทน null ที่แยกจาก cache-miss ไม่ได้)
+    static NULL_SENTINEL = '__NULL__';
+
     async getOrSet(key, fetcher, ttlSeconds = 300) {
         const cached = await this.get(key);
+        // Negative cache hit — DB ไม่มีข้อมูล ไม่ต้อง fetch ใหม่
+        if (cached === RedisCache.NULL_SENTINEL) {
+            logger.info('[Redis]', `Cache HIT (negative): ${key}`);
+            return null;
+        }
         if (cached !== null) {
             logger.info('[Redis]', `Cache HIT: ${key}`);
             return cached;
@@ -89,8 +97,8 @@ class RedisCache {
             .catch(async err => {
                 clearTimeout(timeoutId);
                 this._inflight.delete(key);
-                // Cache a null sentinel for 30s to prevent thundering herd on DB errors
-                await this.set(key, null, 30).catch(() => {});
+                // Phase 19: เก็บ sentinel string แทน null — แยกแยะ cache-miss ออกจาก negative-hit ได้ถูกต้อง
+                await this.set(key, RedisCache.NULL_SENTINEL, 30).catch(() => {});
                 throw err;
             });
 

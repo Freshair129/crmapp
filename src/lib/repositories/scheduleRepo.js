@@ -114,7 +114,9 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
                             include: {
                                 recipe: {
                                     include: {
-                                        ingredients: true,
+                                        ingredients: {
+                                            include: { ingredient: { select: { name: true } } }
+                                        },
                                         equipment: true
                                     }
                                 }
@@ -133,29 +135,34 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
 
         return prisma.$transaction(async (tx) => {
             // Collect all deductions
-            const ingredientDeductions = new Map(); // ingredientId → totalQty
-            const equipmentDeductions = []; // { id, qtyRequired }
+            // ingredientId → { totalQty, name, unit }
+            const ingredientDeductions = new Map();
+            // { id, qtyRequired, name }
+            const equipmentDeductions = [];
 
             for (const menu of schedule.product.courseMenus) {
                 const { recipe } = menu;
 
-                // Ingredients: qty = qtyPerPerson × studentCount
+                // Ingredients: qty = qtyPerPerson × studentCount × conversionFactor (Phase 19)
                 for (const ri of recipe.ingredients) {
-                    const total = ri.qtyPerPerson * count;
-                    ingredientDeductions.set(
-                        ri.ingredientId,
-                        (ingredientDeductions.get(ri.ingredientId) || 0) + total
-                    );
+                    const factor = ri.conversionFactor ?? 1;
+                    const total = ri.qtyPerPerson * count * factor;
+                    const existing = ingredientDeductions.get(ri.ingredientId);
+                    ingredientDeductions.set(ri.ingredientId, {
+                        totalQty: (existing?.totalQty || 0) + total,
+                        name: ri.ingredient?.name ?? ri.ingredientId,
+                        unit: ri.unit,
+                    });
                 }
 
-                // Special equipment: deduct qtyRequired (not per-person — equipment is per session)
+                // Equipment: deduct qtyRequired per session (not per-person)
                 for (const eq of recipe.equipment) {
-                    equipmentDeductions.push({ id: eq.id, qtyRequired: eq.qtyRequired });
+                    equipmentDeductions.push({ id: eq.id, qtyRequired: eq.qtyRequired, name: eq.name, unit: eq.unit });
                 }
             }
 
             // Deduct ingredients
-            for (const [ingredientId, totalQty] of ingredientDeductions) {
+            for (const [ingredientId, { totalQty }] of ingredientDeductions) {
                 await tx.ingredient.update({
                     where: { id: ingredientId },
                     data: { currentStock: { decrement: totalQty } }
@@ -168,6 +175,29 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
                     where: { id: eq.id },
                     data: { currentStock: { decrement: eq.qtyRequired } }
                 });
+            }
+
+            // Phase 19: Append-only audit log (StockDeductionLog)
+            const logEntries = [
+                ...[...ingredientDeductions.entries()].map(([ingredientId, { totalQty, name, unit }]) => ({
+                    scheduleId: schedule.scheduleId,
+                    ingredientId,
+                    itemName: name,
+                    qtyDeducted: totalQty,
+                    unit,
+                    studentCount: count,
+                })),
+                ...equipmentDeductions.map(eq => ({
+                    scheduleId: schedule.scheduleId,
+                    equipmentId: eq.id,
+                    itemName: eq.name,
+                    qtyDeducted: eq.qtyRequired,
+                    unit: eq.unit,
+                    studentCount: count,
+                })),
+            ];
+            if (logEntries.length > 0) {
+                await tx.stockDeductionLog.createMany({ data: logEntries });
             }
 
             // Mark schedule as COMPLETED
