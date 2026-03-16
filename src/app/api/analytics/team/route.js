@@ -85,21 +85,21 @@ export async function GET(request) {
         });
 
         // Calculate Global Summary
-        const adsSpendData = await prisma.adDailyMetric.aggregate({
+        const adsMetrics = await prisma.adDailyMetric.aggregate({
             where: {
                 ...(dateFilter ? { date: dateFilter } : {})
             },
-            _sum: { spend: true }
+            _sum: { spend: true, revenue: true, purchases: true, leads: true }
         });
 
         const summary = {
             totalRevenue: employeeStats.reduce((s, e) => s + e.revenue, 0),
             totalLeads: employeeStats.reduce((s, e) => s + e.leads, 0),
             totalCustomers: employeeStats.reduce((s, e) => s + e.customers, 0),
-            marketingSpend: adsSpendData._sum.spend || 0,
-            marketingRevenue: 0,
-            marketingPurchases: 0,
-            marketingLeads: 0
+            marketingSpend: adsMetrics._sum.spend || 0,
+            marketingRevenue: adsMetrics._sum.revenue || 0,
+            marketingPurchases: adsMetrics._sum.purchases || 0,
+            marketingLeads: adsMetrics._sum.leads || 0
         };
 
         const topClosers = [...employeeStats]
