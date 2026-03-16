@@ -24,7 +24,7 @@ import {
     Phone, 
     Building2, 
     Facebook, 
-    BadgeId 
+    BadgeCheck 
 } from 'lucide-react';
 
 const permissionKeys = [
@@ -405,7 +405,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: Phone, label: 'Phone', val: emp.phone || '—' },
                                         { icon: Building2, label: 'Dept', val: emp.department || '—' },
                                         { icon: Facebook, label: 'Facebook', val: emp.facebookName || '—' },
-                                        { icon: BadgeId, label: 'Employee ID', val: emp.employeeId },
+                                        { icon: BadgeCheck, label: 'Employee ID', val: emp.employeeId },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
