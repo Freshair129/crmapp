@@ -73,29 +73,44 @@ export async function updateStock(ingredientId, newStock) {
     }
 }
 
+// Phase 20: getBOMForProduct now aggregates RecipeIngredient via CourseMenu
+// (CourseBOM table dropped — use computed BOM from recipe layer)
 export async function getBOMForProduct(productId) {
     try {
         const prisma = await getPrisma();
-        return prisma.courseBOM.findMany({
+        const menus = await prisma.courseMenu.findMany({
             where: { productId },
-            include: { ingredient: true }
+            include: {
+                recipe: {
+                    include: {
+                        ingredients: {
+                            include: { ingredient: true }
+                        }
+                    }
+                }
+            }
         });
+
+        const aggregated = new Map();
+        for (const menu of menus) {
+            for (const ri of menu.recipe.ingredients) {
+                const qty = ri.qtyPerPerson * (ri.conversionFactor ?? 1);
+                const existing = aggregated.get(ri.ingredientId);
+                if (existing) {
+                    existing.qtyPerPerson += qty;
+                } else {
+                    aggregated.set(ri.ingredientId, {
+                        ingredientId: ri.ingredientId,
+                        ingredient: ri.ingredient,
+                        qtyPerPerson: qty,
+                        unit: ri.ingredient.unit
+                    });
+                }
+            }
+        }
+        return Array.from(aggregated.values());
     } catch (error) {
         logger.error('[KitchenRepo]', 'Failed to get BOM', error);
-        throw error;
-    }
-}
-
-export async function upsertBOM({ productId, ingredientId, qtyPerPerson, unit }) {
-    try {
-        const prisma = await getPrisma();
-        return prisma.courseBOM.upsert({
-            where: { productId_ingredientId: { productId, ingredientId } },
-            update: { qtyPerPerson, unit },
-            create: { productId, ingredientId, qtyPerPerson, unit }
-        });
-    } catch (error) {
-        logger.error('[KitchenRepo]', 'Failed to upsert BOM', error);
         throw error;
     }
 }
