@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2, Plus } from 'lucide-react';
+import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2, Plus, Layers, CalendarClock, Truck } from 'lucide-react';
 
 export default function KitchenStockPanel({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,80 @@ export default function KitchenStockPanel({ language = 'TH' }) {
     minStock: 0,
     costPerUnit: ''
   });
+
+  const [activeTab, setActiveTab] = useState('ingredients');
+  const [lots, setLots] = useState([]);
+  const [lotsLoading, setLotsLoading] = useState(false);
+  const [lotFilter, setLotFilter] = useState('ACTIVE');
+  const [showAddLotModal, setShowAddLotModal] = useState(false);
+  const [lotForm, setLotForm] = useState({ ingredientId: '', receivedQty: '', unit: '', expiresAt: '', costPerUnit: '', supplier: '', notes: '' });
+  const [lotSaving, setLotSaving] = useState(false);
+
+  const fetchLots = async () => {
+    try {
+      setLotsLoading(true);
+      const q = lotFilter !== 'ALL' ? `?status=${lotFilter}` : '';
+      const res = await fetch(`/api/kitchen/lots${q}`);
+      const data = await res.json();
+      setLots(data.success ? data.data : []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'lots') fetchLots();
+  }, [activeTab, lotFilter]);
+
+  const handleAddLot = async (e) => {
+    e.preventDefault();
+    try {
+      setLotSaving(true);
+      const selectedIng = ingredients.find(i => i.id === lotForm.ingredientId);
+      const res = await fetch('/api/kitchen/lots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ingredientId: lotForm.ingredientId,
+          receivedQty: parseFloat(lotForm.receivedQty),
+          unit: lotForm.unit || selectedIng?.unit || '',
+          expiresAt: lotForm.expiresAt || undefined,
+          costPerUnit: lotForm.costPerUnit ? parseFloat(lotForm.costPerUnit) : undefined,
+          supplier: lotForm.supplier || undefined,
+          notes: lotForm.notes || undefined,
+        })
+      });
+      if (res.ok) {
+        setShowAddLotModal(false);
+        setLotForm({ ingredientId: '', receivedQty: '', unit: '', expiresAt: '', costPerUnit: '', supplier: '', notes: '' });
+        fetchLots();
+      }
+    } catch (err) {
+      alert('Error creating lot');
+    } finally {
+      setLotSaving(false);
+    }
+  };
+
+  const lotStatusBadge = (status, expiresAt) => {
+    const isExpiringSoon = expiresAt && new Date(expiresAt) - new Date() < 7 * 86400000 && status === 'ACTIVE';
+    const cfg = {
+      ACTIVE: isExpiringSoon
+        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      CONSUMED: 'bg-white/5 text-white/30 border-white/10',
+      EXPIRED: 'bg-red-500/10 text-red-400 border-red-500/20',
+      RECALLED: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    };
+    const label = isExpiringSoon ? 'ใกล้หมดอายุ' : status;
+    return (
+      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${cfg[status] || cfg.ACTIVE}`}>
+        {label}
+      </span>
+    );
+  };
 
   const t = {
     TH: {
@@ -166,13 +240,26 @@ export default function KitchenStockPanel({ language = 'TH' }) {
         <div>
           <h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
             <Package className="text-[#C9A34E]" size={36} /> {t.title}
-            <button 
-              onClick={() => setShowAddModal(true)}
+            <button
+              onClick={() => activeTab === 'ingredients' ? setShowAddModal(true) : setShowAddLotModal(true)}
               className="ml-4 bg-[#C9A34E] text-[#0A1A2F] p-2 rounded-2xl hover:scale-110 transition-all font-black"
             >
               <Plus size={24} />
             </button>
           </h2>
+          <div className="flex gap-2 mt-4">
+            {[['ingredients', Package, 'วัตถุดิบ'], ['lots', Layers, 'Lot สต็อก']].map(([tab, Icon, label]) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-2 px-5 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                  activeTab === tab ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                }`}
+              >
+                <Icon size={14} /> {label}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-4 mt-4">
             <div className="bg-white/5 px-6 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
               <span className="text-xs text-white/40 font-black uppercase tracking-widest">{t.total}</span>
@@ -222,6 +309,65 @@ export default function KitchenStockPanel({ language = 'TH' }) {
         </div>
       </div>
 
+      {activeTab === 'lots' && (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {['ALL', 'ACTIVE', 'EXPIRED', 'CONSUMED', 'RECALLED'].map(s => (
+              <button
+                key={s}
+                onClick={() => setLotFilter(s)}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  lotFilter === s ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                }`}
+              >{s}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'lots' ? (
+        <div className="overflow-x-auto">
+          {lotsLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+          ) : lots.length === 0 ? (
+            <div className="text-center py-12 text-white/20 font-black uppercase tracking-widest">ยังไม่มี Lot — กด + เพื่อรับสต็อกเข้า</div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/10">
+                  {['LOT ID', 'วัตถุดิบ', 'รับเข้า', 'เหลือ', 'หน่วย', 'วันหมดอายุ', 'ผู้จำหน่าย', 'สถานะ'].map(h => (
+                    <th key={h} className="py-4 px-3 text-[10px] font-black text-white/40 uppercase tracking-widest">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {lots.map(lot => {
+                  const isExpiringSoon = lot.expiresAt && new Date(lot.expiresAt) - new Date() < 7 * 86400000 && lot.status === 'ACTIVE';
+                  return (
+                    <tr key={lot.id} className={`transition-colors ${isExpiringSoon ? 'bg-amber-500/5' : 'hover:bg-white/[0.02]'}`}>
+                      <td className="py-3 px-3 font-mono text-[#C9A34E] text-xs font-black">{lot.lotId}</td>
+                      <td className="py-3 px-3 text-white font-bold text-sm">{lot.ingredient?.name ?? '—'}</td>
+                      <td className="py-3 px-3 text-white/60 font-bold">{lot.receivedQty}</td>
+                      <td className="py-3 px-3 font-black text-white">{lot.remainingQty}</td>
+                      <td className="py-3 px-3 text-white/40 text-xs font-bold uppercase">{lot.unit}</td>
+                      <td className="py-3 px-3 text-sm">
+                        {lot.expiresAt ? (
+                          <span className={`flex items-center gap-1 ${isExpiringSoon ? 'text-amber-400 font-black' : 'text-white/40'}`}>
+                            {isExpiringSoon && <CalendarClock size={12} />}
+                            {new Date(lot.expiresAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                          </span>
+                        ) : <span className="text-white/20">—</span>}
+                      </td>
+                      <td className="py-3 px-3 text-white/40 text-xs">{lot.supplier || '—'}</td>
+                      <td className="py-3 px-3">{lotStatusBadge(lot.status, lot.expiresAt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
@@ -290,6 +436,88 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           </tbody>
         </table>
       </div>
+
+      )}
+
+      {showAddLotModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative">
+            <button onClick={() => setShowAddLotModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white">
+              <X size={24} />
+            </button>
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-6 flex items-center gap-3">
+              <Truck className="text-[#C9A34E]" size={26} /> รับวัตถุดิบเข้า (Lot ใหม่)
+            </h3>
+            <form onSubmit={handleAddLot} className="space-y-5">
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วัตถุดิบ *</label>
+                <select
+                  required
+                  className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={lotForm.ingredientId}
+                  onChange={e => {
+                    const ing = ingredients.find(i => i.id === e.target.value);
+                    setLotForm({ ...lotForm, ingredientId: e.target.value, unit: ing?.unit || '' });
+                  }}
+                >
+                  <option value="">— เลือกวัตถุดิบ —</option>
+                  {ingredients.map(i => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนที่รับเข้า *</label>
+                  <input required type="number" step="0.001" min="0.001"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={lotForm.receivedQty}
+                    onChange={e => setLotForm({ ...lotForm, receivedQty: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หน่วย</label>
+                  <input type="text" placeholder="kg"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    value={lotForm.unit}
+                    onChange={e => setLotForm({ ...lotForm, unit: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันหมดอายุ</label>
+                  <input type="date"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={lotForm.expiresAt}
+                    onChange={e => setLotForm({ ...lotForm, expiresAt: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ต้นทุน/หน่วย (฿)</label>
+                  <input type="number" step="0.01" min="0"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    value={lotForm.costPerUnit}
+                    onChange={e => setLotForm({ ...lotForm, costPerUnit: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ผู้จำหน่าย</label>
+                <input type="text"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  value={lotForm.supplier}
+                  onChange={e => setLotForm({ ...lotForm, supplier: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หมายเหตุ</label>
+                <textarea rows={2}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 resize-none"
+                  value={lotForm.notes}
+                  onChange={e => setLotForm({ ...lotForm, notes: e.target.value })} />
+              </div>
+              <button type="submit" disabled={lotSaving}
+                className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+                {lotSaving ? 'กำลังบันทึก...' : 'รับ Lot เข้าระบบ'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
