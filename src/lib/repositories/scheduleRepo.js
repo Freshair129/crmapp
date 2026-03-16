@@ -126,8 +126,47 @@ export async function updateScheduleStatus(id, status) {
 }
 
 /**
+ * FEFO (First Expired, First Out) deduction from IngredientLot.
+ * Consumes lots in expiry-date order (nulls last = no-expiry lots used last).
+ * Returns array of { lotId, qtyDeducted } for audit log entries.
+ * @param {object} tx - Prisma transaction client
+ * @param {string} ingredientId - Ingredient UUID
+ * @param {number} qtyNeeded - Total quantity to deduct (in ingredient's unit)
+ */
+async function fefoDeductFromLots(tx, ingredientId, qtyNeeded) {
+    const lots = await tx.ingredientLot.findMany({
+        where: { ingredientId, status: 'ACTIVE', remainingQty: { gt: 0 } },
+        orderBy: [
+            { expiresAt: { sort: 'asc', nulls: 'last' } },
+            { receivedAt: 'asc' }
+        ]
+    });
+
+    let remaining = qtyNeeded;
+    const lotDeductions = [];
+
+    for (const lot of lots) {
+        if (remaining <= 0) break;
+        const deduct = Math.min(lot.remainingQty, remaining);
+        const newQty = +(lot.remainingQty - deduct).toFixed(6);
+        await tx.ingredientLot.update({
+            where: { id: lot.id },
+            data: {
+                remainingQty: newQty,
+                status: newQty <= 0 ? 'CONSUMED' : 'ACTIVE'
+            }
+        });
+        lotDeductions.push({ lotId: lot.lotId, qtyDeducted: deduct });
+        remaining -= deduct;
+    }
+
+    return lotDeductions;
+}
+
+/**
  * Complete a session and deduct stock from ingredients + recipe equipment.
  * Phase 16: Real-time stock deduction when session is marked COMPLETED.
+ * Phase 21: FEFO deduction from IngredientLot + lotId written to StockDeductionLog.
  * @param {string} id - CourseSchedule UUID
  * @param {number} studentCount - Actual number of students in session
  */
@@ -192,12 +231,28 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
                 }
             }
 
-            // Deduct ingredients
-            for (const [ingredientId, { totalQty }] of ingredientDeductions) {
+            // Deduct ingredients: update Ingredient.currentStock + FEFO from IngredientLot
+            const logEntries = [];
+
+            for (const [ingredientId, { totalQty, name, unit }] of ingredientDeductions) {
+                // Always keep Ingredient.currentStock in sync
                 await tx.ingredient.update({
                     where: { id: ingredientId },
                     data: { currentStock: { decrement: totalQty } }
                 });
+
+                // Phase 21: FEFO deduction from registered lots
+                const lotDeductions = await fefoDeductFromLots(tx, ingredientId, totalQty);
+
+                if (lotDeductions.length > 0) {
+                    // One log entry per lot used (with lotId for full traceability)
+                    for (const { lotId, qtyDeducted } of lotDeductions) {
+                        logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted, unit, studentCount: count, lotId });
+                    }
+                } else {
+                    // No lots registered — single entry without lotId (backward compat)
+                    logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted: totalQty, unit, studentCount: count });
+                }
             }
 
             // Deduct recipe equipment stock
@@ -206,27 +261,10 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
                     where: { id: eq.id },
                     data: { currentStock: { decrement: eq.qtyRequired } }
                 });
+                logEntries.push({ scheduleId: schedule.scheduleId, equipmentId: eq.id, itemName: eq.name, qtyDeducted: eq.qtyRequired, unit: eq.unit, studentCount: count });
             }
 
-            // Phase 19: Append-only audit log (StockDeductionLog)
-            const logEntries = [
-                ...[...ingredientDeductions.entries()].map(([ingredientId, { totalQty, name, unit }]) => ({
-                    scheduleId: schedule.scheduleId,
-                    ingredientId,
-                    itemName: name,
-                    qtyDeducted: totalQty,
-                    unit,
-                    studentCount: count,
-                })),
-                ...equipmentDeductions.map(eq => ({
-                    scheduleId: schedule.scheduleId,
-                    equipmentId: eq.id,
-                    itemName: eq.name,
-                    qtyDeducted: eq.qtyRequired,
-                    unit: eq.unit,
-                    studentCount: count,
-                })),
-            ];
+            // Write audit log
             if (logEntries.length > 0) {
                 await tx.stockDeductionLog.createMany({ data: logEntries });
             }
@@ -241,7 +279,8 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
                 }
             });
 
-            logger.info('[ScheduleRepo]', `Session ${schedule.scheduleId} completed — deducted stock for ${count} students, ${ingredientDeductions.size} ingredients, ${equipmentDeductions.length} equipment items`);
+            const lotCount = logEntries.filter(e => e.lotId).length;
+            logger.info('[ScheduleRepo]', `Session ${schedule.scheduleId} completed — deducted stock for ${count} students, ${ingredientDeductions.size} ingredients (${lotCount} lot entries), ${equipmentDeductions.length} equipment items`);
             return { schedule: updated, ingredientsDeducted: ingredientDeductions.size, equipmentDeducted: equipmentDeductions.length, studentCount: count };
         });
     } catch (error) {
