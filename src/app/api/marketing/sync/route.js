@@ -8,29 +8,31 @@ const ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-async function graphGet(path, params = {}, retries = 4) {
+// Custom error class so caller can detect rate limit without re-parsing
+class RateLimitError extends Error {
+    constructor(msg, code) {
+        super(msg);
+        this.name = 'RateLimitError';
+        this.fbCode = code;
+    }
+}
+
+async function graphGet(path, params = {}) {
     const url = new URL(`${GRAPH_API}${path}`);
     url.searchParams.set('access_token', ACCESS_TOKEN);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        const res = await fetch(url.toString());
-        const data = await res.json().catch(() => ({}));
-        if (data.error) {
-            const code = data.error.code;
-            const msg  = data.error.message || '';
-            // Rate limit codes: 4, 17, 32, 613 + "limit" in message
-            const isRateLimit = [4, 17, 32, 613].includes(code) || msg.toLowerCase().includes('limit');
-            if (isRateLimit && attempt < retries) {
-                const wait = Math.pow(2, attempt + 1) * 30000; // 60s, 120s, 240s, 480s
-                logger.warn('[MarketingSync]', `Rate limit (code ${code}) — waiting ${wait/1000}s (attempt ${attempt+1}/${retries})`);
-                await sleep(wait);
-                continue;
-            }
-            throw new Error(data.error.message || `Graph API error ${code}`);
-        }
-        return data;
+    // Single attempt — fail fast on rate limit, let cron retry later
+    const res = await fetch(url.toString());
+    const data = await res.json().catch(() => ({}));
+    if (data.error) {
+        const code = data.error.code;
+        const msg  = data.error.message || `Graph API error ${code}`;
+        const isRateLimit = [4, 17, 32, 613].includes(code) || msg.toLowerCase().includes('limit');
+        if (isRateLimit) throw new RateLimitError(msg, code);
+        throw new Error(msg);
     }
+    return data;
 }
 
 async function paginate(path, params) {
@@ -128,7 +130,7 @@ export async function GET(request) {
         const insightFields = 'spend,impressions,clicks,actions,action_values';
         const until = new Date().toISOString().split('T')[0];
         const BATCH_SIZE = 50;
-        const BATCH_DELAY = 1500; // ms between batches
+        const BATCH_DELAY = 500; // ms between batches (reduced from 1500ms)
         let adsUpdated = 0;
         let insightErrors = 0;
 
@@ -276,7 +278,12 @@ export async function GET(request) {
             syncedAt: new Date().toISOString(),
         });
     } catch (error) {
+        const msg = error?.message || String(error);
+        if (error?.name === 'RateLimitError') {
+            logger.warn('[MarketingSync]', `Rate limit (code ${error.fbCode}) — sync aborted, retry later`);
+            return NextResponse.json({ success: false, error: 'rate_limit', message: msg, retryAfter: 900 }, { status: 429 });
+        }
         logger.error('[MarketingSync]', 'Sync failed', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: msg }, { status: 500 });
     }
 }
