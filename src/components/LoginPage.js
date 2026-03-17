@@ -26,8 +26,8 @@ export default function LoginPage({ onLogin, error: externalError }) {
                 setError('Invalid email or password');
                 if (onLogin) onLogin(null);
             } else if (result?.ok) {
-                // NextAuth SessionProvider will update the session status automatically,
-                // which will trigger the guard in Home component.
+                // Force page reload to get fresh session immediately (don't wait for polling)
+                window.location.href = '/';
             }
         } catch (err) {
             console.error('Login error:', err);
