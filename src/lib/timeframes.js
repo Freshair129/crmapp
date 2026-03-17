@@ -1,3 +1,22 @@
+/**
+ * getRangeFilter — simple Prisma DateTimeFilter for marketing queries
+ * Used by marketingRepo.getCampaignsWithAggregatedMetrics()
+ * Returns a Prisma { gte, lte? } object, or undefined for all-time.
+ */
+export function getRangeFilter(range) {
+    const now = new Date();
+    if (range === 'today') return { gte: new Date(new Date().setUTCHours(0, 0, 0, 0)) };
+    if (range === 'last_7d') return { gte: new Date(Date.now() - 7 * 86400000) };
+    if (range === 'last_30d') return { gte: new Date(Date.now() - 30 * 86400000) };
+    if (range === 'this_month') return { gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+    if (range === 'last_month') {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { gte: start, lte: end };
+    }
+    return undefined;
+}
+
 export const TIMEFRAME_LABELS = {
   today: 'Today',
   this_week: 'This Week',

@@ -1,4 +1,5 @@
 import { getPrisma } from '@/lib/db';
+import { getRangeFilter } from '@/lib/timeframes';
 
 /**
  * @param {string} campaignId
@@ -140,4 +141,74 @@ export async function updateCampaignAuditSnapshot(campaignId, data) {
             fbSnapshotAt: new Date()
         }
     });
+}
+
+/**
+ * ADR-024: Bottom-up aggregation for campaigns.
+ * @param {object} filters
+ * @param {string} [filters.range]
+ * @param {string} [filters.status]
+ */
+export async function getCampaignsWithAggregatedMetrics({ range, status }) {
+    const prisma = await getPrisma();
+    const rangeFilter = getRangeFilter(range);
+
+    const campaigns = await prisma.campaign.findMany({
+        where: {
+            AND: [
+                status ? { status } : {},
+                rangeFilter ? { createdAt: rangeFilter } : {},
+            ],
+        },
+        include: {
+            adSets: {
+                include: { ads: true },
+            },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    const data = campaigns.map((campaign) => {
+        let cSpend = 0, cImpressions = 0, cClicks = 0, cRevenue = 0;
+
+        const adSets = campaign.adSets.map((adSet) => {
+            const metrics = adSet.ads.reduce((acc, ad) => ({
+                spend: acc.spend + (ad.spend || 0),
+                impressions: acc.impressions + (ad.impressions || 0),
+                clicks: acc.clicks + (ad.clicks || 0),
+                revenue: acc.revenue + (ad.revenue || 0),
+            }), { spend: 0, impressions: 0, clicks: 0, revenue: 0 });
+
+            cSpend += metrics.spend;
+            cImpressions += metrics.impressions;
+            cClicks += metrics.clicks;
+            cRevenue += metrics.revenue;
+
+            return { ...adSet, metrics };
+        });
+
+        return {
+            ...campaign,
+            adSets,
+            spend: cSpend,
+            impressions: cImpressions,
+            clicks: cClicks,
+            revenue: cRevenue,
+            roas: cSpend > 0 ? cRevenue / cSpend : 0,
+            metrics: {
+                spend: cSpend,
+                impressions: cImpressions,
+                clicks: cClicks,
+                revenue: cRevenue,
+                roas: cSpend > 0 ? cRevenue / cSpend : 0,
+            },
+        };
+    });
+
+    // lastSync = latest updatedAt across all campaigns
+    const lastSync = data.length > 0
+        ? data.reduce((latest, c) => (c.updatedAt > latest ? c.updatedAt : latest), data[0].updatedAt)
+        : null;
+
+    return { data, lastSync };
 }

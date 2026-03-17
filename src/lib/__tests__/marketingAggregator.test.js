@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { aggregateHierarchy } from '@/services/marketingAggregator'
+import { getCampaignsWithAggregatedMetrics } from '@/lib/repositories/marketingRepo'
+import { getRangeFilter } from '@/lib/timeframes'
+
+vi.mock('@/lib/timeframes', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    getRangeFilter: vi.fn(),
+  }
+})
 
 // Mock getPrisma from lib/db
 vi.mock('@/lib/db', () => ({
@@ -129,6 +139,7 @@ describe('marketingAggregator', () => {
     expect(result.adsets[0].clicks).toBe(0)
   })
 
+
   it('adsets หลาย campaign แยกกันได้ถูกต้อง', async () => {
     mockPrisma.ad.groupBy.mockResolvedValue([
       {
@@ -153,4 +164,47 @@ describe('marketingAggregator', () => {
     expect(campX.spend).toBe(1000)
     expect(campY.spend).toBe(2000)
   })
+})
+
+describe('marketingRepo', () => {
+    let mockPrisma
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockPrisma = {
+            campaign: {
+                findMany: vi.fn(),
+            },
+        }
+        getPrisma.mockResolvedValue(mockPrisma)
+    })
+
+    describe('getCampaignsWithAggregatedMetrics', () => {
+        it('should fetch campaigns and aggregate metrics bottom-up', async () => {
+            getRangeFilter.mockReturnValue({ gte: new Date() })
+            const mockDate = new Date()
+            mockPrisma.campaign.findMany.mockResolvedValue([
+                {
+                    id: 'camp-1',
+                    name: 'Test Campaign',
+                    updatedAt: mockDate,
+                    adSets: [
+                        {
+                            id: 'adset-1',
+                            ads: [
+                                { spend: 100, impressions: 1000, clicks: 10, revenue: 500 }
+                            ]
+                        }
+                    ]
+                }
+            ])
+
+            const result = await getCampaignsWithAggregatedMetrics({ range: 'today' })
+
+            expect(result.data).toHaveLength(1)
+            expect(result.data[0].spend).toBe(100)
+            expect(result.data[0].roas).toBe(5)
+            expect(result.lastSync).toEqual(mockDate)
+        })
+    })
 })
