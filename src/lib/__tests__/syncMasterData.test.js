@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '../../app/api/sheets/sync-master-data/route';
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { upsertIngredient, upsertBOM } from '@/lib/repositories/kitchenRepo';
+import { upsertIngredient } from '@/lib/repositories/kitchenRepo';
 import { getServerSession } from 'next-auth';
 
 vi.mock('@/lib/db', () => ({
@@ -19,8 +19,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('@/lib/repositories/kitchenRepo', () => ({
-    upsertIngredient: vi.fn(),
-    upsertBOM: vi.fn()
+    upsertIngredient: vi.fn()
 }));
 
 vi.mock('next-auth', () => ({
@@ -112,50 +111,21 @@ describe('Sync Master Data API', () => {
         }));
     });
 
-    it('should skip BOM sync if product or ingredient is missing', async () => {
-        // Mock URLs (Only BOM)
-        process.env.SHEET_COURSES_URL = '';
-        process.env.SHEET_INGREDIENTS_URL = '';
-        process.env.SHEET_ASSETS_URL = '';
-        
-        fetch.mockResolvedValueOnce({
-            text: () => Promise.resolve("productId,ingredientId,qtyPerPerson\nP1,I1,2")
-        });
-
-        // Mock findUnique returns null
-        mockPrisma.product.findUnique.mockResolvedValue(null);
-        mockPrisma.ingredient.findUnique.mockResolvedValue(null);
-
-        const res = await POST({});
-        const data = await res.json();
-
-        expect(data.synced.bom).toBe(0);
-        expect(data.skipped.bom).toBe(1);
-        expect(logger.warn).toHaveBeenCalledWith('[SyncMasterData]', expect.stringContaining('BOM skip'));
-    });
-
-    it('should successfully sync BOM if dependencies exist', async () => {
+    it('should log deprecation warning and skip BOM sync (CourseBOM removed in Phase 20)', async () => {
+        // BOM sync is deprecated — CourseBOM table was dropped. Route logs warning and skips.
         process.env.SHEET_COURSES_URL = '';
         process.env.SHEET_INGREDIENTS_URL = '';
         process.env.SHEET_ASSETS_URL = '';
 
-        fetch.mockResolvedValueOnce({
-            text: () => Promise.resolve("productId,ingredientId,qtyPerPerson,unit\nP2,I2,0.5,kg")
-        });
-
-        mockPrisma.product.findUnique.mockResolvedValue({ id: 'p-uid', productId: 'P2' });
-        mockPrisma.ingredient.findUnique.mockResolvedValue({ id: 'i-uid', ingredientId: 'I2' });
-
         const res = await POST({});
-        const data = await res.json();
+        await res.json();
 
-        expect(data.synced.bom).toBe(1);
-        expect(upsertBOM).toHaveBeenCalledWith({
-            productId: 'p-uid',
-            ingredientId: 'i-uid',
-            qtyPerPerson: 0.5,
-            unit: 'kg'
-        });
+        expect(logger.warn).toHaveBeenCalledWith(
+            '[SyncMasterData]',
+            expect.stringContaining('CourseBOM was removed in Phase 20')
+        );
+        // No fetch call for BOM should happen (data is ignored)
+        expect(fetch).not.toHaveBeenCalled();
     });
 
     it('should handle assets sync correctly', async () => {

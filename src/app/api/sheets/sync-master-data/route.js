@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
-import { upsertIngredient, upsertBOM } from '@/lib/repositories/kitchenRepo';
+import { upsertIngredient } from '@/lib/repositories/kitchenRepo';
 import { getServerSession } from 'next-auth';
 
 export async function POST(request) {
@@ -87,27 +87,11 @@ export async function POST(request) {
             }
         }
 
-        // 3. BOM
+        // 3. BOM — deprecated: CourseBOM was removed in Phase 20.
+        // BOM is now managed via Recipe → RecipeIngredient in the app UI.
+        // Sheet column `bom` is ignored to avoid breaking sync; skipped count preserved.
         if (urls.bom) {
-            const res = await fetch(urls.bom);
-            const data = parseCSV(await res.text());
-            for (const row of data) {
-                const product = await prisma.product.findUnique({ where: { productId: row.productId } });
-                const ingredient = await prisma.ingredient.findUnique({ where: { ingredientId: row.ingredientId } });
-
-                if (product && ingredient) {
-                    await upsertBOM({
-                        productId: product.id,
-                        ingredientId: ingredient.id,
-                        qtyPerPerson: parseFloat(row.qtyPerPerson) || 0,
-                        unit: row.unit
-                    });
-                    summary.synced.bom++;
-                } else {
-                    logger.warn('[SyncMasterData]', `BOM skip: Product ${row.productId} or Ingredient ${row.ingredientId} not found`);
-                    summary.skipped.bom++;
-                }
-            }
+            logger.warn('[SyncMasterData]', 'SHEET_BOM_URL is set but CourseBOM was removed in Phase 20. BOM must be managed via Recipe UI. Skipping BOM sync.');
         }
 
         // 4. ASSETS
