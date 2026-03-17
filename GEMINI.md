@@ -12,19 +12,18 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 
 | Version | Milestone | สถานะ |
 |---|---|---|
-| `v0.9.0` | Auth Stable | ✅ released |
-| `v0.10.0` | API Connected | ✅ released |
-| `v0.11.0` | Revenue Split | ✅ released |
-| `v0.12.0` | UI Enhanced | ✅ released (tagged) |
-| `v0.13.0` | Unified Inbox + Redis Cache | ✅ released |
-| `v0.14.0` | NotificationRules + LINE Messaging | ✅ released |
-| `v0.15.0` | Asset + Kitchen Ops + Course Enrollment | ✅ released |
-| `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released |
-| `v0.18.0` | Production Hardening & API Optimization | ✅ released ← HEAD |
+| `v0.9.0` – `v0.16.0` | Auth → Recipe/Package | ✅ released |
+| `v0.18.0` | Production Hardening & API Optimization | ✅ released |
+| `v0.19.0` | Schema Hardening | ✅ released |
+| `v0.20.0` | Lot ID + Class ID (Stock Batches + Cohorts) | ✅ released |
+| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 13 NotificationRules + LINE = ✅ DONE · Phase 14 = 🔲 NEXT
+Phase 17 Repository Refactor = ✅ DONE · Phase 21 FEFO Deduction = 🔲 NEXT
+
+> ⚠️ **ถ้า task ที่รับมา ≠ version HEAD ใน CHANGELOG.md → หยุดและแจ้ง Claude ก่อนเสมอ**
+> อย่า implement งานที่อาจซ้ำ/outdated โดยไม่ยืนยัน
 
 ---
 
@@ -130,11 +129,22 @@ try { ... } catch (error) {
 
 ```
 Phase 13-16: [DONE]    NotificationRules → Asset/PR/Kitchen → Recipe/Package
-Phase 18:   [DONE]    Production Hardening & API Optimization — (by Antigravity)
-                      → Redis resilience, Sync Retry/Batching, Chat Pagination
-Phase 14:   [NEXT]    Production Testing (E2E Playwright)
-Phase 17:   [NEXT]    Repository Refactor (Marketing/Inbox)
+Phase 18:    [DONE]    Production Hardening & API Optimization
+Phase 19:    [DONE]    Schema Hardening
+Phase 20:    [DONE]    Lot ID + Class ID
+Phase 20.5:  [DONE]    Bug Audit & Fix (6 bugs — crash/wrong data/stub)
+Phase 17:    [DONE]    Repository Layer Refactor (inboxRepo + marketingRepo)
+Phase 21:    [NEXT]    FEFO Deduction in completeSessionWithStockDeduction
 ```
+
+## 📋 Changelog System (รู้ไว้ — ไม่ต้อง implement)
+
+CHANGELOG ใหม่ใช้ **Sliding Window**:
+- `CHANGELOG.md` = LATEST pointer + Index table (older) + 5 full entries ล่าสุด
+- `changelog/CL-[YYYYMMDD]-[NNN].md` = full detail แยกต่างหาก (root-level dev tooling)
+
+**Gemini ไม่ต้องอัปเดต changelog** — Claude เป็นคนทำ
+แต่ถ้า task ที่รับมาขัดแย้งกับ version ใน CHANGELOG → แจ้ง Claude ก่อน
 
 ---
 

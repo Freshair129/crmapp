@@ -1,5 +1,6 @@
+// Cache-bust: 2026-03-17 15:12
 import { getPrisma } from '@/lib/db';
-import { getRangeFilter } from '@/lib/timeframes';
+import { getMarketingRangeFilter } from '../dateFilters';
 
 /**
  * @param {string} campaignId
@@ -151,7 +152,7 @@ export async function updateCampaignAuditSnapshot(campaignId, data) {
  */
 export async function getCampaignsWithAggregatedMetrics({ range, status }) {
     const prisma = await getPrisma();
-    const rangeFilter = getRangeFilter(range);
+    const rangeFilter = getMarketingRangeFilter(range);
 
     const campaigns = await prisma.campaign.findMany({
         where: {
@@ -211,4 +212,61 @@ export async function getCampaignsWithAggregatedMetrics({ range, status }) {
         : null;
 
     return { data, lastSync };
+}
+
+/**
+ * Get AdSets with aggregated metrics.
+ */
+export async function getAdSetsWithAggregatedMetrics({ range, status }) {
+    const prisma = await getPrisma();
+    const rangeFilter = getMarketingRangeFilter(range);
+
+    const adSets = await prisma.adSet.findMany({
+        where: {
+            AND: [
+                status ? { status } : {},
+                rangeFilter ? { createdAt: rangeFilter } : {},
+            ],
+        },
+        include: { ads: { select: { spend: true, impressions: true, clicks: true, revenue: true, roas: true } } },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    return adSets.map((adSet) => {
+        const metrics = adSet.ads.reduce((acc, ad) => ({
+            spend: acc.spend + (ad.spend || 0),
+            impressions: acc.impressions + (ad.impressions || 0),
+            clicks: acc.clicks + (ad.clicks || 0),
+            revenue: acc.revenue + (ad.revenue || 0),
+        }), { spend: 0, impressions: 0, clicks: 0, revenue: 0 });
+
+        return {
+            ...adSet,
+            metrics: {
+                ...metrics,
+                roas: metrics.spend > 0 ? metrics.revenue / metrics.spend : 0,
+            },
+        };
+    });
+}
+
+/**
+ * Get Ads with metrics.
+ */
+export async function getAdsWithMetrics({ range, status }) {
+    const prisma = await getPrisma();
+    const rangeFilter = getMarketingRangeFilter(range);
+
+    return prisma.ad.findMany({
+        where: {
+            AND: [
+                status ? { status } : {},
+                rangeFilter ? { createdAt: rangeFilter } : {},
+            ],
+        },
+        include: {
+            adSet: { select: { name: true, campaignId: true } },
+        },
+        orderBy: { spend: 'desc' },
+    });
 }

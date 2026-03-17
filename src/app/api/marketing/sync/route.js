@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
+import { uploadAdImage } from '@/lib/supabaseStorage';
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
@@ -123,11 +124,11 @@ export async function GET(request) {
 
         // 3. Sync Ads with insights — Batch API (50 ads/batch, ~10× faster)
         const fbAds = await paginate(`/${AD_ACCOUNT_ID}/ads`, {
-            fields: `id,name,status,effective_status,adset_id,creative{id}`,
+            fields: `id,name,status,effective_status,adset_id,creative{id,thumbnail_url,body,headline,call_to_action_type}`,
             limit: '100',
         });
 
-        const insightFields = 'spend,impressions,clicks,actions,action_values';
+        const insightFields = 'spend,reach,impressions,clicks,actions,action_values';
         const until = new Date().toISOString().split('T')[0];
         const BATCH_SIZE = 50;
         const BATCH_DELAY = 500; // ms between batches (reduced from 1500ms)
@@ -138,13 +139,34 @@ export async function GET(request) {
         const adSetRows = await prisma.adSet.findMany({ select: { id: true, adSetId: true } });
         const adSetMap = new Map(adSetRows.map(a => [a.adSetId, a.id]));
 
-        // Build creative upsert helper (batch later)
-        const creativeIds = [...new Set(fbAds.map(a => a.creative?.id).filter(Boolean))];
-        for (const cid of creativeIds) {
+        // Build creative upsert — with thumbnail upload to Supabase Storage
+        const creativeMap_raw = new Map(fbAds.map(a => [a.creative?.id, a.creative]).filter(([id]) => id));
+        for (const [cid, creative] of creativeMap_raw) {
+            // Upload thumbnail to Supabase if available
+            let storageUrl = null;
+            const thumbnailSrc = creative?.thumbnail_url;
+            if (thumbnailSrc) {
+                // Find adId for this creative (use first ad that references it)
+                const adId = fbAds.find(a => a.creative?.id === cid)?.id;
+                storageUrl = adId ? await uploadAdImage(thumbnailSrc, adId) : null;
+            }
+
             await prisma.adCreative.upsert({
                 where: { creativeId: cid },
-                update: {},
-                create: { creativeId: cid, name: `Creative ${cid}` }
+                update: {
+                    ...(creative?.body && { body: creative.body }),
+                    ...(creative?.headline && { headline: creative.headline }),
+                    ...(creative?.call_to_action_type && { callToAction: creative.call_to_action_type }),
+                    ...(storageUrl && { imageUrl: storageUrl }),
+                },
+                create: {
+                    creativeId: cid,
+                    name: `Creative ${cid}`,
+                    body: creative?.body ?? null,
+                    headline: creative?.headline ?? null,
+                    callToAction: creative?.call_to_action_type ?? null,
+                    imageUrl: storageUrl,
+                },
             });
         }
         const creativeRows = await prisma.adCreative.findMany({ select: { id: true, creativeId: true } });
@@ -182,6 +204,7 @@ export async function GET(request) {
                     for (const day of days) {
                         const dSpend       = parseFloat(day.spend || 0);
                         const dImpressions = parseInt(day.impressions || 0, 10);
+                        const dReach       = parseInt(day.reach || 0, 10);
                         const dClicks      = parseInt(day.clicks || 0, 10);
                         const dRevenue     = (day.action_values || [])
                             .filter(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))
@@ -194,16 +217,17 @@ export async function GET(request) {
                             .reduce((s, a) => s + parseInt(a.value || 0), 0);
 
                         spend += dSpend; impressions += dImpressions;
-                        clicks += dClicks; revenue += dRevenue;
+                        clicks += dClicks; reach += dReach; revenue += dRevenue;
 
                         dailyRows.push({
                             adId: ad.id, date: new Date(day.date_start),
                             spend: dSpend, impressions: dImpressions, clicks: dClicks,
+                            reach: dReach,
                             revenue: dRevenue, leads: dLeads, purchases: dPurchases,
                             roas: dSpend > 0 ? dRevenue / dSpend : 0,
                         });
                     }
-                    insightMap.set(ad.id, { spend, impressions, clicks, revenue, dailyRows });
+                    insightMap.set(ad.id, { spend, impressions, clicks, reach, revenue, dailyRows });
                 }
             } catch (err) {
                 logger.error('[MarketingSync]', `Batch insights error at chunk ${i}`, err);
@@ -220,7 +244,7 @@ export async function GET(request) {
         for (const ad of fbAds) {
             const adSetDbId = adSetMap.get(ad.adset_id);
             if (!adSetDbId) continue;
-            const ins = insightMap.get(ad.id) || { spend: 0, impressions: 0, clicks: 0, revenue: 0, dailyRows: [] };
+            const ins = insightMap.get(ad.id) || { spend: 0, impressions: 0, clicks: 0, reach: 0, revenue: 0, dailyRows: [] };
             adEntries.push({ ad, ins, adSetDbId });
             allDailyRows.push(...ins.dailyRows);
         }
@@ -235,7 +259,7 @@ export async function GET(request) {
                         name: ad.name, status: ad.status,
                         deliveryStatus: ad.effective_status ?? null,
                         spend: ins.spend, impressions: ins.impressions,
-                        clicks: ins.clicks, revenue: ins.revenue,
+                        clicks: ins.clicks, reach: ins.reach, revenue: ins.revenue,
                         roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
                         creativeId: creativeMap.get(ad.creative?.id) ?? null,
                     },
@@ -244,7 +268,7 @@ export async function GET(request) {
                         deliveryStatus: ad.effective_status ?? null,
                         adSetId: adSetDbId,
                         spend: ins.spend, impressions: ins.impressions,
-                        clicks: ins.clicks, revenue: ins.revenue,
+                        clicks: ins.clicks, reach: ins.reach, revenue: ins.revenue,
                         roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
                         creativeId: creativeMap.get(ad.creative?.id) ?? null,
                     },
@@ -261,7 +285,7 @@ export async function GET(request) {
                 prisma.adDailyMetric.createMany({ data: chunk, skipDuplicates: true }),
                 ...chunk.map(row => prisma.adDailyMetric.updateMany({
                     where: { adId: row.adId, date: row.date },
-                    data: { spend: row.spend, impressions: row.impressions, clicks: row.clicks, revenue: row.revenue, leads: row.leads, purchases: row.purchases, roas: row.roas },
+                    data: { spend: row.spend, impressions: row.impressions, clicks: row.clicks, reach: row.reach, revenue: row.revenue, leads: row.leads, purchases: row.purchases, roas: row.roas },
                 })),
             ]);
             logger.info('[MarketingSync]', `Daily metrics batch ${Math.floor(i/DAILY_CHUNK)+1}/${Math.ceil(allDailyRows.length/DAILY_CHUNK)} done`);

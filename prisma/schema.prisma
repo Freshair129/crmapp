@@ -380,6 +380,7 @@ model Ad {
   spend          Float    @default(0)
   impressions    Int      @default(0)
   clicks         Int      @default(0)
+  reach          Int      @default(0)
   cfr            Float    @default(0)
   revenue        Float    @default(0)
   roas           Float    @default(0)
@@ -452,6 +453,7 @@ model AdDailyMetric {
   spend       Float
   impressions Int
   clicks      Int
+  reach       Int      @default(0)
   leads       Int
   purchases   Int
   revenue     Float    @default(0)
@@ -472,6 +474,7 @@ model AdHourlyMetric {
   spend       Float
   impressions Int
   clicks      Int
+  reach       Int      @default(0)
   leads       Int
   purchases   Int
   revenue     Float    @default(0)
@@ -494,6 +497,7 @@ model AdHourlyLedger {
   spend       Float
   impressions Int
   clicks      Int
+  reach       Int      @default(0)
   leads       Int
   purchases   Int
   revenue     Float    @default(0)

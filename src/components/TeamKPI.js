@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { RefreshCw, Coins, Users, Percent, Trophy, X, Database, Facebook, Search, ShieldCheck, ChevronLeft, ChevronRight, Antenna, Megaphone, Eye, Flame, List } from 'lucide-react';
-import { getDateRange, TIMEFRAME_LABELS } from '@/lib/timeframes';
+import { getDateRange, TIMEFRAME_LABELS } from '@/lib/dateFilters';
 
 export default function TeamKPI({ customers = [] }) {
     const [stats, setStats] = useState([]);

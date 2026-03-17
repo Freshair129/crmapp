@@ -4,9 +4,46 @@
 **อ้างอิง:** `prisma/schema.prisma` (40 models)
 **Standard:** Mermaid erDiagram
 
+## Quick Navigation
+
+- [Conceptual Overview](#conceptual-overview--high-level)
+- [Full Reference ERD](#full-reference-erd--all-relationships) (Original)
+- [Module 1: Sales & Marketing Core](#module-1-sales--marketing-core)
+- [Module 2: Operations & Kitchen](#module-2-operations--kitchen)
+- [Module 3: Enrollment & Packages](#module-3-enrollment--packages)
+- [Entity Blocks (Detailed Fields)](#entity-blocks--key-fields-อัพเดท-phase-19)
+
 ---
 
-## Full ERD — ทุก Relationship
+## Conceptual Overview — High-Level
+
+```mermaid
+erDiagram
+    Customer ||--o{ Order : "buys"
+    Customer ||--o{ Conversation : "chats"
+    Customer ||--o{ Enrollment : "enrolls"
+    Customer ||--o{ PackageEnrollment : "buys package"
+    
+    Employee ||--o{ Order : "closes"
+    Employee ||--o{ Conversation : "handles"
+    
+    Conversation ||--o{ Order : "leads to"
+    
+    Order ||--o{ Transaction : "processed by"
+    
+    Product ||--o{ Enrollment : "enrolled in"
+    Product ||--o{ CourseSchedule : "scheduled for"
+    
+    Package ||--o{ PackageCourse : "contains"
+    Package ||--o{ PackageEnrollment : "enrolled in"
+    
+    CourseSchedule ||--o{ PurchaseRequest : "triggers"
+    Recipe ||--o{ CourseMenu : "used in"
+```
+
+---
+
+## Full Reference ERD — All Relationships
 
 ```mermaid
 erDiagram
@@ -64,8 +101,8 @@ erDiagram
     %% DOMAIN: Marketing / Ads (ADR-024)
     %% ═══════════════════════════════
     AdAccount ||--o{ Campaign        : "มีแคมเปญ"
-    Campaign  ||--o{ AdSet           : "มีชุดโฆษณา"
-    AdSet     ||--o{ Ad              : "มีโฆษณา"
+    Campaign  ||--o{ AdSet           : "มีชุดโฆณา"
+    AdSet     ||--o{ Ad              : "มีโฆณา"
     Ad        ||--|{ AdDailyMetric   : "สถิติรายวัน"
     Ad        ||--|{ AdHourlyMetric  : "สถิติรายชั่วโมง"
     Ad        ||--|{ AdHourlyLedger  : "append-only ledger (ADR-024 D4)"
@@ -108,6 +145,81 @@ erDiagram
     %% DOMAIN: Stock Audit (Phase 19)
     %% ═══════════════════════════════
     %% StockDeductionLog ไม่มี FK relation (append-only, scheduleId เก็บเป็น String ไม่ใช่ UUID)
+```
+
+---
+
+## Module 1: Sales & Marketing Core
+
+```mermaid
+erDiagram
+    Customer ||--o{ Order             : "สั่งซื้อ"
+    Customer ||--o{ Conversation      : "ทักแชท"
+    Customer ||--o{ TimelineEvent     : "timeline กิจกรรม"
+    Customer ||--o{ CartItem          : "มีของในตะกร้า"
+    
+    Conversation ||--o{ Message       : "มีข้อความ"
+    Conversation ||--o{ Order         : "นำไปสู่คำสั่งซื้อ"
+    
+    Employee ||--o{ Message           : "ตอบแชท"
+    Employee ||--o{ Conversation      : "รับผิดชอบ"
+    Employee ||--o{ Order             : "ปิดการขาย"
+    
+    Order ||--o{ Transaction          : "มีการชำระเงิน"
+    
+    AdAccount ||--o{ Campaign         : "มีแคมเปญ"
+    Campaign  ||--o{ AdSet            : "มีชุดโฆษณา"
+    AdSet     ||--o{ Ad               : "มีโฆณา"
+    Ad        ||--|{ AdDailyMetric    : "สถิติรายวัน"
+```
+
+---
+
+## Module 2: Operations & Kitchen
+
+```mermaid
+erDiagram
+    Employee ||--o{ CourseSchedule    : "สอน (Instructor)"
+    Employee ||--o{ PurchaseRequest   : "อนุมัติ (Approver)"
+    Employee ||--o{ Asset             : "ดูแลอุปกรณ์"
+    
+    Product ||--o{ CourseSchedule     : "มีตารางสอน"
+    Product ||--o{ CourseMenu         : "มีเมนูที่สอน"
+    
+    CourseSchedule ||--o{ ClassAttendance : "นักเรียนเข้าเรียน"
+    CourseSchedule ||--o{ PurchaseRequest : "สร้าง PR วัตถุดิบ"
+    
+    Recipe ||--o{ CourseMenu          : "ใช้ในคอร์ส"
+    Recipe ||--o{ RecipeIngredient    : "ใช้วัตถุดิบ"
+    Recipe ||--o{ RecipeEquipment     : "ใช้อุปกรณ์"
+    
+    Ingredient ||--o{ RecipeIngredient : "ใช้ใน recipe"
+    Ingredient ||--o{ PurchaseRequestItem : "ต้องสั่งซื้อ"
+    
+    PurchaseRequest ||--o{ PurchaseRequestItem : "มีรายการสั่งซื้อ"
+```
+
+---
+
+## Module 3: Enrollment & Packages
+
+```mermaid
+erDiagram
+    Customer ||--o{ Enrollment        : "ลงทะเบียนคอร์ส"
+    Customer ||--o{ PackageEnrollment : "ลงทะเบียนแพ็กเกจ"
+    Customer ||--o{ InventoryItem     : "คอร์สที่ซื้อแล้ว"
+    
+    Product ||--o{ Enrollment         : "ถูกลงทะเบียน"
+    Product ||--o{ PackageCourse      : "อยู่ใน package"
+    
+    Package ||--o{ PackageCourse      : "ประกอบด้วยคอร์ส"
+    Package ||--o{ PackageGift        : "มีของแถม"
+    Package ||--o{ PackageEnrollment : "ลูกค้าลงทะเบียน"
+    
+    Enrollment ||--o{ EnrollmentItem  : "มีรายการคอร์ส"
+    EnrollmentItem ||--o{ ClassAttendance : "มีประวัติเข้าเรียน"
+    
+    PackageEnrollment ||--o{ PackageEnrollmentCourse : "เลือกคอร์สไว้"
 ```
 
 ---
@@ -332,8 +444,6 @@ erDiagram
         Int      dayNumber      "default 1 — วันที่ใน multi-day course"
         String   sessionSlot    "MORNING | AFTERNOON | EVENING"
         Int      sortOrder      "default 0"
-        %% Phase 19: @@unique([productId, recipeId, dayNumber])
-        %% → อนุญาต same recipe ใน Day1 + Day2 ของคอร์สเดียวกัน
     }
 
     RecipeIngredient {
@@ -343,7 +453,6 @@ erDiagram
         Float    qtyPerPerson         "ปริมาณต่อ 1 นักเรียน"
         String   unit                 "หน่วยที่ใช้ใน recipe"
         Float    conversionFactor     "default 1 — แปลงหน่วย (Phase 19)"
-        %% qty_deducted = qtyPerPerson × students × conversionFactor
     }
 
     RecipeEquipment {

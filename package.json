@@ -23,6 +23,7 @@
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
+    "@supabase/supabase-js": "^2.99.2",
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",

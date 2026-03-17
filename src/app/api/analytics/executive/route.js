@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { getDateRange } from '@/lib/timeframes';
+import { getDateRange } from '@/lib/dateFilters';
 import { cache } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';

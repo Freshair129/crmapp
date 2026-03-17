@@ -1,9 +1,9 @@
 /**
- * getRangeFilter — simple Prisma DateTimeFilter for marketing queries
+ * dateFilters.js — Cache-bust: 2026-03-17 15:12
+ * getMarketingRangeFilter — simple Prisma DateTimeFilter for marketing queries
  * Used by marketingRepo.getCampaignsWithAggregatedMetrics()
- * Returns a Prisma { gte, lte? } object, or undefined for all-time.
  */
-export function getRangeFilter(range) {
+export const getMarketingRangeFilter = (range) => {
     const now = new Date();
     if (range === 'today') return { gte: new Date(new Date().setUTCHours(0, 0, 0, 0)) };
     if (range === 'last_7d') return { gte: new Date(Date.now() - 7 * 86400000) };
@@ -15,7 +15,7 @@ export function getRangeFilter(range) {
         return { gte: start, lte: end };
     }
     return undefined;
-}
+};
 
 export const TIMEFRAME_LABELS = {
   today: 'Today',
@@ -27,7 +27,7 @@ export const TIMEFRAME_LABELS = {
   all_time: 'All Time'
 };
 
-export function getDateRange(timeframe) {
+export const getDateRange = (timeframe) => {
   const now = new Date();
 
   const startOfTodayUTC = new Date(Date.UTC(
@@ -59,7 +59,7 @@ export function getDateRange(timeframe) {
 
   const jan1CurrentYearUTC = new Date(Date.UTC(
     now.getUTCFullYear(),
-    0,
+    now.getUTCMonth(),
     1
   ));
 
@@ -69,7 +69,6 @@ export function getDateRange(timeframe) {
     1
   ));
 
-  // Rolling offsets
   const getRollingDaysAgo = (days) => {
     const d = new Date(now.getTime());
     d.setUTCDate(d.getUTCDate() - days);
@@ -117,4 +116,4 @@ export function getDateRange(timeframe) {
     default:
       return { current: null, prev: null };
   }
-}
+};

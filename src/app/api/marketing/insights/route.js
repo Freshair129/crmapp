@@ -8,25 +8,30 @@ import { getPrisma } from '@/lib/db';
 export async function GET() {
     try {
         const prisma = await getPrisma();
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
 
-        // Bottom-Up Aggregation as per Phase 5 / Level 3
-        const ads = await prisma.ad.findMany({
-            where: { status: 'ACTIVE' },
-            select: {
+        // Fetch metrics aggregated from AdDailyMetric for the last 30 days
+        const metrics = await prisma.adDailyMetric.aggregate({
+            where: {
+                date: { gte: thirtyDaysAgo }
+            },
+            _sum: {
                 spend: true,
                 impressions: true,
                 clicks: true,
-                revenue: true
+                revenue: true,
+                leads: true
             }
         });
 
-        const insights = ads.reduce((acc, ad) => ({
-            spend: acc.spend + (ad.spend || 0),
-            impressions: acc.impressions + (ad.impressions || 0),
-            clicks: acc.clicks + (ad.clicks || 0),
-            revenue: acc.revenue + (ad.revenue || 0),
-            reach: acc.reach + (ad.impressions || 0) // Proxy reach as impressions for now or total them
-        }), { spend: 0, impressions: 0, clicks: 0, revenue: 0, reach: 0 });
+        const insights = {
+            spend: metrics._sum.spend || 0,
+            impressions: metrics._sum.impressions || 0,
+            clicks: metrics._sum.clicks || 0,
+            revenue: metrics._sum.revenue || 0,
+            reach: metrics._sum.impressions || 0, // Proxy reach as impressions for now
+            leads: metrics._sum.leads || 0
+        };
 
         return NextResponse.json({
             success: true,

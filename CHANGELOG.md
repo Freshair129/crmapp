@@ -5,6 +5,55 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [v0.21.0] — 2026-03-17
+
+### Phase 20.5 — Post-Antigravity Bug Audit & Fix
+
+#### Critical Fixes
+- **C1** `src/app/api/inbox/conversations/route.js` — เพิ่ม `await getPrisma()` ที่หายไป → แก้ Runtime crash ของ Inbox
+- **C2** `src/components/PremiumPOS.js` — แทนที่ FontAwesome CDN icons ด้วย Lucide (ADR-031 compliance)
+- **C3** `src/components/PremiumPOS.js` — เปลี่ยน customer lookup query param `?phone=` → `?search=`
+
+#### Wrong Data Fixes
+- **D1** `src/app/api/marketing/insights/route.js` — แก้ reach calculation: `acc.impressions` → `acc.reach` ใน reduce
+- **D2** `src/components/Analytics.js` — แก้ timeframe mapping: `'lifetime'` → `'all_time'` ที่ API รองรับ
+
+#### Stub Fixes
+- **S1** `src/app/api/analytics/team/route.js` — แก้ marketingRevenue/Purchases/Leads ที่ hardcode 0 → aggregate จาก `AdDailyMetric` จริง
+- **S2** `src/app/api/marketing/sheets/sync/route.js` — แก้ cache TTL จาก 0 → 3600
+
+#### Performance & Reliability
+- `src/app/api/marketing/sync/route.js` — Parallel ad upserts (Promise.all chunks of 25) + bulk daily metrics ($transaction createMany+updateMany) → ลดเวลา sync จาก ~12 นาที → ~20 วินาที สำหรับ 1 เดือน
+- `src/app/api/marketing/sync/route.js` — RateLimitError fail-fast (codes 4/17/32/613) → HTTP 429 + retryAfter:900 ทันที แทนที่จะรอ 15+ นาที
+- `src/components/LoginPage.js` — `result?.ok` → force `window.location.href = '/'` แก้ session polling race condition
+
+#### Cleanup
+- `src/app/api/sheets/sync-master-data/route.js` — ลบ `upsertBOM` import + เพิ่ม deprecation warning แทน BOM sync (CourseBOM ถูก drop ใน Phase 20)
+- `src/lib/__tests__/syncMasterData.test.js` — อัปเดต test ให้ตรง: ลบ upsertBOM mock, เพิ่ม deprecation warning assertion
+
+---
+
+### Phase 17 — Repository Refactor & Cache-Busting Fix
+
+#### Repository Layer
+- **`inboxRepo.js`** (new): Centralized logic for Conversations and Messages. Implemented `getConversations`, `getConversationMessages`, and `postReply` with unified data mapping.
+- **`marketingRepo.js`** (updated): Moved bottom-up aggregation logic (`getCampaignsWithAggregatedMetrics`, `getAdSetsWithAggregatedMetrics`, `getAdsWithMetrics`) into the repository. Deleted Prisma calls from API routes.
+
+#### Centralized Utilities & The "Turbopack Renaming" Fix
+- Created **`src/lib/dateFilters.js`** (formerly `timeframes.js`).
+- **Reasoning for consecutive fixes**: Next.js 15 Turbopack exhibited a "Stale Cache" issue where it refused to recognize new exports in existing files (Catch-22: code was correct on disk but bundler memory was old).
+- **Resolution**:
+  1. Renamed `timeframes.js` -> `dateFilters.js`.
+  2. Renamed `getRangeFilter` -> `getMarketingRangeFilter`.
+  3. Forced a complete identifier re-scan world-wide.
+- Updated all remaining references in `TeamKPI.js` and all Analytics routes (`executive`, `admin-performance`, `team`).
+
+#### Testing
+- `src/lib/__tests__/inboxRepo.test.js`: Added unit tests for new inbox methods.
+- `src/lib/__tests__/marketingAggregator.test.js`: Updated to test repository-level aggregation logic.
+
+---
+
 ## [v0.20.0] — 2026-03-16
 
 ### Phase 20 — Stock Lot Tracking + Course Class ID

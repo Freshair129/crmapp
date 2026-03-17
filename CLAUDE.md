@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-16)
+## Version Status (อัพเดท: 2026-03-17)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -26,7 +26,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.16.0` | Recipe + Package + Real-time Stock Deduction | ✅ released |
 | `v0.18.0` | Production Hardening & API Optimization | ✅ released |
 | `v0.19.0` | Schema Hardening (Phase 19 fixes) | ✅ released |
-| `v0.20.0` | Lot ID + Class ID (Stock Batches + Course Cohorts) | ✅ released ← HEAD |
+| `v0.20.0` | Lot ID + Class ID (Stock Batches + Course Cohorts) | ✅ released |
+| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor (Phase 17) | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
@@ -132,6 +133,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > ⚠️ **Known Gotcha — Lot vs currentStock**: `IngredientLot.remainingQty` ≠ `Ingredient.currentStock` — ทั้งสองต้องอัปเดตพร้อมกันเมื่อตัดสต็อก ใน Phase 21 ควร migrate `completeSessionWithStockDeduction` ให้ตัดจาก Lot FEFO ด้วย
 > ⚠️ **Known Gotcha — classId auto-generate**: `generateClassId()` ไม่ได้ถูกเรียกอัตโนมัติใน createSchedule — Boss ต้องส่ง classId มาเอง หรือ call generateClassId() ก่อน
+
+### v0.21.0 — สิ่งที่ทำแล้ว (Phase 20.5 + Phase 17) ✅ — by Claude + Antigravity
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/app/api/inbox/conversations/route.js` | ✅ fixed | C1: missing `await getPrisma()` → crash fix |
+| `src/components/PremiumPOS.js` | ✅ fixed | C2: FA CDN icons → Lucide (ADR-031); C3: `?phone=` → `?search=` |
+| `src/app/api/marketing/insights/route.js` | ✅ fixed | D1: `acc.impressions` → `acc.reach` ใน reduce |
+| `src/components/Analytics.js` | ✅ fixed | D2: timeframe `'lifetime'` → `'all_time'` |
+| `src/app/api/analytics/team/route.js` | ✅ fixed | S1: marketingRevenue/Purchases/Leads stub 0 → aggregate จาก AdDailyMetric จริง |
+| `src/app/api/marketing/sheets/sync/route.js` | ✅ fixed | S2: cache TTL=0 → 3600 |
+| `src/app/api/marketing/sync/route.js` | ✅ optimized | Parallel ad upserts (chunks 25) + bulk daily metrics ($transaction) + RateLimitError fail-fast → HTTP 429 |
+| `src/components/LoginPage.js` | ✅ fixed | `result?.ok` → `window.location.href = '/'` (force reload ทันที ไม่รอ polling) |
+| `src/lib/repositories/inboxRepo.js` | ✅ new | Phase 17: getConversations, getConversationMessages, postReply |
+| `src/lib/repositories/marketingRepo.js` | ✅ updated | Phase 17: getCampaignsWithAggregatedMetrics, getAdSetsWithAggregatedMetrics, getAdsWithMetrics |
+| `src/app/api/sheets/sync-master-data/route.js` | ✅ fixed | upsertBOM removed in Phase 20 → deprecation warning แทน |
+| `src/lib/dateFilters.js` | ✅ new | รวม getDateRange + getMarketingRangeFilter + TIMEFRAME_LABELS (เดิมชื่อ timeframes.js) |
+| `src/lib/__tests__/inboxRepo.test.js` | ✅ new | 3 tests |
+| `src/lib/__tests__/syncMasterData.test.js` | ✅ updated | ลบ upsertBOM test + เพิ่ม deprecation warning test |
+
+> ⚠️ **Known Gotcha — Antigravity unreviewed**: Pattern = "functional but wrong" bugs — ผ่าน lint/build แต่ logic ผิด → audit data output เสมอ ไม่ใช่แค่ syntax
+> ⚠️ **Known Gotcha — FB Rate Limit**: sync/route.js fail-fast ที่ RateLimitError (code 4/17/32/613) → HTTP 429 + retryAfter:900 — ต้องรอ ~15 นาที แล้ว retry ผ่าน cron
 
 ---
 

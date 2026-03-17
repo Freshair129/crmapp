@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { aggregateHierarchy } from '@/services/marketingAggregator'
 import { getCampaignsWithAggregatedMetrics } from '@/lib/repositories/marketingRepo'
-import { getRangeFilter } from '@/lib/timeframes'
+import { getMarketingRangeFilter } from '@/lib/dateFilters'
 
-vi.mock('@/lib/timeframes', async (importOriginal) => {
+vi.mock('@/lib/dateFilters', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,
-    getRangeFilter: vi.fn(),
+    getMarketingRangeFilter: vi.fn(),
   }
 })
 
@@ -181,7 +181,7 @@ describe('marketingRepo', () => {
 
     describe('getCampaignsWithAggregatedMetrics', () => {
         it('should fetch campaigns and aggregate metrics bottom-up', async () => {
-            getRangeFilter.mockReturnValue({ gte: new Date() })
+            getMarketingRangeFilter.mockReturnValue({ gte: new Date() })
             const mockDate = new Date()
             mockPrisma.campaign.findMany.mockResolvedValue([
                 {
