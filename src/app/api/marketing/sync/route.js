@@ -139,16 +139,20 @@ export async function GET(request) {
         const adSetRows = await prisma.adSet.findMany({ select: { id: true, adSetId: true } });
         const adSetMap = new Map(adSetRows.map(a => [a.adSetId, a.id]));
 
-        // Build creative upsert — with thumbnail upload to Supabase Storage
+        // Build creative upsert — full-quality image → compress WebP → Supabase Storage
         const creativeMap_raw = new Map(fbAds.map(a => [a.creative?.id, a.creative]).filter(([id]) => id));
         for (const [cid, creative] of creativeMap_raw) {
-            // Upload thumbnail to Supabase if available
+            // Priority: full image > thumbnail
+            const imageSrc = creative?.object_story_spec?.link_data?.picture
+                || creative?.object_story_spec?.video_data?.image_url
+                || creative?.image_url
+                || creative?.thumbnail_url
+                || null;
+
             let storageUrl = null;
-            const thumbnailSrc = creative?.thumbnail_url;
-            if (thumbnailSrc) {
-                // Find adId for this creative (use first ad that references it)
+            if (imageSrc) {
                 const adId = fbAds.find(a => a.creative?.id === cid)?.id;
-                storageUrl = adId ? await uploadAdImage(thumbnailSrc, adId) : null;
+                storageUrl = adId ? await uploadAdImage(imageSrc, adId, { fullQuality: true }) : null;
             }
 
             await prisma.adCreative.upsert({
