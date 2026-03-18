@@ -511,6 +511,28 @@ model AdHourlyLedger {
 }
 
 // ─────────────────────────────────────────────
+// DOMAIN: Ad Activity Log (Phase 21.1)
+// ─────────────────────────────────────────────
+
+model AdActivity {
+  id                  String   @id @default(uuid())
+  adId                String   @map("ad_id")          // Meta ad_id (matches Ad.adId)
+  eventType           String   @map("event_type")     // create_ad, update_ad_run_status, etc.
+  eventTime           DateTime @map("event_time")
+  objectId            String   @map("object_id")
+  objectName          String   @map("object_name")
+  actorName           String?  @map("actor_name")     // "Panxei" | "Meta"
+  translatedEventType String?  @map("translated_event_type")
+  extraData           Json?    @map("extra_data")     // { old_value, new_value, ... }
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@unique([adId, eventType, eventTime])              // idempotent upsert
+  @@index([adId])
+  @@index([eventTime])
+  @@map("ad_activities")
+}
+
+// ─────────────────────────────────────────────
 // DOMAIN: Tasks
 // ─────────────────────────────────────────────
 
@@ -1000,4 +1022,22 @@ model PackageEnrollmentCourse {
 
   @@unique([packageEnrollmentId, productId])
   @@map("package_enrollment_courses")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Ad Review (Phase A)
+// ─────────────────────────────────────────────
+
+model AdReviewResult {
+  id           String   @id @default(uuid())
+  adId         String   @map("ad_id")
+  reviewedAt   DateTime @default(now()) @map("reviewed_at")
+  phaseA       Json     @map("phase_a")
+  phaseB       Json?    @map("phase_b")
+  overallScore Int      @map("overall_score")
+  riskLevel    String   @map("risk_level")
+  status       String   @default("pending")
+
+  @@index([adId])
+  @@map("ad_review_results")
 }
