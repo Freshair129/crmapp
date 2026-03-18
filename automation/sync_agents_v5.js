@@ -1,4 +1,4 @@
- * sync_agents_v5.js — V School Agent Sync(A - ID Edition)
+/* sync_agents_v5.js — V School Agent Sync(A - ID Edition)
     * A - ID = Admin Identity(Persistent ID placeholder for future alignment)
  * อ่าน "ส่งโดย [ชื่อ]" และเก็บหลักฐาน ID ดิบจาก Facebook Business Suite
     * แล้วบันทึกลง CRM
