@@ -244,6 +244,7 @@
 | BKL-01 | ~~FB Login พัง (PSID mapping recovery) — FR1.1~~ | ~~HIGH~~ → **CLOSED** (ADR-035: FB hides admin PSID by design — won't fix) |
 | BKL-02 | Revenue real-time socket integration — FR5.1 | MEDIUM |
 | BKL-03 | ~~Product.linkedMenuIds → Course-to-Menu link~~ | ~~LOW~~ → **RESOLVED** by ADR-037 (Product-as-Course, Phase 15) |
+| BKL-04 | **Login page + RBAC enforcement** — ปิดไว้ระหว่าง dev (middleware bypass `NODE_ENV=development`) **ไม่ได้ยกเลิก** — เปิดก่อน production deploy โดยลบ dev bypass block ใน `src/middleware.js` | PRE-PROD |
 
 ---
 

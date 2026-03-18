@@ -48,6 +48,10 @@ const CRON_ROUTES = [
 ];
 
 export async function middleware(request) {
+  // DEV BYPASS — auth disabled during development (ADR-026 deferred, not cancelled)
+  // Re-enable by removing this block before production deploy
+  if (process.env.NODE_ENV === 'development') return NextResponse.next();
+
   const { pathname } = request.nextUrl;
 
   // CRON_SECRET bypass — allows internal scripts/schedulers to call sync routes
