@@ -25,95 +25,124 @@ Node.js: **v22 LTS** (ดู `.nvmrc`)
 
 ### 1. Data Flow Diagram
 ```text
-[External Users/Customers]                 [Facebook Ecosystem]   [LINE Platform]
-         |                                          |                    |
-         | (Web Requests)                           | (Webhooks)         | (Webhooks / Push API)
-         v                                          v                    v
-+-----------------------------------------------------------------+-----------+
-|                        CRM Web Application                                  |
-|                                                                             |
-|   [API Routes] <--- (Read/Write) ---> [Prisma ORM (db.js)]                 |
-|        ^                                       |                            |
-|        | (Event Processing)                    v                            |
-|   [BullMQ / Redis] <------------------ [Webhook Listeners]                  |
-|                                        (FB + LINE)                          |
-+-----------------------------------------------------------------------------+
-                           |         |                    |
-      (Primary Data Flow)  |         |                    | (Outbound Alerts)
-                           v         v                    v
-+-----------------------------+   +------------------+  +-------------------+
-|     Single Source of Truth  |   | Local File Cache |  | LINE Messaging    |
-|        [PostgreSQL]         |   |   [cache/]       |  | (Flex Messages,   |
-|         (Supabase)          |   |   [logs/]        |  |  Push Alerts)     |
-+-----------------------------+   +------------------+  +-------------------+
+[Customers / Web]        [Facebook Ecosystem]     [LINE Platform]     [Meta Ads API]
+        |                         |                      |                   |
+        | HTTP                    | Webhooks              | Webhooks/Push     | Graph API v19
+        v                         v                      v                   v
++-----------------------------------------------------------------------------------+
+|                           CRM Web Application (Next.js 14)                        |
+|                                                                                   |
+|  [API Routes]  ←──(read/write)──→  [Repository Layer]  ←──→  [Prisma ORM]        |
+|       ^                              (marketingRepo,               |               |
+|       |                               inboxRepo,                   v               |
+|  [BullMQ Workers] ←── [Webhook Listeners]  agentSyncRepo,   [PostgreSQL]          |
+|       |                (FB + LINE)          adReviewRepo,    (Supabase cloud)      |
+|       |                                     kitchenRepo …)         ^               |
+|       └──(cache layer)──→ [Redis Cache]  ←─────────────────── cacheSync.js        |
+|                           (ioredis, docker)                                        |
+|                           getOrSet pattern                                         |
+|                           TTL-based invalidation                                   |
++-----------------------------------------------------------------------------------+
+                    |                          |                    |
+     (Outbound)     v                          v                    v
+           +----------------+      +---------------------+  +------------------+
+           | LINE Messaging |      | Gemini AI           |  | Ad Review Engine |
+           | Push Alerts    |      | (geminiReviewService|  | Phase A: rules   |
+           | Flex Messages  |      |  adReviewPrompt)    |  | Phase B: Gemini  |
+           | Group Notify   |      |                     |  | score 0–100      |
+           +----------------+      +---------------------+  +------------------+
 ```
 
 ### 2. Pipeline Work Flow (Event-Driven Sync)
 ```text
 [Phase 1: Ingestion]
-    FB Webhooks (Real-time)  OR  Cron Job (Hourly Reconciliation)
-              |                          |
-              +-----------+--------------+
-                          |
-                          v
-                  +-----------------+
-                  |  Event Queue    | (BullMQ / Redis)
-                  +-----------------+
-                          |
-                          v
-                  +-----------------+
-                  | Sync Services   | (chatService, marketingService)
-                  +-----------------+
-                          |
-                          v (Upsert Data)
-                  +-----------------+
-                  |  PostgreSQL DB  |
-                  +-----------------+
+  FB Webhook (< 200ms, NFR1)   LINE Webhook       Meta Ads Cron (hourly)
+              |                     |                      |
+              +----------+----------+                      |
+                         |                                 |
+                         v                                 v
+               +------------------+            +---------------------+
+               |  BullMQ Queue    |            | sync/route.js       |
+               |  (Redis 6379)    |            | Batch API 50 ads    |
+               |  retry ≥ 5x      |            | exponential backoff |
+               |  exp. backoff    |            | RateLimit fail-fast |
+               +------------------+            +---------------------+
+                         |                                 |
+                         v                                 v (upsert)
+               +------------------+            +---------------------+
+               | notificationWorker|           | AdDailyMetric       |
+               | lineService.push  |           | AdHourlyMetric      |
+               +------------------+            | AdActivity          |
+                         |                     +---------------------+
+                         v
+               +-----------------------------+
+               |        PostgreSQL (Supabase)|
+               +-----------------------------+
+                         ^
+                         | getOrSet (TTL)
+               +-----------------------------+
+               |   Redis Cache (ioredis)     |  ← NOT local file cache
+               |   docker: redis:7-alpine    |
+               |   ADR-034 singleton pattern |
+               +-----------------------------+
 
-              |
-[Phase 2: Data Extraction & Processing]
-              |
-              v (Query via Prisma: getAllProducts, findMany)
-      +-----------------+
-      | Context Builder | (Prepares Data for AI)
-      +-----------------+
-              |
-              v (Structured Context: JSON/Text)
-      +-----------------+
-      | Gemini AI Model | (BusinessAnalyst.js)
-      +-----------------+
-
-              |
-[Phase 3: Output Generation]
+[Phase 2: Ad Intelligence]
+  GET /api/marketing/ai-review/[adId]
               |
               v
-   +-----------------------+
-   | Executive Summary     |
-   | Intelligence Insights |  <--- (Sent as Response to CRM Frontend)
-   | Recommendations       |
-   +-----------------------+
+  runPhaseAChecks() → 7 rule checks → score 0-100 → riskLevel
+              |
+              | score < 60?
+              v
+  runPhaseBAnalysis() ──fire-and-forget──> Gemini 2.0 Flash
+              |                            buildReviewPrompt()
+              v                            → creativeScore, policyRisk,
+  AdReviewResult (DB)                        rewriteSuggestion (TH)
+
+[Phase 3: Agent Attribution (Playwright)]
+  sync_agents_v5.js
+              |
+              v DOM scrape "ส่งโดย / Sent by"
+  POST /api/marketing/chat/message-sender
+              |
+              v agentSyncRepo.processAgentAttribution()
+  resolveEmployeeByName() → attributeByMsgId() / attributeByText()
+              |
+              v
+  Message.responderId = Employee.id
 ```
 
 ---
 
 ## 📂 Directories at a Glance
-- `crm-app/`: Core Web App & API.
-- `crm-app/cache/`: Internal local data mirror & fallback.
-- `docs/`: Technical documentation (ADRs, arc42).
-- `scripts/`: Maintenance & data sync utilities.
-- `logs/`: System activity & checkpoint reports.
+- `src/app/` — Next.js 14 App Router (API routes + pages)
+- `src/lib/repositories/` — **Repository layer** (ทุก DB op ต้องผ่านที่นี่)
+- `src/lib/` — Services: redis.js, lineService.js, geminiReviewService.js, notificationEngine.js
+- `src/components/` — React UI components (Lucide icons, Recharts, Framer Motion)
+- `prisma/` — Schema + migrations (PostgreSQL via Supabase)
+- `automation/` — Playwright scrapers (sync_agents_v5.js) — excluded from TS build
+- `scripts/` — One-time data sync / report generation utilities
+- `docs/` — ADRs, arc42, ERD, specs
+- `workers/` — BullMQ worker processes (notificationWorker.mjs)
+
+> ⚠️ **ไม่มี** `cache/` local file cache แล้ว — ใช้ Redis (ioredis docker) ตั้งแต่ v0.13.0 (ADR-034)
 
 ---
 
-### 3. Agent Sync & Attribution (Playwright)
-```text
-[Playwright Worker] ──(Deep Scroll)──> [Business Suite UI]
-         |                                     |
-         | (Extract Fiber Props: threadID, responseId)
-         v
-[API: /api/marketing/chat/message-sender] ──> [DB: Conversation (t_ID)]
-                                         └──> [DB: Message (msgId)]
-```
+### 3. Current Version Status
+| Version | Milestone | Status |
+|---|---|---|
+| v0.21.0 | Bug Audit Fix + Repository Layer Refactor | ✅ HEAD |
+| v0.22.0 | AI Ad Review Engine (Phase A + B) + agentSyncRepo | ✅ released |
+| v1.0.0 | Production Ready | 🔲 planned |
+
+### 4. Key Non-Functional Requirements
+| NFR | Requirement |
+|---|---|
+| NFR1 | Webhook ตอบ Facebook < 200ms เสมอ |
+| NFR2 | Dashboard API < 500ms (Redis cache) |
+| NFR3 | BullMQ retry ≥ 5 ครั้ง, exponential backoff |
+| NFR5 | Identity upsert ต้องอยู่ใน prisma.$transaction |
 
 ---
 
@@ -132,7 +161,12 @@ Major technical choices and their rationale.
 | **029** | Employee Registry | Auto-generate TVS-EMP ID, JSONB identities, bcrypt |
 | **030** | Revenue Channel Split | conversationId → Ads vs Store classification |
 | **031** | Icon-Only Sidebar | w-20 sidebar, Lucide migration ออกจาก FontAwesome CDN |
-| **032** | UI Enhancement (A) | Recharts charts, Framer Motion animations, cherry-pick approach |
+| **032** | UI Enhancement (A) | Recharts charts, Framer Motion animations |
+| **033** | Unified Inbox | FB + LINE inbox รวม, pagination, right customer card |
+| **034** | Redis Cache | ioredis singleton, getOrSet pattern, TTL, negative cache |
+| **035** | Remove FB Login | CredentialsOnly auth (FB hides admin PSID) |
+| **036** | Google Sheets SSOT | Master data sync via CSV URL |
+| **037** | Product-as-Course-Catalog | Reuse Product model, certLevel 30/111/201h |
 
 ### v1 Reference ADRs
 | ADR | Title | Summary |
