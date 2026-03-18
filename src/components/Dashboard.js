@@ -19,7 +19,7 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
 }
 
 export default function Dashboard({ customers, products, orders = [], onRefresh }) {
-    const [insights, setInsights] = useState({ spend: 0, reach: 0, impressions: 0 });
+    const [insights, setInsights] = useState({ spend: 0, reach: 0, impressions: 0, allTimeRevenue: 0, allTimePurchases: 0, engagedCustomers: 0 });
     const [loadingInsights, setLoadingInsights] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [isTokenExpired, setIsTokenExpired] = useState(false);
@@ -93,17 +93,27 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
         ? `${(avgLifespanMonths / 12).toFixed(1)} Years`
         : `${avgLifespanMonths.toFixed(1)} Months`;
 
-    const avgLTV = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+    // LTV = all-time ad revenue ÷ total purchases (revenue per conversion)
+    // Fallback: all-time revenue ÷ total customers
+    const avgLTV = insights.allTimePurchases > 0
+        ? Math.round(insights.allTimeRevenue / insights.allTimePurchases)
+        : totalCustomers > 0
+            ? Math.round(insights.allTimeRevenue / totalCustomers)
+            : 0;
 
-    // Calculate Churn Rate
+    // Churn heuristic: customers who never engaged (no conversation) = cold leads
+    // Real churn (status-based) + never-engaged as proxy
     const churnedCustomers = customers.filter(c => (c.status || c.profile?.status) === 'Inactive' || (c.status || c.profile?.status) === 'Churned').length;
-    const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
+    const neverEngaged = totalCustomers - (insights.engagedCustomers || 0);
+    const churnRate = totalCustomers > 0
+        ? ((churnedCustomers + neverEngaged) / totalCustomers) * 100
+        : 0;
 
     const stats = [
         { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Avg. Lifetime Value', value: Math.round(avgLTV), prefix: '฿', subValue: `Avg. Lifespan: ${avgLifespanText}`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, icon: UserMinus, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'Avg. Lifetime Value', value: avgLTV, prefix: '฿', subValue: `${insights.allTimePurchases} purchases · ${avgLifespanText}`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, subValue: `${neverEngaged} ไม่เคยตอบรับ`, icon: UserMinus, color: 'text-rose-500', bg: 'bg-rose-500/10' },
         { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: Target, color: 'text-purple-500', bg: 'bg-purple-500/10' },
         { label: 'Marketing Reach', value: Number(insights.reach || 0), icon: Megaphone, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
