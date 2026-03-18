@@ -64,8 +64,8 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
         }
     };
 
-    // Generate some metrics based on data
-    const totalCustomers = customers.length;
+    // Use DB count from insights API (customers prop is limited to 50 by API pagination)
+    const totalCustomers = insights.totalCustomers || customers.length;
     
     // Calculate total revenue from orders with 'closed' or 'CLOSED' status
     const totalRevenue = orders
