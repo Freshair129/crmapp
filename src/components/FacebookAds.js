@@ -114,7 +114,7 @@ export default function FacebookAds({ customers }) {
 
 
 
-    const [lastSync, setLastSync] = useState(null);
+    const [lastSync, setLastSync] = useState(null); // { syncedAt, campaigns, adSets, ads }
 
     const syncMarketingData = async () => {
         setSyncing(true);
@@ -122,7 +122,7 @@ export default function FacebookAds({ customers }) {
             const res = await fetch(`/api/marketing/sync?months=3`);
             const data = await res.json();
             if (data.success) {
-                setLastSync(new Date().toISOString());
+                setLastSync(data.synced ?? { syncedAt: data.syncedAt });
                 const dailyRes = await fetch('/api/marketing/daily');
                 const dailyData = await dailyRes.json();
                 if (dailyData.success) setDaily(dailyData.data || []);
@@ -142,15 +142,19 @@ export default function FacebookAds({ customers }) {
                 // Trigger sync in background REMOVED per user request
                 // syncMarketingData();
 
-                const [campRes, adsetRes, dailyRes, adsRes] = await Promise.all([
+                const [campRes, adsetRes, dailyRes, adsRes, syncStatusRes] = await Promise.all([
                     fetch('/api/marketing/campaigns'),
                     fetch('/api/marketing/adsets'),
                     fetch('/api/marketing/daily'),
                     fetch('/api/marketing/ads'),
+                    fetch('/api/marketing/sync/status'),
                 ]);
-                const [campData, adsetData, dailyData, adsData] = await Promise.all([
-                    campRes.json(), adsetRes.json(), dailyRes.json(), adsRes.json(),
+                const [campData, adsetData, dailyData, adsData, syncStatusData] = await Promise.all([
+                    campRes.json(), adsetRes.json(), dailyRes.json(), adsRes.json(), syncStatusRes.json(),
                 ]);
+                if (syncStatusData.success && syncStatusData.lastSync) {
+                    setLastSync(syncStatusData.lastSync);
+                }
 
                 if (campData.success) {
                     const sorted = (campData.data || []).sort((a, b) => {
@@ -479,8 +483,25 @@ export default function FacebookAds({ customers }) {
                         <div>
                             <h1 className="text-3xl font-black text-white tracking-tight">Facebook Ads</h1>
                             <p className="text-sm text-white/40 font-bold">
-                                Last 30 Days Performance • {campaigns.length} Campaign{campaigns.length !== 1 ? 's' : ''} Tracked • Server Auto-Sync Active
+                                Last 30 Days Performance • {campaigns.length} Campaign{campaigns.length !== 1 ? 's' : ''} Tracked
                             </p>
+                            {lastSync?.syncedAt && (() => {
+                                const d = new Date(lastSync.syncedAt);
+                                const now = new Date();
+                                const diffMin = Math.round((now - d) / 60000);
+                                const timeAgo = diffMin < 60
+                                    ? `${diffMin} นาทีที่แล้ว`
+                                    : diffMin < 1440
+                                        ? `${Math.round(diffMin / 60)} ชั่วโมงที่แล้ว`
+                                        : `${Math.round(diffMin / 1440)} วันที่แล้ว`;
+                                const thTime = d.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+                                return (
+                                    <p className="text-xs text-white/25 font-medium mt-0.5">
+                                        🔄 Sync ล่าสุด: {thTime} ({timeAgo})
+                                        {lastSync.ads ? ` • ${lastSync.ads} ads` : ''}
+                                    </p>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

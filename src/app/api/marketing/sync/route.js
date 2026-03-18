@@ -2,6 +2,9 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { uploadAdImage } from '@/lib/supabaseStorage';
+import { getRedis } from '@/lib/redis';
+
+const SYNC_STATUS_KEY = 'meta:last_sync';
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
@@ -295,16 +298,24 @@ export async function GET(request) {
             logger.info('[MarketingSync]', `Daily metrics batch ${Math.floor(i/DAILY_CHUNK)+1}/${Math.ceil(allDailyRows.length/DAILY_CHUNK)} done`);
         }
 
-        return NextResponse.json({
-            success: true,
-            synced: {
-                campaigns: fbCampaigns.length,
-                adSets: fbAdSets.length,
-                ads: adsUpdated,
-                insightErrors,
-            },
-            syncedAt: new Date().toISOString(),
-        });
+        const syncedAt = new Date().toISOString();
+        const syncSummary = {
+            campaigns: fbCampaigns.length,
+            adSets: fbAdSets.length,
+            ads: adsUpdated,
+            insightErrors,
+            syncedAt,
+        };
+
+        // Persist sync status to Redis (survives page reload)
+        try {
+            const redis = await getRedis();
+            await redis.set(SYNC_STATUS_KEY, JSON.stringify(syncSummary), 'EX', 60 * 60 * 24 * 7); // 7 days TTL
+        } catch (redisErr) {
+            logger.warn('[MarketingSync]', 'Failed to persist sync status to Redis', redisErr);
+        }
+
+        return NextResponse.json({ success: true, synced: syncSummary, syncedAt });
     } catch (error) {
         const msg = error?.message || String(error);
         if (error?.name === 'RateLimitError') {
