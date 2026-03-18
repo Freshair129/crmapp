@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, animate } from 'framer-motion';
-import { Key, Loader2, RefreshCw, Coins, GraduationCap, TrendingUp, UserMinus, Target, Megaphone, Clock, Lightbulb } from 'lucide-react';
+import { Key, Loader2, RefreshCw, Coins, GraduationCap, TrendingUp, UserMinus, Target, Megaphone, Clock, Lightbulb, Users } from 'lucide-react';
 
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
     const count = useMotionValue(0);
@@ -67,10 +67,13 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
     // Use DB count from insights API (customers prop is limited to 50 by API pagination)
     const totalCustomers = insights.totalCustomers || customers.length;
     
-    // Calculate total revenue from orders with 'closed' or 'CLOSED' status
-    const totalRevenue = orders
-        .filter(o => ['closed', 'CLOSED'].includes(o.status))
-        .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    // Use true CRM total revenue aggregated from the database API
+    // Fall back to client calculation only if API hasn't loaded
+    const totalRevenue = insights.crmTotalRevenue !== undefined 
+        ? insights.crmTotalRevenue 
+        : orders
+            .filter(o => ['closed', 'CLOSED'].includes(o.status))
+            .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     // Calculate Average Lifespan
     const now = new Date();
@@ -93,21 +96,11 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
         ? `${(avgLifespanMonths / 12).toFixed(1)} Years`
         : `${avgLifespanMonths.toFixed(1)} Months`;
 
-    // LTV = all-time ad revenue ÷ total purchases (revenue per conversion)
-    // Fallback: all-time revenue ÷ total customers
-    const avgLTV = insights.allTimePurchases > 0
-        ? Math.round(insights.allTimeRevenue / insights.allTimePurchases)
-        : totalCustomers > 0
-            ? Math.round(insights.allTimeRevenue / totalCustomers)
-            : 0;
-
-    // Churn Rate (standard): churned / total × 100
-    // Source: customers with status Inactive/Churned in DB
-    // Note: DB only 6 days old — churn will accumulate over time (30-day window standard)
-    const churnedCustomers = customers.filter(c =>
-        ['Inactive', 'Churned'].includes(c.status || c.profile?.status)
-    ).length;
-    const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
+    // LTV + Churn: use DB-accurate values from insights API
+    // (customers prop is paginated — never use it as denominator for rates)
+    const avgLTV          = insights.avgLTV ?? 0;
+    const churnRate       = insights.churnRate ?? 0;
+    const churnedCustomers = insights.churnedCustomers ?? 0;
 
     // Engagement Rate (separate metric): customers who have ever messaged
     const engagedCustomers = Math.min(insights.engagedCustomers || 0, totalCustomers);
@@ -115,7 +108,8 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
 
     const stats = [
         { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Active Students', value: insights.activeStudents || 0, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { label: 'Total Leads', value: totalCustomers, icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
         { label: 'Avg. Lifetime Value', value: avgLTV, prefix: '฿', subValue: `${insights.allTimePurchases} purchases · ${avgLifespanText}`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Engagement Rate', value: engagementRate, suffix: '%', decimals: 1, subValue: `${engagedCustomers} / ${totalCustomers} ตอบรับแล้ว`, icon: UserMinus, color: churnRate > 5 ? 'text-rose-500' : 'text-emerald-400', bg: churnRate > 5 ? 'bg-rose-500/10' : 'bg-emerald-500/10' },
         { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: Target, color: 'text-purple-500', bg: 'bg-purple-500/10' },
