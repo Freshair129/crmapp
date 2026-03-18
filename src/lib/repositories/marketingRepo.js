@@ -1,4 +1,4 @@
-// Cache-bust: 2026-03-17 15:12
+// Build-ID: 2026-03-18-0209-FINAL-FIX
 import { getPrisma } from '@/lib/db';
 import { getMarketingRangeFilter } from '../dateFilters';
 
@@ -270,3 +270,4 @@ export async function getAdsWithMetrics({ range, status }) {
         orderBy: { spend: 'desc' },
     });
 }
+

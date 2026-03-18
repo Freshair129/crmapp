@@ -1,31 +1,29 @@
-import { PrismaClient } from '../generated/prisma-client'
+import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
-function createPrismaClient(): PrismaClient {
-  const pool = new pg.Pool({ 
-    connectionString: process.env.DATABASE_URL,
-    max: 10,             // Limit connections to prevent overhead
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  })
+export function getInternalPrisma(): PrismaClient {
+  if (globalForPrisma.prisma) return globalForPrisma.prisma;
+
+  // Next.js 15 Turbopack optimization: Use Driver Adapter for 'client' engine
+  // This satisfies both Node.js and Edge/Serverless environments.
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   const adapter = new PrismaPg(pool)
   
   const client = new PrismaClient({
     adapter,
-    log: ['warn', 'error']  // query log ปิดไว้ — เปิดเมื่อ debug เท่านั้น
+    log: ['warn', 'error']
   })
 
-  return client
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client
+  }
+  
+  return client;
 }
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
 export async function getPrisma(): Promise<PrismaClient> {
-  return prisma
+  return getInternalPrisma();
 }

@@ -1,9 +1,9 @@
-import { prisma } from './prisma';
+import { getInternalPrisma } from './prisma';
 
 /**
  * Standard getPrisma singleton facade as per GEMINI.md
  * @returns {Promise<import('@prisma/client').PrismaClient>}
  */
 export async function getPrisma() {
-    return prisma;
+    return getInternalPrisma();
 }

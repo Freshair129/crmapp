@@ -9,6 +9,7 @@ export async function register() {
         const { sendLineAlert } = await import('./lib/lineService.js');
         const { logger } = await import('./lib/logger.js');
         const { sendDailySheetSummary, syncGoogleSheetTasks } = await import('./lib/googleSheetService.js');
+        const { cache } = await import('./lib/redis.js');
 
         logger.info('[Instrumentation]', 'Initializing Crons: Fatigue(09:00), ContentSummary(08:00), SheetsSync(Dynamic)');
 
@@ -46,7 +47,6 @@ export async function register() {
         // 3. Google Sheets Dynamic Sync (Check every 5 mins)
         cron.schedule('*/5 * * * *', async () => {
             try {
-                const { cache } = await import('./lib/redis.js');
                 const config = await cache.get('sheets:sync_config') || { mode: 'manual', interval: 15, lastSyncAt: null };
 
                 if (config.mode !== 'auto') return;
@@ -56,13 +56,12 @@ export async function register() {
                 const intervalMs = config.interval * 60 * 1000;
 
                 if (now - lastSync >= intervalMs) {
-                    const { syncGoogleSheetTasks } = await import('./lib/googleSheetService.js');
                     logger.info('[Instrumentation]', `Dynamic sync triggered (interval: ${config.interval}m)`);
                     await syncGoogleSheetTasks();
                     
                     // Update last sync time
                     config.lastSyncAt = new Date().toISOString();
-                    await cache.set('sheets:sync_config', config, 0);
+                    await cache.set('sheets:sync_config', config, 86400) // 24h — persists sync config across restarts;
                 }
             } catch (e) {
                 logger.error('[Instrumentation]', 'Dynamic sync error', e);

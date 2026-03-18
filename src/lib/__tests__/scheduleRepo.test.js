@@ -183,6 +183,32 @@ describe('scheduleRepo — completeSessionWithStockDeduction', () => {
         expect(logData.find(e => e.lotId === 'LOT-B').qtyDeducted).toBe(4);
     });
 
+    it('FEFO: logs remainder when lots are insufficient', async () => {
+        // qtyNeeded = 2 × 1 × 10 = 20
+        mockPrisma.courseSchedule.findUnique.mockResolvedValue(
+            makeSchedule({ confirmedStudents: 10, ingredients: [{ id: 'i1' }] })
+        );
+        mockPrisma.ingredientLot.findMany.mockResolvedValue([
+            { id: 'lot1', lotId: 'LOT-A', remainingQty: 8, expiresAt: new Date('2026-03-20') }
+        ]);
+
+        await completeSessionWithStockDeduction('s1', 10);
+
+        // lot1 exhausted (8 → 0, CONSUMED)
+        expect(mockPrisma.ingredientLot.update).toHaveBeenCalledWith({
+            where: { id: 'lot1' },
+            data: { remainingQty: 0, status: 'CONSUMED' }
+        });
+
+        const logData = mockPrisma.stockDeductionLog.createMany.mock.calls[0][0].data;
+        const ingEntries = logData.filter(e => e.ingredientId === 'i1');
+        
+        // Two entries for 'i1': 8 from lot, 12 as remainder
+        expect(ingEntries).toHaveLength(2);
+        expect(ingEntries.find(e => e.lotId === 'LOT-A').qtyDeducted).toBe(8);
+        expect(ingEntries.find(e => !e.lotId).qtyDeducted).toBe(12);
+    });
+
     // ── Final state ──────────────────────────────────────────────────
     it('marks schedule as COMPLETED and returns summary', async () => {
         mockPrisma.courseSchedule.findUnique.mockResolvedValue(makeSchedule());

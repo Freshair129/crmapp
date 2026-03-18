@@ -11,7 +11,7 @@ import {
  * GET /api/marketing/ai-review/[adId] - Individual result (with auto-refresh)
  */
 export async function GET(request, { params }) {
-    const { adId } = params;
+    const { adId } = await params;
 
     try {
         let result = await getReviewResult(adId);

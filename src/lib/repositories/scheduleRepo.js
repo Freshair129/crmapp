@@ -243,15 +243,17 @@ export async function completeSessionWithStockDeduction(id, studentCount) {
 
                 // Phase 21: FEFO deduction from registered lots
                 const lotDeductions = await fefoDeductFromLots(tx, ingredientId, totalQty);
+                const deductedFromLots = lotDeductions.reduce((sum, d) => sum + d.qtyDeducted, 0);
+                const remainder = +(totalQty - deductedFromLots).toFixed(6);
 
-                if (lotDeductions.length > 0) {
-                    // One log entry per lot used (with lotId for full traceability)
-                    for (const { lotId, qtyDeducted } of lotDeductions) {
-                        logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted, unit, studentCount: count, lotId });
-                    }
-                } else {
-                    // No lots registered — single entry without lotId (backward compat)
-                    logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted: totalQty, unit, studentCount: count });
+                // Log all lot-specific deductions
+                for (const { lotId, qtyDeducted } of lotDeductions) {
+                    logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted, unit, studentCount: count, lotId });
+                }
+
+                // If lots were insufficient or missing, log the remainder without lotId
+                if (remainder > 0.000001) {
+                    logEntries.push({ scheduleId: schedule.scheduleId, ingredientId, itemName: name, qtyDeducted: remainder, unit, studentCount: count });
                 }
             }
 
