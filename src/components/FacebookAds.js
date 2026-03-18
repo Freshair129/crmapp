@@ -10,8 +10,8 @@ import HourlyReport from './HourlyReport';
 import YearlyReport from './YearlyReport';
 import {
   AlertCircle, ShieldCheck, AlertTriangle, KeyRound, Facebook,
-  Loader2, CalendarDays, History, RefreshCw, TrendingUp, Clock,
-  CalendarRange, Calendar, Layers, Filter, X, RotateCcw, Banknote,
+  Loader2, CalendarDays, TrendingUp, Clock,
+  CalendarRange, Calendar, Layers, Filter, X, Banknote,
   ShoppingCart, Tag, MessageSquare, BarChart2, Percent, Megaphone,
   BarChart, ChevronDown, ChevronRight, ImageOff, PieChart, Ghost,
   Package, Inbox, UserCircle, Headphones
@@ -114,29 +114,23 @@ export default function FacebookAds({ customers }) {
 
 
 
-    const [deepSyncing, setDeepSyncing] = useState(false);
     const [lastSync, setLastSync] = useState(null);
 
-    const syncMarketingData = async (deep = false) => {
-        if (deep) setDeepSyncing(true);
-        else setSyncing(true);
-
+    const syncMarketingData = async () => {
+        setSyncing(true);
         try {
-            const months = deep ? 37 : 3;
-            const res = await fetch(`/api/marketing/sync?months=${months}`);
+            const res = await fetch(`/api/marketing/sync?months=3`);
             const data = await res.json();
             if (data.success) {
                 setLastSync(new Date().toISOString());
-                // Refresh daily data after sync
                 const dailyRes = await fetch('/api/marketing/daily');
                 const dailyData = await dailyRes.json();
                 if (dailyData.success) setDaily(dailyData.data || []);
             }
         } catch (err) {
-            console.error('Sync error:', err);
+            console.error('[FacebookAds] syncMarketingData error:', err);
         } finally {
             setSyncing(false);
-            setDeepSyncing(false);
         }
     };
 
@@ -489,37 +483,6 @@ export default function FacebookAds({ customers }) {
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => syncMarketingData(true)}
-                            disabled={syncing || deepSyncing}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${deepSyncing
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 cursor-wait'
-                                : 'bg-[#C9A34E]/20 border border-[#C9A34E]/30 text-[#C9A34E] hover:bg-[#C9A34E]/30'
-                                }`}
-                            title="Sync last 37 months of data"
-                        >
-                            {deepSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarDays className="w-4 h-4" />}
-                            {deepSyncing ? 'Deep Syncing...' : 'Deep Sync (3Y)'}
-                        </button>
-                        <button
-                            onClick={() => syncMarketingData(false)}
-                            disabled={syncing || deepSyncing}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${syncing
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 cursor-wait'
-                                : 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30'
-                                }`}
-                        >
-                            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
-                            {syncing ? 'Syncing...' : 'Quick Sync'}
-                        </button>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-5 py-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all flex items-center gap-2"
-                        >
-                            <RefreshCw className="w-4 h-4" /> Refresh
-                        </button>
-                    </div>
                 </div>
 
                 {/* Dashboard Selector */}
@@ -628,27 +591,6 @@ export default function FacebookAds({ customers }) {
                             </div>
                         )}
 
-                        {!isTokenExpired && isDataStale && dashboardMode === 'daily' && (
-                            <div className="mb-8 p-6 bg-amber-500/10 border border-amber-500/30 rounded-[2rem] flex items-center justify-between">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-[#0A1A2F] shadow-lg shadow-amber-500/20">
-                                        <RotateCcw className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-amber-500 font-black text-lg tracking-tight">Data Delay Detected</h3>
-                                        <p className="text-amber-500/60 text-xs font-bold uppercase tracking-widest">Showing data for {latestDay?.date} (Thai Time {todayStr})</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => syncMarketingData()}
-                                    disabled={syncing}
-                                    className="px-6 py-3 bg-amber-500 text-[#0A1A2F] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all flex items-center gap-3"
-                                >
-                                    <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                                    {syncing ? 'Syncing...' : 'Sync Today\'s Data'}
-                                </button>
-                            </div>
-                        )}
 
                         <DataHealthHeader />
 
