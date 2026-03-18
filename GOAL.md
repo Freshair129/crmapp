@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-17 (Phase 1–13 ✅ | Phase 15 ✅ Done | Phase 16 ✅ Done | Phase 18 ✅ | Phase 19 ✅ | Phase 20 ✅)
+> Last updated: 2026-03-18 (Phase 1–13 ✅ | Phase 15 ✅ | Phase 16 ✅ | Phase 18 ✅ | Phase 19 ✅ | Phase 20 ✅ | Phase 21 ✅)
 
 ---
 
@@ -42,7 +42,7 @@
 | Phase 19 | Schema Hardening | ✅ Done | — |
 | Phase 20 | Lot ID + Class ID (Stock Batches + Cohorts) | ✅ Done | — |
 | Phase 20.5 | Bug Audit & Fix (Post-Antigravity) | ✅ Done | 6/6 |
-| Phase 21 | FEFO Deduction in completeSession + Lot Integration | 🔲 Planned | 0/? |
+| Phase 21 | FEFO Deduction in completeSession + Lot Integration | ✅ Done | 3/3 |
 | Phase 22 | Repository Layer Refactor (Marketing/Inbox) | 🔲 Planned | 0/? |
 
 ---
@@ -269,3 +269,15 @@
 | 18.2 | [Hourly Sync] 429 Retry/Backoff + Concurrency Batching (Batch Size 5) | 🤖 Antigravity | ✅ |
 | 18.3 | [Chat API] Cursor-based pagination + Null-safe display mapping | 🤖 Antigravity | ✅ |
 | 18.4 | [Redis] JSON.parse safety + _inflight watchdog timeout + Negative caching | 🤖 Antigravity | ✅ |
+
+---
+
+## ✅ Phase 21: FEFO Deduction Implementation
+> **Goal:** Refine stock deduction to ensure full audit trail (remainder logging) + Vitest verification
+> **Implemented by:** Antigravity (Senior Agent)
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 21.1 | Implement remainder logging for partial lot deductions in `scheduleRepo.js` | 🤖 Antigravity | ✅ |
+| 21.2 | Add unit test `FEFO: logs remainder when lots are insufficient` | 🤖 Antigravity | ✅ |
+| 21.3 | Verify stock audit trail completion (total master stock decrement vs log sum) | 🤖 Antigravity | ✅ |

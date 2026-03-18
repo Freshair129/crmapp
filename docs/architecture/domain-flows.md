@@ -89,7 +89,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A([New Message Event\nFB Webhook / LINE Webhook]) --> B[notificationEngine.evaluateRules\neventName, context]
+    A(["New Message Event<br/>FB Webhook / LINE Webhook"]) --> B["notificationEngine.evaluateRules<br/>eventName, context"]
 
     B --> C{Match Rules?}
     C -- No match --> D([End — no notification])
@@ -98,19 +98,19 @@ flowchart TD
     C -- tier match --> F[Rule: membershipTier = VIP]
     C -- VIP match --> G[Rule: customer.isVIP = true]
 
-    E & F & G --> H[Build notification payload\nruleId, channel, template]
+    E & F & G --> H["Build notification payload<br/>ruleId, channel, template"]
 
-    H --> I[BullMQ: add job\nqueue: notifications\nretry ≥ 5x, exp. backoff]
+    H --> I["BullMQ: add job<br/>queue: notifications<br/>retry ≥ 5x, exp. backoff"]
 
-    I --> J[notificationWorker.mjs\npull job from Redis]
+    I --> J["notificationWorker.mjs<br/>pull job from Redis"]
 
     J --> K{notification.channel}
-    K -- LINE --> L[lineService.pushMessage\nLINE_CHANNEL_ACCESS_TOKEN]
+    K -- LINE --> L["lineService.pushMessage<br/>LINE_CHANNEL_ACCESS_TOKEN"]
     K -- email --> M[future — not implemented]
 
     L --> N{Quota OK?}
     N -- circuit breaker open --> O([skip — log warning])
-    N -- OK --> P[LINE API push\n200 OK]
+    N -- OK --> P["LINE API push<br/>200 OK"]
     P --> Q([job done — BullMQ ack])
     N -- fail --> R([throw error → BullMQ retry])
 ```
@@ -121,39 +121,39 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A([GET /api/marketing/ai-review/adId]) --> B{Result in DB?\nreviewedAt < 24h?}
+    A(["GET /api/marketing/ai-review/adId"]) --> B{Result in DB?<br/>reviewedAt < 24h?}
 
     B -- fresh --> C([Return cached AdReviewResult])
 
-    B -- stale / missing --> D[adReviewRepo.runPhaseAChecks\nadId]
+    B -- stale / missing --> D["adReviewRepo.runPhaseAChecks<br/>adId"]
 
-    D --> E[(DB: Ad + AdCreative\n+ AdDailyMetric 7 days)]
+    D --> E[("(DB: Ad + AdCreative<br/>+ AdDailyMetric 7 days)")]
 
     E --> F[Run 7 Rule Checks]
-    F --> F1[CREATIVE_FATIGUE\nCTR day 1-3 vs 4-7 drop > 30%]
-    F --> F2[ROAS_NEGATIVE\nROAS < 1.0 AND spend > ฿500]
-    F --> F3[ZERO_CONVERSION\nspend > ฿1000 AND purchases = 0]
-    F --> F4[HIGH_FREQUENCY\navg daily freq > 3.5]
-    F --> F5[EMOJI_OVERLOAD\nemoji count > 7]
-    F --> F6[CAPTION_TOO_LONG\nbody.length > 500]
-    F --> F7[URGENCY_WORDS\nจำกัด/ด่วน/หมดแล้ว/รีบสมัคร]
+    F --> F1["CREATIVE_FATIGUE<br/>CTR day 1-3 vs 4-7 drop > 30%"]
+    F --> F2["ROAS_NEGATIVE<br/>ROAS < 1.0 AND spend > ฿500"]
+    F --> F3["ZERO_CONVERSION<br/>spend > ฿1000 AND purchases = 0"]
+    F --> F4["HIGH_FREQUENCY<br/>avg daily freq > 3.5"]
+    F --> F5["EMOJI_OVERLOAD<br/>emoji count > 7"]
+    F --> F6["CAPTION_TOO_LONG<br/>body.length > 500"]
+    F --> F7["URGENCY_WORDS<br/>จำกัด/ด่วน/หมดแล้ว/รีบสมัคร"]
 
-    F1 & F2 & F3 & F4 & F5 & F6 & F7 --> G[Calculate Score 0-100\nHIGH: -25 / MEDIUM: -10 / LOW: -5]
+    F1 & F2 & F3 & F4 & F5 & F6 & F7 --> G["Calculate Score 0-100<br/>HIGH: -25 / MEDIUM: -10 / LOW: -5"]
 
-    G --> H[saveReviewResult\nadReviewResult.phaseA = checks]
+    G --> H["saveReviewResult<br/>adReviewResult.phaseA = checks"]
 
     H --> I{score < 60?}
     I -- No --> J([Return Phase A result])
 
-    I -- Yes --> K[fire-and-forget\nrunPhaseBAnalysis]
+    I -- Yes --> K["fire-and-forget<br/>runPhaseBAnalysis"]
 
-    K --> L[geminiReviewService\nanalyzeAdWithGemini]
-    L --> M[buildReviewPrompt\nbody + headline + CTA\n+ failed Phase A checks]
-    M --> N[Gemini 2.0 Flash API\nresponse_mime_type: application/json]
+    K --> L["geminiReviewService<br/>analyzeAdWithGemini"]
+    L --> M["buildReviewPrompt<br/>body + headline + CTA<br/>+ failed Phase A checks"]
+    M --> N["Gemini 2.0 Flash API<br/>response_mime_type: application/json"]
     N --> O{Parse + Validate JSON}
     O -- invalid / timeout --> P([return null — Phase A still returned])
-    O -- valid --> Q[phaseBResult:\ncreativeScore, policyRisk,\naudioenceFit, rewriteSuggestion TH,\nsummary TH]
-    Q --> R[update AdReviewResult.phaseB\nlatest record by id]
+    O -- valid --> Q["phaseBResult:<br/>creativeScore, policyRisk,<br/>audienceFit, rewriteSuggestion TH,<br/>summary TH"]
+    Q --> R["update AdReviewResult.phaseB<br/>latest record by id"]
     R --> S([Employee sees full AI report])
 ```
 
@@ -169,6 +169,7 @@ sequenceDiagram
     participant API as /api/marketing/chat/message-sender
     participant AR  as agentSyncRepo.js<br/>processAgentAttribution()
     participant DB  as PostgreSQL
+
 
     Note over PW,BS: Mode 1: Sidebar scroll / Mode 2: --mode=db (pull conv IDs from DB)
 
@@ -208,28 +209,28 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A([POST /api/schedules/id/complete\n{ studentCount }]) --> B[scheduleRepo\ncompleteSessionWithStockDeduction]
+    A(["POST /api/schedules/id/complete<br/>{ studentCount }"]) --> B["scheduleRepo<br/>completeSessionWithStockDeduction"]
 
-    B --> C[(DB: CourseSchedule\n→ Product → CourseBOM\n→ RecipeIngredient + RecipeEquipment)]
+    B --> C[("(DB: CourseSchedule<br/>→ Product → CourseBOM<br/>→ RecipeIngredient + RecipeEquipment)")]
 
-    C --> D{For each ingredient\nin recipe BOM}
+    C --> D{"For each ingredient<br/>in recipe BOM"}
 
-    D --> E[qtyNeeded = RecipeIngredient.qty × studentCount]
-    E --> F[(DB: IngredientLot\nstatus=ACTIVE\norderBy expiresAt ASC\nFEFO — First Expired First Out)]
+    D --> E["qtyNeeded = RecipeIngredient.qty × studentCount"]
+    E --> F[("(DB: IngredientLot<br/>status=ACTIVE<br/>orderBy expiresAt ASC<br/>FEFO — First Expired First Out)")]
 
     F --> G{remaining > 0?}
-    G -- yes --> H[deduct from lot\nremainingQty -= deduct\nupdate lot status\nCONSUMED if remainingQty = 0]
-    H --> I[StockDeductionLog\nwrite: lotId, qtyDeducted]
+    G -- yes --> H["deduct from lot<br/>remainingQty -= deduct<br/>update lot status<br/>CONSUMED if remainingQty = 0"]
+    H --> I["StockDeductionLog<br/>write: lotId, qtyDeducted"]
     I --> G
 
-    G -- no more lots --> J[Ingredient.currentStock -= totalDeducted\nDB update]
+    G -- no more lots --> J["Ingredient.currentStock -= totalDeducted<br/>DB update"]
 
-    D --> K{For each equipment\nin RecipeEquipment}
-    K --> L[qtyRequired per session\nNOT multiplied by studentCount]
-    L --> M[Ingredient.currentStock -= qtyRequired\nno lot tracking for equipment]
+    D --> K{For each equipment<br/>in RecipeEquipment}
+    K --> L["qtyRequired per session<br/>NOT multiplied by studentCount"]
+    L --> M["Ingredient.currentStock -= qtyRequired<br/>no lot tracking for equipment"]
 
-    J & M --> N[prisma.$transaction\nall-or-nothing commit]
-    N --> O([CourseSchedule.status = COMPLETED\nreturn deduction summary])
+    J & M --> N["prisma.$transaction<br/>all-or-nothing commit"]
+    N --> O(["CourseSchedule.status = COMPLETED<br/>return deduction summary"])
 ```
 
 ---
@@ -245,16 +246,16 @@ flowchart LR
     end
 
     subgraph Redis getOrSet Pattern
-        R[(Redis\nioredis docker\nredis:7-alpine :6379)]
+        R[("Redis<br/>ioredis docker<br/>redis:7-alpine :6379")]
     end
 
     subgraph PostgreSQL
-        DB[(Supabase\nPostgreSQL)]
+        DB[("Supabase<br/>PostgreSQL")]
     end
 
-    A -->|key: insights:TIMEFRAME\nTTL: 3600s| R
-    B -->|key: inbox:list:PAGE\nTTL: 60s| R
-    C -->|key: analytics:team:DATE\nTTL: 3600s| R
+    A -->|"key: insights:TIMEFRAME<br/>TTL: 3600s"| R
+    B -->|"key: inbox:list:PAGE<br/>TTL: 60s"| R
+    C -->|"key: analytics:team:DATE<br/>TTL: 3600s"| R
 
     R -->|MISS: query| DB
     DB -->|write-through| R

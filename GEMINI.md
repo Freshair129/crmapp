@@ -16,7 +16,8 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.18.0` | Production Hardening & API Optimization | ✅ released |
 | `v0.19.0` | Schema Hardening | ✅ released |
 | `v0.20.0` | Lot ID + Class ID (Stock Batches + Cohorts) | ✅ released |
-| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor | ✅ released ← HEAD |
+| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor | ✅ released |
+| `v0.22.0` | FEFO Deduction Refinement | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
@@ -133,8 +134,8 @@ Phase 18:    [DONE]    Production Hardening & API Optimization
 Phase 19:    [DONE]    Schema Hardening
 Phase 20:    [DONE]    Lot ID + Class ID
 Phase 20.5:  [DONE]    Bug Audit & Fix (6 bugs — crash/wrong data/stub)
-Phase 17:    [DONE]    Repository Layer Refactor (inboxRepo + marketingRepo)
-Phase 21:    [NEXT]    FEFO Deduction in completeSessionWithStockDeduction
+Phase 21:    [DONE]    FEFO Deduction in completeSessionWithStockDeduction
+Phase 22:    [NEXT]    Repository Layer Refactor (Marketing/Inbox)
 ```
 
 ## 📋 Changelog System (รู้ไว้ — ไม่ต้อง implement)

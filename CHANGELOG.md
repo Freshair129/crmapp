@@ -1,98 +1,64 @@
-# Changelog — V School CRM v2
-
-Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+**LATEST:** CL-20260318-001 | v0.22.0 | 2026-03-18
 
 ---
 
-## [v0.21.0] — 2026-03-17
+## 📋 Index (older entries)
 
-### Phase 20.5 — Post-Antigravity Bug Audit & Fix
+| ID | Name | Version | Date | Severity | Tags |
+|---|---|---|---|---|---|
+| CL-20260317-002 | Bug Audit + Repo Refactor | v0.21.0 | 2026-03-17 | PATCH | #bugfix #repository |
+| CL-20260316-001 | Lot ID + Class ID | v0.20.0 | 2026-03-16 | MINOR | #schema #kitchen |
+| CL-20260315-001 | Schema Hardening | v0.19.0 | 2026-03-15 | PATCH | #schema #prisma |
+
+---
+
+## 📝 Recent (last 5 — full content)
+
+### [CL-20260318-001] v0.22.0 — FEFO Stock Deduction Refinement
+**Date:** 2026-03-18 | **Severity:** MINOR | **Tags:** #kitchen #repository #bugfix
+
+Refined the FEFO deduction logic in `scheduleRepo.js` to ensure the "remainder" portion is correctly logged in `StockDeductionLog` when registered lots are insufficient. This ensures the total stock decrement on the `Ingredient` table always matches the sum of audit log entries.
+
+- **Deduction Split**: Correctly handles partial lot deductions by creating separate log entries for each lot plus a remainder entry.
+- **Traceability**: Every stock deduction is now fully traceable back to a source lot or identified as unassigned.
+- **Precision**: Applied `toFixed(6)` to prevent floating point errors during the deduction loop.
+
+---
+
+### [CL-20260317-002] v0.21.0 — Bug Audit + Repo Refactor
+**Date:** 2026-03-17 | **Severity:** PATCH | **Tags:** #bugfix #repository
+
+Phase 20.5 Bug Audit & Fix + Phase 17 Repository Refactor.
 
 #### Critical Fixes
-- **C1** `src/app/api/inbox/conversations/route.js` — เพิ่ม `await getPrisma()` ที่หายไป → แก้ Runtime crash ของ Inbox
-- **C2** `src/components/PremiumPOS.js` — แทนที่ FontAwesome CDN icons ด้วย Lucide (ADR-031 compliance)
+- **C1** `src/app/api/inbox/conversations/route.js` — เพิ่ม `await getPrisma()` ที่หายไป
+- **C2** `src/components/PremiumPOS.js` — แทนที่ FontAwesome CDN icons ด้วย Lucide
 - **C3** `src/components/PremiumPOS.js` — เปลี่ยน customer lookup query param `?phone=` → `?search=`
 
-#### Wrong Data Fixes
-- **D1** `src/app/api/marketing/insights/route.js` — แก้ reach calculation: `acc.impressions` → `acc.reach` ใน reduce
-- **D2** `src/components/Analytics.js` — แก้ timeframe mapping: `'lifetime'` → `'all_time'` ที่ API รองรับ
-
-#### Stub Fixes
-- **S1** `src/app/api/analytics/team/route.js` — แก้ marketingRevenue/Purchases/Leads ที่ hardcode 0 → aggregate จาก `AdDailyMetric` จริง
-- **S2** `src/app/api/marketing/sheets/sync/route.js` — แก้ cache TTL จาก 0 → 3600
-
-#### Performance & Reliability
-- `src/app/api/marketing/sync/route.js` — Parallel ad upserts (Promise.all chunks of 25) + bulk daily metrics ($transaction createMany+updateMany) → ลดเวลา sync จาก ~12 นาที → ~20 วินาที สำหรับ 1 เดือน
-- `src/app/api/marketing/sync/route.js` — RateLimitError fail-fast (codes 4/17/32/613) → HTTP 429 + retryAfter:900 ทันที แทนที่จะรอ 15+ นาที
-- `src/components/LoginPage.js` — `result?.ok` → force `window.location.href = '/'` แก้ session polling race condition
-
-#### Cleanup
-- `src/app/api/sheets/sync-master-data/route.js` — ลบ `upsertBOM` import + เพิ่ม deprecation warning แทน BOM sync (CourseBOM ถูก drop ใน Phase 20)
-- `src/lib/__tests__/syncMasterData.test.js` — อัปเดต test ให้ตรง: ลบ upsertBOM mock, เพิ่ม deprecation warning assertion
-
----
-
-### Phase 17 — Repository Refactor & Cache-Busting Fix
-
 #### Repository Layer
-- **`inboxRepo.js`** (new): Centralized logic for Conversations and Messages. Implemented `getConversations`, `getConversationMessages`, and `postReply` with unified data mapping.
-- **`marketingRepo.js`** (updated): Moved bottom-up aggregation logic (`getCampaignsWithAggregatedMetrics`, `getAdSetsWithAggregatedMetrics`, `getAdsWithMetrics`) into the repository. Deleted Prisma calls from API routes.
-
-#### Centralized Utilities & The "Turbopack Renaming" Fix
-- Created **`src/lib/dateFilters.js`** (formerly `timeframes.js`).
-- **Reasoning for consecutive fixes**: Next.js 15 Turbopack exhibited a "Stale Cache" issue where it refused to recognize new exports in existing files (Catch-22: code was correct on disk but bundler memory was old).
-- **Resolution**:
-  1. Renamed `timeframes.js` -> `dateFilters.js`.
-  2. Renamed `getRangeFilter` -> `getMarketingRangeFilter`.
-  3. Forced a complete identifier re-scan world-wide.
-- Updated all remaining references in `TeamKPI.js` and all Analytics routes (`executive`, `admin-performance`, `team`).
-
-#### Testing
-- `src/lib/__tests__/inboxRepo.test.js`: Added unit tests for new inbox methods.
-- `src/lib/__tests__/marketingAggregator.test.js`: Updated to test repository-level aggregation logic.
+- **`inboxRepo.js`** (new): Centralized logic for Conversations and Messages.
+- **`marketingRepo.js`** (updated): Moved aggregation logic into the repository.
 
 ---
 
-## [v0.20.0] — 2026-03-16
+### [CL-20260316-001] v0.20.0 — Stock Lot Tracking + Course Class ID
+**Date:** 2026-03-16 | **Severity:** MINOR | **Tags:** #schema #kitchen
 
-### Phase 20 — Stock Lot Tracking + Course Class ID
-
-#### Schema
-- `IngredientLot` (new model): tracks stock batches with `lotId` (LOT-YYYYMMDD-XXX), `receivedQty`, `remainingQty`, `expiresAt`, `status` (ACTIVE/CONSUMED/EXPIRED/RECALLED), optional link to `PurchaseRequest`
-- `CourseSchedule`: + `classId String?` — cohort ID (CLS-YYYYMM-XXX) for grouping multi-day course sessions
-- `StockDeductionLog`: + `lotId String?` — optional human-readable lot reference for audit trail
-- `Ingredient`: + `lots IngredientLot[]` back-relation
-- `PurchaseRequest`: + `lots IngredientLot[]` back-relation
-
-#### Repository
-- `kitchenRepo.js`: + `generateLotId()`, `createLot()`, `getLotsByIngredient()`, `getAllLots({ status, ingredientId })`, `getExpiringLots(daysAhead)`, `updateLotStatus(id, status)`
-- `scheduleRepo.js`: + `generateClassId()`, `getSchedulesByClass(classId)`, `createSchedule` now accepts `classId`
-
-#### API
-- `GET|POST /api/kitchen/lots` — lot list (filterable by status/ingredientId/expiring window) + create new lot
-- `GET|PATCH /api/kitchen/lots/[id]` — single lot detail + update status/remainingQty
-
-#### Standards
-- `id_standards.yaml`: added `LOT-[YYYYMMDD]-[SERIAL]` (daily scope) and `CLS-[YYYYMM]-[SERIAL]` (monthly scope)
+- `IngredientLot` (new model): tracks stock batches with expiry tracking.
+- `CourseSchedule`: + `classId` for cohort grouping.
 
 ---
 
-## [v0.19.0] — 2026-03-16
+### [CL-20260315-001] v0.19.0 — Schema Hardening + Audit Trail
+**Date:** 2026-03-15 | **Severity:** PATCH | **Tags:** #schema #prisma
 
-### Phase 19 — Schema Hardening + Audit Trail
-
-- `CourseMenu`: `@@unique` now includes `dayNumber` — allows same recipe on Day1 + Day2 of multi-day course
-- `RecipeIngredient`: + `conversionFactor Float @default(1)` — enables unit conversion between recipe unit and ingredient master unit
-- `StockDeductionLog` (new model): append-only audit log of every stock deduction — `scheduleId`, `ingredientId`, `equipmentId`, `itemName` (snapshot), `qtyDeducted`, `unit`, `studentCount`
-- `scheduleRepo.js`: `completeSessionWithStockDeduction` now applies `conversionFactor` + writes `StockDeductionLog` entries inside the same `prisma.$transaction`
-- `redis.js`: `NULL_SENTINEL = '__NULL__'` — distinguishes negative cache hit from cache miss; `getOrSet` stores sentinel on fetcher failure
+- `RecipeIngredient`: + `conversionFactor`.
+- `StockDeductionLog` (new model): append-only audit log of every stock deduction.
 
 ---
 
-## [v0.18.0] — 2026-03-16
-
-### Phase 18 — Production Hardening & API Optimization (by Antigravity)
+### [CL-20260314-001] v0.18.0 — Production Hardening & API Optimization
+**Date:** 2026-03-16 | **Severity:** PATCH | **Tags:** #performance #reliability
 
 #### Infrastructure & Reliability
 - **`src/app/api/webhooks/facebook/route.js`**: Fixed race condition in Customer creation using atomic `try-catch` with Prisma `P2002` (Unique constraint) recovery. Moved hardcoded Page IDs to `KNOWN_PAGE_IDS` env-based array.
@@ -105,6 +71,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 #### Null Safety & UX
 - **Chat Conversations**: Implemented null-safe Display Name mapping (firstName > facebookName > participantId) and safe message snippet slicing to prevent 500 errors on incomplete data.
 - **Token Expiry**: Added proactive detection of `OAuthException` (code 190) in hourly sync, returning 401 early to prompt env-var renewal.
+
+---
 
 ## [v0.16.0] — 2026-03-15
 

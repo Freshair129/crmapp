@@ -28,6 +28,25 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-18 18:45] Antigravity — Phase 21 (FEFO Deduction Refinement) COMPLETE
+- **สิ่งที่ทำ**:
+    - แก้ไข logic ใน `completeSessionWithStockDeduction` (scheduleRepo.js) ให้คำนวณ "remainder" (ยอดค้างที่ไม่อยู่ใน Lot ไหนเลย) และเขียนลง `StockDeductionLog` แยกต่างหาก เพื่อให้ Audit Trail ครบถ้วน (Phase 21 bug fix)
+    - เพิ่ม unit test ใน `scheduleRepo.test.js` เพื่อ verify logic remainder logging
+    - ปรับปรุง `CHANGELOG.md` ให้เป็นรูปแบบ Sliding Window v2 (ADR-038 alignment)
+    - สร้าง `changelog/CL-20260318-001.md` เป็น full detail
+- **ไฟล์ที่เปลี่ยน**:
+    - `src/lib/repositories/scheduleRepo.js`
+    - `src/lib/__tests__/scheduleRepo.test.js`
+    - `CHANGELOG.md`
+    - `GOAL.md`
+    - `MEMORY.md`
+    - `changelog/CL-20260318-001.md` (new)
+- **Breaking Changes**: ไม่มี
+- **ต้อง review**:
+    - ความแม่นยำของ remainder logging เมื่อ ingredient ไม่มี Lot เลย (ปัจจุบันจะสร้าง Log entry เดียวที่มี `lotId: null` ซึ่งถูกต้องตาม design)
+- **ทำต่อ**:
+    - Phase 22 หรือ task ถัดไปตาม roadmap
+
 ### [2026-03-15 16:00] Claude — Phase 15a/b/c Implementation
 
 - **สิ่งที่ทำ**:
