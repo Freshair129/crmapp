@@ -3,6 +3,7 @@
 ### 📗 Technical Infrastructure (arc42/C4 Model)
 The Single Source of Truth for system architecture, data flow, and technical decisions.
 👉 [**Read the Architecture Documentation**](./architecture/arc42-main.md)
+👉 [**Domain Data Flow Diagrams**](./architecture/domain-flows.md) — Inbox · Marketing Sync · Notifications · Ad Review · Agent Attribution · Kitchen Stock
 👉 [**ID & Naming Standards**](./id_standards.yaml)
 
 ---
