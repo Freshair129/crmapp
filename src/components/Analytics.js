@@ -1,18 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import BusinessIntelligence from './BusinessIntelligence';
 import {
     Lightbulb, Wand2, AreaChart, ArrowUp, Clock, UserMinus, Phone,
     CheckSquare, CalendarDays, Users2, Banknote, CalendarCheck, BarChart,
     Trees, Radio, Package, ImageOff, Trophy, Tags, Search, X, Pencil,
-    Trash2, ChessKnight, PieChart, Users, Coins, Filter, Bell, DollarSign,
+    Trash2, PieChart, Users, Coins, Filter, Bell, DollarSign,
     Brain, UserCog, Network
 } from 'lucide-react';
 
 export default function Analytics({ customers, products }) {
     const [rankingPeriod, setRankingPeriod] = useState('month');
-    const [activeTab, setActiveTab] = useState('strategic');
+    const [activeTab, setActiveTab] = useState('market');
     const [marketingData, setMarketingData] = useState(null);
     const [adMapping, setAdMapping] = useState({ campaign_mappings: [], ad_mappings: [] });
     const [isLoadingMapping, setIsLoadingMapping] = useState(false);
@@ -766,7 +765,6 @@ export default function Analytics({ customers, products }) {
                 {/* Tab Navigation */}
                 <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
                     {[
-                        { id: 'strategic', label: 'Strategic Advisor', Icon: ChessKnight },
                         { id: 'market', label: 'Market & Sales', Icon: PieChart },
                         { id: 'customer', label: 'Customer & CLV', Icon: Users },
                         { id: 'financial', label: 'Financial Overview', Icon: Coins },
@@ -793,10 +791,7 @@ export default function Analytics({ customers, products }) {
                 </div>
             </div>
 
-            {/* TAB 0: Strategic Advisor (New) */}
-            {activeTab === 'strategic' && <BusinessIntelligence />}
-
-            {/* TAB 1: Market & Sales (Existing ABC & Best Sellers) */}
+            {/* TAB: Market & Sales */}
             {activeTab === 'market' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     {/* Main Analytics (8 Units) */}

@@ -22,8 +22,7 @@ import {
     Phone 
 } from 'lucide-react';
 import IntelligencePanel from './IntelligencePanel';
-import InventoryPanel from './InventoryPanel';
-import Timeline from './Timeline';
+
 
 export default function CustomerCard({ customer, customers, onSelectCustomer, currentUser, onUpdateInventory, onGoToChat }) {
     const [searchTerm, setSearchTerm] = useState('');
@@ -455,30 +454,6 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
 
                 <div className="lg:col-span-9 space-y-6">
                     <IntelligencePanel intel={intel} profile={profile} />
-                    <InventoryPanel
-                        inventory={inventory}
-                        searchTerm={searchTerm}
-                        currentUser={currentUser}
-                        onUpdateInventory={(newInventory, redeemedItem) => {
-                            let updatedCustomer = { ...customer, inventory: newInventory };
-                            if (redeemedItem) {
-                                const logEntry = {
-                                    id: `RED-${Date.now()}`,
-                                    date: new Date().toISOString(),
-                                    type: 'REDEEM',
-                                    summary: `Redeemed ${redeemedItem.type}: ${redeemedItem.name}`,
-                                    details: {
-                                        item_id: redeemedItem.coupon_id || redeemedItem.course_id || redeemedItem.bundle_id,
-                                        name: redeemedItem.name,
-                                        timestamp: new Date().toLocaleTimeString()
-                                    }
-                                };
-                                updatedCustomer.timeline = [logEntry, ...(customer.timeline || [])];
-                            }
-                            onUpdateInventory(updatedCustomer);
-                        }}
-                    />
-                    <Timeline timeline={timeline} />
                 </div>
             </div>
 

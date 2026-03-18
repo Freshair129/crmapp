@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import AIAnalytics from './AIAnalytics';
 import AdVisualReport from './AdVisualReport';
 import MonthlyPerformance from './MonthlyPerformance';
 import DailyReport from './DailyReport';
@@ -16,7 +15,6 @@ import {
   BarChart, ChevronDown, ChevronRight, ImageOff, PieChart, Ghost,
   Package, Inbox, UserCircle, Headphones
 } from 'lucide-react';
-import ActiveAdsDashboard from './ActiveAdsDashboard';
 
 export default function FacebookAds({ customers }) {
     const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
@@ -586,8 +584,6 @@ export default function FacebookAds({ customers }) {
                     <HourlyReport />
                 ) : dashboardMode === 'weekly_report' ? (
                     <WeeklyReport dailyData={daily} />
-                ) : dashboardMode === 'active_ads' ? (
-                    <ActiveAdsDashboard dailyData={daily} />
                 ) : dashboardMode === 'daily_report' ? (
                     <DailyReport dailyData={daily} />
                 ) : dashboardMode === 'monthly' ? (
@@ -1023,8 +1019,6 @@ export default function FacebookAds({ customers }) {
                 )
                 }
 
-                {/* AI Marketing Intelligence */}
-                <AIAnalytics campaigns={campaigns} />
             </div>
             {/* Purchase Breakdown Modal */}
             {purchaseModalOpen && (
