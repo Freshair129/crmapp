@@ -101,19 +101,23 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
             ? Math.round(insights.allTimeRevenue / totalCustomers)
             : 0;
 
-    // Churn heuristic: customers who never engaged (no conversation) = cold leads
-    // Real churn (status-based) + never-engaged as proxy
-    const churnedCustomers = customers.filter(c => (c.status || c.profile?.status) === 'Inactive' || (c.status || c.profile?.status) === 'Churned').length;
-    const neverEngaged = totalCustomers - (insights.engagedCustomers || 0);
-    const churnRate = totalCustomers > 0
-        ? ((churnedCustomers + neverEngaged) / totalCustomers) * 100
-        : 0;
+    // Churn Rate (standard): churned / total × 100
+    // Source: customers with status Inactive/Churned in DB
+    // Note: DB only 6 days old — churn will accumulate over time (30-day window standard)
+    const churnedCustomers = customers.filter(c =>
+        ['Inactive', 'Churned'].includes(c.status || c.profile?.status)
+    ).length;
+    const churnRate = totalCustomers > 0 ? (churnedCustomers / totalCustomers) * 100 : 0;
+
+    // Engagement Rate (separate metric): customers who have ever messaged
+    const engagedCustomers = Math.min(insights.engagedCustomers || 0, totalCustomers);
+    const engagementRate = totalCustomers > 0 ? (engagedCustomers / totalCustomers) * 100 : 0;
 
     const stats = [
         { label: 'Total Revenue', value: totalRevenue, prefix: '฿', icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         { label: 'Active Students', value: totalCustomers - churnedCustomers, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
         { label: 'Avg. Lifetime Value', value: avgLTV, prefix: '฿', subValue: `${insights.allTimePurchases} purchases · ${avgLifespanText}`, icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Churn Rate', value: churnRate, suffix: '%', decimals: 1, subValue: `${neverEngaged} ไม่เคยตอบรับ`, icon: UserMinus, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { label: 'Engagement Rate', value: engagementRate, suffix: '%', decimals: 1, subValue: `${engagedCustomers} / ${totalCustomers} ตอบรับแล้ว`, icon: UserMinus, color: churnRate > 5 ? 'text-rose-500' : 'text-emerald-400', bg: churnRate > 5 ? 'bg-rose-500/10' : 'bg-emerald-500/10' },
         { label: 'Marketing Spend (30d)', value: Number(insights.spend || 0), prefix: '฿', icon: Target, color: 'text-purple-500', bg: 'bg-purple-500/10' },
         { label: 'Marketing Reach', value: Number(insights.reach || 0), icon: Megaphone, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
