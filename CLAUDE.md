@@ -34,7 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.25.0` | Production Hardening Complete — RBAC + Security + Build (Phase 14) | ✅ released |
 | `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 + 186 tests (Phase 26) | ✅ released |
 | `v0.27.0` | Upstash Migration — BullMQ→QStash, ioredis→Upstash, zero local infra (Phase 27) | ✅ released |
-| `v1.0.0` | Production Ready — Docs Hardening + ADR-041 (Phase 28) | ✅ released ← HEAD |
+| `v1.0.0` | Production Ready — Docs Hardening + ADR-041 (Phase 28) | ✅ released |
+| `v1.1.0` | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`

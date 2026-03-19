@@ -1,6 +1,6 @@
 # V School CRM — Entity Relationship Diagram (ERD)
 
-**อัปเดต:** 2026-03-19 (v0.27.0 — Phase 20: IngredientLot · Phase 26: firstTouchAdId · Phase 27: Upstash)
+**อัปเดต:** 2026-03-19 (v1.1.0 — ADR-042: Product ID gen from Sheet · Phase 27: Upstash · Phase 26: Slip OCR)
 **อ้างอิง:** `prisma/schema.prisma` (46 models)
 **Standard:** Mermaid erDiagram
 
@@ -624,7 +624,7 @@ ORDER BY total_deducted DESC;
 
 ---
 
-## Domain Summary (อัพเดท v0.27.0)
+## Domain Summary (อัพเดท v1.1.0)
 
 | Domain | Models | หมายเหตุ |
 |---|---|---|

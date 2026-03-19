@@ -148,10 +148,10 @@ NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
 ### 3. Current Version Status
 | Version | Milestone | Status |
 |---|---|---|
-| v0.25.0 | Production Hardening — RBAC + Security + 186 Tests | ✅ released |
 | v0.26.0 | Chat-First Revenue — Slip OCR + REQ-07 firstTouchAdId | ✅ released |
-| v0.27.0 | Upstash Migration — QStash + Upstash Redis (zero local infra) | ✅ HEAD |
-| v1.0.0 | Production Ready | 🔲 planned |
+| v0.27.0 | Upstash Migration — QStash + Upstash Redis (zero local infra) | ✅ released |
+| v1.0.0 | Production Ready — Docs Hardening + ADR-041 | ✅ released |
+| v1.1.0 | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ HEAD |
 
 ### 4. Key Non-Functional Requirements
 | NFR | Requirement |
@@ -182,10 +182,12 @@ Major technical choices and their rationale.
 | **033** | Unified Inbox | FB + LINE inbox รวม, pagination, right customer card |
 | **034** | Redis Cache | ioredis→Upstash REST, getOrSet pattern, TTL, negative cache |
 | **035** | Remove FB Login | CredentialsOnly auth (FB hides admin PSID) |
-| **036** | Google Sheets SSOT | Master data sync via CSV URL |
+| **036** | Google Sheets SSOT | Master data sync via CSV URL — amended by ADR-042 |
 | **037** | Product-as-Course-Catalog | Reuse Product model, certLevel 30/111/201h |
 | **039** | Chat-First Revenue Attribution | Slip OCR → Transaction → ROAS จริง (Phase 26) |
 | **040** | Upstash Infrastructure | BullMQ→QStash, ioredis→Upstash Redis, zero local infra (Phase 27) |
+| **041** | v1.0.0 Production Launch | Declaration of readiness, evidence of 17 modules + 6 NFRs |
+| **042** | Product ID Generation | Sheet → auto-gen TVS-[CAT]-[PACK]-[SUB]-[SERIAL], column spec |
 
 ### v1 Reference ADRs
 | ADR | Title | Summary |

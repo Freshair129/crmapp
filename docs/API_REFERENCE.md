@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-03-19 (v0.27.0 — Phase 20/26/27 endpoints added)
+> อัปเดตล่าสุด: 2026-03-19 (v1.1.0 — Phase 20/26/27 + ADR-042 ProductDetailModal + Sheet auto-ID)
 
 ---
 
@@ -187,6 +187,34 @@ Sync Facebook Messenger conversations → สร้าง customer profiles
 |---|---|
 | Response | `{ courses: [], packages: [], equipment: [], _source: 'cache' }` |
 | Dependencies | `getAllProducts()`, `readCacheEntry()`, `writeCacheEntry()` |
+
+---
+
+### `GET /api/products/[id]/stats`
+
+ดึง enrollment stats สำหรับสินค้าเดี่ยว — ใช้ใน POS ProductDetailModal
+
+| Field | Value |
+|---|---|
+| Path Param | `id` — UUID หรือ productId (TVS-JP-...) |
+| Response | `{ product: {...}, stats: { totalSold, pendingStudents, completedStudents, inProgressStudents } }` |
+| Auth | AGENT+ |
+| Note | `pendingStudents ≥ 5` → แสดง amber warning ใน POS modal "พิจารณาเปิดรอบใหม่" |
+
+---
+
+### `POST /api/sheets/sync-master-data`
+
+Sync master data จาก Google Sheets เข้า DB — รองรับ auto-generate productId (ADR-042)
+
+| Field | Value |
+|---|---|
+| Auth | MANAGER+ |
+| Body | `{}` (ไม่มี body — อ่าน URLs จาก env vars) |
+| Response | `{ synced: { courses: N, ingredients: N, assets: N }, errors: [] }` |
+| Env vars | `SHEET_COURSES_URL`, `SHEET_INGREDIENTS_URL`, `SHEET_ASSETS_URL` |
+| Sheet columns | ดู [ADR-042](./adr/042-product-id-generation-from-sheets.md) |
+| ID gen | `productId` ว่าง → auto-gen `TVS-{cuisineCode}-{packCode}-{subcatCode}-{SERIAL}` |
 
 ---
 
@@ -940,4 +968,4 @@ Vercel serverless endpoint รับ job จาก Upstash QStash
 
 ---
 
-> **อัปเดต:** 2026-03-19 (v0.27.0 — Phase 20 Lots, Phase 26 Payments/Slip OCR, Phase 27 QStash Worker)
+> **อัปเดต:** 2026-03-19 (v1.1.0 — Phase 20 Lots · Phase 26 Payments/Slip OCR · Phase 27 QStash · ADR-042 Product ID)

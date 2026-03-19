@@ -395,5 +395,5 @@ graph TB
 
 ---
 
-*Last updated: 2026-03-19 — v0.27.0*
+*Last updated: 2026-03-19 — v1.1.0*
 *ดูเพิ่มเติม: [overview.md](../overview.md) · [arc42-main.md](./arc42-main.md) · [ADR directory](../adr/)* · [domain-boundaries.md](./domain-boundaries.md)*

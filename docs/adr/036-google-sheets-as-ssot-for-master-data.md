@@ -81,3 +81,21 @@ GOOGLE_SHEETS_MASTER_DATA_ID=<spreadsheet_id>
 3. ย้าย edit workflow ไปที่ CRM UI
 4. ลบ sync endpoint `POST /api/sheets/sync-master-data`
 5. ปล่อยให้ Sheets เป็นแค่ export/read view
+
+---
+
+## Amendment — v1.1.0 (2026-03-19) — ADR-042
+
+**ปรับปรุงจาก ADR-042:** `productId` column ใน Courses Sheet เป็น optional แล้ว
+
+เดิม sync-master-data กำหนดให้ทุก row ต้องมี `productId` ไม่งั้น skip
+ใหม่: ถ้า `productId` ว่าง → `generateProductId()` สร้างให้อัตโนมัติตาม `TVS-[CATEGORY]-[PACK]-[SUBCAT]-[SERIAL]`
+
+เพิ่ม columns ใหม่ใน Courses Sheet:
+- `productType` — COURSE / PACKAGE / FULL_COURSE
+- `cuisineCode` — JP / TH / SP / MG / AR
+- `packCode` — 1FC / 2FC / SP
+- `subcatCode` — HO / CO / SC / DS / HC / HR / HN
+- `pkgNo`, `pkgShortName` — สำหรับ PACKAGE เท่านั้น
+
+รายละเอียดเต็มดู [ADR-042](./042-product-id-generation-from-sheets.md)

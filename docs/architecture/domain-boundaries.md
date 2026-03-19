@@ -1,7 +1,7 @@
 # Domain Boundaries & Dependency Map — V School CRM v2
 
 > **Lead Architect:** Claude
-> **Last updated:** 2026-03-19 — v0.27.0
+> **Last updated:** 2026-03-19 — v1.1.0
 > อ่านร่วมกับ [`domain-flows.md`](./domain-flows.md) · [`arc42-main.md`](./arc42-main.md)
 
 ---
@@ -108,9 +108,9 @@
 |---|---|
 | **Owns (Models)** | `Enrollment`, `EnrollmentItem`, `CourseSchedule`, `Ingredient`, `IngredientLot`, `CourseBOM`, `Recipe`, `RecipeIngredient`, `RecipeEquipment`, `Package`, `Asset`, `StockDeductionLog`, `PurchaseRequest` |
 | **Owns (Repos)** | `enrollmentRepo.js`, `kitchenRepo.js`, `scheduleRepo.js`, `recipeRepo.js`, `packageRepo.js`, `assetRepo.js`, `courseRepo.js` |
-| **Owns (Routes)** | `/api/enrollments/*`, `/api/schedules/*`, `/api/kitchen/*`, `/api/assets/*`, `/api/recipes/*`, `/api/packages/*` |
-| **Owns (UI)** | `CourseEnrollmentPanel.js`, `KitchenStockPanel.js`, `AssetPanel.js`, `ScheduleCalendar.js`, `RecipePage.js`, `PackagePage.js` |
-| **ADR** | ADR-037 (Product-as-Course-Catalog) |
+| **Owns (Routes)** | `/api/enrollments/*`, `/api/schedules/*`, `/api/kitchen/*`, `/api/assets/*`, `/api/recipes/*`, `/api/packages/*`, `/api/products/[id]/stats` |
+| **Owns (UI)** | `CourseEnrollmentPanel.js`, `KitchenStockPanel.js`, `AssetPanel.js`, `ScheduleCalendar.js`, `RecipePage.js`, `PackagePage.js`, `PremiumPOS.js` (ProductDetailModal + stats) |
+| **ADR** | ADR-037 (Product-as-Course-Catalog), ADR-042 (Product ID Generation from Sheets) |
 
 **Bounded Context:**
 - รู้จัก: Stock, Lots, BOM, Schedules, Enrollments, Assets

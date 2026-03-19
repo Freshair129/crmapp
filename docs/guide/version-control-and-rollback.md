@@ -26,7 +26,8 @@ v  MAJOR  .  PHASE  .  PATCH
 | `v0.12.0` | **UI Enhanced** | Sidebar icon, Charts, Motion, Lucide, Node 22 |
 | `v0.13.0` | **Unified Inbox** *(planned)* | รวม FB + LINE inbox |
 | `v0.14.0` | **Notification Rules** *(planned)* | Phase 13 |
-| `v1.0.0` | **Production Ready** *(planned)* | Deploy จริง, QA ผ่าน, data migration สมบูรณ์ |
+| `v1.0.0` | **Production Ready** | ✅ released — Phase 28, ADR-041 |
+| `v1.1.0` | **POS + Sheet Auto-ID** | ✅ HEAD — ProductDetailModal + ADR-042 |
 
 ### กฎการขึ้น version
 
