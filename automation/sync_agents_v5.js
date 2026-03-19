@@ -885,18 +885,29 @@ async function syncAgents() {
                                 if (page.url() === urlBefore) { settled = true; break; }
                             }
 
-                            // Double check it's not a completely empty page just in case
-                            // Note: We check if candidate OR redirected UID is in URL
+                            // Check if FB actually loaded the conversation:
+                            // Primary: URL still has selected_item_id after settling (FB keeps it for valid convs)
+                            // Fallback: DOM check with relaxed conditions
                             let isReal = false;
                             try {
-                                isReal = await page.evaluate(() => {
-                                    const main = document.querySelector('[aria-label*="Message list"]')
-                                        || document.querySelector('div[role="main"]')
-                                        || document.querySelector('[role="log"]');
-                                    if (!main) return null;
-                                    const t = (main.innerText || '').trim();
-                                    return t.length > 50 && !t.includes('Messenger User');
-                                });
+                                const finalUrlCheck = page.url();
+                                const urlHasSelectedId = finalUrlCheck.includes('selected_item_id=');
+                                const urlOnInbox = finalUrlCheck.includes('business.facebook.com') && !finalUrlCheck.includes('/login');
+
+                                if (urlOnInbox && urlHasSelectedId) {
+                                    // URL-based check passed — FB accepted the selected_item_id
+                                    isReal = true;
+                                } else if (urlOnInbox) {
+                                    // URL check inconclusive — fallback to DOM
+                                    isReal = await page.evaluate(() => {
+                                        const el = document.querySelector('[data-testid="mw_message_bubble"]')
+                                            || document.querySelector('[role="article"]')
+                                            || document.querySelector('[aria-label*="Message"]')
+                                            || document.querySelector('[role="log"]')
+                                            || document.querySelector('[aria-label*="Chat"]');
+                                        return !!el;
+                                    });
+                                }
                             } catch (ce) { /* ignore navigation error during check */ }
 
                             if (isReal) {
