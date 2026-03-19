@@ -553,31 +553,31 @@ export default function FacebookAds({ customers }) {
                         onClick={() => setDashboardMode('hourly_report')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'hourly_report' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <Clock className="w-4 h-4" /> Daily (Hourly)
+                        <Clock className="w-4 h-4" /> Hourly
                     </button>
                     <button
                         onClick={() => setDashboardMode('daily_report')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily_report' ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <CalendarDays className="w-4 h-4" /> Detailed Daily
+                        <CalendarDays className="w-4 h-4" /> Daily
                     </button>
                     <button
                         onClick={() => setDashboardMode('weekly_report')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'weekly_report' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <CalendarRange className="w-4 h-4" /> Weekly Report
+                        <CalendarRange className="w-4 h-4" /> Weekly
                     </button>
                     <button
                         onClick={() => setDashboardMode('monthly')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'monthly' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <Calendar className="w-4 h-4" /> Monthly Report
+                        <Calendar className="w-4 h-4" /> Monthly
                     </button>
                     <button
                         onClick={() => setDashboardMode('yearly')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'yearly' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-white/30 hover:text-white/60'}`}
                     >
-                        <Layers className="w-4 h-4" /> Yearly Report
+                        <Layers className="w-4 h-4" /> Yearly
                     </button>
                 </div>
 
