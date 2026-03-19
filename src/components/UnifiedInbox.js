@@ -465,8 +465,8 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                                         ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/20 rounded-tr-none'
                                                         : 'bg-white/10 text-white border border-white/5 rounded-tl-none'
                                                 }`}>
-                                                    {/* Attachment (image) */}
-                                                    {msg.hasAttachment && msg.attachmentType === 'image' && msg.attachmentUrl && (
+                                                    {/* Attachment: render image if URL exists (type may be null for FB backfilled msgs) */}
+                                                    {msg.hasAttachment && msg.attachmentUrl && (
                                                         <img
                                                             src={msg.attachmentUrl}
                                                             alt="attachment"
@@ -474,14 +474,14 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                                             onError={(e) => { e.target.style.display = 'none'; }}
                                                         />
                                                     )}
-                                                    {/* Non-image attachment with known type */}
-                                                    {msg.hasAttachment && msg.attachmentType && msg.attachmentType !== 'image' && (
+                                                    {/* Non-image attachment with known type and no URL */}
+                                                    {msg.hasAttachment && !msg.attachmentUrl && msg.attachmentType && msg.attachmentType !== 'image' && (
                                                         <div className="px-5 py-3.5 flex items-center gap-2 opacity-70">
                                                             <span className="text-xs uppercase tracking-wider">📎 {msg.attachmentType}</span>
                                                         </div>
                                                     )}
-                                                    {/* Attachment exists but type unknown (e.g. sticker, template, etc.) */}
-                                                    {msg.hasAttachment && !msg.attachmentType && !msg.text && (
+                                                    {/* Attachment exists but no URL and no type */}
+                                                    {msg.hasAttachment && !msg.attachmentUrl && !msg.attachmentType && !msg.text && (
                                                         <div className="px-5 py-3.5 flex items-center gap-1.5 opacity-50">
                                                             <span className="text-xs">📎</span>
                                                             <span className="text-[10px] uppercase tracking-wider">สื่อแนบ</span>
