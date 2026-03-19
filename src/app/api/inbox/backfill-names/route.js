@@ -18,15 +18,18 @@ export async function POST() {
     }
 
     try {
-        // Step 1: fetch participant names from FB (1-3 API calls)
+        // Step 1: fetch participant names from FB — 90 days back, up to 6 pages
+        // Only fetching `participants` (no messages) so each call is ~100ms — fits Vercel 10s
         const psidToName = {};
         let cursor = null;
+        const since = Math.floor((Date.now() - 90 * 86400000) / 1000);
 
-        for (let page = 0; page < 3; page++) {
+        for (let page = 0; page < 6; page++) {
             const url = new URL(`${GRAPH}/${PAGE_ID}/conversations`);
             url.searchParams.set('access_token', token);
             url.searchParams.set('fields', 'participants');
             url.searchParams.set('limit', '25');
+            url.searchParams.set('since', String(since));
             if (cursor) url.searchParams.set('after', cursor);
 
             const res = await fetch(url.toString());
@@ -52,30 +55,48 @@ export async function POST() {
             return NextResponse.json({ updated: 0, message: 'No participants found' });
         }
 
-        // Step 2: single DB transaction — find + update all at once
+        // Step 2: update customers + conversation participant_name in one transaction
         const prisma = await getPrisma();
         const customers = await prisma.customer.findMany({
             where: { facebookId: { in: psids }, firstName: null },
             select: { id: true, facebookId: true }
         });
 
-        if (customers.length === 0) {
+        // Also find conversations with null participant_name whose PSID we now know
+        const conversations = await prisma.conversation.findMany({
+            where: { participantId: { in: psids }, participantName: null },
+            select: { id: true, participantId: true }
+        });
+
+        if (customers.length === 0 && conversations.length === 0) {
             return NextResponse.json({ updated: 0, message: 'All customers already have names' });
         }
 
-        await prisma.$transaction(
-            customers.map(c => {
+        const ops = [
+            ...customers.map(c => {
                 const name = psidToName[c.facebookId];
                 const [firstName, ...rest] = name.trim().split(' ');
                 return prisma.customer.update({
                     where: { id: c.id },
                     data: { facebookName: name, firstName, lastName: rest.join(' ') || null }
                 });
-            })
-        );
+            }),
+            ...conversations.map(c =>
+                prisma.conversation.update({
+                    where: { id: c.id },
+                    data: { participantName: psidToName[c.participantId] }
+                })
+            )
+        ];
 
-        logger.info('[BackfillNames]', `Updated ${customers.length} customers`);
-        return NextResponse.json({ updated: customers.length, total_participants: psids.length });
+        await prisma.$transaction(ops);
+
+        logger.info('[BackfillNames]', `Updated ${customers.length} customers, ${conversations.length} conversation names`);
+        return NextResponse.json({
+            updated: customers.length,
+            conversationsUpdated: conversations.length,
+            total_participants: psids.length
+        });
     } catch (error) {
         logger.error('[BackfillNames]', 'error', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
