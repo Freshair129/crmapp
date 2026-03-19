@@ -35,6 +35,7 @@ export async function getConversations({ channel, status, search, limit = 10, pa
                         customerId: true,
                         firstName: true,
                         lastName: true,
+                        facebookName: true,
                         phonePrimary: true,
                         facebookId: true,
                         originId: true,
@@ -68,10 +69,11 @@ export async function getConversations({ channel, status, search, limit = 10, pa
             customer: c.customer ? {
                 customerId: c.customer.customerId,
                 firstName: c.customer.firstName
+                    || c.customer.facebookName?.split(' ')[0]
                     || c.participantName
                     || (c.messages[0]?.fromName && c.messages[0].fromName !== 'Admin' ? c.messages[0].fromName : null)
                     || (c.customer.facebookId ? `FB-${c.customer.facebookId.slice(-6)}` : 'ผู้ใช้ Facebook'),
-                lastName: c.customer.lastName || '',
+                lastName: c.customer.lastName || c.customer.facebookName?.split(' ').slice(1).join(' ') || '',
                 channel: (c.channel || 'facebook').toUpperCase(),
                 phonePrimary: c.customer.phonePrimary,
                 facebookId: c.customer.facebookId,
