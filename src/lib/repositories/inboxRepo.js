@@ -55,7 +55,10 @@ export async function getConversations({ channel, status, search, limit = 10, pa
                     }
                 }
             },
-            orderBy: { updatedAt: 'desc' },
+            orderBy: [
+                { lastMessageAt: { sort: 'desc', nulls: 'last' } },
+                { updatedAt: 'desc' }
+            ],
             skip,
             take: limit
         });
