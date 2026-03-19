@@ -474,17 +474,24 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                                             onError={(e) => { e.target.style.display = 'none'; }}
                                                         />
                                                     )}
-                                                    {/* Non-image attachment */}
+                                                    {/* Non-image attachment with known type */}
                                                     {msg.hasAttachment && msg.attachmentType && msg.attachmentType !== 'image' && (
                                                         <div className="px-5 py-3.5 flex items-center gap-2 opacity-70">
                                                             <span className="text-xs uppercase tracking-wider">📎 {msg.attachmentType}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Attachment exists but type unknown (e.g. sticker, template, etc.) */}
+                                                    {msg.hasAttachment && !msg.attachmentType && !msg.text && (
+                                                        <div className="px-5 py-3.5 flex items-center gap-1.5 opacity-50">
+                                                            <span className="text-xs">📎</span>
+                                                            <span className="text-[10px] uppercase tracking-wider">สื่อแนบ</span>
                                                         </div>
                                                     )}
                                                     {/* Text content */}
                                                     {msg.text && (
                                                         <div className="px-5 py-3.5">{msg.text}</div>
                                                     )}
-                                                    {/* Fallback when no text and no recognized attachment */}
+                                                    {/* Fallback: no text, no attachment */}
                                                     {!msg.text && !msg.hasAttachment && (
                                                         <div className="px-5 py-3.5 opacity-40 italic text-xs">—</div>
                                                     )}
