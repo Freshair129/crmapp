@@ -159,10 +159,11 @@ export async function getConversationMessages(conversationId, { limit = 20, page
  * @param {string} conversationId 
  * @param {object} params
  */
-export async function postReply(conversationId, { text, responderId }) {
+export async function postReply(conversationId, { text, responderId, fbMessageId }) {
     try {
         const prisma = await getPrisma();
-        const messageId = `m_${Date.now()}_${Math.random().toString(36).slice(-4)}`;
+        // Use FB message_id when available — prevents echo webhook from creating duplicate
+        const messageId = fbMessageId || `m_${Date.now()}_${Math.random().toString(36).slice(-4)}`;
         
         return await prisma.$transaction(async (tx) => {
             const message = await tx.message.create({
@@ -171,9 +172,10 @@ export async function postReply(conversationId, { text, responderId }) {
                     conversationId,
                     content: text,
                     responderId,
-                    fromId: 'system', // Consistent with current route
+                    fromId: 'system',
+                    fromName: 'Admin',
                     createdAt: new Date(),
-                    metadata: { source: 'unified-inbox' }
+                    metadata: { source: 'unified-inbox', is_echo: true }
                 }
             });
 
