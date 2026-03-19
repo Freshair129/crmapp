@@ -217,7 +217,8 @@ export default function Home() {
                     setLanguage={setLanguage}
                     theme={theme}
                     setTheme={setTheme}
-                    userName={currentUser?.firstName || 'User'}
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
                 />
 
                 {/* Demo Mode Banner */}

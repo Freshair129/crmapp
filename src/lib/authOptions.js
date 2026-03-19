@@ -55,12 +55,42 @@ export const authOptions = {
                     // Success — reset rate limit
                     await redis.del(rateLimitKey).catch(() => {});
 
+                    // ─── Login Audit Log + lastLoginAt ───────────────────────
+                    const now = new Date();
+                    await Promise.all([
+                        prisma.auditLog.create({
+                            data: {
+                                action: 'LOGIN',
+                                actor: employee.employeeId,
+                                target: employee.email,
+                                status: 'SUCCESS',
+                                details: {
+                                    role: employee.role,
+                                    firstName: employee.firstName,
+                                    lastName: employee.lastName,
+                                    loginAt: now.toISOString(),
+                                },
+                            },
+                        }),
+                        prisma.employee.update({
+                            where: { id: employee.id },
+                            data: { lastLoginAt: now },
+                        }),
+                    ]).catch(err => {
+                        // Non-blocking — login still succeeds even if audit write fails
+                        logger.error('NEXTAUTH', 'Audit log write failed', err);
+                    });
+
                     return {
                         id: employee.id,
                         employeeId: employee.employeeId,
                         name: `${employee.firstName} ${employee.lastName}`,
+                        firstName: employee.firstName,
+                        lastName: employee.lastName,
+                        nickName: employee.nickName,
                         email: employee.email,
                         role: employee.role,
+                        lastLoginAt: now.toISOString(),
                     };
                 } catch (error) {
                     logger.error('NEXTAUTH', 'Authorize error', error);
@@ -75,16 +105,24 @@ export const authOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.role = user.role;
-                token.employeeId = user.employeeId;
+                token.role        = user.role;
+                token.employeeId  = user.employeeId;
+                token.firstName   = user.firstName;
+                token.lastName    = user.lastName;
+                token.nickName    = user.nickName;
+                token.lastLoginAt = user.lastLoginAt;
             }
             return token;
         },
 
         async session({ session, token }) {
             if (session.user) {
-                session.user.role = token.role;
-                session.user.employeeId = token.employeeId;
+                session.user.role        = token.role;
+                session.user.employeeId  = token.employeeId;
+                session.user.firstName   = token.firstName;
+                session.user.lastName    = token.lastName;
+                session.user.nickName    = token.nickName;
+                session.user.lastLoginAt = token.lastLoginAt;
             }
             return session;
         }
