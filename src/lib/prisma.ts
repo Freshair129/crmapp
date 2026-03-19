@@ -17,9 +17,10 @@ export function getInternalPrisma(): PrismaClient {
     log: ['warn', 'error']
   })
 
-  // Cache singleton on globalThis for warm reuse (both dev and production)
-  globalForPrisma.prisma = client
-
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client
+  }
+  
   return client;
 }
 
