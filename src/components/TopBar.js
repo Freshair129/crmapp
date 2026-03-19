@@ -62,8 +62,14 @@ export default function TopBar({
 
     const role = currentUser?.role || 'GUEST';
     const roleInfo = ROLE_LABEL[role] || ROLE_LABEL.GUEST;
-    const displayName = currentUser?.nickName || currentUser?.firstName || 'User';
-    const fullName = [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ') || 'User';
+    // Fallback chain: nickName → firstName → first word of name → 'User'
+    const displayName = currentUser?.nickName
+        || currentUser?.firstName
+        || currentUser?.name?.split(' ')[0]
+        || 'User';
+    const fullName = (currentUser?.firstName && currentUser?.lastName)
+        ? `${currentUser.firstName} ${currentUser.lastName}`
+        : currentUser?.name || 'User';
 
     return (
         <header className="sticky top-0 z-[90] w-full bg-[#0A1A2F]/80 backdrop-blur-xl border-b border-white/5 py-4 px-8 flex items-center justify-between transition-all">
