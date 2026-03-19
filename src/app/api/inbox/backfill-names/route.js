@@ -24,11 +24,11 @@ export async function POST() {
         let cursor = null;
         const since = Math.floor((Date.now() - 90 * 86400000) / 1000);
 
-        for (let page = 0; page < 6; page++) {
+        for (let page = 0; page < 3; page++) {
             const url = new URL(`${GRAPH}/${PAGE_ID}/conversations`);
             url.searchParams.set('access_token', token);
             url.searchParams.set('fields', 'participants');
-            url.searchParams.set('limit', '25');
+            url.searchParams.set('limit', '50');
             url.searchParams.set('since', String(since));
             if (cursor) url.searchParams.set('after', cursor);
 
