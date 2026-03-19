@@ -407,8 +407,8 @@ export default function PremiumPOS({ language = 'TH' }) {
                     ))}
                 </div>
 
-                {/* Grid — content-start + auto rows keeps cards natural height while scrolling */}
-                <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 content-start custom-scrollbar" style={{ alignItems: 'start' }}>
+                {/* Product Grid — POS-optimised compact cards */}
+                <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 content-start custom-scrollbar">
                     {/* Empty / error state */}
                     {filteredProducts.length === 0 && (
                         <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4 text-center">
@@ -437,50 +437,56 @@ export default function PremiumPOS({ language = 'TH' }) {
                             )}
                         </div>
                     )}
-                    {filteredProducts.map(product => (
-                        <div
-                            key={product.id}
-                            onClick={() => addItem(product)}
-                            className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/40 hover:bg-white/8 rounded-2xl p-3 transition-all duration-300 cursor-pointer relative overflow-hidden active:scale-95 flex flex-col"
-                        >
-                            {/* Image area — aspect-square keeps it perfectly square */}
-                            <div className="aspect-square w-full rounded-xl mb-3 overflow-hidden relative flex-shrink-0">
-                                {product.image ? (
-                                    <img
-                                        src={product.image}
-                                        className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                                        alt={product.name}
-                                        onError={(e) => {
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                        }}
-                                    />
-                                ) : null}
-                                {/* Inline placeholder — shown when no image or img error */}
-                                <div className={`absolute inset-0 ${product.image ? 'hidden' : 'flex'} flex-col items-center justify-center`}>
-                                    <ProductPlaceholder category={product.category} name={product.name} />
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-                                {/* Category badge */}
-                                <div className="absolute top-2 left-2 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-lg text-[8px] font-black text-[#C9A34E] uppercase tracking-wider border border-white/10">
-                                    {product.category || 'คอร์ส'}
-                                </div>
-                            </div>
-
-                            {/* Info area */}
-                            <div className="flex flex-col gap-2">
-                                <h4 className="font-bold text-[#F8F8F6] text-xs leading-snug line-clamp-2 min-h-[2.5rem]">
-                                    {product.name}
-                                </h4>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[#C9A34E] font-black text-base">฿{Number(product.price).toLocaleString()}</span>
-                                    <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-[#C9A34E] transition-all duration-200">
-                                        <Plus size={12} />
+                    {filteredProducts.map(product => {
+                        const emoji = getEmoji(product.category, product.name);
+                        const inCart = cart.find(i => i.id === product.id);
+                        return (
+                            <div
+                                key={product.id}
+                                onClick={() => addItem(product)}
+                                className={`group cursor-pointer flex flex-col gap-3 rounded-2xl p-4 border transition-all duration-200 active:scale-95 select-none ${
+                                    inCart
+                                        ? 'bg-[#C9A34E]/10 border-[#C9A34E]/40'
+                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-[#C9A34E]/30'
+                                }`}
+                            >
+                                {/* Top row: emoji icon + add button */}
+                                <div className="flex items-start justify-between">
+                                    <div
+                                        className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                                        style={{ background: 'rgba(201,163,78,0.08)', border: '1px solid rgba(201,163,78,0.15)' }}
+                                    >
+                                        {emoji}
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                                        inCart
+                                            ? 'bg-[#C9A34E] text-[#0A1A2F]'
+                                            : 'bg-white/5 border border-white/10 text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-transparent'
+                                    }`}>
+                                        {inCart
+                                            ? <span className="text-[9px] font-black">{inCart.quantity}</span>
+                                            : <Plus size={10} />
+                                        }
                                     </div>
                                 </div>
+
+                                {/* Product name */}
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-[#F8F8F6] text-[11px] leading-snug line-clamp-2">
+                                        {product.name}
+                                    </h4>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-white/25 mt-1">
+                                        {categoryLabels[product.category] || product.category || 'คอร์ส'}
+                                    </p>
+                                </div>
+
+                                {/* Price */}
+                                <p className="text-[#C9A34E] font-black text-sm leading-none">
+                                    ฿{Number(product.price).toLocaleString()}
+                                </p>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
