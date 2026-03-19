@@ -4,6 +4,43 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
+// ─── Product Placeholder ───────────────────────────────────────────────────
+const CATEGORY_EMOJI = {
+    'ญี่ปุ่น': '🍱', 'japanese': '🍱',
+    'sushi': '🍣',   'Sushi': '🍣',
+    'ramen': '🍜',   'Ramen': '🍜',
+    'tempura': '🍤', 'Tempura': '🍤',
+    'thai': '🍛',    'Thai': '🍛',
+    'dessert': '🍰', 'Dessert': '🍰',
+    'bakery': '🥐',  'Bakery': '🥐',
+    'beverage': '🍵','Beverage': '🍵',
+    'cake': '🎂',    'Cake': '🎂',
+};
+
+function getEmoji(category = '', name = '') {
+    const key = Object.keys(CATEGORY_EMOJI).find(k =>
+        category.toLowerCase().includes(k.toLowerCase()) ||
+        name.toLowerCase().includes(k.toLowerCase())
+    );
+    return key ? CATEGORY_EMOJI[key] : '🍽️';
+}
+
+function ProductPlaceholder({ category, name }) {
+    const emoji = getEmoji(category, name);
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none"
+             style={{ background: 'linear-gradient(135deg, #0d2240 0%, #152A47 60%, #1a1a2e 100%)' }}>
+            <span style={{ fontSize: '2.8rem', lineHeight: 1, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}>
+                {emoji}
+            </span>
+            <span className="text-[#C9A34E] text-[7px] font-black uppercase tracking-[0.2em] opacity-70">
+                V SCHOOL
+            </span>
+        </div>
+    );
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 export default function PremiumPOS({ language = 'TH' }) {
     const { data: session } = useSession();
     const [products, setProducts] = useState([]);
@@ -361,31 +398,47 @@ export default function PremiumPOS({ language = 'TH' }) {
                 </div>
 
                 {/* Grid */}
-                <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 content-start custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 content-start auto-rows-fr custom-scrollbar">
                     {filteredProducts.map(product => (
                         <div
                             key={product.id}
                             onClick={() => addItem(product)}
-                            className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/30 rounded-[2rem] p-4 transition-all duration-500 cursor-pointer relative overflow-hidden active:scale-95"
+                            className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/40 hover:bg-white/8 rounded-2xl p-3 transition-all duration-300 cursor-pointer relative overflow-hidden active:scale-95 flex flex-col"
                         >
-                            <div className="aspect-square bg-slate-900 rounded-2xl mb-4 overflow-hidden relative">
-                                <img
-                                    src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'}
-                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
-                                    alt={product.name}
-                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x300?text=V+School'; }}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0A1A2F] to-transparent opacity-60"></div>
-                                <div className="absolute top-2 right-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded text-[8px] font-black text-[#C9A34E] uppercase tracking-widest border border-white/5">
-                                    {product.category}
+                            {/* Image area — fixed aspect ratio */}
+                            <div className="w-full rounded-xl mb-3 overflow-hidden relative flex-shrink-0"
+                                 style={{ aspectRatio: '1 / 1' }}>
+                                {product.image ? (
+                                    <img
+                                        src={product.image}
+                                        className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                                        alt={product.name}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
+                                {/* Inline placeholder — shown when no image or img error */}
+                                <div className={`absolute inset-0 ${product.image ? 'hidden' : 'flex'} flex-col items-center justify-center`}>
+                                    <ProductPlaceholder category={product.category} name={product.name} />
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                                {/* Category badge */}
+                                <div className="absolute top-2 left-2 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-lg text-[8px] font-black text-[#C9A34E] uppercase tracking-wider border border-white/10">
+                                    {product.category || 'คอร์ส'}
                                 </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-[#F8F8F6] text-sm leading-tight mb-2 line-clamp-1">{product.name}</h4>
+
+                            {/* Info area — flex-1 so all cards same height */}
+                            <div className="flex-1 flex flex-col justify-between min-h-0">
+                                <h4 className="font-bold text-[#F8F8F6] text-xs leading-snug mb-2 line-clamp-2 min-h-[2.4rem]">
+                                    {product.name}
+                                </h4>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[#C9A34E] font-black text-lg italic">฿{product.price}</span>
-                                    <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] transition-all">
-                                        <Plus size={14} />
+                                    <span className="text-[#C9A34E] font-black text-base">฿{Number(product.price).toLocaleString()}</span>
+                                    <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-[#C9A34E] transition-all duration-200">
+                                        <Plus size={12} />
                                     </div>
                                 </div>
                             </div>
