@@ -1,4 +1,4 @@
-**LATEST:** CL-20260319-005 | v1.0.0 | 2026-03-19
+**LATEST:** CL-20260319-006 | v1.1.0 | 2026-03-19
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260319-001 | Comprehensive Unit Test Expansion | v0.24.0 | 2026-03-19 | MINOR | #testing #quality |
 | CL-20260318-002 | Repository Layer Full Compliance | v0.23.0 | 2026-03-18 | MINOR | #repository #refactor |
 | CL-20260318-001 | FEFO Stock Deduction Refinement | v0.22.0 | 2026-03-18 | MINOR | #kitchen #repository |
 | CL-20260317-002 | Bug Audit + Repo Refactor | v0.21.0 | 2026-03-17 | PATCH | #bugfix #repository |
@@ -15,6 +16,32 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260319-006] v1.1.0 — POS Modal + Sheet ID Generation (TVS format)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #pos #sheets #id-generation #ui
+
+เพิ่ม ProductDetailModal ใน POS + ระบบ auto-generate readable ID จาก Google Sheet ตาม format มาตรฐาน `TVS-[CATEGORY]-[PACK]-[SUBCAT]-[SERIAL]`
+
+#### ProductDetailModal
+- กดการ์ดสินค้า → popup รายละเอียด (image gallery ≤6, tags, meta chips, enrollment stats)
+- Warning banner เมื่อ `pendingStudents ≥ 5` — "พิจารณาเปิดรอบใหม่"
+- แสดง `productId` human-readable ใต้ชื่อสินค้า
+- ปุ่ม "+" บนการ์ด → `e.stopPropagation()` → add to cart โดยไม่เปิด modal
+
+#### generateProductId (แก้ format)
+- แก้จาก `PRD-CRS-YYYY-XXX` (ผิด spec) → `TVS-{cuisineCode}-{packCode}-{subcatCode}-{SERIAL:02d}`
+- PACKAGE → `TVS-PKG{pkgNo:02d}-{pkgShortName}-{hours}H`
+- FULL_COURSE → `TVS-FC-FULL-COURSES-{A|B}-{hours}H`
+- Serial ต่อ prefix (แต่ละ cuisineCode+packCode+subcatCode มี serial ของตัวเอง)
+
+#### sync-master-data Sheet columns
+- เพิ่ม: `productType`, `cuisineCode`, `packCode`, `subcatCode`, `pkgNo`, `pkgShortName`
+- Auto-infer DB `category` จาก `cuisineCode` (JP→japanese_culinary, SP→specialty, ฯลฯ)
+
+#### Session Start Protocol
+- `CLAUDE.md` — เพิ่ม step 3: อ่าน `CHANGELOG.md` LATEST pointer ทุก session
+
+---
 
 ### [CL-20260319-005] v1.0.0 — Production Ready (Phase 28 — Docs Hardening + ADR-041)
 **Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #documentation #v1 #production #phase28
@@ -109,39 +136,6 @@ Phase 14 Production Hardening เสร็จสมบูรณ์ — ระบ
 #### Build Validation (14d)
 - `npm run build` ผ่านโดยไม่มี error หรือ warning
 - ไม่มี `console.log` หลงเหลือ — ทุก route ใช้ `logger`
-
----
-
-### [CL-20260319-001] v0.24.0 — Comprehensive Unit Test Expansion (Phase 14 + Phase 22)
-**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #testing #quality #phase14 #phase22
-
-เพิ่ม test coverage ครั้งใหญ่ — 50+ test cases ใหม่ครอบคลุม critical repositories และ integration paths
-
-#### Test Files เพิ่มใหม่
-- **`redis.test.js`** — getOrSet, negative cache, inflight dedup, watchdog timeout
-- **`marketingRepo.test.js`** — getSyncStatus, getCampaignsWithAggregatedMetrics, sync pipeline
-- **`adReviewRepo.test.js`** — ad review workflow, approval/rejection logic
-- **`agentSyncRepo.test.js`** — agent attribution sync, name-matching
-- **`customerRepo.test.js`** — resolveOrCreate, phone normalize, cross-platform merge
-- **`analyticsRepository.test.js`** — revenue aggregation, team KPI, ROAS calculation
-- **`employeeRepo.test.js`** — CRUD, ID generation (TVS-EMP), bcrypt, facebookName attribution
-
-#### Test Files ขยาย (existing)
-- **`inboxRepo.test.js`** — เพิ่ม pagination edge cases + reply validation
-- **`marketingMetrics.test.js`** — เพิ่ม CON/CPA boundary conditions
-- **`middleware`** — RBAC guard tests (BKL-04 coverage)
-- **Webhook integration** — FB + LINE webhook end-to-end (race condition, duplicate message)
-
-#### Coverage ก่อน/หลัง
-| Repository | ก่อน | หลัง |
-|---|---|---|
-| marketingRepo | — | ✅ |
-| inboxRepo | partial | ✅ full |
-| customerRepo | — | ✅ |
-| analyticsRepository | — | ✅ |
-| employeeRepo | — | ✅ |
-| redis | — | ✅ |
-| middleware + webhooks | — | ✅ |
 
 ---
 

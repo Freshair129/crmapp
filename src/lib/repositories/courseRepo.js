@@ -6,30 +6,67 @@ import { logger } from '@/lib/logger';
 // ──────────────────────────────────────────
 
 /**
- * Auto-generate a human-readable product ID.
- * category='package' → PRD-PKG-YYYY-XXX
- * everything else   → PRD-CRS-YYYY-XXX
+ * Auto-generate a human-readable product ID following id_standards.yaml spec.
  *
- * Exported so sync-master-data route can call it when
- * the Google Sheet row does not have a productId yet.
+ * Product Types:
+ *   COURSE      → TVS-{cuisineCode}-{packCode}-{subcatCode}-{SERIAL:02d}
+ *                 e.g. TVS-JP-2FC-HC-21
+ *   PACKAGE     → TVS-PKG{pkgNo:02d}-{pkgShortName}-{hours}H
+ *                 e.g. TVS-PKG01-BUFFET-30H
+ *   FULL_COURSE → TVS-FC-FULL-COURSES-{variant}-{hours}H
+ *                 variant = A (≤111h) | B (>111h)
+ *                 e.g. TVS-FC-FULL-COURSES-A-111H
+ *
+ * Params (object):
+ *   productType   'COURSE' | 'PACKAGE' | 'FULL_COURSE'  (default: 'COURSE')
+ *   cuisineCode   'JP' | 'TH' | 'SP' | 'MG' | 'AR'    (COURSE only)
+ *   packCode      '1FC' | '2FC' | 'SP'                  (COURSE only)
+ *   subcatCode    'HO' | 'CO' | 'SC' | 'DS' | 'HC' | 'HR' | 'HN' | 'MG' | 'AR' (COURSE only)
+ *   pkgNo         1–99                                   (PACKAGE only)
+ *   pkgShortName  'BUFFET' | 'DELIVERY' | …             (PACKAGE only)
+ *   hours         numeric                                (PACKAGE & FULL_COURSE)
  */
-export async function generateProductId(category = 'course') {
+export async function generateProductId({
+    productType = 'COURSE',
+    cuisineCode = 'JP',
+    packCode = '2FC',
+    subcatCode = 'HO',
+    pkgNo,
+    pkgShortName,
+    hours,
+} = {}) {
     const prisma = await getPrisma();
-    const yyyy = String(new Date().getFullYear());
-    const type = category === 'package' ? 'PKG' : 'CRS';
-    const prefix = `PRD-${type}-${yyyy}-`;
+    const type = String(productType).toUpperCase();
+
+    if (type === 'PACKAGE') {
+        // Fixed format — pkgNo is the unique serial, no DB lookup needed
+        const no = String(pkgNo || 1).padStart(2, '0');
+        const name = (pkgShortName || 'PKG').toUpperCase().replace(/\s+/g, '');
+        return `TVS-PKG${no}-${name}-${hours || 0}H`;
+    }
+
+    if (type === 'FULL_COURSE') {
+        const variant = Number(hours) <= 111 ? 'A' : 'B';
+        return `TVS-FC-FULL-COURSES-${variant}-${hours || 0}H`;
+    }
+
+    // Default: COURSE  →  TVS-{cuisine}-{pack}-{subcat}-{SERIAL}
+    const cu = String(cuisineCode).toUpperCase();
+    const pk = String(packCode).toUpperCase();
+    const sc = String(subcatCode).toUpperCase();
+    const prefix = `TVS-${cu}-${pk}-${sc}-`;
     const last = await prisma.product.findFirst({
         where: { productId: { startsWith: prefix } },
         orderBy: { productId: 'desc' },
         select: { productId: true }
     });
     const next = last ? parseInt(last.productId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${next.toString().padStart(3, '0')}`;
+    return `${prefix}${next.toString().padStart(2, '0')}`;
 }
 
 // kept for internal use within this file
 async function generateCourseId() {
-    return generateProductId('course');
+    return generateProductId({ productType: 'COURSE' });
 }
 
 // ──────────────────────────────────────────

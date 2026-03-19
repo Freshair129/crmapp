@@ -40,34 +40,77 @@ export async function POST(request) {
             });
         };
 
-        // 1. COURSES
+        // 1. COURSES / PACKAGES / FULL COURSES
+        // ─────────────────────────────────────────────────────────────────────
+        // Google Sheet columns (all except name are optional):
+        //
+        //  productId     | ถ้าว่าง → auto-gen จาก components ด้านล่าง
+        //  name          | ชื่อสินค้า (REQUIRED)
+        //  productType   | COURSE | PACKAGE | FULL_COURSE  (default: COURSE)
+        //  cuisineCode   | JP | TH | SP | MG | AR          (COURSE)
+        //  packCode      | 1FC | 2FC | SP                  (COURSE)
+        //  subcatCode    | HO | CO | SC | DS | HC | HR | HN | MG | AR (COURSE)
+        //  pkgNo         | 01-99                            (PACKAGE)
+        //  pkgShortName  | BUFFET | DELIVERY | …           (PACKAGE)
+        //  category      | DB category field (japanese_culinary/package/…)
+        //  price         | ราคาขาย
+        //  basePrice     | ราคาก่อนลด
+        //  hours         | ชั่วโมงเรียน
+        //  days          | จำนวนวัน
+        //  sessionType   | MORNING | AFTERNOON | EVENING (pipe-separated)
+        //  description   | คำอธิบาย
+        //  tags          | คั่นด้วย | เช่น sushi|japanese
+        //  image         | URL รูปหลัก
+        //  isActive      | TRUE / FALSE
+        // ─────────────────────────────────────────────────────────────────────
         if (urls.courses) {
             const res = await fetch(urls.courses);
             const data = parseCSV(await res.text());
             for (const row of data) {
-                // Require at least a name to process a row
                 if (!row.name || !row.name.trim()) continue;
 
-                // Auto-generate productId if the Sheet row doesn't have one yet
-                const productId = row.productId?.trim() || await generateProductId(row.category || 'course');
+                // Resolve productId — use Sheet value or auto-generate
+                let productId = row.productId?.trim();
+                if (!productId) {
+                    const productType = row.productType?.trim().toUpperCase() || 'COURSE';
+                    productId = await generateProductId({
+                        productType,
+                        cuisineCode: row.cuisineCode?.trim() || 'JP',
+                        packCode:    row.packCode?.trim()    || '2FC',
+                        subcatCode:  row.subcatCode?.trim()  || 'HO',
+                        pkgNo:       row.pkgNo ? parseInt(row.pkgNo) : undefined,
+                        pkgShortName: row.pkgShortName?.trim(),
+                        hours:       row.hours ? parseFloat(row.hours) : 0,
+                    });
+                }
 
-                // Build metadata object from Sheet columns
+                // Infer DB category from cuisineCode if not explicitly provided
+                const CUISINE_TO_CATEGORY = {
+                    JP: 'japanese_culinary', TH: 'thai',
+                    SP: 'specialty',         MG: 'management',
+                    AR: 'arts',              FC: 'full_course',
+                    PKG: 'package',
+                };
+                const inferredCategory = row.category?.trim()
+                    || CUISINE_TO_CATEGORY[row.cuisineCode?.trim().toUpperCase()]
+                    || (row.productType === 'PACKAGE' ? 'package' : 'japanese_culinary');
+
                 const tags = row.tags ? row.tags.split('|').map(t => t.trim()).filter(Boolean) : undefined;
-                const metadataUpdate = tags ? { tags } : undefined;
 
                 const sharedFields = {
-                    name: row.name.trim(),
-                    category: row.category?.trim() || 'course',
-                    price: parseFloat(row.price) || 0,
-                    ...(row.basePrice ? { basePrice: parseFloat(row.basePrice) } : {}),
-                    ...(row.duration ? { duration: parseInt(row.duration) } : {}),
-                    ...(row.hours ? { hours: parseFloat(row.hours) } : {}),
-                    ...(row.days ? { days: parseFloat(row.days) } : {}),
-                    ...(row.sessionType ? { sessionType: row.sessionType.trim() } : {}),
-                    ...(row.description ? { description: row.description.trim() } : {}),
-                    ...(row.image ? { image: row.image.trim() } : {}),
-                    ...(metadataUpdate ? { metadata: metadataUpdate } : {}),
-                    ...(row.isActive !== undefined ? { isActive: row.isActive !== 'false' && row.isActive !== '0' } : {}),
+                    name:     row.name.trim(),
+                    category: inferredCategory,
+                    price:    parseFloat(row.price) || 0,
+                    ...(row.basePrice    ? { basePrice:   parseFloat(row.basePrice) }  : {}),
+                    ...(row.hours        ? { hours:        parseFloat(row.hours) }      : {}),
+                    ...(row.days         ? { days:         parseFloat(row.days) }       : {}),
+                    ...(row.sessionType  ? { sessionType:  row.sessionType.trim() }     : {}),
+                    ...(row.description  ? { description:  row.description.trim() }     : {}),
+                    ...(row.image        ? { image:        row.image.trim() }           : {}),
+                    ...(tags             ? { metadata: { tags } }                       : {}),
+                    ...(row.isActive !== undefined && row.isActive !== ''
+                        ? { isActive: row.isActive !== 'false' && row.isActive !== '0' && row.isActive !== 'FALSE' }
+                        : {}),
                 };
 
                 await prisma.product.upsert({
@@ -76,7 +119,7 @@ export async function POST(request) {
                     create: { productId, isActive: true, ...sharedFields }
                 });
                 summary.synced.courses++;
-                logger.info('[SyncMasterData]', `Course upserted: ${productId} — ${row.name}`);
+                logger.info('[SyncMasterData]', `Product upserted: ${productId} — ${row.name}`);
             }
         }
 

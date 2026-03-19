@@ -234,8 +234,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **อ่าน `MEMORY.md`** — ตรวจว่า Antigravity ทำอะไรไปบ้างระหว่างที่ Claude ไม่อยู่
 2. **อ่าน `GOAL.md` → Project Status table** — ดู Active Phase + Known Issues
-3. ถ้ามีการเปลี่ยนแปลงที่ Claude ไม่เห็นด้วย → บันทึกใน MEMORY.md + แจ้ง Boss
-4. ถ้าไม่มีอะไรเปลี่ยน → ข้ามได้ ทำงานต่อปกติ
+3. **อ่าน `CHANGELOG.md` → LATEST pointer** — รู้ว่า HEAD อยู่ที่ version ไหน; ถ้า LATEST ≠ CLAUDE.md version table → sync ก่อน
+4. ถ้ามีการเปลี่ยนแปลงที่ Claude ไม่เห็นด้วย → บันทึกใน MEMORY.md + แจ้ง Boss
+5. ถ้าไม่มีอะไรเปลี่ยน → ข้ามได้ ทำงานต่อปกติ
+
+> 📋 **Changelog protocol:** หลังทุก commit ที่มีนัยสำคัญ → สร้าง `changelog/CL-[YYYYMMDD]-[NNN].md` + อัปเดต `CHANGELOG.md` sliding window (Recent = 5 entries) ดู spec ใน `changelog/CHANGELOG_SYSTEM.md`
 
 ---
 
