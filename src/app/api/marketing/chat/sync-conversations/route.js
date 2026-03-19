@@ -44,108 +44,118 @@ export async function GET(request) {
 
         const { searchParams } = new URL(request.url);
         const days = Math.min(parseInt(searchParams.get('days') || '3', 10), 30);
+        // fetchMessages=1 enables per-conversation message pull (slower, use on-demand only)
+        const fetchMessages = searchParams.get('fetchMessages') === '1';
         const since = Math.floor((Date.now() - days * 86400000) / 1000);
 
         let upsertedConversations = 0;
         let upsertedMessages = 0;
-        let cursor = null;
+        let namesUpdated = 0;
 
         const prisma = await getPrisma();
+        const { randomUUID } = await import('crypto');
 
-        // Fetch conversations page by page (max 3 pages to avoid timeout)
-        for (let page = 0; page < 3; page++) {
-            const params = {
-                fields: 'participants,updated_time,unread_count',
-                since: String(since),
-                limit: '25',
-            };
-            if (cursor) params.after = cursor;
+        // Single page, 15 conversations max — keeps total time < 8s on Vercel free tier
+        const convData = await graphGet(`/${PAGE_ID}/conversations`, {
+            fields: 'participants,updated_time,unread_count',
+            since: String(since),
+            limit: '15',
+        });
+        const conversations = convData.data || [];
 
-            const convData = await graphGet(`/${PAGE_ID}/conversations`, params);
-            const conversations = convData.data || [];
-            if (conversations.length === 0) break;
+        // Process all conversations in parallel
+        await Promise.all(conversations.map(async (conv) => {
+            const participants = conv.participants?.data || [];
+            const customerParticipant = participants.find(p => p.id !== PAGE_ID);
+            if (!customerParticipant) return;
 
-            for (const conv of conversations) {
-                // Find the customer participant (not the page)
-                const participants = conv.participants?.data || [];
-                const customerParticipant = participants.find(p => p.id !== PAGE_ID);
-                if (!customerParticipant) continue;
+            const customerPsid = customerParticipant.id;
+            const participantName = customerParticipant.name || null;
+            const threadId = `t_${customerPsid}`;
 
-                const customerPsid = customerParticipant.id;
-                const threadId = `t_${customerPsid}`;
+            // Upsert customer (create if not exists, update name if null)
+            let customer = await prisma.customer.findFirst({
+                where: { facebookId: customerPsid },
+                select: { id: true, firstName: true },
+            });
 
-                // Fetch messages for this conversation
+            if (!customer) {
+                const customerId = `TVS-CUS-FB-26-${randomUUID().slice(-4).toUpperCase()}`;
+                try {
+                    customer = await prisma.customer.create({
+                        data: {
+                            customerId,
+                            status: 'Active',
+                            membershipTier: 'MEMBER',
+                            lifecycleStage: 'Lead',
+                            facebookId: customerPsid,
+                            firstName: participantName?.split(' ')[0] || null,
+                            lastName: participantName?.split(' ').slice(1).join(' ') || null,
+                            facebookName: participantName,
+                            joinDate: new Date(),
+                        },
+                        select: { id: true, firstName: true },
+                    });
+                } catch (err) {
+                    if (err.code === 'P2002') {
+                        customer = await prisma.customer.findFirst({
+                            where: { facebookId: customerPsid },
+                            select: { id: true, firstName: true },
+                        });
+                    } else throw err;
+                }
+            } else if (!customer.firstName && participantName) {
+                // Backfill name for existing customers with null firstName
+                await prisma.customer.update({
+                    where: { id: customer.id },
+                    data: {
+                        firstName: participantName.split(' ')[0],
+                        lastName: participantName.split(' ').slice(1).join(' ') || null,
+                        facebookName: participantName,
+                    },
+                });
+                namesUpdated++;
+            }
+
+            if (!customer) return;
+
+            // Upsert conversation
+            const lastMsgAt = conv.updated_time ? new Date(conv.updated_time) : new Date();
+            const dbConv = await prisma.conversation.upsert({
+                where: { conversationId: threadId },
+                create: {
+                    conversationId: threadId,
+                    customerId: customer.id,
+                    channel: 'facebook',
+                    participantId: customerPsid,
+                    participantName: participantName,
+                    lastMessageAt: lastMsgAt,
+                    unreadCount: conv.unread_count || 0,
+                },
+                update: {
+                    lastMessageAt: lastMsgAt,
+                    participantName: participantName,
+                },
+                select: { id: true },
+            });
+            upsertedConversations++;
+
+            // Optional: fetch & upsert messages (slower — only when fetchMessages=1)
+            if (fetchMessages) {
                 let messages = [];
                 try {
                     const msgData = await graphGet(`/${conv.id}/messages`, {
                         fields: 'id,message,from,created_time,attachments',
-                        limit: '20',
+                        limit: '10',
                     });
                     messages = msgData.data || [];
                 } catch (err) {
                     logger.warn('[ChatSync]', `Failed to fetch messages for conv ${conv.id}`, err);
                 }
 
-                // Upsert customer
-                let customer = await prisma.customer.findFirst({
-                    where: { facebookId: customerPsid },
-                    select: { id: true },
-                });
-
-                if (!customer) {
-                    const { randomUUID } = await import('crypto');
-                    const customerId = `TVS-CUS-FB-26-${randomUUID().slice(-4).toUpperCase()}`;
-                    try {
-                        customer = await prisma.customer.create({
-                            data: {
-                                customerId,
-                                status: 'Active',
-                                membershipTier: 'MEMBER',
-                                lifecycleStage: 'Lead',
-                                facebookId: customerPsid,
-                                firstName: customerParticipant.name?.split(' ')[0] || null,
-                                lastName: customerParticipant.name?.split(' ').slice(1).join(' ') || null,
-                                facebookName: customerParticipant.name || null,
-                                joinDate: new Date(),
-                            },
-                            select: { id: true },
-                        });
-                    } catch (err) {
-                        if (err.code === 'P2002') {
-                            customer = await prisma.customer.findFirst({
-                                where: { facebookId: customerPsid },
-                                select: { id: true },
-                            });
-                        } else throw err;
-                    }
-                }
-
-                if (!customer) continue;
-
-                // Upsert conversation
-                const lastMsgAt = conv.updated_time ? new Date(conv.updated_time) : new Date();
-                const dbConv = await prisma.conversation.upsert({
-                    where: { conversationId: threadId },
-                    create: {
-                        conversationId: threadId,
-                        customerId: customer.id,
-                        channel: 'facebook',
-                        participantId: customerPsid,
-                        lastMessageAt: lastMsgAt,
-                        unreadCount: conv.unread_count || 0,
-                    },
-                    update: {
-                        lastMessageAt: lastMsgAt,
-                    },
-                    select: { id: true },
-                });
-                upsertedConversations++;
-
-                // Upsert messages
                 for (const msg of messages) {
                     if (!msg.id || !msg.message) continue;
                     const isFromPage = msg.from?.id === PAGE_ID;
-
                     try {
                         await prisma.message.upsert({
                             where: { messageId: msg.id },
@@ -153,11 +163,11 @@ export async function GET(request) {
                                 messageId: msg.id,
                                 conversationId: dbConv.id,
                                 fromId: msg.from?.id || customerPsid,
-                                fromName: isFromPage ? (msg.from?.name || 'Admin') : (customerParticipant.name || null),
+                                fromName: isFromPage ? (msg.from?.name || 'Admin') : (participantName || null),
                                 content: msg.message || null,
                                 hasAttachment: !!(msg.attachments?.data?.length),
                                 createdAt: new Date(msg.created_time),
-                                metadata: { source: 'graph_api_sync' },
+                                metadata: { source: 'graph_api_sync', is_echo: isFromPage },
                             },
                             update: {},
                         });
@@ -169,17 +179,14 @@ export async function GET(request) {
                     }
                 }
             }
+        }));
 
-            cursor = convData.paging?.cursors?.after;
-            if (!cursor || !convData.paging?.next) break;
-        }
-
-        logger.info('[ChatSync]', `Done: ${upsertedConversations} conversations, ${upsertedMessages} messages`);
+        logger.info('[ChatSync]', `Done: ${upsertedConversations} convs, ${upsertedMessages} msgs, ${namesUpdated} names backfilled`);
 
         return NextResponse.json({
             success: true,
             syncedAt: new Date().toISOString(),
-            stats: { conversations: upsertedConversations, messages: upsertedMessages, days },
+            stats: { conversations: upsertedConversations, messages: upsertedMessages, namesUpdated, days },
         });
     } catch (error) {
         logger.error('[ChatSync]', 'sync-conversations failed', error);
