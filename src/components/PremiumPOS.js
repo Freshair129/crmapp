@@ -50,6 +50,7 @@ export default function PremiumPOS({ language = 'TH' }) {
     const [activeCategory, setActiveCategory] = useState('All');
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [enrollmentCount, setEnrollmentCount] = useState(0);
+    const [fetchError, setFetchError] = useState(null);
 
     const [customerPhone, setCustomerPhone] = useState('');
     const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -62,12 +63,21 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     useEffect(() => {
         fetch('/api/products')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status} — ${r.statusText}`);
+                return r.json();
+            })
             .then(data => {
-                setProducts(Array.isArray(data) ? data : []);
+                const list = Array.isArray(data) ? data : [];
+                console.log(`[POS] Loaded ${list.length} products`, list.slice(0, 3));
+                setProducts(list);
                 setLoading(false);
             })
-            .catch(() => setLoading(false));
+            .catch(err => {
+                console.error('[POS] Product fetch failed:', err.message);
+                setFetchError(err.message);
+                setLoading(false);
+            });
     }, []);
 
     const categories = ['All', 'japanese_culinary', 'specialty', 'management', 'arts', 'package', 'full_course'];
@@ -399,6 +409,34 @@ export default function PremiumPOS({ language = 'TH' }) {
 
                 {/* Grid — content-start + auto rows keeps cards natural height while scrolling */}
                 <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 content-start custom-scrollbar" style={{ alignItems: 'start' }}>
+                    {/* Empty / error state */}
+                    {filteredProducts.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4 text-center">
+                            <span style={{ fontSize: '3rem' }}>🍽️</span>
+                            <p className="font-black text-xs uppercase tracking-[0.2em] text-white/20">
+                                {fetchError
+                                    ? `โหลดสินค้าไม่สำเร็จ — ${fetchError}`
+                                    : search
+                                        ? `ไม่พบสินค้า "${search}"`
+                                        : 'ยังไม่มีสินค้าในระบบ'}
+                            </p>
+                            {fetchError && (
+                                <button
+                                    className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:underline"
+                                    onClick={() => {
+                                        setFetchError(null);
+                                        setLoading(true);
+                                        fetch('/api/products')
+                                            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+                                            .then(data => { setProducts(Array.isArray(data) ? data : []); setLoading(false); })
+                                            .catch(err => { setFetchError(err.message); setLoading(false); });
+                                    }}
+                                >
+                                    ลองใหม่
+                                </button>
+                            )}
+                        </div>
+                    )}
                     {filteredProducts.map(product => (
                         <div
                             key={product.id}
