@@ -69,7 +69,7 @@ export async function getConversations({ channel, status, search, limit = 10, pa
                 customerId: c.customer.customerId,
                 firstName: c.customer.firstName
                     || c.participantName
-                    || c.messages[0]?.fromName
+                    || (c.messages[0]?.fromName && c.messages[0].fromName !== 'Admin' ? c.messages[0].fromName : null)
                     || (c.customer.facebookId ? `FB-${c.customer.facebookId.slice(-6)}` : 'ผู้ใช้ Facebook'),
                 lastName: c.customer.lastName || '',
                 channel: (c.channel || 'facebook').toUpperCase(),
@@ -82,7 +82,7 @@ export async function getConversations({ channel, status, search, limit = 10, pa
             } : {
                 customerId: null,
                 firstName: c.participantName
-                    || c.messages[0]?.fromName
+                    || (c.messages[0]?.fromName && c.messages[0].fromName !== 'Admin' ? c.messages[0].fromName : null)
                     || (c.participantId ? `FB-${c.participantId.slice(-6)}` : 'ผู้ใช้ Facebook'),
                 lastName: '',
                 channel: (c.channel || 'facebook').toUpperCase(),
@@ -130,14 +130,22 @@ export async function getConversationMessages(conversationId, { limit = 20, page
         const pageMessages = hasMore ? messages.slice(0, limit) : messages;
 
         // Sort back to chronological for the frontend and format
-        const formatted = pageMessages.reverse().map(m => ({
-            id: m.id,
-            messageId: m.messageId,
-            text: m.content || '(Media or Empty Content)',
-            senderId: m.fromId,
-            senderType: m.responderId ? 'AGENT' : 'CUSTOMER',
-            createdAt: m.createdAt
-        }));
+        const formatted = pageMessages.reverse().map(m => {
+            // Determine sender type: check responderId OR is_echo flag from FB webhook
+            const isAgent = !!(m.responderId || m.metadata?.is_echo === true || m.fromName === 'Admin');
+            return {
+                id: m.id,
+                messageId: m.messageId,
+                text: m.content || null,
+                senderId: m.fromId,
+                senderName: m.fromName || null,
+                senderType: isAgent ? 'AGENT' : 'CUSTOMER',
+                hasAttachment: m.hasAttachment || false,
+                attachmentType: m.attachmentType || null,
+                attachmentUrl: m.attachmentUrl || null,
+                createdAt: m.createdAt
+            };
+        });
 
         return { messages: formatted, hasMore };
     } catch (error) {

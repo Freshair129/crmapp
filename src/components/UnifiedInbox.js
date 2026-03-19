@@ -460,14 +460,37 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     {messages.map((msg, idx) => (
                                         <div key={msg.id || idx} className={`flex ${msg.senderType === 'AGENT' ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-[70%] space-y-1.5`}>
-                                                <div className={`px-5 py-3.5 rounded-3xl text-sm font-medium leading-relaxed shadow-lg ${
-                                                    msg.senderType === 'AGENT' 
-                                                        ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/20 rounded-tr-none' 
+                                                <div className={`rounded-3xl text-sm font-medium leading-relaxed shadow-lg overflow-hidden ${
+                                                    msg.senderType === 'AGENT'
+                                                        ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/20 rounded-tr-none'
                                                         : 'bg-white/10 text-white border border-white/5 rounded-tl-none'
                                                 }`}>
-                                                    {msg.text}
+                                                    {/* Attachment (image) */}
+                                                    {msg.hasAttachment && msg.attachmentType === 'image' && msg.attachmentUrl && (
+                                                        <img
+                                                            src={msg.attachmentUrl}
+                                                            alt="attachment"
+                                                            className="w-full max-w-[240px] object-cover rounded-2xl"
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                        />
+                                                    )}
+                                                    {/* Non-image attachment */}
+                                                    {msg.hasAttachment && msg.attachmentType && msg.attachmentType !== 'image' && (
+                                                        <div className="px-5 py-3.5 flex items-center gap-2 opacity-70">
+                                                            <span className="text-xs uppercase tracking-wider">📎 {msg.attachmentType}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Text content */}
+                                                    {msg.text && (
+                                                        <div className="px-5 py-3.5">{msg.text}</div>
+                                                    )}
+                                                    {/* Fallback when no text and no recognized attachment */}
+                                                    {!msg.text && !msg.hasAttachment && (
+                                                        <div className="px-5 py-3.5 opacity-40 italic text-xs">—</div>
+                                                    )}
                                                 </div>
                                                 <p className={`text-[9px] font-bold text-white/20 uppercase tracking-widest px-2 ${msg.senderType === 'AGENT' ? 'text-right' : 'text-left'}`}>
+                                                    {msg.senderType === 'AGENT' ? (msg.senderName || 'Admin') + ' · ' : ''}
                                                     {new Date(msg.createdAt).toLocaleTimeString(language === 'TH' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
