@@ -4,16 +4,32 @@ import { logger } from '@/lib/logger';
 // ──────────────────────────────────────────
 // ID generation
 // ──────────────────────────────────────────
-async function generateCourseId() {
+
+/**
+ * Auto-generate a human-readable product ID.
+ * category='package' → PRD-PKG-YYYY-XXX
+ * everything else   → PRD-CRS-YYYY-XXX
+ *
+ * Exported so sync-master-data route can call it when
+ * the Google Sheet row does not have a productId yet.
+ */
+export async function generateProductId(category = 'course') {
     const prisma = await getPrisma();
-    const yy = String(new Date().getFullYear()).slice(-2);
-    const prefix = `TVS-CRS-${yy}-`;
+    const yyyy = String(new Date().getFullYear());
+    const type = category === 'package' ? 'PKG' : 'CRS';
+    const prefix = `PRD-${type}-${yyyy}-`;
     const last = await prisma.product.findFirst({
         where: { productId: { startsWith: prefix } },
-        orderBy: { productId: 'desc' }
+        orderBy: { productId: 'desc' },
+        select: { productId: true }
     });
     const next = last ? parseInt(last.productId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${next.toString().padStart(4, '0')}`;
+    return `${prefix}${next.toString().padStart(3, '0')}`;
+}
+
+// kept for internal use within this file
+async function generateCourseId() {
+    return generateProductId('course');
 }
 
 // ──────────────────────────────────────────

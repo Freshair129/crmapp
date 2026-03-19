@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
 import { upsertIngredient } from '@/lib/repositories/kitchenRepo';
+import { generateProductId } from '@/lib/repositories/courseRepo';
 import { getSession } from '@/lib/getSession';
 
 export async function POST(request) {
@@ -44,27 +45,38 @@ export async function POST(request) {
             const res = await fetch(urls.courses);
             const data = parseCSV(await res.text());
             for (const row of data) {
-                if (!row.productId) continue;
+                // Require at least a name to process a row
+                if (!row.name || !row.name.trim()) continue;
+
+                // Auto-generate productId if the Sheet row doesn't have one yet
+                const productId = row.productId?.trim() || await generateProductId(row.category || 'course');
+
+                // Build metadata object from Sheet columns
+                const tags = row.tags ? row.tags.split('|').map(t => t.trim()).filter(Boolean) : undefined;
+                const metadataUpdate = tags ? { tags } : undefined;
+
+                const sharedFields = {
+                    name: row.name.trim(),
+                    category: row.category?.trim() || 'course',
+                    price: parseFloat(row.price) || 0,
+                    ...(row.basePrice ? { basePrice: parseFloat(row.basePrice) } : {}),
+                    ...(row.duration ? { duration: parseInt(row.duration) } : {}),
+                    ...(row.hours ? { hours: parseFloat(row.hours) } : {}),
+                    ...(row.days ? { days: parseFloat(row.days) } : {}),
+                    ...(row.sessionType ? { sessionType: row.sessionType.trim() } : {}),
+                    ...(row.description ? { description: row.description.trim() } : {}),
+                    ...(row.image ? { image: row.image.trim() } : {}),
+                    ...(metadataUpdate ? { metadata: metadataUpdate } : {}),
+                    ...(row.isActive !== undefined ? { isActive: row.isActive !== 'false' && row.isActive !== '0' } : {}),
+                };
+
                 await prisma.product.upsert({
-                    where: { productId: row.productId },
-                    update: {
-                        name: row.name,
-                        category: row.category,
-                        price: parseFloat(row.price) || 0,
-                        duration: parseInt(row.duration) || 0,
-                        description: row.description
-                    },
-                    create: {
-                        productId: row.productId,
-                        name: row.name,
-                        category: row.category || 'course',
-                        price: parseFloat(row.price) || 0,
-                        duration: parseInt(row.duration) || 0,
-                        description: row.description,
-                        isActive: true
-                    }
+                    where: { productId },
+                    update: sharedFields,
+                    create: { productId, isActive: true, ...sharedFields }
                 });
                 summary.synced.courses++;
+                logger.info('[SyncMasterData]', `Course upserted: ${productId} — ${row.name}`);
             }
         }
 
