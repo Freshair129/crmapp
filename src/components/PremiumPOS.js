@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus } from 'lucide-react';
+import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus, X, Clock, Users, GraduationCap, Tag, ImageOff, ShoppingBag, TrendingUp } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 // ─── Product Placeholder ───────────────────────────────────────────────────
@@ -41,6 +41,228 @@ function ProductPlaceholder({ category, name }) {
 }
 // ──────────────────────────────────────────────────────────────────────────
 
+// ─── Product Detail Modal ─────────────────────────────────────────────────
+const SESSION_LABEL = { MORNING: 'เช้า', AFTERNOON: 'บ่าย', EVENING: 'เย็น' };
+
+function ProductDetailModal({ product, onClose, onAddToCart, inCart }) {
+    const [data, setData] = useState(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+    const [activeImg, setActiveImg] = useState(0);
+
+    const emoji = getEmoji(product.category, product.name);
+
+    // Extract images from metadata or single image field
+    const rawImages = useMemo(() => {
+        const meta = product.metadata || {};
+        const extras = Array.isArray(meta.images) ? meta.images : [];
+        const all = product.image ? [product.image, ...extras] : extras;
+        return all.filter(Boolean).slice(0, 6);
+    }, [product]);
+
+    // Extract tags from metadata
+    const tags = useMemo(() => {
+        const meta = product.metadata || {};
+        if (Array.isArray(meta.tags)) return meta.tags;
+        if (typeof meta.tags === 'string') return meta.tags.split(',').map(t => t.trim()).filter(Boolean);
+        return [];
+    }, [product]);
+
+    const sessions = product.sessionType
+        ? product.sessionType.split(',').map(s => SESSION_LABEL[s.trim()] || s.trim())
+        : [];
+
+    useEffect(() => {
+        fetch(`/api/products/${product.id}/stats`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { setData(d); setLoadingStats(false); })
+            .catch(() => setLoadingStats(false));
+    }, [product.id]);
+
+    const stats = data?.stats;
+    const isCourse = ['japanese_culinary','specialty','management','arts','full_course','course'].includes(product.category);
+
+    // Close on backdrop click
+    const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
+
+    return (
+        <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={handleBackdrop}
+        >
+            <div className="relative bg-[#0d1f35] border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
+
+                {/* Close */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                >
+                    <X size={14} />
+                </button>
+
+                {/* ── Image gallery ── */}
+                <div className="relative w-full bg-[#0a1628] flex-shrink-0" style={{ height: 220 }}>
+                    {rawImages.length > 0 ? (
+                        <>
+                            <img
+                                src={rawImages[activeImg]}
+                                className="w-full h-full object-cover"
+                                alt={product.name}
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                            {/* Thumbnail strip */}
+                            {rawImages.length > 1 && (
+                                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 px-4">
+                                    {rawImages.map((img, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setActiveImg(i)}
+                                            className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${i === activeImg ? 'border-[#C9A34E]' : 'border-white/20 opacity-60 hover:opacity-100'}`}
+                                        >
+                                            <img src={img} className="w-full h-full object-cover" alt="" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* No image — show large emoji */
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-3"
+                             style={{ background: 'linear-gradient(135deg,#0d2240 0%,#152A47 60%,#1a1a2e 100%)' }}>
+                            <span style={{ fontSize: '4rem', lineHeight: 1, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}>{emoji}</span>
+                            <span className="text-[#C9A34E] text-[8px] font-black uppercase tracking-[0.3em] opacity-60">V SCHOOL</span>
+                        </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d1f35] via-transparent to-transparent pointer-events-none" />
+                </div>
+
+                {/* ── Scrollable body ── */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
+
+                    {/* Name + price row */}
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-lg font-black text-[#F8F8F6] leading-snug">{product.name}</h2>
+                            {product.description && (
+                                <p className="text-xs text-white/40 mt-1 leading-relaxed">{product.description}</p>
+                            )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                            <p className="text-2xl font-black text-[#C9A34E]">฿{Number(product.price).toLocaleString()}</p>
+                            {product.basePrice && product.basePrice !== product.price && (
+                                <p className="text-[10px] text-white/30 line-through">฿{Number(product.basePrice).toLocaleString()}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Meta chips */}
+                    <div className="flex flex-wrap gap-2">
+                        {product.hours && (
+                            <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black text-white/50">
+                                <Clock size={10} /> {product.hours} ชม.
+                            </span>
+                        )}
+                        {product.days && (
+                            <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black text-white/50">
+                                <Clock size={10} /> {product.days} วัน
+                            </span>
+                        )}
+                        {sessions.map(s => (
+                            <span key={s} className="px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-300">
+                                {s}
+                            </span>
+                        ))}
+                        <span className="px-2.5 py-1 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/20 text-[10px] font-black text-[#C9A34E]">
+                            {product.category}
+                        </span>
+                    </div>
+
+                    {/* Tags */}
+                    {tags.length > 0 && (
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-white/25 mb-2 flex items-center gap-1">
+                                <Tag size={9} /> Tags
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {tags.map(tag => (
+                                    <span key={tag} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/50">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Enrollment / Student Stats */}
+                    <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-white/25 mb-3 flex items-center gap-1">
+                            <GraduationCap size={9} /> สถานะนักเรียน
+                        </p>
+                        {loadingStats ? (
+                            <div className="flex items-center gap-2 text-white/20 text-xs">
+                                <Loader2 size={12} className="animate-spin" /> กำลังโหลด...
+                            </div>
+                        ) : stats ? (
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                    <p className="text-lg font-black text-[#C9A34E]">{stats.totalSold}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-wide text-white/30 mt-0.5 flex items-center justify-center gap-1">
+                                        <ShoppingBag size={8} /> ขายแล้ว
+                                    </p>
+                                </div>
+                                <div className={`rounded-xl p-3 text-center border ${stats.pendingStudents > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/5'}`}>
+                                    <p className={`text-lg font-black ${stats.pendingStudents > 0 ? 'text-amber-400' : 'text-white/40'}`}>{stats.pendingStudents}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-wide text-white/30 mt-0.5 flex items-center justify-center gap-1">
+                                        <Users size={8} /> รอเรียน
+                                    </p>
+                                </div>
+                                <div className="bg-green-500/5 rounded-xl p-3 text-center border border-green-500/10">
+                                    <p className="text-lg font-black text-green-400">{stats.completedStudents}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-wide text-white/30 mt-0.5 flex items-center justify-center gap-1">
+                                        <CheckCircle size={8} /> จบแล้ว
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-[10px] text-white/20">ไม่สามารถโหลดข้อมูลได้</p>
+                        )}
+
+                        {/* Pending warning */}
+                        {stats?.pendingStudents >= 5 && (
+                            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                <TrendingUp size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-[10px] text-amber-300 leading-relaxed">
+                                    มีนักเรียนรอเรียน <span className="font-black">{stats.pendingStudents} คน</span> — พิจารณาเปิดรอบใหม่
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Footer: Add to Cart ── */}
+                <div className="px-6 py-4 border-t border-white/5 flex-shrink-0">
+                    <button
+                        onClick={() => { onAddToCart(product); onClose(); }}
+                        className="w-full flex items-center justify-center gap-3 bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
+                    >
+                        {inCart ? (
+                            <>
+                                <Plus size={14} />
+                                เพิ่มอีก 1 (ในตะกร้า {inCart.quantity})
+                            </>
+                        ) : (
+                            <>
+                                <ShoppingCart size={14} />
+                                เพิ่มลงตะกร้า
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 export default function PremiumPOS({ language = 'TH' }) {
     const { data: session } = useSession();
     const [products, setProducts] = useState([]);
@@ -51,6 +273,7 @@ export default function PremiumPOS({ language = 'TH' }) {
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [enrollmentCount, setEnrollmentCount] = useState(0);
     const [fetchError, setFetchError] = useState(null);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const [customerPhone, setCustomerPhone] = useState('');
     const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -443,7 +666,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         return (
                             <div
                                 key={product.id}
-                                onClick={() => addItem(product)}
+                                onClick={() => setSelectedProduct(product)}
                                 className={`group cursor-pointer flex flex-col gap-3 rounded-2xl p-4 border transition-all duration-200 active:scale-95 select-none ${
                                     inCart
                                         ? 'bg-[#C9A34E]/10 border-[#C9A34E]/40'
@@ -458,16 +681,20 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     >
                                         {emoji}
                                     </div>
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                                        inCart
-                                            ? 'bg-[#C9A34E] text-[#0A1A2F]'
-                                            : 'bg-white/5 border border-white/10 text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-transparent'
-                                    }`}>
+                                    {/* + button — adds directly without opening modal */}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); addItem(product); }}
+                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                                            inCart
+                                                ? 'bg-[#C9A34E] text-[#0A1A2F]'
+                                                : 'bg-white/5 border border-white/10 text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-transparent'
+                                        }`}
+                                    >
                                         {inCart
                                             ? <span className="text-[9px] font-black">{inCart.quantity}</span>
                                             : <Plus size={10} />
                                         }
-                                    </div>
+                                    </button>
                                 </div>
 
                                 {/* Product name */}
@@ -489,6 +716,16 @@ export default function PremiumPOS({ language = 'TH' }) {
                     })}
                 </div>
             </div>
+
+            {/* Product Detail Modal */}
+            {selectedProduct && (
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    onAddToCart={(p) => { addItem(p); setSelectedProduct(null); }}
+                    inCart={cart.find(i => i.id === selectedProduct.id)}
+                />
+            )}
 
             {/* Cart Sidebar */}
             <div className="w-full lg:w-[400px] bg-black/30 border-l border-white/10 backdrop-blur-xl flex flex-col p-8">
