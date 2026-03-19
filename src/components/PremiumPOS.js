@@ -397,21 +397,20 @@ export default function PremiumPOS({ language = 'TH' }) {
                     ))}
                 </div>
 
-                {/* Grid */}
-                <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 content-start auto-rows-fr custom-scrollbar">
+                {/* Grid — content-start + auto rows keeps cards natural height while scrolling */}
+                <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 content-start custom-scrollbar" style={{ alignItems: 'start' }}>
                     {filteredProducts.map(product => (
                         <div
                             key={product.id}
                             onClick={() => addItem(product)}
                             className="group bg-white/5 border border-white/5 hover:border-[#C9A34E]/40 hover:bg-white/8 rounded-2xl p-3 transition-all duration-300 cursor-pointer relative overflow-hidden active:scale-95 flex flex-col"
                         >
-                            {/* Image area — fixed aspect ratio */}
-                            <div className="w-full rounded-xl mb-3 overflow-hidden relative flex-shrink-0"
-                                 style={{ aspectRatio: '1 / 1' }}>
+                            {/* Image area — aspect-square keeps it perfectly square */}
+                            <div className="aspect-square w-full rounded-xl mb-3 overflow-hidden relative flex-shrink-0">
                                 {product.image ? (
                                     <img
                                         src={product.image}
-                                        className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                                        className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                                         alt={product.name}
                                         onError={(e) => {
                                             e.target.style.display = 'none';
@@ -430,9 +429,9 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 </div>
                             </div>
 
-                            {/* Info area — flex-1 so all cards same height */}
-                            <div className="flex-1 flex flex-col justify-between min-h-0">
-                                <h4 className="font-bold text-[#F8F8F6] text-xs leading-snug mb-2 line-clamp-2 min-h-[2.4rem]">
+                            {/* Info area */}
+                            <div className="flex flex-col gap-2">
+                                <h4 className="font-bold text-[#F8F8F6] text-xs leading-snug line-clamp-2 min-h-[2.5rem]">
                                     {product.name}
                                 </h4>
                                 <div className="flex items-center justify-between">
