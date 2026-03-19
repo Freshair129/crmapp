@@ -14,13 +14,17 @@ const PAGE_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
  * Returns count of messages saved.
  */
 async function lazyFetchMessagesFromFB(convDbId, participantId, participantName) {
+    // Hard cap: 7s total — must fit inside Vercel 10s limit
+    const controller = new AbortController();
+    const killTimer = setTimeout(() => controller.abort(), 7000);
+
     try {
         // Step 1: find the FB conversation ID for this PSID
         const convLookupUrl = new URL(`${FB_GRAPH}/${PAGE_ID}/conversations`);
         convLookupUrl.searchParams.set('user_id', participantId);
         convLookupUrl.searchParams.set('fields', 'id');
         convLookupUrl.searchParams.set('access_token', PAGE_TOKEN);
-        const convLookupRes = await fetch(convLookupUrl.toString());
+        const convLookupRes = await fetch(convLookupUrl.toString(), { signal: controller.signal });
         if (!convLookupRes.ok) return 0;
         const convLookupData = await convLookupRes.json();
         const fbConvId = convLookupData.data?.[0]?.id;
@@ -31,7 +35,7 @@ async function lazyFetchMessagesFromFB(convDbId, participantId, participantName)
         msgUrl.searchParams.set('fields', 'id,message,from,created_time,attachments');
         msgUrl.searchParams.set('limit', '25');
         msgUrl.searchParams.set('access_token', PAGE_TOKEN);
-        const msgRes = await fetch(msgUrl.toString());
+        const msgRes = await fetch(msgUrl.toString(), { signal: controller.signal });
         if (!msgRes.ok) return 0;
         const msgData = await msgRes.json();
         const messages = msgData.data || [];
@@ -67,8 +71,14 @@ async function lazyFetchMessagesFromFB(convDbId, participantId, participantName)
         logger.info('[LazyFetch]', `Saved ${saved} messages for conv ${convDbId}`);
         return saved;
     } catch (err) {
-        logger.warn('[LazyFetch]', 'Failed to lazy-fetch from FB', err.message);
+        if (err.name === 'AbortError') {
+            logger.warn('[LazyFetch]', `Timeout fetching messages for PSID ${participantId}`);
+        } else {
+            logger.warn('[LazyFetch]', 'Failed to lazy-fetch from FB', err.message);
+        }
         return 0;
+    } finally {
+        clearTimeout(killTimer);
     }
 }
 
