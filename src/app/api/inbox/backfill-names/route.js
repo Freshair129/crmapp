@@ -6,11 +6,10 @@ const GRAPH = 'https://graph.facebook.com/v19.0';
 
 /**
  * POST /api/inbox/backfill-names
- * Use FB /conversations?fields=participants to populate customer names.
- * Unlike /{psid}?fields=name (now blocked), participants data is returned
- * as part of conversation objects and is always accessible.
+ * Uses FB conversations/participants to backfill customer names.
+ * Optimised for Vercel 10s timeout: 1-3 FB API calls + 1 DB transaction.
  */
-export async function POST(request) {
+export async function POST() {
     const PAGE_ID = process.env.FB_PAGE_ID;
     const token = process.env.FB_PAGE_ACCESS_TOKEN;
 
@@ -19,11 +18,10 @@ export async function POST(request) {
     }
 
     try {
-        const prisma = await getPrisma();
-        let updated = 0;
+        // Step 1: fetch participant names from FB (1-3 API calls)
+        const psidToName = {};
         let cursor = null;
 
-        // Fetch up to 3 pages of conversations (75 convs) with participant names
         for (let page = 0; page < 3; page++) {
             const url = new URL(`${GRAPH}/${PAGE_ID}/conversations`);
             url.searchParams.set('access_token', token);
@@ -36,44 +34,50 @@ export async function POST(request) {
 
             if (!res.ok || data.error) {
                 const msg = data.error?.message || `Graph API ${res.status}`;
-                logger.error('[BackfillNames]', msg);
                 return NextResponse.json({ error: msg }, { status: 502 });
             }
 
-            const conversations = data.data || [];
-            if (conversations.length === 0) break;
-
-            // For each conversation, find the customer participant and update their name
-            await Promise.all(conversations.map(async (conv) => {
+            for (const conv of (data.data || [])) {
                 const participants = conv.participants?.data || [];
-                const customer = participants.find(p => p.id !== PAGE_ID);
-                if (!customer?.name || !customer?.id) return;
-
-                const [firstName, ...rest] = customer.name.trim().split(' ');
-
-                // Only update customers with no first_name set
-                await prisma.customer.updateMany({
-                    where: {
-                        facebookId: customer.id,
-                        firstName: null
-                    },
-                    data: {
-                        facebookName: customer.name,
-                        firstName,
-                        lastName: rest.join(' ') || null,
-                    }
-                });
-                updated++;
-            }));
+                const cust = participants.find(p => p.id !== PAGE_ID);
+                if (cust?.id && cust?.name) psidToName[cust.id] = cust.name;
+            }
 
             cursor = data.paging?.cursors?.after;
             if (!cursor || !data.paging?.next) break;
         }
 
-        logger.info('[BackfillNames]', `Done: ~${updated} customers updated`);
-        return NextResponse.json({ updated, source: 'conversations/participants' });
+        const psids = Object.keys(psidToName);
+        if (psids.length === 0) {
+            return NextResponse.json({ updated: 0, message: 'No participants found' });
+        }
+
+        // Step 2: single DB transaction — find + update all at once
+        const prisma = await getPrisma();
+        const customers = await prisma.customer.findMany({
+            where: { facebookId: { in: psids }, firstName: null },
+            select: { id: true, facebookId: true }
+        });
+
+        if (customers.length === 0) {
+            return NextResponse.json({ updated: 0, message: 'All customers already have names' });
+        }
+
+        await prisma.$transaction(
+            customers.map(c => {
+                const name = psidToName[c.facebookId];
+                const [firstName, ...rest] = name.trim().split(' ');
+                return prisma.customer.update({
+                    where: { id: c.id },
+                    data: { facebookName: name, firstName, lastName: rest.join(' ') || null }
+                });
+            })
+        );
+
+        logger.info('[BackfillNames]', `Updated ${customers.length} customers`);
+        return NextResponse.json({ updated: customers.length, total_participants: psids.length });
     } catch (error) {
-        logger.error('[BackfillNames]', 'Backfill error', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        logger.error('[BackfillNames]', 'error', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
