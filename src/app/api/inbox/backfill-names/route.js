@@ -32,36 +32,30 @@ export async function POST(request) {
             return NextResponse.json({ updated: 0, message: 'All FB customers already have names' });
         }
 
-        let updated = 0;
-        let failed = 0;
-
-        for (const cust of customers) {
-            try {
+        // Parallel fetch — all at once to stay within 10s Vercel timeout
+        const results = await Promise.allSettled(
+            customers.map(async (cust) => {
                 const res = await fetch(
                     `${FB_GRAPH}/${cust.facebookId}?fields=name&access_token=${token}`
                 );
                 const data = await res.json();
-
                 if (!res.ok || data.error || !data.name) {
-                    logger.warn('[BackfillNames]', `No name for PSID ${cust.facebookId}`, data.error?.message);
-                    failed++;
-                    continue;
+                    throw new Error(data.error?.message || 'no name');
                 }
-
                 const [firstName, ...rest] = data.name.trim().split(' ');
                 await prisma.customer.update({
                     where: { id: cust.id },
-                    data: {
-                        facebookName: data.name,
-                        firstName,
-                        lastName: rest.join(' ') || null,
-                    }
+                    data: { facebookName: data.name, firstName, lastName: rest.join(' ') || null }
                 });
-                updated++;
-            } catch (err) {
-                logger.error('[BackfillNames]', `Failed for ${cust.facebookId}`, err);
-                failed++;
-            }
+                return data.name;
+            })
+        );
+
+        let updated = 0;
+        let failed = 0;
+        for (const r of results) {
+            if (r.status === 'fulfilled') updated++;
+            else { failed++; logger.warn('[BackfillNames]', r.reason?.message); }
         }
 
         logger.info('[BackfillNames]', `Done: ${updated} updated, ${failed} failed out of ${customers.length}`);
