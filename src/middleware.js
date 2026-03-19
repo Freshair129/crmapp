@@ -9,6 +9,10 @@
  *   /api/customers/*   → AGENT+
  *   /api/webhooks/*    → skip RBAC (signature-based auth per handler)
  *   all others         → AGENT+ (authenticated)
+ *
+ * GUEST write-block: GUEST role may only use GET requests.
+ *   POST/PATCH/PUT/DELETE from GUEST → 403 Forbidden (read-only enforcement)
+ *   Exceptions: /api/auth/* and /api/webhooks/* (always pass-through)
  */
 
 import { NextResponse } from 'next/server';
@@ -34,8 +38,11 @@ const ROLE_LEVEL = {
   SUPERVISOR: 3,
   ADMIN:      4, // school owner/director — same access as MANAGER
   AGENT:      1,
-  GUEST:      1, // Read-only demo — same API access as AGENT, UI enforces read-only
+  GUEST:      1, // Read-only demo — GET only, all writes blocked at middleware
 };
+
+/** HTTP methods that mutate state — blocked for GUEST role */
+const WRITE_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 
 function hasPermission(userRole, requiredRole) {
   return (ROLE_LEVEL[userRole] ?? 0) >= (ROLE_LEVEL[requiredRole] ?? 0);
@@ -78,6 +85,14 @@ export async function middleware(request) {
 
   if (!hasPermission(token.role, rule.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // GUEST write-block — read-only enforcement at API layer
+  if (token.role === 'GUEST' && WRITE_METHODS.has(request.method)) {
+    return NextResponse.json(
+      { error: 'Forbidden', reason: 'Demo account is read-only' },
+      { status: 403 }
+    );
   }
 
   return NextResponse.next();
