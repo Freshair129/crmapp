@@ -142,6 +142,9 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart }) {
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                             <h2 className="text-lg font-black text-[#F8F8F6] leading-snug">{product.name}</h2>
+                            {product.productId && (
+                                <p className="text-[9px] font-mono text-white/25 mt-0.5 tracking-wider">{product.productId}</p>
+                            )}
                             {product.description && (
                                 <p className="text-xs text-white/40 mt-1 leading-relaxed">{product.description}</p>
                             )}
