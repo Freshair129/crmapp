@@ -45,3 +45,74 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-white/10 rounded-full hover:bg-white/20 transition-all;
 }
+
+/* ─────────────────────────────────────────────
+   LIGHT MODE — applied when <html data-theme="light">
+   Uses CSS specificity (2 attribute selectors) to
+   override hardcoded Tailwind utility classes.
+───────────────────────────────────────────── */
+
+[data-theme="light"] body {
+  background-color: #F0F4F8 !important;
+  background-image: radial-gradient(circle at 50% 50%, #E2E8F0 0%, #F0F4F8 100%);
+  color: #0F172A;
+}
+
+/* Navy / dark backgrounds → light gray */
+[data-theme="light"] [class*="bg-[#0A1A2F"] {
+  background-color: #F0F4F8 !important;
+}
+[data-theme="light"] [class*="bg-[#152A47"] {
+  background-color: #E2E8F0 !important;
+}
+[data-theme="light"] [class*="bg-[#1E293B"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Translucent white cards → translucent dark cards */
+[data-theme="light"] .bg-white\/5  { background-color: rgba(15,23,42,0.04) !important; }
+[data-theme="light"] .bg-white\/8  { background-color: rgba(15,23,42,0.06) !important; }
+[data-theme="light"] .bg-white\/10 { background-color: rgba(15,23,42,0.07) !important; }
+[data-theme="light"] .bg-white\/20 { background-color: rgba(15,23,42,0.12) !important; }
+[data-theme="light"] .bg-white\/30 { background-color: rgba(15,23,42,0.18) !important; }
+
+/* White text → slate text */
+[data-theme="light"] .text-white        { color: #0F172A !important; }
+[data-theme="light"] .text-white\/20    { color: rgba(15,23,42,0.30) !important; }
+[data-theme="light"] .text-white\/25    { color: rgba(15,23,42,0.35) !important; }
+[data-theme="light"] .text-white\/30    { color: rgba(15,23,42,0.40) !important; }
+[data-theme="light"] .text-white\/40    { color: rgba(15,23,42,0.50) !important; }
+[data-theme="light"] .text-white\/50    { color: rgba(15,23,42,0.60) !important; }
+[data-theme="light"] .text-white\/60    { color: rgba(15,23,42,0.70) !important; }
+[data-theme="light"] .text-white\/70    { color: rgba(15,23,42,0.75) !important; }
+[data-theme="light"] .placeholder-white\/20::placeholder { color: rgba(15,23,42,0.30) !important; }
+[data-theme="light"] .placeholder-white\/25::placeholder { color: rgba(15,23,42,0.35) !important; }
+
+/* White borders → slate borders */
+[data-theme="light"] .border-white\/5  { border-color: rgba(15,23,42,0.06) !important; }
+[data-theme="light"] .border-white\/10 { border-color: rgba(15,23,42,0.12) !important; }
+[data-theme="light"] .border-white\/20 { border-color: rgba(15,23,42,0.18) !important; }
+[data-theme="light"] .border-white\/30 { border-color: rgba(15,23,42,0.24) !important; }
+
+/* Focus rings */
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  color: #0F172A !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: rgba(15,23,42,0.35) !important;
+}
+
+/* Scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(15,23,42,0.15) !important;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(15,23,42,0.25) !important;
+}
+
+/* Smooth theme transition */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.1s ease;
+}

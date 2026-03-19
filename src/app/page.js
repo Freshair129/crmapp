@@ -55,6 +55,11 @@ export default function Home() {
     const [language, setLanguage] = useState('TH');
     const [theme, setTheme] = useState('dark');
 
+    // Apply theme to <html> so CSS selectors can respond
+    useEffect(() => {
+        document.documentElement.dataset.theme = theme;
+    }, [theme]);
+
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
             setCurrentUser(session.user);
