@@ -1,10 +1,10 @@
 # V SCHOOL CRM v2 — SYSTEM REQUIREMENTS
 # โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ
-# Last updated: 2026-03-16 (v0.18.0)
+# Last updated: 2026-03-19 (v0.27.0)
 # ─────────────────────────────────────────────────────────
 
 system_name: "The V School CRM v2"
-version: "0.18.0"
+version: "0.27.0"
 description: |
   Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
   รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,
@@ -13,7 +13,8 @@ description: |
 tech_stack:
   framework: "Next.js 14 App Router"
   database: "PostgreSQL (Supabase) via Prisma ORM"
-  queue: "Redis + BullMQ"
+  queue: "Upstash QStash (HTTP) — แทน BullMQ local worker (ADR-040)"
+  cache: "Upstash Redis REST — แทน ioredis local docker (ADR-040)"
   ai: "Google Gemini"
   styling: "TailwindCSS"
   marketing_api: "Meta Graph API v19.0"
@@ -87,8 +88,10 @@ functional_requirements:
         status: "✅ Working"
         description: |
           evaluateRules() ตรวจ keyword/tier/VIP conditions
-          → BullMQ queue → LINE push via pushMessage()
-        implementation: "src/lib/notificationEngine.js, src/workers/notificationWorker.mjs"
+          → Upstash QStash publishJSON → /api/workers/notification (Vercel serverless)
+          → verify QStash signature → LINE push via pushMessage()
+        implementation: "src/lib/notificationEngine.js, src/app/api/workers/notification/route.js"
+        note: "v0.27.0 (ADR-040): notificationWorker.mjs + queue.js ถูกลบแล้ว — แทนด้วย QStash"
 
   # ── MODULE 3: IDENTITY RESOLUTION ─────────────────────
 
@@ -348,12 +351,82 @@ functional_requirements:
         implementation: "src/app/api/notifications/rules/route.js"
         events: ["MESSAGE_RECEIVED", "CONVERSATION_CLOSED", "INACTIVITY"]
 
-      - name: "FR13.2: LINE Push via BullMQ"
+      - name: "FR13.2: LINE Push via QStash"
         status: "✅ Working"
-        description: "notificationWorker → pushMessage() → LINE Messaging API"
-        implementation: "src/workers/notificationWorker.mjs"
+        description: "QStash HTTP queue → /api/workers/notification → pushMessage() → LINE Messaging API"
+        implementation: "src/app/api/workers/notification/route.js"
+        note: "v0.27.0 (ADR-040): เปลี่ยนจาก BullMQ worker เป็น QStash serverless"
 
   # ── MODULE 14: TASK MANAGEMENT ────────────────────────
+
+
+  # ── MODULE 15: PAYMENT & SLIP OCR ─────────────────────
+
+  - module: "Payment & Slip OCR (Chat-First Revenue)"
+    status: "✅ Working"
+    adr: "ADR-039"
+    description: "ใช้สลิปโอนเงินในแชทเป็น Source of Truth ของ Revenue — แทน Meta estimated"
+    features:
+      - name: "FR15.1: Slip OCR via Gemini Vision"
+        status: "✅ Working"
+        description: |
+          parseSlip(imageUrl) → { isSlip, confidence, amount, date, refNumber, bankName }
+          threshold: confidence ≥ 0.80 ถึงสร้าง Transaction อัตโนมัติ
+        implementation: "src/lib/slipParser.js"
+
+      - name: "FR15.2: Webhook Slip Detection"
+        status: "✅ Working"
+        description: "FB + LINE webhook detect attachmentType=image → fire-and-forget OCR (NFR1 ครบ)"
+        implementation: "src/app/api/webhooks/facebook/route.js, src/app/api/webhooks/line/route.js"
+
+      - name: "FR15.3: Payment Repository"
+        status: "✅ Working"
+        description: |
+          createPendingFromSlip → PENDING Transaction
+          verifyPayment(id, employeeId) → VERIFIED + Order CLOSED
+          getMonthlyRevenue → fromAds vs organic split
+        implementation: "src/lib/repositories/paymentRepo.js"
+
+      - name: "FR15.4: Employee Verify Flow"
+        status: "✅ Working"
+        description: "PATCH /api/payments/verify/[id] — พนักงาน verify สลิปก่อน Revenue นับ"
+        endpoint: "PATCH /api/payments/verify/[id]"
+
+      - name: "FR15.5: REQ-07 First Touch Ad Attribution"
+        status: "✅ Working"
+        description: |
+          Conversation.firstTouchAdId — บันทึก referral.ad_id จาก FB webhook เฉพาะตอน CREATE (immutable)
+          getMonthlyRevenue ใช้ firstTouchAdId แยก Ads vs Organic ROAS
+        note: "historical conversations ก่อน v0.26.0 จะมี firstTouchAdId = null (= organic)"
+
+  # ── MODULE 16: INGREDIENT LOT TRACKING ────────────────
+
+  - module: "Ingredient Lot Tracking (FEFO)"
+    status: "✅ Working"
+    adr: "ADR-038"
+    description: "ติดตาม stock batch-level ด้วย Lot ID + FEFO deduction"
+    features:
+      - name: "FR16.1: Lot Management"
+        status: "✅ Working"
+        description: |
+          IngredientLot — LOT-YYYYMMDD-XXX, receivedQty, remainingQty, expiresAt
+          status: ACTIVE | CONSUMED | EXPIRED | RECALLED
+        implementation: "src/lib/repositories/kitchenRepo.js"
+
+      - name: "FR16.2: FEFO Stock Deduction"
+        status: "✅ Working"
+        description: |
+          completeSessionWithStockDeduction() ตัดจาก Lot เรียง expiresAt ASC (First Expired First Out)
+          remainder logging ใน StockDeductionLog — full audit trail
+        implementation: "src/lib/repositories/scheduleRepo.js"
+
+      - name: "FR16.3: Lot API"
+        status: "✅ Working"
+        endpoints:
+          - "GET/POST /api/kitchen/lots"
+          - "GET/PATCH /api/kitchen/lots/[id]"
+
+  # ── MODULE 17: TASK MANAGEMENT ────────────────────────
 
   - module: "Task Management"
     status: "✅ Working"
@@ -577,6 +650,31 @@ api_specification:
       - method: "DELETE"
         path: "/api/notifications/rules/[id]"
         purpose: "Delete rule by UUID or ruleId"
+
+  - module: "Payments"
+    endpoints:
+      - method: "GET"
+        path: "/api/payments/pending"
+        purpose: "List pending slips รอ employee verify"
+      - method: "PATCH"
+        path: "/api/payments/verify/[id]"
+        purpose: "Verify slip → slipStatus=VERIFIED + Order CLOSED"
+
+  - module: "Kitchen Lots"
+    endpoints:
+      - method: "GET/POST"
+        path: "/api/kitchen/lots"
+        purpose: "List lots (filter: status, ingredientId, expiring=30) + create lot"
+      - method: "GET/PATCH"
+        path: "/api/kitchen/lots/[id]"
+        purpose: "Lot detail + update status/remainingQty"
+
+  - module: "QStash Worker"
+    endpoints:
+      - method: "POST"
+        path: "/api/workers/notification"
+        purpose: "Upstash QStash serverless worker — verify signature + LINE push"
+        note: "ห้ามเรียกตรง ต้องผ่าน QStash เท่านั้น (signature required)"
 
   - module: "Sheets Sync"
     endpoints:

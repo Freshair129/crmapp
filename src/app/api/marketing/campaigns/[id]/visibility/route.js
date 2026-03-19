@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
 
 /**
  * PATCH /api/marketing/campaigns/[id]/visibility
@@ -8,13 +8,9 @@ import { getPrisma } from '@/lib/db';
  */
 export async function PATCH(request, { params }) {
     try {
-        const prisma = await getPrisma();
         const { isVisible } = await request.json();
 
-        await prisma.campaign.update({
-            where: { id: params.id },
-            data: { isVisible: Boolean(isVisible) },
-        });
+        await marketingRepo.updateCampaign(params.id, { isVisible: Boolean(isVisible) });
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -1,7 +1,6 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
-import { upsertAdHourlyMetric, appendHourlyLedgerIfChanged } from '@/lib/repositories/marketingRepo';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
@@ -45,15 +44,10 @@ export async function GET() {
             return NextResponse.json({ success: false, error: 'FB credentials not configured' }, { status: 503 });
         }
 
-        const prisma = await getPrisma();
         const today = new Date().toISOString().split('T')[0];
 
         // Fetch active/recent ads to reduce API load
-        // Alternatively, pull all ads if account is small
-        const ads = await prisma.ad.findMany({
-            where: { status: 'ACTIVE' },
-            select: { adId: true }
-        });
+        const ads = await marketingRepo.getActiveAds();
 
         logger.info('[SyncHourly]', `Syncing ${ads.length} active ads for ${today}`);
         let updatedCount = 0;
@@ -92,10 +86,10 @@ export async function GET() {
                         const metrics = { spend, impressions, clicks, leads, purchases, revenue };
 
                         // 1. Update Hourly Rollup
-                        await upsertAdHourlyMetric(ad.adId, today, hour, metrics);
+                        await marketingRepo.upsertAdHourlyMetric(ad.adId, today, hour, metrics);
                         
                         // 2. Delta Ledgering
-                        const ledgerEntry = await appendHourlyLedgerIfChanged(ad.adId, today, hour, metrics);
+                        const ledgerEntry = await marketingRepo.appendHourlyLedgerIfChanged(ad.adId, today, hour, metrics);
                         if (ledgerEntry) ledgerRows++;
                         
                         updatedCount++;

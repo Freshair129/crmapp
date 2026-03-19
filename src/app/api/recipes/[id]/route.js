@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getServerSession } from 'next-auth';
+import { getSession } from '@/lib/getSession';
 import { getRecipeById, updateRecipe } from '@/lib/repositories/recipeRepo';
 
 export async function GET(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const recipe = await getRecipeById(params.id);
@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();

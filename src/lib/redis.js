@@ -1,28 +1,21 @@
-import Redis from 'ioredis';
+import { Redis } from '@upstash/redis';
 import { logger } from './logger';
-
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 class RedisCache {
     constructor() {
-        // Promise sharing map — ป้องกัน Cache Stampede
-        // ถ้า 2 requests ขอ key เดียวกันพร้อมกัน, request ที่ 2 จะรอ promise ของ request แรก
+        // Promise sharing map — เพื่อป้องกัน Cache Stampede ในสภาพแวดล้อม Serverless
         this._inflight = new Map();
 
-        this.client = new Redis(redisUrl, {
-            maxRetriesPerRequest: 3,
-            retryStrategy(times) {
-                const delay = Math.min(times * 50, 2000);
-                return delay;
-            }
-        });
+        const url = process.env.UPSTASH_REDIS_REST_URL;
+        const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-        this.client.on('error', (err) => {
-            logger.error('[Redis]', 'Connection error', err);
-        });
+        if (!url || !token) {
+            logger.error('[Redis]', 'Upstash Redis environment variables are missing');
+        }
 
-        this.client.on('connect', () => {
-            logger.info('[Redis]', 'Connected successfully');
+        this.client = new Redis({
+            url: url || '',
+            token: token || '',
         });
     }
 
@@ -30,12 +23,17 @@ class RedisCache {
         try {
             const data = await this.client.get(key);
             if (!data) return null;
+            
+            // @upstash/redis returns parsed JSON if the data was stored as JSON
+            // and strings for everything else. No need for manual JSON.parse if ioredis compatibility is required.
+            // But to be safe and maintain ioredis behavior (which stores everything as strings):
+            if (typeof data === 'object') return data;
+            
             try {
                 return JSON.parse(data);
             } catch (parseError) {
-                logger.warn('[Redis]', `Corrupted cache for key ${key} — deleting`);
-                await this.client.del(key).catch(() => {});
-                return null;
+                // If it's not JSON, return it as is (string)
+                return data;
             }
         } catch (error) {
             logger.error('[Redis]', `GET failed for ${key}`, error);
@@ -45,7 +43,7 @@ class RedisCache {
 
     async set(key, value, ttlSeconds = 300) {
         try {
-            await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+            await this.client.set(key, JSON.stringify(value), { ex: ttlSeconds });
             return true;
         } catch (error) {
             logger.error('[Redis]', `SET failed for ${key}`, error);
@@ -55,14 +53,12 @@ class RedisCache {
 
     /**
      * Get or Set pattern with Promise sharing (anti-stampede)
-     * ถ้า 2 requests ขอ key เดียวกันพร้อมกัน → share promise เดียว → DB query แค่ 1 ครั้ง
      */
-    // Phase 19: Sentinel string สำหรับ negative cache (แทน null ที่แยกจาก cache-miss ไม่ได้)
     static NULL_SENTINEL = '__NULL__';
 
     async getOrSet(key, fetcher, ttlSeconds = 300) {
         const cached = await this.get(key);
-        // Negative cache hit — DB ไม่มีข้อมูล ไม่ต้อง fetch ใหม่
+        
         if (cached === RedisCache.NULL_SENTINEL) {
             logger.info('[Redis]', `Cache HIT (negative): ${key}`);
             return null;
@@ -72,7 +68,6 @@ class RedisCache {
             return cached;
         }
 
-        // ถ้ามี request อื่นกำลัง fetch อยู่แล้ว → รอ promise เดิม
         if (this._inflight.has(key)) {
             logger.info('[Redis]', `Cache MISS (shared): ${key}`);
             return this._inflight.get(key);
@@ -85,7 +80,7 @@ class RedisCache {
                 this._inflight.delete(key);
                 logger.warn('[Redis]', `_inflight timeout for key ${key}`);
             }
-        }, 30_000); // 30s max
+        }, 30_000);
 
         const promise = fetcher()
             .then(async freshData => {
@@ -97,7 +92,6 @@ class RedisCache {
             .catch(async err => {
                 clearTimeout(timeoutId);
                 this._inflight.delete(key);
-                // Phase 19: เก็บ sentinel string แทน null — แยกแยะ cache-miss ออกจาก negative-hit ได้ถูกต้อง
                 await this.set(key, RedisCache.NULL_SENTINEL, 30).catch(() => {});
                 throw err;
             });
@@ -107,7 +101,30 @@ class RedisCache {
     }
 
     async del(key) {
-        return this.client.del(key);
+        try {
+            return await this.client.del(key);
+        } catch (error) {
+            logger.error('[Redis]', `DEL failed for ${key}`, error);
+            return 0;
+        }
+    }
+
+    async incr(key) {
+        try {
+            return await this.client.incr(key);
+        } catch (error) {
+            logger.error('[Redis]', `INCR failed for ${key}`, error);
+            return null;
+        }
+    }
+
+    async expire(key, seconds) {
+        try {
+            return await this.client.expire(key, seconds);
+        } catch (error) {
+            logger.error('[Redis]', `EXPIRE failed for ${key}`, error);
+            return false;
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
+import * as inboxRepo from '@/lib/repositories/inboxRepo';
 
 export async function POST(request) {
     try {
@@ -9,17 +10,11 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'conversationId and agentName are required' }, { status: 400 });
         }
 
-        const prisma = await getPrisma();
-
-        await prisma.conversation.upsert({
-            where: { conversationId },
-            update: { assignedAgent: agentName },
-            create: { conversationId, assignedAgent: agentName },
-        });
+        await inboxRepo.upsertConversationByExternalId(conversationId, { assignedAgent: agentName });
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('[ChatAssign] Assign failed', error);
+        logger.error('[ChatAssign]', 'Assign failed', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getServerSession } from 'next-auth';
+import { getSession } from '@/lib/getSession';
 import { createPurchaseRequest, getPurchaseRequests } from '@/lib/repositories/kitchenRepo';
 
 export async function GET(request) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { searchParams } = new URL(request.url);
@@ -22,7 +22,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { scheduleId, notes } = await request.json();

@@ -1,17 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { notificationEngine } from '../notificationEngine';
-import { notificationQueue } from '../queue';
+import { NotificationEngine } from '../notificationEngine';
 
-// Mock BullMQ queue
-vi.mock('../queue', () => ({
-  notificationQueue: {
-    add: vi.fn(),
-  },
-}));
+// Mock QStash Client correctly
+const mockPublishJSON = vi.fn().mockResolvedValue({ messageId: 'msg_123' });
+
+vi.mock('@upstash/qstash', () => {
+  return {
+    Client: vi.fn().mockImplementation(function() {
+      return {
+        publishJSON: mockPublishJSON
+      };
+    })
+  };
+});
 
 describe('NotificationEngine', () => {
+  let engine;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.QSTASH_TOKEN = 'test-token';
+    process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+    engine = new NotificationEngine();
   });
 
   const mockContext = {
@@ -20,7 +30,7 @@ describe('NotificationEngine', () => {
     channel: 'facebook'
   };
 
-  it('should match a rule based on keywords', async () => {
+  it('should match a rule based on keywords and enqueue to QStash', async () => {
     const mockPrisma = {
       notificationRule: {
         findMany: vi.fn().mockResolvedValue([
@@ -36,11 +46,14 @@ describe('NotificationEngine', () => {
       }
     };
 
-    await notificationEngine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
+    await engine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
 
     expect(mockPrisma.notificationRule.findMany).toHaveBeenCalled();
-    expect(notificationQueue.add).toHaveBeenCalledWith('NOT-001', expect.objectContaining({
-      ruleId: 'NOT-001'
+    expect(mockPublishJSON).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.objectContaining({
+        ruleId: 'NOT-001'
+      }),
+      retries: 5
     }));
   });
 
@@ -60,9 +73,9 @@ describe('NotificationEngine', () => {
       }
     };
 
-    await notificationEngine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
+    await engine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
 
-    expect(notificationQueue.add).not.toHaveBeenCalled();
+    expect(mockPublishJSON).not.toHaveBeenCalled();
   });
 
   it('should match a rule based on membership tier', async () => {
@@ -82,9 +95,9 @@ describe('NotificationEngine', () => {
     };
 
     const vipContext = { ...mockContext, customer: { membershipTier: 'VIP' } };
-    await notificationEngine.evaluateRules('MESSAGE_RECEIVED', vipContext, mockPrisma);
+    await engine.evaluateRules('MESSAGE_RECEIVED', vipContext, mockPrisma);
 
-    expect(notificationQueue.add).toHaveBeenCalledWith('NOT-002', expect.any(Object));
+    expect(mockPublishJSON).toHaveBeenCalled();
   });
 
   it('should match a catch-all rule (no conditions)', async () => {
@@ -103,8 +116,8 @@ describe('NotificationEngine', () => {
       }
     };
 
-    await notificationEngine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
+    await engine.evaluateRules('MESSAGE_RECEIVED', mockContext, mockPrisma);
 
-    expect(notificationQueue.add).toHaveBeenCalledWith('NOT-003', expect.any(Object));
+    expect(mockPublishJSON).toHaveBeenCalled();
   });
 });

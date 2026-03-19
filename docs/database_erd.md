@@ -1,7 +1,7 @@
 # V School CRM — Entity Relationship Diagram (ERD)
 
-**อัปเดต:** 2026-03-16 (Phase 19)
-**อ้างอิง:** `prisma/schema.prisma` (40 models)
+**อัปเดต:** 2026-03-19 (v0.27.0 — Phase 20: IngredientLot · Phase 26: firstTouchAdId · Phase 27: Upstash)
+**อ้างอิง:** `prisma/schema.prisma` (46 models)
 **Standard:** Mermaid erDiagram
 
 ## Quick Navigation
@@ -624,23 +624,23 @@ ORDER BY total_deducted DESC;
 
 ---
 
-## Domain Summary (อัพเดท Phase 19)
+## Domain Summary (อัพเดท v0.27.0)
 
 | Domain | Models | หมายเหตุ |
 |---|---|---|
 | Customer Core | Customer, Order, Transaction, InventoryItem, TimelineEvent, CartItem | 6 models |
-| Conversation | Conversation, Message, ChatEpisode | 3 models |
+| Conversation | Conversation, Message, ChatEpisode | 3 models — `firstTouchAdId` added (Phase 26) |
 | Employee / RBAC | Employee | 1 model — ADR-026 6-tier roles |
 | Product / Cart | Product, CartItem | 2 models |
 | Marketing / Ads | AdAccount, Campaign, AdSet, Ad, AdDailyMetric, AdHourlyMetric, AdHourlyLedger, AdLiveStatus, AdCreative, Experiment | 10 models — ADR-024 |
-| Enrollment + Schedule | Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance | 4 models |
-| Kitchen Ops | Ingredient, CourseBOM⚠️, PurchaseRequest, PurchaseRequestItem, Asset | 5 models |
+| Enrollment + Schedule | Enrollment, EnrollmentItem, CourseSchedule, ClassAttendance | 4 models — `classId` added (Phase 20) |
+| Kitchen Ops | Ingredient, **IngredientLot**, CourseBOM⚠️, PurchaseRequest, PurchaseRequestItem, Asset | 6 models — `IngredientLot` added (Phase 20) |
 | Recipe + Menu | Recipe, CourseMenu, RecipeIngredient, RecipeEquipment, CourseEquipment | 5 models |
 | Package | Package, PackageCourse, PackageGift, PackageEnrollment, PackageEnrollmentCourse | 5 models |
 | Notification | NotificationRule | 1 model |
 | Tasks | Task | 1 model |
-| Audit | AuditLog, **StockDeductionLog** | 2 models — Phase 19 |
-| **รวม** | **45 models** | ⚠️ CourseBOM deprecated → Phase 20 |
+| Audit | AuditLog, **StockDeductionLog** | 2 models — `lotId` added (Phase 20) |
+| **รวม** | **46 models** | IngredientLot เพิ่ม Phase 20 · CourseBOM deprecated |
 
 ---
 
@@ -659,3 +659,7 @@ ORDER BY total_deducted DESC;
 | **ADR-036** | Google Sheets SSOT | master data sync ผ่าน CSV URL (courses/ingredients/BOM/assets) |
 | **ADR-037** | Product as Course Catalog | Reuse Product model เป็น course catalog — ไม่สร้าง model ซ้อน |
 | **Phase 19** | Multi-Level BOM | RecipeIngredient = MenuBOM (stored) · CourseBOM = computed (deprecated table) |
+| **ADR-038** | Recipe + Package + Stock Deduction | Recipe entity แยกจาก Ingredient · swap 1×/enrollment · atomic $transaction |
+| **ADR-039** | Chat-First Revenue Attribution | Slip OCR via Gemini Vision · `Conversation.firstTouchAdId` (immutable) · confidence ≥ 0.80 |
+| **ADR-040** | Upstash Infrastructure | ioredis → @upstash/redis REST · BullMQ → Upstash QStash · zero local docker |
+| **Phase 20** | Ingredient Lot Tracking | `IngredientLot` model · LOT-YYYYMMDD-XXX · FEFO deduction · `classId` บน CourseSchedule |

@@ -13,8 +13,8 @@ sequenceDiagram
     participant LINE as LINE Platform
     participant WH   as Webhook API<br/>/api/webhooks/facebook<br/>/api/webhooks/line
     participant NE   as notificationEngine.js<br/>evaluateRules()
-    participant BQ   as BullMQ Queue<br/>(Redis 6379)
-    participant NW   as notificationWorker.mjs
+    participant QS   as Upstash QStash<br/>(HTTP Queue)
+    participant NW   as /api/workers/notification<br/>(Vercel serverless)
     participant DB   as PostgreSQL (Supabase)
     participant RD   as Redis Cache<br/>getOrSet TTL
     participant UI   as UnifiedInbox.js<br/>(Employee Browser)
@@ -25,8 +25,9 @@ sequenceDiagram
     WH-->>FB: 200 OK (immediate — fire & forget)
     WH->>DB: prisma.$transaction<br/>upsert Customer + Conversation + Message<br/>(P2002 race condition handled)
     WH->>NE: evaluateRules(newMessage, context)
-    NE->>BQ: enqueue notification job<br/>(keyword/tier/VIP match)
-    BQ->>NW: process job
+    NE->>QS: qstash.publishJSON(url, payload)<br/>(keyword/tier/VIP match)
+    QS->>NW: POST /api/workers/notification<br/>+ QStash-Signature header
+    NW->>NW: Receiver.verify(signature)
     NW->>LINE: lineService.pushMessage()<br/>quota circuit breaker
 
     LINE->>WH: POST message event
@@ -100,9 +101,9 @@ flowchart TD
 
     E & F & G --> H["Build notification payload<br/>ruleId, channel, template"]
 
-    H --> I["BullMQ: add job<br/>queue: notifications<br/>retry ≥ 5x, exp. backoff"]
+    H --> I["QStash: publishJSON<br/>url: /api/workers/notification<br/>retry ≥ 5x built-in"]
 
-    I --> J["notificationWorker.mjs<br/>pull job from Redis"]
+    I --> J["/api/workers/notification<br/>Vercel serverless<br/>verify QStash signature"]
 
     J --> K{notification.channel}
     K -- LINE --> L["lineService.pushMessage<br/>LINE_CHANNEL_ACCESS_TOKEN"]
@@ -246,7 +247,7 @@ flowchart LR
     end
 
     subgraph Redis getOrSet Pattern
-        R[("Redis<br/>ioredis docker<br/>redis:7-alpine :6379")]
+        R[("Upstash Redis<br/>REST API<br/>@upstash/redis")]
     end
 
     subgraph PostgreSQL
@@ -266,5 +267,133 @@ flowchart LR
 
 ---
 
-*Last updated: 2026-03-18 — v0.22.0*
-*ดูเพิ่มเติม: [overview.md](../overview.md) · [arc42-main.md](./arc42-main.md) · [ADR directory](../adr/)*
+---
+
+## 7. Chat-First Revenue Attribution — Slip OCR → Transaction → ROAS (Phase 26)
+
+> **หลักการ:** ใช้สลิปโอนเงินในแชทเป็น source of truth ของ Revenue แทนตัวเลข estimated จาก Meta
+> **ADR:** ADR-038 (planned)
+
+```mermaid
+sequenceDiagram
+    participant CUS  as ลูกค้า<br/>(FB / LINE)
+    participant WH   as Webhook<br/>facebook / line
+    participant DB   as PostgreSQL
+    participant GV   as Gemini Vision API<br/>slipParser.js
+    participant EMP  as Employee<br/>Slip Review UI
+    participant AR   as analyticsRepo<br/>getMonthlyRevenue()
+
+    Note over CUS,WH: ลูกค้าส่งสลิปโอนเงินในแชท
+
+    CUS->>WH: POST image attachment<br/>(attachmentType = image)
+    WH-->>CUS: 200 OK (< 200ms — fire & forget)
+
+    WH->>DB: upsert Message<br/>attachmentUrl, attachmentType=image
+
+    Note over WH,GV: ตรวจสอบว่าเป็นสลิปไหม (fire-and-forget)
+    WH->>GV: slipParser.parseSlip(imageUrl)
+    GV-->>WH: { isSlip: true, amount: 3500,<br/>date: "2026-03-19", refNumber: "6703...",<br/>bankName: "SCB", confidence: 0.97 }
+
+    alt isSlip = true AND confidence > 0.80
+        WH->>DB: Transaction.create<br/>slipStatus=PENDING, slipData=OCR result<br/>chatMessageId, conversationId
+        Note over WH,EMP: Employee poll /api/payments/pending หรือรับแจ้งเตือน
+    else ไม่ใช่สลิป หรือ confidence ต่ำ
+        WH-->WH: skip — log warning
+    end
+
+    Note over EMP,DB: Employee ตรวจสอบและ verify
+
+    EMP->>DB: GET /api/payments/pending<br/>paymentRepo.getPendingSlips()
+    DB-->>EMP: Transaction[] พร้อม slipImageUrl
+
+    EMP->>DB: PATCH /api/payments/[id]/verify<br/>paymentRepo.verifyPayment(id, employeeId)
+    DB->>DB: Transaction.slipStatus = VERIFIED<br/>Order.status = PAID (auto-create ถ้าไม่มี)<br/>Order.paidAmount += amount
+
+    Note over DB,AR: Revenue aggregation — bottom-up
+
+    AR->>DB: SUM(Transaction.amount)<br/>WHERE slipStatus=VERIFIED<br/>AND month = target
+    DB-->>AR: monthlyRevenue = ฿XX,XXX
+
+    Note over AR: ROAS = monthlyRevenue / Ad.spend<br/>แยก: Ads (firstTouchAdId != null) vs Organic
+```
+
+---
+
+## 8. REQ-07: First Touch Ad Attribution — Conversation → Ad Link
+
+> **ปัญหา:** Webhook รับ `referral.ad_id` จาก Facebook ได้ แต่ปัจจุบันทิ้งค่านี้ไป (line 155: `{}`)
+> **แก้:** บันทึก `firstTouchAdId` ลง Conversation เมื่อสร้างครั้งแรก
+
+```mermaid
+flowchart TD
+    A(["ลูกค้าคลิก Ad บน Facebook\n'วิดีโอชาบูเนื้อ A5'"]) --> B["Facebook ส่ง Webhook\nพร้อม referral.ad_id = '120...'"]
+
+    B --> C{"Conversation มีอยู่แล้ว?"}
+
+    C -- ใหม่ (CREATE) --> D["Conversation.create\nfirstTouchAdId = referral.ad_id\nbaked in permanently"]
+
+    C -- มีแล้ว (UPDATE) --> E["ไม่เปลี่ยน firstTouchAdId\n(first touch = immutable)"]
+
+    D --> F[("DB: Conversation\nfirstTouchAdId = '120...'\ncustomerId, channel, ...")]
+
+    F --> G["ลูกค้าส่งสลิป\n→ Transaction.create\n← conversationId"]
+
+    G --> H["Revenue Attribution:\nTransaction → Conversation → Ad\n→ AdSet → Campaign"]
+
+    H --> I(["ROAS = Revenue จากสลิปจริง\n/ Ad.spend จาก Meta API\n= ตัวเลขที่เชื่อถือได้ 100%"])
+
+    style D fill:#d4edda,stroke:#28a745
+    style I fill:#cce5ff,stroke:#007bff
+```
+
+---
+
+## Cross-Domain: Chat-First Revenue Domain Map
+
+```mermaid
+graph TB
+    subgraph INBOX ["🔵 INBOX DOMAIN"]
+        WH["Webhook\nfacebook / line"]
+        WH_IMG["Image Detection\nattachmentType = image"]
+        REQ07["REQ-07\nfirstTouchAdId"]
+    end
+
+    subgraph INFRA ["⚙️ INFRA DOMAIN"]
+        OCR["slipParser.js\nGemini Vision API"]
+    end
+
+    subgraph CUSTOMER ["🟡 CUSTOMER DOMAIN"]
+        PR["paymentRepo.js"]
+        TX["Transaction\nPENDING → VERIFIED"]
+        ORD["Order\nauto-create / update"]
+    end
+
+    subgraph ANALYTICS ["🔴 ANALYTICS / MARKETING DOMAIN"]
+        REV["getMonthlyRevenue()\nSUM verified transactions"]
+        ROAS["ROAS Calculation\nreal revenue / ad spend"]
+        DASH["Dashboard\nChat Revenue vs Meta Estimate"]
+    end
+
+    subgraph EXTERNAL ["☁️ External"]
+        GEM["Google Gemini\nVision API"]
+        META["Meta Graph API\nAd Spend (cost side only)"]
+    end
+
+    WH --> WH_IMG
+    WH --> REQ07
+    WH_IMG --> OCR
+    OCR <--> GEM
+    OCR --> PR
+    REQ07 --> PR
+    PR --> TX
+    TX --> ORD
+    TX --> REV
+    REV --> ROAS
+    META -.->|spend data| ROAS
+    ROAS --> DASH
+```
+
+---
+
+*Last updated: 2026-03-19 — v0.27.0*
+*ดูเพิ่มเติม: [overview.md](../overview.md) · [arc42-main.md](./arc42-main.md) · [ADR directory](../adr/)* · [domain-boundaries.md](./domain-boundaries.md)*

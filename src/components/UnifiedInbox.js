@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink } from 'lucide-react';
+import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
     const [conversations, setConversations] = useState([]);
@@ -13,6 +13,8 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const [loading, setLoading] = useState(true);
     const [msgLoading, setMsgLoading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+    const [syncResult, setSyncResult] = useState(null);
     
     const messagesEndRef = useRef(null);
 
@@ -232,6 +234,27 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
     const selectedConv = conversations.find(c => c.id === selectedId);
 
+    // Pull recent conversations from FB Graph API (fallback when webhook offline)
+    const handleSyncFB = async () => {
+        setSyncing(true);
+        setSyncResult(null);
+        try {
+            const res = await fetch('/api/marketing/chat/sync-conversations?days=7');
+            const data = await res.json();
+            if (data.success) {
+                setSyncResult({ ok: true, msg: `ดึงแล้ว ${data.stats.conversations} แชท / ${data.stats.messages} ข้อความ` });
+                fetchConversations(1, true); // reload list
+            } else {
+                setSyncResult({ ok: false, msg: data.error || 'Sync failed' });
+            }
+        } catch {
+            setSyncResult({ ok: false, msg: 'Network error' });
+        } finally {
+            setSyncing(false);
+            setTimeout(() => setSyncResult(null), 5000);
+        }
+    };
+
     return (
         <div className="flex w-full flex-1 min-h-0 bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
             {/* Conversation List */}
@@ -242,8 +265,24 @@ export default function UnifiedInbox({ language = 'TH' }) {
                            <h2 className="text-xl font-black tracking-tight">{language === 'TH' ? 'กล่องข้อความ' : 'Inbox'}</h2>
                            <span className="text-[10px] text-[#C9A34E] font-black uppercase tracking-[0.2em] opacity-80">{conversations.length} {language === 'TH' ? 'บทสนทนา' : 'Active Chats'}</span>
                         </div>
-                        <MessageCircle size={20} className="text-[#C9A34E]" />
+                        <div className="flex items-center gap-2">
+                            {/* Sync FB Chat — Graph API pull (works offline/local) */}
+                            <button
+                                onClick={handleSyncFB}
+                                disabled={syncing}
+                                title="ดึงแชทล่าสุดจาก Facebook (7 วัน)"
+                                className="w-8 h-8 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 flex items-center justify-center transition-all disabled:opacity-40"
+                            >
+                                <RefreshCw size={13} className={`text-blue-400 ${syncing ? 'animate-spin' : ''}`} />
+                            </button>
+                            <MessageCircle size={20} className="text-[#C9A34E]" />
+                        </div>
                     </div>
+                    {syncResult && (
+                        <div className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${syncResult.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                            {syncResult.msg}
+                        </div>
+                    )}
                     
                     <div className="relative group">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#C9A34E] transition-colors" />

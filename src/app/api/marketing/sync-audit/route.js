@@ -1,7 +1,6 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
-import { updateCampaignAuditSnapshot } from '@/lib/repositories/marketingRepo';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
@@ -38,8 +37,6 @@ export async function GET(request) {
         const since = new Date(Date.now() - months * 30 * 86400000).toISOString().split('T')[0];
         const until = new Date().toISOString().split('T')[0];
 
-        const prisma = await getPrisma();
-
         // 1. Fetch Campaign Insights directly from Meta
         const campaignInsights = await graphGet(`/${AD_ACCOUNT_ID}/insights`, {
             level: 'campaign',
@@ -63,7 +60,7 @@ export async function GET(request) {
             const mLeads = leadAction ? parseInt(leadAction.value || 0) : 0;
 
             // Update Snapshot in DB
-            await updateCampaignAuditSnapshot(campaignId, {
+            await marketingRepo.updateCampaignAuditSnapshot(campaignId, {
                 spend: mSpend,
                 clicks: mClicks,
                 leads: mLeads,
@@ -71,18 +68,7 @@ export async function GET(request) {
             });
 
             // Calculate Local Bottom-Up Aggregate for this campaign/range
-            const localAggr = await prisma.adDailyMetric.aggregate({
-                where: {
-                    date: { gte: new Date(since), lte: new Date(until) },
-                    ad: { adSet: { campaignId: campaignId } }
-                },
-                _sum: {
-                    spend: true,
-                    clicks: true,
-                    leads: true,
-                    revenue: true
-                }
-            });
+            const localAggr = await marketingRepo.getCampaignAggregateMetrics(campaignId, since, until);
 
             const lSpend = localAggr._sum.spend || 0;
             const diff = Math.abs(mSpend - lSpend);
@@ -91,21 +77,19 @@ export async function GET(request) {
             const isMismatch = deltaPct > 1; // > 1% mismatch
             if (isMismatch) {
                 mismatches++;
-                await prisma.auditLog.create({
-                    data: {
-                        action: 'MARKETING_AUDIT_MISMATCH',
-                        actor: 'SYSTEM',
-                        target: `Campaign:${campaignId}`,
-                        status: 'WARNING',
-                        details: {
-                            campaignName: meta.campaign_name,
-                            since,
-                            until,
-                            metaSpend: mSpend,
-                            localSpend: lSpend,
-                            delta: diff,
-                            deltaPct
-                        }
+                await marketingRepo.createAuditLog({
+                    action: 'MARKETING_AUDIT_MISMATCH',
+                    actor: 'SYSTEM',
+                    target: `Campaign:${campaignId}`,
+                    status: 'WARNING',
+                    details: {
+                        campaignName: meta.campaign_name,
+                        since,
+                        until,
+                        metaSpend: mSpend,
+                        localSpend: lSpend,
+                        delta: diff,
+                        deltaPct
                     }
                 });
             }

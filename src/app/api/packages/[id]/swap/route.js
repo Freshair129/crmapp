@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getServerSession } from 'next-auth';
+import { getSession } from '@/lib/getSession';
 import { swapCourseInEnrollment } from '@/lib/repositories/packageRepo';
 
 /**
@@ -10,7 +10,7 @@ import { swapCourseInEnrollment } from '@/lib/repositories/packageRepo';
  */
 export async function POST(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { oldProductId, newProductId } = await request.json();

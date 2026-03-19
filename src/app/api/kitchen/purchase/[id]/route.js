@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getServerSession } from 'next-auth';
+import { getSession } from '@/lib/getSession';
 import { getPrisma } from '@/lib/db';
 
 const VALID_STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'RECEIVED'];
 
 export async function PATCH(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();

@@ -191,3 +191,158 @@ export async function postReply(conversationId, { text, responderId }) {
         throw error;
     }
 }
+
+
+/**
+ * Update a conversation.
+ * @param {string} id - UUID or conversationId
+ * @param {any} data 
+ */
+export async function updateConversation(id, data) {
+    const prisma = await getPrisma();
+    return prisma.conversation.update({
+        where: { id },
+        data
+    });
+}
+
+/**
+ * Upsert a conversation.
+ * @param {string} id - UUID or conversationId
+ * @param {any} data 
+ */
+export async function upsertConversation(id, data) {
+    const prisma = await getPrisma();
+    return prisma.conversation.upsert({
+        where: { id },
+        create: { id, ...data },
+        update: data
+    });
+}
+
+/**
+ * Bulk update conversations by status or other criteria.
+ */
+export async function updateManyConversations(where, data) {
+    const prisma = await getPrisma();
+    return prisma.conversation.updateMany({
+        where,
+        data
+    });
+}
+
+/**
+ * Get internal UUID from conversationId lookup.
+ */
+export async function getConversationInternalId(conversationId) {
+    const prisma = await getPrisma();
+    const conv = await prisma.conversation.findUnique({
+        where: { conversationId },
+        select: { id: true }
+    });
+    return conv?.id;
+}
+
+/**
+ * Get conversation by ID with detailed inclusion.
+ */
+export async function getConversationWithDetail(id) {
+    const prisma = await getPrisma();
+    return prisma.conversation.findUnique({
+        where: { id },
+        include: {
+            customer: true,
+            assignedEmployee: { select: { firstName: true, nickName: true } }
+        }
+    });
+}
+
+/**
+ * Get conversations with cursor-based pagination.
+ * @param {object} params
+ * @param {number} params.limit
+ * @param {string} [params.cursor] - UUID of the conversation
+ */
+export async function getConversationsWithCursor({ limit = 50, cursor }) {
+    const prisma = await getPrisma();
+    const convs = await prisma.conversation.findMany({
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        orderBy: { lastMessageAt: 'desc' },
+        include: {
+            assignedEmployee: { select: { firstName: true, nickName: true } },
+            customer: { select: { firstName: true, lastName: true, facebookName: true } },
+            messages: {
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+                select: { content: true, createdAt: true },
+            },
+        },
+    });
+
+    const hasMore = convs.length > limit;
+    const rows = hasMore ? convs.slice(0, limit) : convs;
+    const nextCursor = hasMore ? rows[rows.length - 1].id : null;
+
+    return { rows, nextCursor, hasMore };
+}
+
+/**
+ * Get conversation by External ID (conversationId string).
+ */
+export async function getConversationByExternalId(externalId) {
+    const prisma = await getPrisma();
+    return prisma.conversation.findUnique({
+        where: { conversationId: externalId }
+    });
+}
+
+/**
+ * Upsert conversation by External ID (conversationId string).
+ */
+export async function upsertConversationByExternalId(externalId, data) {
+    const prisma = await getPrisma();
+    return prisma.conversation.upsert({
+        where: { conversationId: externalId },
+        create: { conversationId: externalId, ...data },
+        update: data
+    });
+}
+
+/**
+ * Update conversation by External ID (conversationId string).
+ */
+export async function updateConversationByExternalId(externalId, data) {
+    const prisma = await getPrisma();
+    return prisma.conversation.update({
+        where: { conversationId: externalId },
+        data
+    });
+}
+
+/**
+ * Get messages for marketing chat UI.
+ * @param {string} conversationId - FB conversation ID
+ * @param {object} params
+ */
+export async function getMarketingChatMessages(conversationId, { limit = 50, cursor } = {}) {
+    const prisma = await getPrisma();
+    const messages = await prisma.message.findMany({
+        where: { conversationId },
+        take: limit,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        orderBy: { createdAt: 'desc' },
+    });
+
+    return messages.map(m => ({
+        id: m.id,
+        text: m.content || '(Media)',
+        senderId: m.fromId,
+        senderType: m.responderId ? 'AGENT' : 'CUSTOMER',
+        createdAt: m.createdAt,
+        metadata: m.metadata
+    }));
+}
+
+
+

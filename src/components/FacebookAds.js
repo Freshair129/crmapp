@@ -406,6 +406,43 @@ export default function FacebookAds({ customers }) {
         return map[status] || 'bg-slate-500/20 text-slate-400 border-slate-500/30';
     };
 
+    // Delivery status badge — derived from configured status
+    const DeliveryBadge = ({ status }) => {
+        if (status === 'ACTIVE') return (
+            <span className="inline-flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-emerald-400 font-black text-[9px] uppercase tracking-widest">กำลังส่ง</span>
+            </span>
+        );
+        if (status === 'PAUSED') return (
+            <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500/60"></span>
+                <span className="text-amber-400/70 font-black text-[9px] uppercase tracking-widest">หยุดชั่วคราว</span>
+            </span>
+        );
+        if (status === 'DELETED') return (
+            <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500/60"></span>
+                <span className="text-red-400/70 font-black text-[9px] uppercase tracking-widest">ลบแล้ว</span>
+            </span>
+        );
+        if (status === 'ARCHIVED') return (
+            <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-slate-500/60"></span>
+                <span className="text-slate-400/70 font-black text-[9px] uppercase tracking-widest">จัดเก็บ</span>
+            </span>
+        );
+        return (
+            <span className="inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-white/20"></span>
+                <span className="text-white/30 font-black text-[9px] uppercase tracking-widest">ไม่ทราบ</span>
+            </span>
+        );
+    };
+
     // Objective label
     const objectiveLabel = (obj) => {
         const map = {
@@ -778,6 +815,7 @@ export default function FacebookAds({ customers }) {
                                     <thead>
                                         <tr className="bg-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">
                                             <th className="p-4 pl-8">Campaign</th>
+                                            <th className="p-4">สถานะการนำส่ง</th>
                                             <th className="p-4">Status</th>
                                             <th className="p-4 text-right">Spend</th>
                                             <th className="p-4 text-right">ROAS</th>
@@ -818,6 +856,9 @@ export default function FacebookAds({ customers }) {
                                                                     </p>
                                                                 </div>
                                                             </div>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <DeliveryBadge status={c.status} />
                                                         </td>
                                                         <td className="p-4">
                                                             <div className="flex flex-col gap-2">
@@ -952,7 +993,7 @@ export default function FacebookAds({ customers }) {
                                                     })}
                                                     {isExpanded && campAdsets.length === 0 && (
                                                         <tr className="bg-blue-600/5">
-                                                            <td colSpan={9} className="p-4 pl-16 text-center text-white/20 text-[10px] font-bold uppercase tracking-widest">
+                                                            <td colSpan={10} className="p-4 pl-16 text-center text-white/20 text-[10px] font-bold uppercase tracking-widest">
                                                                 No ad sets found for this campaign
                                                             </td>
                                                         </tr>
@@ -962,7 +1003,7 @@ export default function FacebookAds({ customers }) {
                                         })}
                                         {campaigns.length === 0 && (
                                             <tr>
-                                                <td colSpan={9} className="p-12 text-center text-white/20">
+                                                <td colSpan={10} className="p-12 text-center text-white/20">
                                                     <Megaphone className="w-10 h-10 mx-auto mb-3" />
                                                     <p className="text-xs font-bold uppercase tracking-widest">No campaigns found</p>
                                                 </td>

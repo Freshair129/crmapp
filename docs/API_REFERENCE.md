@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-03-15 (Phase 16)
+> อัปเดตล่าสุด: 2026-03-19 (v0.27.0 — Phase 20/26/27 endpoints added)
 
 ---
 
@@ -27,6 +27,9 @@
 18. [Packages (Phase 16)]
 19. [Schedule — Complete Session (Phase 16)]
 16. [Google Sheets Integration](#16-google-sheets-integration)
+20. [Ingredient Lots — FEFO (Phase 20)](#20-ingredient-lots--fefo-phase-20)
+21. [Payments & Slip OCR (Phase 26)](#21-payments--slip-ocr-phase-26)
+22. [QStash Worker (Phase 27)](#22-qstash-worker-phase-27)
 
 ---
 
@@ -819,4 +822,122 @@ Manual trigger — sync tasks จาก Google Sheets เข้า database
 
 ---
 
-> **อัปเดต:** 2026-03-15 (Phase 16 — Recipe + Package + Stock Deduction)
+---
+
+## 20. Ingredient Lots — FEFO (Phase 20)
+
+> **Version:** v0.20.0 | **Repository:** `src/lib/repositories/kitchenRepo.js`
+> **Model:** `IngredientLot` | **ID Format:** `LOT-YYYYMMDD-XXX`
+
+### `GET /api/kitchen/lots`
+
+ดึงรายการ ingredient lots ทั้งหมด พร้อม filter
+
+| Field | Value |
+|---|---|
+| Query | `?status=ACTIVE\|CONSUMED\|EXPIRED\|RECALLED` (optional) |
+| Query | `?ingredientId=UUID` (optional — filter by ingredient) |
+| Query | `?expiring=30` (optional — lots ที่ expire ภายใน N วัน) |
+| Response | `IngredientLot[]` พร้อม `ingredient.name` |
+
+### `POST /api/kitchen/lots`
+
+สร้าง lot ใหม่ (รับวัตถุดิบเข้าคลัง)
+
+| Field | Value |
+|---|---|
+| Body | `{ ingredientId*, receivedQty*, expiresAt*, supplierName, costPerUnit, notes }` |
+| Response | `IngredientLot` (201) พร้อม `lotId: "LOT-YYYYMMDD-XXX"` |
+| Side Effect | **ไม่** อัปเดต `Ingredient.currentStock` อัตโนมัติ — ต้อง PATCH ingredient แยก |
+
+### `GET /api/kitchen/lots/[id]`
+
+ดึง lot รายตัว
+
+| Field | Value |
+|---|---|
+| Route Param | `[id]` = `IngredientLot.id` (UUID) |
+| Response | `IngredientLot` พร้อม `ingredient` |
+
+### `PATCH /api/kitchen/lots/[id]`
+
+อัปเดต lot status, remainingQty, หรือ notes
+
+| Field | Value |
+|---|---|
+| Body | `{ status?, remainingQty?, notes? }` |
+| Response | Updated `IngredientLot` |
+| Note | FEFO deduction อัปเดต `remainingQty` + status=`CONSUMED` อัตโนมัติผ่าน `completeSessionWithStockDeduction()` |
+
+---
+
+## 21. Payments & Slip OCR (Phase 26)
+
+> **Version:** v0.26.0 | **ADR:** ADR-039
+> **Repository:** `src/lib/repositories/paymentRepo.js`
+> **OCR Engine:** `src/lib/slipParser.js` (Gemini Vision — confidence ≥ 0.80)
+
+### `GET /api/payments/pending`
+
+ดึงรายการสลิปที่รอ verify จากพนักงาน
+
+| Field | Value |
+|---|---|
+| Query | `?limit=20&cursor=UUID` (optional — cursor pagination) |
+| Response | `Transaction[]` ที่ `status=PENDING` พร้อม `conversation.channel`, `customer.displayName` |
+| Auth | ต้องการ role ≥ `Agent` |
+
+### `PATCH /api/payments/verify/[id]`
+
+พนักงาน verify สลิป → Revenue นับ
+
+| Field | Value |
+|---|---|
+| Route Param | `[id]` = `Transaction.id` (UUID) |
+| Body | `{ employeeId*, notes? }` |
+| Response | `{ transaction, order }` — Transaction status → `VERIFIED`, Order status → `CLOSED` |
+| Error | 404 if Transaction not found |
+| Error | 409 if already `VERIFIED` |
+| Side Effect | Auto-creates `Order` ถ้ายังไม่มี + Revenue นับใน `getMonthlyRevenue()` |
+| Note | confidence < 0.80 → Transaction สถานะ `PENDING_MANUAL` — ต้อง verify ก่อนเสมอ |
+
+**Revenue Attribution Logic (REQ-07):**
+
+```
+Conversation.firstTouchAdId != null → Revenue จาก Ads
+Conversation.firstTouchAdId == null → Revenue จาก Organic
+```
+
+> ⚠️ `firstTouchAdId` บันทึกเฉพาะตอน CREATE conversation (immutable) — historical conversations จะ null
+
+---
+
+## 22. QStash Worker (Phase 27)
+
+> **Version:** v0.27.0 | **ADR:** ADR-040
+> **Replaces:** `notificationWorker.mjs` (BullMQ — deleted)
+> **Caller:** `src/lib/notificationEngine.js` → `qstash.publishJSON()`
+
+### `POST /api/workers/notification`
+
+Vercel serverless endpoint รับ job จาก Upstash QStash
+
+| Field | Value |
+|---|---|
+| Headers | `Upstash-Signature` (required — verify ด้วย `@upstash/qstash` Receiver) |
+| Body | `{ type: "LINE_PUSH", payload: { lineUserId, message, customerId } }` |
+| Response | `{ success: true }` (200) |
+| Error | 401 if signature invalid |
+| Error | 500 if LINE push fails (QStash จะ retry อัตโนมัติ) |
+| Note | **ห้ามลบ** `Receiver.verify()` — security boundary สำคัญ |
+| Note | QStash latency ~1-3s (acceptable สำหรับ cooking school notifications) |
+
+**Job Types:**
+
+| Type | Payload | Action |
+|---|---|---|
+| `LINE_PUSH` | `{ lineUserId, message, customerId }` | `pushMessage()` → LINE Messaging API |
+
+---
+
+> **อัปเดต:** 2026-03-19 (v0.27.0 — Phase 20 Lots, Phase 26 Payments/Slip OCR, Phase 27 QStash Worker)

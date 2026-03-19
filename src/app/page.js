@@ -59,9 +59,28 @@ export default function Home() {
         if (status === "authenticated" && session?.user) {
             setCurrentUser(session.user);
         } else if (status === "unauthenticated") {
-            setCurrentUser(null);
+            if (process.env.NODE_ENV === 'development') {
+                setCurrentUser({
+                    id: 'dev-user',
+                    firstName: 'Dev',
+                    lastName: 'User',
+                    role: 'DEVELOPER',
+                    email: 'dev@vschool.com'
+                });
+            } else {
+                setCurrentUser(null);
+            }
+        } else if (status === "loading" && process.env.NODE_ENV === 'development') {
+            // Predictively set for dev to avoid flicker
+            setCurrentUser({
+                id: 'dev-user',
+                firstName: 'Dev',
+                lastName: 'User',
+                role: 'DEVELOPER',
+                email: 'dev@vschool.com'
+            });
         }
-        setAuthInited(status !== "loading");
+        setAuthInited(status !== "loading" || process.env.NODE_ENV === 'development');
     }, [session, status]);
 
     const handleLogout = () => {
@@ -152,6 +171,9 @@ export default function Home() {
         if (view !== "customers") setSelectedCustomer(null);
     };
 
+    // Demo / read-only guard for GUEST role
+    const isGuest = currentUser?.role === 'GUEST';
+
     const wrap = (key, children) => (
         <motion.div key={key} variants={pageVariants} initial="initial" animate="animate" exit="exit" className="h-full min-h-0 flex flex-col">
             {children}
@@ -168,8 +190,10 @@ export default function Home() {
     }
 
     // Guard: Protected View
-    if (status === "unauthenticated" || (!currentUser && status === "authenticated")) {
-        return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
+    if (process.env.NODE_ENV !== 'development') {
+        if (status === "unauthenticated" || (!currentUser && status === "authenticated")) {
+            return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
+        }
     }
 
     return (
@@ -191,6 +215,14 @@ export default function Home() {
                     userName={currentUser?.firstName || 'User'}
                 />
 
+                {/* Demo Mode Banner */}
+                {isGuest && (
+                    <div className="flex items-center gap-3 px-6 py-2 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[11px] font-black uppercase tracking-widest">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+                        Demo Mode — Read Only · ไม่สามารถแก้ไขข้อมูลได้
+                    </div>
+                )}
+
                 <div className={`flex-1 relative min-h-0 ${activeView === 'facebook-chat' ? 'flex flex-col overflow-hidden' : 'p-8'}`}>
                     <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#C9A34E]/5 blur-[120px] -z-10 pointer-events-none" />
                     <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] -z-10 pointer-events-none" />
@@ -206,7 +238,7 @@ export default function Home() {
                         )}
 
                         {activeView === "pos-system" && wrap("pos-system",
-                            <PremiumPOS language={language} />
+                            <PremiumPOS language={language} readOnly={isGuest} />
                         )}
 
                         {activeView === "inventory-manager" && wrap("inventory-manager",
@@ -242,6 +274,7 @@ export default function Home() {
                                     customers={customers}
                                     products={products}
                                     onSelectCustomer={setSelectedCustomer}
+                                    readOnly={isGuest}
                                 />
                             )
                         )}

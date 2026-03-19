@@ -144,6 +144,7 @@ model Conversation {
   assignedAgent      String?   @map("assigned_agent")
   status             String    @default("open") @map("status")  // open | pending | closed
   isStarred          Boolean   @default(false) @map("is_starred")
+  firstTouchAdId     String?   @map("first_touch_ad_id")
   lastMessageAt      DateTime? @map("last_message_at")
   unreadCount        Int       @default(0) @map("unread_count")
   assignedEmployeeId String?   @map("assigned_employee_id")

@@ -1,17 +1,29 @@
 import { logger } from './logger';
 import { getPrisma } from './db';
-import { notificationQueue } from './queue';
+import { Client as QStashClient } from '@upstash/qstash';
 
 /**
  * Notification Engine
  * Logic to evaluate rules based on events and context.
  */
-class NotificationEngine {
+export class NotificationEngine {
+    constructor() {
+        this.qstash = null;
+    }
+
+    getQStashClient() {
+        if (!this.qstash && process.env.QSTASH_TOKEN) {
+            try {
+                this.qstash = new QStashClient({ token: process.env.QSTASH_TOKEN });
+            } catch (err) {
+                logger.error('[NotificationEngine]', 'Failed to create QStash client', err);
+            }
+        }
+        return this.qstash;
+    }
+
     /**
      * Evaluate rules for a specific event type.
-     * @param {string} eventName - MESSAGE_RECEIVED | CONVERSATION_CLOSED | etc.
-     * @param {Object} context - Data related to the event (message, customer, etc.)
-     * @param {Object} [prismaOverride] - Optional prisma client for testing
      */
     async evaluateRules(eventName, context, prismaOverride = null) {
         try {
@@ -24,23 +36,34 @@ class NotificationEngine {
                     isActive: true
                 }
             });
-
+ 
             if (rules.length === 0) return;
-
-            logger.info('[NotificationEngine]', `Evaluating ${rules.length} rules for event: ${eventName}`);
-
+ 
             for (const rule of rules) {
                 const match = await this.checkConditions(rule.conditions, context);
                 
                 if (match) {
                     logger.info('[NotificationEngine]', `Rule MATCH: ${rule.name} (${rule.ruleId})`);
                     
-                    // 2. Enqueue actions
-                    await notificationQueue.add(rule.ruleId, {
-                        ruleId: rule.ruleId,
-                        actions: rule.actions,
-                        context
-                    });
+                    // Phase 27: Publish to QStash instead of BullMQ
+                    const qstash = this.getQStashClient();
+                    if (qstash) {
+                        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+                        const workerUrl = `${appUrl}/api/workers/notification`;
+ 
+                        await qstash.publishJSON({
+                            url: workerUrl,
+                            body: {
+                                ruleId: rule.ruleId,
+                                actions: rule.actions,
+                                context
+                            },
+                            retries: 5,
+                        });
+                        logger.info('[NotificationEngine]', `Enqueued to QStash: ${rule.ruleId}`);
+                    } else {
+                        logger.warn('[NotificationEngine]', 'QStash client not initialized (check QSTASH_TOKEN)');
+                    }
                 }
             }
         } catch (error) {

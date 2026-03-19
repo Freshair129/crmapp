@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
 import { cache } from '@/lib/redis';
 
 /**
@@ -15,42 +15,8 @@ export async function GET(request) {
         const cacheKey = `marketing:daily:${date || 'latest'}`;
 
         const payload = await cache.getOrSet(cacheKey, async () => {
-            const prisma = await getPrisma();
-
             const since = new Date(Date.now() - 90 * 86400000);
-
-            const metrics = await prisma.adDailyMetric.findMany({
-                where: { date: { gte: since } },
-                orderBy: { date: 'desc' },
-                include: { ad: { select: { name: true, adId: true } } },
-            });
-
-            // Group by date and aggregate
-            const byDate = {};
-            for (const m of metrics) {
-                const key = m.date.toISOString().split('T')[0];
-                if (!byDate[key]) {
-                    byDate[key] = { date: key, spend: 0, impressions: 0, clicks: 0, reach: 0, leads: 0, purchases: 0, revenue: 0 };
-                }
-                byDate[key].spend       += m.spend       || 0;
-                byDate[key].impressions += m.impressions || 0;
-                byDate[key].clicks      += m.clicks      || 0;
-                byDate[key].reach       += m.reach       || 0;
-                byDate[key].leads       += m.leads       || 0;
-                byDate[key].purchases   += m.purchases   || 0;
-                byDate[key].revenue     += m.revenue     || 0;
-            }
-
-            // Compute derived metrics per day
-            const data = Object.values(byDate)
-                .sort((a, b) => a.date.localeCompare(b.date))
-                .map(d => ({
-                    ...d,
-                    ctr: d.impressions > 0 ? d.clicks / d.impressions * 100 : 0,
-                    cpc: d.clicks      > 0 ? d.spend  / d.clicks            : 0,
-                    roas: d.spend      > 0 ? d.revenue / d.spend            : 0,
-                }));
-
+            const data = await marketingRepo.getDailyAggregatedMetrics(since);
             return { success: true, data };
         }, 300); // 5 min TTL
 

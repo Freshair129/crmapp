@@ -87,8 +87,8 @@ export default function AssetPanel({ language = 'TH' }) {
             setLoading(true);
             const res = await fetch('/api/assets');
             const data = await res.json();
-            setAssets(data);
-        } catch (err) { console.error(err); }
+            setAssets(Array.isArray(data) ? data : []);
+        } catch (err) { console.error('[AssetPanel] fetchAssets failed', err); }
         finally { setLoading(false); }
     };
 

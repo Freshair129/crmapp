@@ -1,6 +1,6 @@
 # V SCHOOL CRM v2 — ID FORMATTING & NAMING CONVENTIONS
 # Source of Truth for all identifier formats and casing rules
-# Last updated: 2026-03-16 (v0.18.0)
+# Last updated: 2026-03-19 (v0.27.0 — LOT + CLS + ADR-038/039/040)
 # ─────────────────────────────────────────────────────────
 
 id_naming_conventions:

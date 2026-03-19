@@ -17,11 +17,16 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.19.0` | Schema Hardening | ✅ released |
 | `v0.20.0` | Lot ID + Class ID (Stock Batches + Cohorts) | ✅ released |
 | `v0.21.0` | Bug Audit Fix + Repository Layer Refactor | ✅ released |
-| `v0.22.0` | FEFO Deduction Refinement | ✅ released ← HEAD |
+| `v0.22.0` | FEFO Deduction Refinement | ✅ released |
+| `v0.23.0` | Repository Layer Full Compliance (Phase 22) | ✅ released |
+| `v0.24.0` | Comprehensive Unit Test Expansion — 50+ cases | ✅ released |
+| `v0.25.0` | Production Hardening Complete — RBAC + Security + Build | ✅ released |
+| `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 | ✅ released |
+| `v0.27.0` | Upstash Migration — QStash + Upstash Redis, zero local infra | ✅ released ← HEAD |
 | `v1.0.0` | Production Ready | 🔲 planned |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 17 Repository Refactor = ✅ DONE · Phase 21 FEFO Deduction = 🔲 NEXT
+Phase 22 Repository Refactor = ✅ DONE · Phase 27 Upstash Migration = ✅ DONE
 
 > ⚠️ **ถ้า task ที่รับมา ≠ version HEAD ใน CHANGELOG.md → หยุดและแจ้ง Claude ก่อนเสมอ**
 > อย่า implement งานที่อาจซ้ำ/outdated โดยไม่ยืนยัน
@@ -46,7 +51,9 @@ Phase 17 Repository Refactor = ✅ DONE · Phase 21 FEFO Deduction = 🔲 NEXT
 **V School CRM v2** — ระบบ CRM สำหรับโรงเรียนสอนทำอาหารญี่ปุ่น (The V School, กรุงเทพฯ)
 Greenfield rewrite — สะอาด, ไม่ carry tech debt จากของเดิม
 
-**Stack:** Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Redis/BullMQ · Gemini AI · TailwindCSS · Node.js v22 LTS
+**Stack:** Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Upstash Redis + Upstash QStash · Gemini AI · TailwindCSS · Node.js v22 LTS
+
+> ⚠️ **ADR-040 (v0.27.0):** ioredis/BullMQ ถูกแทนด้วย @upstash/redis + @upstash/qstash แล้ว — ห้าม import bullmq หรือ ioredis อีกต่อไป
 
 ---
 
@@ -132,10 +139,13 @@ try { ... } catch (error) {
 Phase 13-16: [DONE]    NotificationRules → Asset/PR/Kitchen → Recipe/Package
 Phase 18:    [DONE]    Production Hardening & API Optimization
 Phase 19:    [DONE]    Schema Hardening
-Phase 20:    [DONE]    Lot ID + Class ID
+Phase 20:    [DONE]    Lot ID + Class ID (IngredientLot + CourseSchedule.classId)
 Phase 20.5:  [DONE]    Bug Audit & Fix (6 bugs — crash/wrong data/stub)
 Phase 21:    [DONE]    FEFO Deduction in completeSessionWithStockDeduction
-Phase 22:    [NEXT]    Repository Layer Refactor (Marketing/Inbox)
+Phase 22:    [DONE]    Repository Layer Full Compliance (Marketing/Inbox)
+Phase 14b:   [DONE]    Production Hardening — RBAC + Security + Build (v0.24.0–v0.25.0)
+Phase 26:    [DONE]    Chat-First Revenue Attribution — Slip OCR + REQ-07 (v0.26.0)
+Phase 27:    [DONE]    Upstash Infrastructure Migration — zero local infra (v0.27.0)
 ```
 
 ## 📋 Changelog System (รู้ไว้ — ไม่ต้อง implement)
@@ -263,9 +273,23 @@ components/
 lib/
   db/index.js                  getPrisma() singleton
   logger.js                    logger.error/info/warn
-  notificationEngine.js        ✅ evaluateRules() (v0.14.0)
-  queue.js                     ✅ BullMQ notification queue
-  redis.js                     ✅ cache singleton (v0.13.0)
-workers/
-  notificationWorker.mjs       ✅ BullMQ worker — LINE push (v0.14.0)
+  notificationEngine.js        ✅ evaluateRules() → QStash publishJSON (v0.27.0)
+  redis.js                     ✅ Upstash Redis REST client (v0.27.0) — แทน ioredis
+  slipParser.js                ✅ Gemini Vision OCR — parseSlip() (v0.26.0)
+  repositories/
+    paymentRepo.js             ✅ createPendingFromSlip, verifyPayment, getMonthlyRevenue (v0.26.0)
+    kitchenRepo.js             ✅ + lot management (v0.20.0)
+    scheduleRepo.js            ✅ + FEFO deduction (v0.22.0)
+app/api/workers/
+  notification/route.js        ✅ QStash serverless worker — แทน notificationWorker.mjs (v0.27.0)
+app/api/payments/
+  pending/route.js             ✅ GET pending slips (v0.26.0)
+  verify/[id]/route.js         ✅ PATCH verify slip (v0.26.0)
+app/api/kitchen/
+  lots/route.js                ✅ GET+POST IngredientLot (v0.20.0)
+  lots/[id]/route.js           ✅ GET+PATCH lot status (v0.20.0)
+
+❌ DELETED (v0.27.0 — ห้ามใช้):
+  src/workers/notificationWorker.mjs  (ลบแล้ว — แทนด้วย /api/workers/notification)
+  src/lib/queue.js                    (ลบแล้ว — ไม่มี BullMQ อีกต่อไป)
 ```

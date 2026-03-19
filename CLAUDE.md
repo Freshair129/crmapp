@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-17)
+## Version Status (อัพเดท: 2026-03-19)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -27,8 +27,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.18.0` | Production Hardening & API Optimization | ✅ released |
 | `v0.19.0` | Schema Hardening (Phase 19 fixes) | ✅ released |
 | `v0.20.0` | Lot ID + Class ID (Stock Batches + Course Cohorts) | ✅ released |
-| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor (Phase 17) | ✅ released ← HEAD |
-| `v1.0.0` | Production Ready | 🔲 planned |
+| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor (Phase 17) | ✅ released |
+| `v0.22.0` | FEFO Stock Deduction Refinement (Phase 21) | ✅ released |
+| `v0.23.0` | Repository Layer Full Compliance (Phase 22) | ✅ released |
+| `v0.24.0` | Comprehensive Unit Test Expansion — 50+ cases (Phase 14) | ✅ released |
+| `v0.25.0` | Production Hardening Complete — RBAC + Security + Build (Phase 14) | ✅ released |
+| `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 + 186 tests (Phase 26) | ✅ released |
+| `v0.27.0` | Upstash Migration — BullMQ→QStash, ioredis→Upstash, zero local infra (Phase 27) | ✅ released |
+| `v1.0.0` | Production Ready — Docs Hardening + ADR-041 (Phase 28) | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
@@ -133,6 +139,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > ⚠️ **Known Gotcha — Lot vs currentStock**: `IngredientLot.remainingQty` ≠ `Ingredient.currentStock` — ทั้งสองต้องอัปเดตพร้อมกันเมื่อตัดสต็อก ใน Phase 21 ควร migrate `completeSessionWithStockDeduction` ให้ตัดจาก Lot FEFO ด้วย
 > ⚠️ **Known Gotcha — classId auto-generate**: `generateClassId()` ไม่ได้ถูกเรียกอัตโนมัติใน createSchedule — Boss ต้องส่ง classId มาเอง หรือ call generateClassId() ก่อน
+
+### v0.27.0 — สิ่งที่ทำแล้ว (Phase 27) ✅ — by Antigravity + Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/lib/redis.js` | ✅ updated | ioredis → @upstash/redis REST client (API เดิมไม่เปลี่ยน) |
+| `src/lib/notificationEngine.js` | ✅ updated | `queue.add()` → `qstash.publishJSON()` |
+| `src/app/api/workers/notification/route.js` | ✅ new | Vercel endpoint แทน notificationWorker.mjs — verify QStash sig |
+| `src/workers/notificationWorker.mjs` | ✅ deleted | ถูกแทนด้วย /api/workers/notification |
+| `queue.js` (BullMQ config) | ✅ deleted | ไม่จำเป็นอีกต่อไป |
+| `webhookIntegration.test.js` | ✅ refactored | mock notificationEngine แทน queue.js (cleaner) |
+| `package.json` | ✅ updated | ลบ bullmq, เพิ่ม @upstash/redis @upstash/qstash, ลบ worker script |
+
+> ⚠️ **Known Gotcha — Upstash Free Tier**: Redis 10k req/day, QStash 500 msg/day — monitor เมื่อ traffic เพิ่ม
+> ⚠️ **Known Gotcha — QStash Latency**: notification ไม่ instant เหมือน BullMQ — delay ~1-3s (ยอมรับได้สำหรับ cooking school)
+> ⚠️ **Known Gotcha — QStash Signature**: `/api/workers/notification` ต้อง verify signature เสมอ — ห้ามลบ Receiver.verify()
+> ⚠️ **Known Gotcha — Playwright Scraper**: ยังรันบน local machine — ไม่ได้ย้ายไป cloud (FB session required)
+
+---
+
+### v0.26.0 — สิ่งที่ทำแล้ว (Phase 26) ✅ — by Antigravity + Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Conversation.firstTouchAdId | ✅ done | REQ-07 — บันทึก ad_id แรกที่ลูกค้ามาจาก (immutable) |
+| `src/app/api/webhooks/facebook/route.js` | ✅ updated | บันทึก referral.ad_id เมื่อ CREATE conv เท่านั้น |
+| `src/lib/slipParser.js` | ✅ done | Gemini Vision OCR — parseSlip() → confidence, amount, date, refNumber |
+| `src/lib/repositories/paymentRepo.js` | ✅ done | createPendingFromSlip, getPendingSlips, verifyPayment, getMonthlyRevenue |
+| `src/app/api/payments/verify/[id]/route.js` | ✅ done | PATCH — verify slip + auto-create Order |
+| `src/app/api/payments/pending/route.js` | ✅ done | GET — pending slips รอ verify |
+| Webhook: FB + LINE slip detection | ✅ done | fire-and-forget OCR เมื่อ attachmentType=image |
+| Tests (186 cases / 25 files) | ✅ done | slipParser, paymentRepo, webhook integration — 100% pass |
+
+> ⚠️ **Known Gotcha — Slip Confidence**: threshold 0.80 — ต่ำกว่านี้ไม่สร้าง Transaction อัตโนมัติ ต้องให้พนักงาน manual add
+> ⚠️ **Known Gotcha — refNumber Duplicate**: สลิปเดียวกันส่ง 2 ครั้งใน chat → reject ที่ refNumber unique constraint
+> ⚠️ **Known Gotcha — firstTouchAdId**: บันทึกเฉพาะตอน CREATE — ถ้า conversation สร้างก่อน Phase 26 จะ null (historical data)
+
+---
+
+### v0.23.0 — สิ่งที่ทำแล้ว (Phase 22) ✅ — by Boss + Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/app/api/marketing/sync/status/route.js` | ✅ done | เปลี่ยนจาก direct Redis → `marketingRepo.getSyncStatus()` + `logger` |
+| `src/app/api/marketing/sync/route.js` | ✅ done | ย้าย DB logic → `marketingRepo.js` |
+| `src/app/api/marketing/chat/conversations/route.js` | ✅ done | ใช้ `inboxRepo.getConversations()` ครบ |
+| `src/app/api/marketing/insights/route.js` | ✅ done | ย้าย aggregation → `marketingRepo.js` |
+| Unit Tests | ✅ done | test coverage สำหรับ logic ที่ย้าย |
+
+> ✅ **Architecture Compliance:** ไม่มี `import { getPrisma }` โดยตรงใน `/api/marketing/*` หรือ `/api/inbox/*` อีกต่อไป
+
+---
 
 ### v0.21.0 — สิ่งที่ทำแล้ว (Phase 20.5 + Phase 17) ✅ — by Claude + Antigravity
 | ไฟล์ | สถานะ | หมายเหตุ |

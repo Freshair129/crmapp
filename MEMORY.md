@@ -28,6 +28,27 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-19 12:00] Claude — Phase 28 (v1.0.0 Docs Hardening) COMPLETE
+- **สิ่งที่ทำ**:
+  - Session Start: อ่าน context files ทั้งหมด (CLAUDE.md, CHANGELOG.md, ADR-038/039/040, MEMORY.md, GOAL.md, ANTIGRAVITY.md, GEMINI.md, system_requirements.yaml, domain-boundaries.md, domain-flows.md, id_standards.yaml, API_REFERENCE.md, database_erd.md)
+  - อัปเดต context files ที่ outdated: ANTIGRAVITY.md, GEMINI.md, system_requirements.yaml, domain-boundaries.md, domain-flows.md → ทั้งหมดตรงกับ v0.27.0 แล้ว
+  - Phase 28: GOAL.md cleanup (Phase 15 ✅, ADR ref fixes, Phase 27 section, Phase 28 definition)
+  - Phase 28: API_REFERENCE.md เพิ่ม Section 20/21/22 (Lots, Payments, QStash)
+  - Phase 28: database_erd.md อัปเดต header + 46 models + ADR-038/039/040
+  - Phase 28: id_standards.yaml version header v0.27.0
+  - Phase 28: ADR-041 (v1.0.0 Production Launch Declaration)
+  - Phase 28: CHANGELOG.md CL-20260319-005 + changelog/CL-20260319-005.md
+- **ไฟล์ที่เปลี่ยน**:
+  - `GOAL.md`, `CLAUDE.md`, `CHANGELOG.md`
+  - `docs/API_REFERENCE.md`, `docs/database_erd.md`, `id_standards.yaml`
+  - `docs/adr/041-v1-production-launch.md` (new)
+  - `changelog/CL-20260319-005.md` (new)
+  - `ANTIGRAVITY.md`, `GEMINI.md`, `system_requirements.yaml`
+  - `docs/architecture/domain-boundaries.md`, `docs/architecture/domain-flows.md`
+- **Breaking Changes**: ไม่มี — documentation only
+- **ต้อง review**: ไม่มี
+- **ทำต่อ**: v1.0.0 🎉 — next step: Boss กำหนด v1.1.0 scope หรือ BKL-02 (Revenue real-time socket)
+
 ### [2026-03-18 18:45] Antigravity — Phase 21 (FEFO Deduction Refinement) COMPLETE
 - **สิ่งที่ทำ**:
     - แก้ไข logic ใน `completeSessionWithStockDeduction` (scheduleRepo.js) ให้คำนวณ "remainder" (ยอดค้างที่ไม่อยู่ใน Lot ไหนเลย) และเขียนลง `StockDeductionLog` แยกต่างหาก เพื่อให้ Audit Trail ครบถ้วน (Phase 21 bug fix)

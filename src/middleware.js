@@ -34,7 +34,7 @@ const ROLE_LEVEL = {
   SUPERVISOR: 3,
   ADMIN:      4, // school owner/director — same access as MANAGER
   AGENT:      1,
-  GUEST:      0,
+  GUEST:      1, // Read-only demo — same API access as AGENT, UI enforces read-only
 };
 
 function hasPermission(userRole, requiredRole) {
@@ -48,11 +48,12 @@ const CRON_ROUTES = [
 ];
 
 export async function middleware(request) {
-  // DEV BYPASS — auth disabled during development (ADR-026 deferred, not cancelled)
-  // Re-enable by removing this block before production deploy
+  const { pathname } = request.nextUrl;
+
+  // Development Bypass (Production Hardening — Phase 14) 
+  // Restore for local development convenience if needed
   if (process.env.NODE_ENV === 'development') return NextResponse.next();
 
-  const { pathname } = request.nextUrl;
 
   // CRON_SECRET bypass — allows internal scripts/schedulers to call sync routes
   // without a user session. Header: x-cron-secret: <CRON_SECRET>

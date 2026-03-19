@@ -1,4 +1,4 @@
-**LATEST:** CL-20260318-001 | v0.22.0 | 2026-03-18
+**LATEST:** CL-20260319-005 | v1.0.0 | 2026-03-19
 
 ---
 
@@ -6,6 +6,8 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260318-002 | Repository Layer Full Compliance | v0.23.0 | 2026-03-18 | MINOR | #repository #refactor |
+| CL-20260318-001 | FEFO Stock Deduction Refinement | v0.22.0 | 2026-03-18 | MINOR | #kitchen #repository |
 | CL-20260317-002 | Bug Audit + Repo Refactor | v0.21.0 | 2026-03-17 | PATCH | #bugfix #repository |
 | CL-20260316-001 | Lot ID + Class ID | v0.20.0 | 2026-03-16 | MINOR | #schema #kitchen |
 | CL-20260315-001 | Schema Hardening | v0.19.0 | 2026-03-15 | PATCH | #schema #prisma |
@@ -13,6 +15,135 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260319-005] v1.0.0 — Production Ready (Phase 28 — Docs Hardening + ADR-041)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #documentation #v1 #production #phase28
+
+Phase 28 เสร็จสมบูรณ์ — ประกาศ v1.0.0 Production Ready อย่างเป็นทางการ
+
+#### Documentation Hardening
+- **`docs/API_REFERENCE.md`** — เพิ่ม Phase 20 (kitchen/lots), Phase 26 (payments/slip OCR), Phase 27 (QStash worker) endpoints; อัปเดต header → v0.27.0
+- **`docs/database_erd.md`** — อัปเดต header v0.27.0; เพิ่ม IngredientLot ใน Domain Summary (46 models); เพิ่ม ADR-038/039/040/Phase 20 ใน Key Architecture Decisions
+- **`id_standards.yaml`** — อัปเดต version header v0.18.0 → v0.27.0
+
+#### Context File Cleanup
+- **`GOAL.md`** — Phase 15 sub-phases ✅, Phase 26 ADR ref แก้ ADR-038 → ADR-039, เพิ่ม Phase 27 section, Phase 28 section
+- **`CLAUDE.md`** — v1.0.0 status: planned → in progress
+- **`ANTIGRAVITY.md`**, **`GEMINI.md`**, **`system_requirements.yaml`**, **`domain-boundaries.md`**, **`domain-flows.md`** — ทั้งหมดอัปเดตไปแล้วก่อน Phase 28
+
+#### ADR-041
+- **`docs/adr/041-v1-production-launch.md`** (new) — Production Launch Declaration: evidence of readiness (17 modules ✅, 6 NFRs ✅), infrastructure table, known limitations, full ADR chain 024–041
+
+---
+
+### [CL-20260319-004] v0.27.0 — Upstash Infrastructure Migration (Phase 27)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #infrastructure #upstash #qstash #cleanup #phase27
+
+Phase 27 เสร็จสมบูรณ์ — ระบบไม่ต้องการเครื่องที่เปิดตลอดอีกต่อไป (zero local infrastructure)
+
+#### Redis → Upstash Redis (Task A)
+- `src/lib/redis.js` — เปลี่ยนจาก `ioredis` → `@upstash/redis` REST client
+- API เดิม (`get`, `set`, `del`, `getOrSet`) ยังเหมือนเดิม — ไม่มี breaking change
+- New env vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+
+#### BullMQ → QStash (Task B)
+- `src/lib/notificationEngine.js` — `queue.add()` → `qstash.publishJSON(url, payload, retry:5)`
+- `src/app/api/workers/notification/route.js` (ใหม่) — แทน `notificationWorker.mjs`
+  - verify QStash signature ก่อนทุก request
+  - logic เดิม: ดึง rule → `lineService.pushMessage()`
+- New env vars: `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`, `NEXT_PUBLIC_APP_URL`
+
+#### Cleanup (Task C)
+- ลบ `src/workers/notificationWorker.mjs`
+- ลบ `queue.js` (BullMQ config)
+- ลบ BullMQ จาก `package.json` dependencies
+- ลบ `npm run worker` script
+- Refactor `webhookIntegration.test.js` — mock `notificationEngine` แทน `queue.js` (cleaner pattern)
+
+---
+
+### [CL-20260319-003] v0.26.0 — Chat-First Revenue Attribution (Phase 26)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #revenue #attribution #ocr #testing #phase26
+
+Phase 26 เสร็จสมบูรณ์ — ระบบรู้ยอดเงินจริงจากสลิปในแชท ไม่ใช่ตัวเลข estimated จาก Meta อีกต่อไป
+
+#### REQ-07: First Touch Ad Attribution (Task A)
+- `Conversation.firstTouchAdId` — เพิ่ม field ใหม่ใน schema
+- `webhooks/facebook/route.js` — บันทึก `referral.ad_id` เมื่อ CREATE conversation (immutable, ไม่ overwrite)
+
+#### Gemini Vision OCR (Task B)
+- `src/lib/slipParser.js` — parseSlip(imageUrl) → { isSlip, confidence, amount, date, refNumber, bankName }
+- Threshold: confidence ≥ 0.80 ถึงนับเป็นสลิป
+- Duplicate guard: refNumber ซ้ำ → reject
+
+#### Webhook Slip Detection (Task C)
+- `webhooks/facebook` + `webhooks/line` — detect attachmentType=image → fire-and-forget OCR
+- ตอบ < 200ms เสมอ (NFR1 ยังครบ)
+
+#### Payment Repository (Task D + E)
+- `src/lib/repositories/paymentRepo.js` — createPendingFromSlip, getPendingSlips, verifyPayment, getMonthlyRevenue
+- `POST /api/payments/verify/[id]` + `GET /api/payments/pending`
+
+#### Test Coverage
+- 186 unit + integration tests (25 files) — **ผ่าน 100%**
+- ครอบคลุม: slipParser OCR, paymentRepo CRUD, webhook slip detection integration
+
+---
+
+### [CL-20260319-002] v0.25.0 — Production Hardening Complete (Phase 14 Full)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #security #reliability #production #phase14
+
+Phase 14 Production Hardening เสร็จสมบูรณ์ — ระบบพร้อม deploy
+
+#### Security (14b)
+- **BKL-04 RESOLVED**: เปิด RBAC Middleware — ลบ `NODE_ENV=development` bypass ใน `src/middleware.js` แล้ว
+- Rate Limiting บน `/api/auth` routes
+- Webhook Signature Validation (FB `x-hub-signature-256` + LINE `x-line-signature`) ครบทุก route
+- ตรวจ `.env` clean — ไม่มี secret ติด git history
+
+#### Reliability (14c)
+- BullMQ `defaultJobOptions`: retry ≥ 5, exponential backoff — ยืนยันครบ
+- Redis reconnect strategy — ตรวจสอบและผ่าน
+- Webhook response time < 200ms (NFR1) — ยืนยันหลัง refactor
+
+#### Build Validation (14d)
+- `npm run build` ผ่านโดยไม่มี error หรือ warning
+- ไม่มี `console.log` หลงเหลือ — ทุก route ใช้ `logger`
+
+---
+
+### [CL-20260319-001] v0.24.0 — Comprehensive Unit Test Expansion (Phase 14 + Phase 22)
+**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #testing #quality #phase14 #phase22
+
+เพิ่ม test coverage ครั้งใหญ่ — 50+ test cases ใหม่ครอบคลุม critical repositories และ integration paths
+
+#### Test Files เพิ่มใหม่
+- **`redis.test.js`** — getOrSet, negative cache, inflight dedup, watchdog timeout
+- **`marketingRepo.test.js`** — getSyncStatus, getCampaignsWithAggregatedMetrics, sync pipeline
+- **`adReviewRepo.test.js`** — ad review workflow, approval/rejection logic
+- **`agentSyncRepo.test.js`** — agent attribution sync, name-matching
+- **`customerRepo.test.js`** — resolveOrCreate, phone normalize, cross-platform merge
+- **`analyticsRepository.test.js`** — revenue aggregation, team KPI, ROAS calculation
+- **`employeeRepo.test.js`** — CRUD, ID generation (TVS-EMP), bcrypt, facebookName attribution
+
+#### Test Files ขยาย (existing)
+- **`inboxRepo.test.js`** — เพิ่ม pagination edge cases + reply validation
+- **`marketingMetrics.test.js`** — เพิ่ม CON/CPA boundary conditions
+- **`middleware`** — RBAC guard tests (BKL-04 coverage)
+- **Webhook integration** — FB + LINE webhook end-to-end (race condition, duplicate message)
+
+#### Coverage ก่อน/หลัง
+| Repository | ก่อน | หลัง |
+|---|---|---|
+| marketingRepo | — | ✅ |
+| inboxRepo | partial | ✅ full |
+| customerRepo | — | ✅ |
+| analyticsRepository | — | ✅ |
+| employeeRepo | — | ✅ |
+| redis | — | ✅ |
+| middleware + webhooks | — | ✅ |
+
+---
 
 ### [CL-20260318-001] v0.22.0 — FEFO Stock Deduction Refinement
 **Date:** 2026-03-18 | **Severity:** MINOR | **Tags:** #kitchen #repository #bugfix

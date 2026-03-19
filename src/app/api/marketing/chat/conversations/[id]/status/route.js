@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import * as inboxRepo from '@/lib/repositories/inboxRepo';
 
 const VALID_STATUSES = ['open', 'pending', 'closed'];
 
@@ -29,12 +29,10 @@ export async function PATCH(request, { params }) {
     }
 
     try {
-        const prisma = await getPrisma();
-
-        const updated = await prisma.conversation.updateMany({
-            where: { conversationId: id },
-            data:  { status },
-        });
+        const updated = await inboxRepo.updateManyConversations(
+            { conversationId: id },
+            { status }
+        );
 
         if (updated.count === 0) {
             return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });

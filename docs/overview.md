@@ -11,14 +11,24 @@ The Single Source of Truth for system architecture, data flow, and technical dec
 ## 🚀 Quick Start
 ```bash
 cd /Users/ideab/Desktop/crm
-docker compose up -d          # PostgreSQL (port 5433) + Redis
+docker compose up -d          # PostgreSQL (port 5433) เท่านั้น — Redis ย้าย Upstash แล้ว
 npx prisma generate
 npx prisma migrate dev
 npm run dev                   # http://localhost:3000
-npm run worker                # BullMQ worker (terminal แยก)
+# ❌ npm run worker — ไม่จำเป็นแล้ว (Phase 27: BullMQ → QStash serverless)
 ```
 Login: `admin@vschool.com` / (ดูใน `.env`)
 Node.js: **v22 LTS** (ดู `.nvmrc`)
+
+**Required env vars (v0.27.0+):**
+```
+UPSTASH_REDIS_REST_URL=       # Upstash Redis REST URL
+UPSTASH_REDIS_REST_TOKEN=     # Upstash Redis token
+QSTASH_TOKEN=                 # Upstash QStash token
+QSTASH_CURRENT_SIGNING_KEY=   # QStash signature verify
+QSTASH_NEXT_SIGNING_KEY=      # QStash signature verify (rotation)
+NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
+```
 
 ---
 
@@ -36,13 +46,13 @@ Node.js: **v22 LTS** (ดู `.nvmrc`)
 |  [API Routes]  ←──(read/write)──→  [Repository Layer]  ←──→  [Prisma ORM]        |
 |       ^                              (marketingRepo,               |               |
 |       |                               inboxRepo,                   v               |
-|  [BullMQ Workers] ←── [Webhook Listeners]  agentSyncRepo,   [PostgreSQL]          |
-|       |                (FB + LINE)          adReviewRepo,    (Supabase cloud)      |
-|       |                                     kitchenRepo …)         ^               |
-|       └──(cache layer)──→ [Redis Cache]  ←─────────────────── cacheSync.js        |
-|                           (ioredis, docker)                                        |
-|                           getOrSet pattern                                         |
-|                           TTL-based invalidation                                   |
+|  [QStash Worker] ←──── [Webhook Listeners]  agentSyncRepo,   [PostgreSQL]          |
+|  /api/workers/    (FB + LINE)          adReviewRepo,    (Supabase cloud)      |
+|  notification     + Slip OCR           kitchenRepo …)         ^               |
+|  (Vercel serverless)                   paymentRepo            |               |
+|       └──(cache layer)──→ [Upstash Redis] ←────────────── cacheSync.js        |
+|                           (@upstash/redis REST)                                    |
+|                           getOrSet pattern · TTL · ADR-034                         |
 +-----------------------------------------------------------------------------------+
                     |                          |                    |
      (Outbound)     v                          v                    v
@@ -63,27 +73,30 @@ Node.js: **v22 LTS** (ดู `.nvmrc`)
                          |                                 |
                          v                                 v
                +------------------+            +---------------------+
-               |  BullMQ Queue    |            | sync/route.js       |
-               |  (Redis 6379)    |            | Batch API 50 ads    |
+               |  Upstash QStash  |            | sync/route.js       |
+               |  HTTP Job Queue  |            | Batch API 50 ads    |
                |  retry ≥ 5x      |            | exponential backoff |
-               |  exp. backoff    |            | RateLimit fail-fast |
+               |  ADR-040         |            | RateLimit fail-fast |
                +------------------+            +---------------------+
                          |                                 |
-                         v                                 v (upsert)
+                         v HTTP call                       v (upsert)
                +------------------+            +---------------------+
-               | notificationWorker|           | AdDailyMetric       |
-               | lineService.push  |           | AdHourlyMetric      |
-               +------------------+            | AdActivity          |
-                         |                     +---------------------+
-                         v
+               |/api/workers/     |           | AdDailyMetric       |
+               | notification     |           | AdHourlyMetric      |
+               | (Vercel serverless)          | AdActivity          |
+               | lineService.push |           +---------------------+
+               +------------------+
+                         |
+[Phase 4: Slip OCR]      v
+  FB/LINE image attachment
                +-----------------------------+
                |        PostgreSQL (Supabase)|
                +-----------------------------+
                          ^
                          | getOrSet (TTL)
                +-----------------------------+
-               |   Redis Cache (ioredis)     |  ← NOT local file cache
-               |   docker: redis:7-alpine    |
+               |   Upstash Redis (REST)      |  ← NOT local docker anymore
+               |   @upstash/redis client     |  ← Phase 27 — ADR-040
                |   ADR-034 singleton pattern |
                +-----------------------------+
 
@@ -118,31 +131,34 @@ Node.js: **v22 LTS** (ดู `.nvmrc`)
 ## 📂 Directories at a Glance
 - `src/app/` — Next.js 14 App Router (API routes + pages)
 - `src/lib/repositories/` — **Repository layer** (ทุก DB op ต้องผ่านที่นี่)
-- `src/lib/` — Services: redis.js, lineService.js, geminiReviewService.js, notificationEngine.js
+- `src/app/api/workers/` — Serverless worker endpoints (notification — แทน notificationWorker.mjs)
+- `src/lib/` — Services: redis.js (Upstash), lineService.js, geminiReviewService.js, slipParser.js, notificationEngine.js
+- `src/lib/repositories/` — **Repository layer** (ทุก DB op ต้องผ่านที่นี่) รวม paymentRepo.js (Phase 26)
 - `src/components/` — React UI components (Lucide icons, Recharts, Framer Motion)
 - `prisma/` — Schema + migrations (PostgreSQL via Supabase)
-- `automation/` — Playwright scrapers (sync_agents_v5.js) — excluded from TS build
+- `automation/` — Playwright scrapers (sync_agents_v5.js) — excluded from TS build, รันบน local machine
 - `scripts/` — One-time data sync / report generation utilities
 - `docs/` — ADRs, arc42, ERD, specs
-- `workers/` — BullMQ worker processes (notificationWorker.mjs)
 
-> ⚠️ **ไม่มี** `cache/` local file cache แล้ว — ใช้ Redis (ioredis docker) ตั้งแต่ v0.13.0 (ADR-034)
+> ⚠️ **ไม่มี** `workers/` แล้ว — ย้ายไป `src/app/api/workers/` (Vercel serverless) ตั้งแต่ v0.27.0 (ADR-040)
+> ⚠️ **ไม่มี** local Redis docker แล้ว — ใช้ Upstash Redis REST ตั้งแต่ v0.27.0 (ADR-040)
 
 ---
 
 ### 3. Current Version Status
 | Version | Milestone | Status |
 |---|---|---|
-| v0.21.0 | Bug Audit Fix + Repository Layer Refactor | ✅ HEAD |
-| v0.22.0 | AI Ad Review Engine (Phase A + B) + agentSyncRepo | ✅ released |
+| v0.25.0 | Production Hardening — RBAC + Security + 186 Tests | ✅ released |
+| v0.26.0 | Chat-First Revenue — Slip OCR + REQ-07 firstTouchAdId | ✅ released |
+| v0.27.0 | Upstash Migration — QStash + Upstash Redis (zero local infra) | ✅ HEAD |
 | v1.0.0 | Production Ready | 🔲 planned |
 
 ### 4. Key Non-Functional Requirements
 | NFR | Requirement |
 |---|---|
 | NFR1 | Webhook ตอบ Facebook < 200ms เสมอ |
-| NFR2 | Dashboard API < 500ms (Redis cache) |
-| NFR3 | BullMQ retry ≥ 5 ครั้ง, exponential backoff |
+| NFR2 | Dashboard API < 500ms (Upstash Redis cache) |
+| NFR3 | QStash retry ≥ 5 ครั้ง (built-in, แทน BullMQ) |
 | NFR5 | Identity upsert ต้องอยู่ใน prisma.$transaction |
 
 ---
@@ -164,10 +180,12 @@ Major technical choices and their rationale.
 | **031** | Icon-Only Sidebar | w-20 sidebar, Lucide migration ออกจาก FontAwesome CDN |
 | **032** | UI Enhancement (A) | Recharts charts, Framer Motion animations |
 | **033** | Unified Inbox | FB + LINE inbox รวม, pagination, right customer card |
-| **034** | Redis Cache | ioredis singleton, getOrSet pattern, TTL, negative cache |
+| **034** | Redis Cache | ioredis→Upstash REST, getOrSet pattern, TTL, negative cache |
 | **035** | Remove FB Login | CredentialsOnly auth (FB hides admin PSID) |
 | **036** | Google Sheets SSOT | Master data sync via CSV URL |
 | **037** | Product-as-Course-Catalog | Reuse Product model, certLevel 30/111/201h |
+| **039** | Chat-First Revenue Attribution | Slip OCR → Transaction → ROAS จริง (Phase 26) |
+| **040** | Upstash Infrastructure | BullMQ→QStash, ioredis→Upstash Redis, zero local infra (Phase 27) |
 
 ### v1 Reference ADRs
 | ADR | Title | Summary |

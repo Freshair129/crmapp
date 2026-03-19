@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getServerSession } from 'next-auth';
+import { getSession } from '@/lib/getSession';
 import { getAssetById, updateAsset } from '@/lib/repositories/assetRepo';
 
 const MAX_PHOTOS = 5;
@@ -12,7 +12,7 @@ const MAX_SIZE_BYTES = 800 * 1024; // 800KB per photo (after client-side compres
  */
 export async function POST(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { photo } = await request.json();
@@ -51,7 +51,7 @@ export async function POST(request, { params }) {
  */
 export async function DELETE(request, { params }) {
     try {
-        const session = await getServerSession();
+        const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { index } = await request.json();

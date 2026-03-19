@@ -1,8 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
 import { uploadAdImage } from '@/lib/supabaseStorage';
-import { getRedis } from '@/lib/redis';
+import { cache as redis } from '@/lib/redis';
 
 const SYNC_STATUS_KEY = 'meta:last_sync';
 
@@ -65,8 +65,6 @@ export async function GET(request) {
         const months = parseInt(searchParams.get('months') || '1', 10);
         const since = new Date(Date.now() - months * 30 * 86400000).toISOString().split('T')[0];
 
-        const prisma = await getPrisma();
-
         // 1. Sync Campaigns
         const fbCampaigns = await paginate(`/${AD_ACCOUNT_ID}/campaigns`, {
             fields: 'id,name,status,objective,start_time,stop_time',
@@ -74,25 +72,13 @@ export async function GET(request) {
         });
 
         for (const c of fbCampaigns) {
-            await prisma.campaign.upsert({
-                where: { campaignId: c.id },
-                update: {
-                    name: c.name,
-                    status: c.status,
-                    objective: c.objective,
-                    startDate: c.start_time ? new Date(c.start_time) : undefined,
-                    endDate: c.stop_time ? new Date(c.stop_time) : undefined,
-                    rawData: c,
-                },
-                create: {
-                    campaignId: c.id,
-                    name: c.name,
-                    status: c.status,
-                    objective: c.objective,
-                    startDate: c.start_time ? new Date(c.start_time) : undefined,
-                    endDate: c.stop_time ? new Date(c.stop_time) : undefined,
-                    rawData: c,
-                },
+            await marketingRepo.upsertCampaign(c.id, {
+                name: c.name,
+                status: c.status,
+                objective: c.objective,
+                startDate: c.start_time ? new Date(c.start_time) : undefined,
+                endDate: c.stop_time ? new Date(c.stop_time) : undefined,
+                rawData: c,
             });
         }
 
@@ -103,25 +89,15 @@ export async function GET(request) {
         });
 
         for (const s of fbAdSets) {
-            const campaign = await prisma.campaign.findUnique({ where: { campaignId: s.campaign_id } });
+            const campaign = await marketingRepo.getCampaignByFBId(s.campaign_id);
             if (!campaign) continue;
 
-            await prisma.adSet.upsert({
-                where: { adSetId: s.id },
-                update: {
-                    name: s.name,
-                    status: s.status,
-                    dailyBudget: s.daily_budget ? parseFloat(s.daily_budget) / 100 : undefined,
-                    targeting: s.targeting || {},
-                },
-                create: {
-                    adSetId: s.id,
-                    name: s.name,
-                    status: s.status,
-                    campaignId: campaign.id,
-                    dailyBudget: s.daily_budget ? parseFloat(s.daily_budget) / 100 : undefined,
-                    targeting: s.targeting || {},
-                },
+            await marketingRepo.upsertAdSet(s.id, {
+                name: s.name,
+                status: s.status,
+                dailyBudget: s.daily_budget ? parseFloat(s.daily_budget) / 100 : undefined,
+                targeting: s.targeting || {},
+                campaignId: campaign.id,
             });
         }
 
@@ -139,8 +115,7 @@ export async function GET(request) {
         let insightErrors = 0;
 
         // Build adSet lookup map (avoid N+1 DB queries)
-        const adSetRows = await prisma.adSet.findMany({ select: { id: true, adSetId: true } });
-        const adSetMap = new Map(adSetRows.map(a => [a.adSetId, a.id]));
+        const adSetMap = await marketingRepo.getAllAdSetFBIds();
 
         // Build creative upsert — full-quality image → compress WebP → Supabase Storage
         const creativeMap_raw = new Map(fbAds.map(a => [a.creative?.id, a.creative]).filter(([id]) => id));
@@ -158,26 +133,14 @@ export async function GET(request) {
                 storageUrl = adId ? await uploadAdImage(imageSrc, adId, { fullQuality: true }) : null;
             }
 
-            await prisma.adCreative.upsert({
-                where: { creativeId: cid },
-                update: {
-                    ...(creative?.body && { body: creative.body }),
-                    ...(creative?.headline && { headline: creative.headline }),
-                    ...(creative?.call_to_action_type && { callToAction: creative.call_to_action_type }),
-                    ...(storageUrl && { imageUrl: storageUrl }),
-                },
-                create: {
-                    creativeId: cid,
-                    name: `Creative ${cid}`,
-                    body: creative?.body ?? null,
-                    headline: creative?.headline ?? null,
-                    callToAction: creative?.call_to_action_type ?? null,
-                    imageUrl: storageUrl,
-                },
+            await marketingRepo.upsertAdCreative(cid, {
+                body: creative?.body ?? null,
+                headline: creative?.headline ?? null,
+                callToAction: creative?.call_to_action_type ?? null,
+                imageUrl: storageUrl,
             });
         }
-        const creativeRows = await prisma.adCreative.findMany({ select: { id: true, creativeId: true } });
-        const creativeMap = new Map(creativeRows.map(c => [c.creativeId, c.id]));
+        const creativeMap = await marketingRepo.getAllCreativeFBIds();
 
         // Fetch insights in batches of 50
         const insightMap = new Map(); // adId → { spend, impressions, clicks, revenue, dailyRows[] }
@@ -260,25 +223,18 @@ export async function GET(request) {
         const AD_CHUNK = 25;
         for (let i = 0; i < adEntries.length; i += AD_CHUNK) {
             await Promise.all(adEntries.slice(i, i + AD_CHUNK).map(({ ad, ins, adSetDbId }) =>
-                prisma.ad.upsert({
-                    where: { adId: ad.id },
-                    update: {
-                        name: ad.name, status: ad.status,
-                        deliveryStatus: ad.effective_status ?? null,
-                        spend: ins.spend, impressions: ins.impressions,
-                        clicks: ins.clicks, reach: ins.reach, revenue: ins.revenue,
-                        roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
-                        creativeId: creativeMap.get(ad.creative?.id) ?? null,
-                    },
-                    create: {
-                        adId: ad.id, name: ad.name, status: ad.status,
-                        deliveryStatus: ad.effective_status ?? null,
-                        adSetId: adSetDbId,
-                        spend: ins.spend, impressions: ins.impressions,
-                        clicks: ins.clicks, reach: ins.reach, revenue: ins.revenue,
-                        roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
-                        creativeId: creativeMap.get(ad.creative?.id) ?? null,
-                    },
+                marketingRepo.upsertAd(ad.id, {
+                    name: ad.name,
+                    status: ad.status,
+                    deliveryStatus: ad.effective_status ?? null,
+                    adSetId: adSetDbId,
+                    spend: ins.spend,
+                    impressions: ins.impressions,
+                    clicks: ins.clicks,
+                    reach: ins.reach,
+                    revenue: ins.revenue,
+                    roas: ins.spend > 0 ? ins.revenue / ins.spend : 0,
+                    creativeId: creativeMap.get(ad.creative?.id) ?? null,
                 })
             ));
         }
@@ -288,13 +244,7 @@ export async function GET(request) {
         const DAILY_CHUNK = 100;
         for (let i = 0; i < allDailyRows.length; i += DAILY_CHUNK) {
             const chunk = allDailyRows.slice(i, i + DAILY_CHUNK);
-            await prisma.$transaction([
-                prisma.adDailyMetric.createMany({ data: chunk, skipDuplicates: true }),
-                ...chunk.map(row => prisma.adDailyMetric.updateMany({
-                    where: { adId: row.adId, date: row.date },
-                    data: { spend: row.spend, impressions: row.impressions, clicks: row.clicks, reach: row.reach, revenue: row.revenue, leads: row.leads, purchases: row.purchases, roas: row.roas },
-                })),
-            ]);
+            await marketingRepo.bulkUpsertDailyMetrics(chunk);
             logger.info('[MarketingSync]', `Daily metrics batch ${Math.floor(i/DAILY_CHUNK)+1}/${Math.ceil(allDailyRows.length/DAILY_CHUNK)} done`);
         }
 
@@ -309,8 +259,7 @@ export async function GET(request) {
 
         // Persist sync status to Redis (survives page reload)
         try {
-            const redis = await getRedis();
-            await redis.set(SYNC_STATUS_KEY, JSON.stringify(syncSummary), 'EX', 60 * 60 * 24 * 7); // 7 days TTL
+            await redis.set(SYNC_STATUS_KEY, syncSummary, 60 * 60 * 24 * 7); // 7 days TTL
         } catch (redisErr) {
             logger.warn('[MarketingSync]', 'Failed to persist sync status to Redis', redisErr);
         }

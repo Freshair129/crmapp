@@ -151,8 +151,8 @@ async function processEvent(event) {
                 participantId: customerPsid,
                 lastMessageAt: new Date(timestamp),
                 unreadCount: isFromPage ? 0 : 1,
-                // Ad attribution
-                ...(referral?.ad_id ? {} : {}),
+                // Ad attribution (Phase 26 Task A2)
+                firstTouchAdId: referral?.ad_id ?? null,
             },
             update: {
                 lastMessageAt: new Date(timestamp),
@@ -199,7 +199,7 @@ async function processEvent(event) {
     eventBus.emit('chat-update', { conversationId: threadId, customerPsid, isFromPage });
     logger.info('FacebookWebhook', `chat-update emitted for ${threadId}`);
 
-    // 4. Trigger Notification Engine (Rule evaluation)
+    // 4. Fire-and-forget: Trigger Notification Engine (Rule evaluation)
     if (!isFromPage && message.mid) {
         notificationEngine.evaluateRules('MESSAGE_RECEIVED', {
             message: { id: message.mid, content: message.text, metadata: message.metadata },
@@ -207,5 +207,24 @@ async function processEvent(event) {
             channel: 'facebook',
             customerPsid
         }).catch(err => logger.error('FacebookWebhook', 'notificationEngine failed', err));
+
+        // TASK C: Trigger Slip Detection (Phase 26)
+        const attach = (message.attachments || [])[0];
+        if (attach && attach.type === 'image' && attach.payload?.url) {
+            import('@/lib/slipParser').then(({ parseSlip }) => {
+                return parseSlip(attach.payload.url).then(slipResult => {
+                    if (slipResult.isSlip && slipResult.confidence >= 0.8) {
+                        import('@/lib/repositories/paymentRepo').then(({ createPendingFromSlip }) => {
+                            return createPendingFromSlip({
+                                messageId: message.mid,
+                                conversationId: threadId,
+                                imageUrl: attach.payload.url,
+                                slipResult
+                            });
+                        }).catch(err => logger.error('FacebookWebhook', 'createPendingFromSlip failed', err));
+                    }
+                });
+            }).catch(err => logger.error('FacebookWebhook', 'parseSlip failed', err));
+        }
     }
 }
