@@ -91,6 +91,7 @@ export async function GET(request, { params }) {
         const { messages } = await inboxRepo.getConversationMessages(params.id, { page, limit });
 
         // Lazy fetch: if DB has no messages on page 1, pull from FB Graph API
+        // Promise.race ensures we never exceed 7s regardless of what hangs inside
         if (messages.length === 0 && page === 1 && PAGE_ID && PAGE_TOKEN) {
             const prisma = await getPrisma();
             const conv = await prisma.conversation.findUnique({
@@ -98,9 +99,12 @@ export async function GET(request, { params }) {
                 select: { participantId: true, channel: true, participantName: true },
             });
             if (conv?.channel?.toLowerCase() === 'facebook' && conv.participantId) {
-                const saved = await lazyFetchMessagesFromFB(params.id, conv.participantId, conv.participantName);
+                const hardTimeout = new Promise(resolve => setTimeout(() => resolve(0), 6500));
+                const saved = await Promise.race([
+                    lazyFetchMessagesFromFB(params.id, conv.participantId, conv.participantName),
+                    hardTimeout,
+                ]);
                 if (saved > 0) {
-                    // Re-query after saving
                     const { messages: freshMessages } = await inboxRepo.getConversationMessages(params.id, { page, limit });
                     return NextResponse.json(freshMessages);
                 }
