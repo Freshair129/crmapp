@@ -201,9 +201,23 @@ git reset --hard HEAD~1
 
 ```
 v0.9.0  ──── Auth Stable
-v0.10.0 ──── API Connected      (Phase 11 done)
+v0.10.0 ──── API Connected        (Phase 11)
 v0.11.0 ──── Revenue Split
-v0.12.0 ──── UI Enhanced        ← stable, current
-               │
-             master              ← HEAD (2026-03-13)
+v0.12.0 ──── UI Enhanced          ← stable branch ชี้ที่นี่
+v0.13.0 ──── Unified Inbox + Redis Cache
+v0.14.0 ──── NotificationRules + LINE Messaging
+v0.15.0 ──── Asset + Kitchen Ops + Course Enrollment
+v0.16.0 ──── Recipe + Package + Real-time Stock Deduction
+v0.18.0 ──── Production Hardening & API Optimization
+v0.19.0 ──── Schema Hardening
+v0.20.0 ──── Lot ID + Class ID
+v0.21.0 ──── Bug Audit Fix + Repository Layer Refactor
+v0.22.0 ──── FEFO Stock Deduction Refinement
+v0.23.0 ──── Repository Layer Full Compliance
+v0.24.0 ──── Unit Test Expansion (50+ cases)
+v0.25.0 ──── Production Hardening — RBAC + Security
+v0.26.0 ──── Chat-First Revenue Attribution — Slip OCR
+v0.27.0 ──── Upstash Migration — zero local infra
+v1.0.0  ──── Production Ready — ADR-041             ✅ released
+v1.1.0  ──── POS ProductDetailModal + Sheet Auto-ID  ← master HEAD (2026-03-19)
 ```

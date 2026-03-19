@@ -9,15 +9,15 @@ A comprehensive CRM system designed for V School (Japanese Culinary Academy). It
 ### Key Goals
 - **Real-time Insights:** Instant visibility into marketing spend and ROAS.
 - **Engagement:** Seamless integration with Facebook Messenger for student communication.
-- **Scalability:** Hybrid architecture to handle growing student data and complex AI workloads.
+- **Scalability:** Serverless architecture to handle growing student data and complex AI workloads.
 
 ---
 
 ## 2. Architecture Constraints
 - **Database:** PostgreSQL (Supabase) as the primary relational store.
 - **High Performance:** Must use Redis caching for high-traffic dashboard components and heavy analytics queries.
-- **AI Integration:** Python-based worker for Gemini AI processing and heavy data manipulation.
-- **Queueing:** Redis/BullMQ for asynchronous job processing.
+- **AI Integration:** Google Gemini API (Vertex AI/AI Studio) for processing and insights.
+- **Queueing:** Upstash QStash for serverless HTTP job queuing and retries.
 
 ---
 
@@ -37,7 +37,7 @@ graph TB
     end
 
     subgraph VSchool_CRM [V School CRM System]
-        CRM[V School CRM v2\nNext.js 14 App Router\n+ Python Worker]
+        CRM[V School CRM v2\nNext.js 14 App Router]
     end
 
     subgraph External_Systems [External Systems]
@@ -67,9 +67,9 @@ graph TB
 ---
 
 ## 4. Solution Strategy
-- **Hybrid Platform:** Next.js for the web interface and API; Python for background AI and sync tasks.
-- **Cache-First UI:** Redis-based caching layer to minimize database latency and API rate limits.
-- **Event-Driven:** Changes in the database or external webhooks trigger background workers via Redis.
+- **Serverless Platform:** Next.js for the web interface and API; QStash for background tasks.
+- **Cache-First UI:** Upstash Redis (REST) caching layer to minimize database latency and API rate limits.
+- **Event-Driven:** Changes in the database or external webhooks trigger serverless workers via QStash.
 
 ---
 
@@ -83,9 +83,8 @@ graph TD
     
     subgraph V_School_CRM_System [V School CRM System]
         Web_App[Next.js App / Webhook Listener]
-        Python_Worker[Python AI Worker]
-        Redis_Queue[Redis Queue / BullMQ]
-        Redis_Cache[Redis Cache / Caching Layer]
+        QStash_Queue[Upstash QStash / HTTP Queue]
+        Upstash_Redis[Upstash Redis / Caching Layer]
     end
 
     Supabase[(PostgreSQL / Supabase)]
@@ -94,17 +93,15 @@ graph TD
 
     User -->|Interacts with| Web_App
     Web_App -->|Reads/Writes| Supabase
-    Web_App -->|Fast Reads| Redis_Cache
-    Web_App -->|Enqueues Events| Redis_Queue
+    Web_App -->|Fast Reads| Upstash_Redis
+    Web_App -->|Enqueues Jobs| QStash_Queue
     Meta -->|Webhooks| Web_App
     
-    Redis_Queue -->|Processed by| Python_Worker
-    Redis_Queue -->|Processed by| Node_Worker[Node.js Event Worker]
+    QStash_Queue -->|Triggers| Worker_Endpoint["/api/workers/notification\n(Serverless)"]
     
-    Node_Worker -->|Updates| Supabase
-    Python_Worker -->|Syncs/Responds| Meta
-    Python_Worker -->|RAG / AI Analysis| Gemini
-    Python_Worker -->|Updates| Supabase
+    Worker_Endpoint -->|Updates| Supabase
+    Worker_Endpoint -->|Push Alerts| LINE[LINE API]
+    Web_App -->|RAG / AI Analysis| Gemini
 ```
 
 ### 5.2 Level 3: Components (CRM Web App)
@@ -131,7 +128,7 @@ graph TD
     Lib_Core -->|Fetch Insights| FB_API
     
     Cron_Scheduler -->|Triggers Sync| Lib_Core
-    Cache_Sync -->|Read/Write| Redis_Cache[(Redis Cache)]
+    Cache_Sync -->|Read/Write| Upstash_Redis[(Upstash Redis)]
     Prisma_Client -->|Read/Write| Postgres[(PostgreSQL)]
 ```
 
@@ -144,32 +141,24 @@ Behavior of the system during specific scenarios.
 ```mermaid
 sequenceDiagram
     participant FB as Facebook Marketing API
-    participant PS as marketing_sync.py (Python)
     participant DB as PostgreSQL (Supabase)
     participant NX as Next.js API/Cron
-    participant RD as Redis (BullMQ)
-    participant WK as cacheSyncWorker.js
-    participant LC as Redis Cache
-
-    rect rgb(240, 240, 240)
-        Note over PS, FB: Daily Bulk Sync (Legacy/Deep)
-        FB->>PS: Bulk Fetch Data
-        PS->>DB: SQL Upsert Data
-        PS->>NX: Trigger Sync
-    end
+    participant QS as Upstash QStash
+    participant NW as /api/workers/notification
+    participant LC as Upstash Redis
 
     rect rgb(230, 240, 255)
-        Note over NX, FB: Hourly Breakdown Sync (New)
+        Note over NX, FB: Hourly Breakdown Sync
         NX->>FB: Fetch Hourly Breakdown
         FB-->>NX: Success
         NX->>DB: Prisma Upsert AdHourlyMetric
     end
 
-    NX->>RD: Enqueue Job
-    RD->>WK: Process Job
-    WK->>DB: Read Latest Metrics
-    WK->>LC: Write JSON Cache
-    Note over LC: Optimized for High Performance UI (Redis)
+    NX->>QS: Enqueue Job
+    QS->>NW: POST Trigger
+    NW->>DB: Read Latest Metrics
+    NW->>LC: Write JSON Cache
+    Note over LC: Optimized for High Performance UI (REST)
 ```
 
 ### 6.2 Event-Driven Chat Synchronization (Real-time)
@@ -177,19 +166,19 @@ sequenceDiagram
 sequenceDiagram
     participant FB as Facebook Messenger
     participant WH as Webhook API (/api/webhooks)
-    participant RD as Redis (BullMQ)
-    participant WK as eventProcessor.mjs
+    participant QS as Upstash QStash
+    participant NW as /api/workers/notification
     participant DB as PostgreSQL (Supabase)
-    participant LC as Redis Cache
+    participant LC as Upstash Redis
 
     FB->>WH: New Message/Event
-    WH->>RD: Enqueue 'fb-events'
+    WH->>QS: Enqueue notification
     WH-->>FB: 200 OK (Immediate)
     
-    RD->>WK: Pull Event
-    WK->>DB: Upsert Message & Customer
-    WK->>LC: Update Redis Cache
-    Note over WK: Automatic Slip Detection & AI Analysis
+    QS->>NW: POST payload
+    NW->>DB: Evaluate Rules & Log
+    NW->>LC: Update Redis Cache
+    Note over NW: Automatic Slip Detection & AI Analysis
 ```
 
 ---
@@ -206,58 +195,49 @@ graph TB
     end
 
     subgraph Vercel [Vercel — Production]
-        NextApp[Next.js 14\nApp Router\nSSR + API Routes]
-    end
-
-    subgraph VPS_or_Local [VPS / Local Worker]
-        BullWorker[BullMQ Worker\nNode.js eventProcessor]
-        PythonWorker[Python Worker\nAd Calc / NumPy / Pandas]
+        NextApp[Next.js 14\nApp Router]
+        WorkerEndpoint[Serverless Worker\n/api/workers/notification]
     end
 
     subgraph Data_Layer [Data Layer]
         Supabase[(PostgreSQL\nSupabase Cloud)]
-        Redis[(Redis\nCache + Queue)]
+        UpstashRedis[(Upstash Redis\nCache Layer)]
+        QStash[(Upstash QStash\nQueue Layer)]
     end
 
     subgraph External
         Meta[Meta Graph API]
         LINE[LINE Messaging API]
         Gemini[Google Gemini AI]
-        SlipOK[SlipOK Verify]
     end
 
     Student -->|HTTPS| NextApp
     Employee -->|HTTPS| NextApp
 
     NextApp -->|Prisma ORM| Supabase
-    NextApp -->|Cache-Aside| Redis
-    NextApp -->|Enqueue jobs| Redis
+    NextApp -->|REST Cache| UpstashRedis
+    NextApp -->|HTTP Push| QStash
 
-    Redis -->|BullMQ pull| BullWorker
-    Redis -->|BullMQ pull| PythonWorker
-
-    BullWorker -->|Upsert| Supabase
-    PythonWorker -->|Upsert metrics| Supabase
-    PythonWorker -->|Fetch ads| Meta
-
+    QStash -->|HTTP POST| WorkerEndpoint
+    WorkerEndpoint -->|Upsert| Supabase
+    
     NextApp -->|Webhook receive| Meta
     NextApp -->|Webhook receive| LINE
     NextApp -->|AI call| Gemini
-    NextApp -->|Slip verify| SlipOK
 ```
 
 ### 7.2 Environments
 
-| Environment | Next.js | Database | Redis | Worker |
+| Environment | Next.js | Database | Cache | Queue |
 |---|---|---|---|---|
-| **Local Dev** | `npm run dev` (port 3000) | Docker PostgreSQL (port 5433) | Docker Redis (port 6379) | `npm run worker` |
-| **Production** | Vercel (auto-deploy from master) | Supabase Cloud | Redis Cloud / Upstash | VPS cron or always-on |
+| **Local Dev** | `npm run dev` | Docker PostgreSQL | Upstash Redis | Upstash QStash |
+| **Production** | Vercel | Supabase Cloud | Upstash Redis | Upstash QStash |
 
 ### 7.3 Key NFRs for Deployment
 
 - **NFR1:** Webhook ตอบ Meta < 200ms — ใช้ Vercel Edge proximity
 - **NFR2:** Dashboard API < 500ms — Redis cache-aside ลด DB round-trips
-- **NFR3:** BullMQ retry ≥ 5 ครั้ง, exponential backoff — worker process แยกต่างหาก
+- **NFR3:** QStash retry ≥ 5 ครั้ง, exponential backoff — built-in reliability.
 
 ---
 
@@ -291,6 +271,7 @@ Detailed history of key architectural choices:
 - [ADR 032: UI Enhancement Recharts Framer Motion](../adr/032-ui-enhancement-recharts-framer-motion.md)
 - [ADR 033: Unified Inbox Implementation](../adr/033-unified-inbox-implementation.md)
 - [ADR 034: Redis Caching Layer](../adr/034-redis-caching-layer.md)
+- [ADR 040: Upstash Infrastructure Migration](../adr/040-upstash-infrastructure-migration.md)
 
 ---
 
@@ -311,4 +292,4 @@ Detailed history of key architectural choices:
 - **TVS:** The V School / Thai Video Solution.
 - **RAG:** Retrieval-Augmented Generation (used in knowledge base).
 - **SSOT:** Single Source of Truth.
-- **BullMQ:** Message queue on top of Redis.
+- **QStash:** Serverless HTTP-based message queue by Upstash.
