@@ -11,6 +11,25 @@ import { getPrisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { cache as redis } from "@/lib/redis";
 
+/**
+ * generateLogId — LOG-YYYYMMDD-SERIAL
+ * Serial = last 4 digits of ms timestamp (unique enough per day within a single process)
+ */
+async function generateLogId(prisma) {
+    const today = new Date();
+    const datePart = today.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const prefix = `LOG-${datePart}-`;
+    const last = await prisma.auditLog.findFirst({
+        where: { logId: { startsWith: prefix } },
+        orderBy: { logId: 'desc' },
+        select: { logId: true },
+    });
+    const serial = last
+        ? String(parseInt(last.logId.split('-')[2], 10) + 1).padStart(4, '0')
+        : '0001';
+    return `${prefix}${serial}`;
+}
+
 export const authOptions = {
     providers: [
         CredentialsProvider({
@@ -57,9 +76,11 @@ export const authOptions = {
 
                     // ─── Login Audit Log + lastLoginAt ───────────────────────
                     const now = new Date();
+                    const logId = await generateLogId(prisma).catch(() => `LOG-${Date.now()}`);
                     await Promise.all([
                         prisma.auditLog.create({
                             data: {
+                                logId,
                                 action: 'LOGIN',
                                 actor: employee.employeeId,
                                 target: employee.email,

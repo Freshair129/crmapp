@@ -567,6 +567,7 @@ model Task {
 
 model AuditLog {
   id        String   @id @default(uuid())
+  logId     String   @unique @map("log_id")          // LOG-YYYYMMDD-SERIAL — human-readable audit ID
   action    String
   actor     String
   target    String?
@@ -575,6 +576,7 @@ model AuditLog {
   details   Json?    @default("{}")
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([logId])
   @@index([action, createdAt])
   @@index([target])
   @@map("audit_logs")

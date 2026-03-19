@@ -396,3 +396,11 @@ id_origins:
     format: "UUID (matches Employee.id)"
     stored_in: "Message.responderId"
     purpose: "KPI Attribution — ระบุว่าใครตอบข้อความนั้น"
+
+  - id: "logId"
+    origin: "Internal"
+    format: "LOG-YYYYMMDD-SERIAL"
+    example: "LOG-20260319-0001"
+    stored_in: "AuditLog.logId"
+    purpose: "Human-readable audit trail ID — ใช้ระบุ event ใน log, debug, compliance"
+    serial: "4-digit zero-padded, reset ทุกวัน (per-day sequence)"
