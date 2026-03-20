@@ -836,7 +836,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             <Sparkles size={11} className="text-[#C9A34E]" />
                             <span className="text-[9px] font-black text-[#C9A34E] uppercase tracking-[0.15em]">AI Reply Helper</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 min-w-0 overflow-hidden">
                             {/* Admin Style selector */}
                             <div className="relative flex items-center gap-1">
                                 {aiStyleAnalyzing && (
@@ -869,7 +869,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                 <select
                                     value={aiTone}
                                     onChange={e => setAiTone(e.target.value)}
-                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest pl-2 pr-5 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all"
+                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-wide pl-2 pr-5 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all w-[72px] max-w-[72px]"
                                 >
                                     <option value="friendly">😊 Friendly</option>
                                     <option value="formal">🎩 Formal</option>
