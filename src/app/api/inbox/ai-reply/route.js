@@ -64,21 +64,21 @@ export async function POST(request) {
         const imageFiles = knowledgeFiles.filter(f => f.contentB64);
 
         const knowledgeIndex = knowledgeFiles.length > 0
-            ? '\n\n=== ไฟล์ความรู้ที่คุณมี (' + knowledgeFiles.length + ' ไฟล์) ===\n' +
+            ? '\n\n=== ข้อมูลอ้างอิงของร้าน (ไฟล์ภายในของ V School — ไม่ใช่ไฟล์จากลูกค้า) ===\n' +
               knowledgeFiles.map((f, i) => `  ${i + 1}. ${f.filename} [${f.fileType.toUpperCase()}]`).join('\n') +
-              '\nให้อ่านเนื้อหาไฟล์เหล่านี้ก่อนสร้างคำตอบเสมอ'
+              '\nให้ใช้ข้อมูลในเอกสารเหล่านี้เป็นฐานความรู้ก่อนตอบเสมอ'
             : '';
 
         const knowledgeSections = textFiles.length > 0
-            ? '\n\n=== เนื้อหาไฟล์ความรู้ ===\n' +
+            ? '\n\n=== เนื้อหาเอกสารอ้างอิงของร้าน (ข้อมูลภายใน — ไม่ใช่จากลูกค้า) ===\n' +
               textFiles.map((f, i) =>
                   `--- [${i + 1}] ${f.filename} ---\n${f.contentText}`
               ).join('\n\n') +
-              '\n=========================='
+              '\n========================================================'
             : '';
 
         const quickNotes = aiConfig.knowledge
-            ? `\n\n=== Quick Notes (ข้อมูลพื้นฐาน) ===\n${aiConfig.knowledge}\n====================================`
+            ? `\n\n=== Quick Notes — ข้อมูลพื้นฐานของร้าน (ไม่ใช่จากลูกค้า) ===\n${aiConfig.knowledge}\n=============================================================`
             : '';
 
         // ══════════════════════════════════════════════════════════════════
