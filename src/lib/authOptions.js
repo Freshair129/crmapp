@@ -55,9 +55,15 @@ export const authOptions = {
 
                 try {
                     const prisma = await getPrisma();
-                    const employee = await prisma.employee.findUnique({
+                    // Support login by email OR by employeeId (e.g. TVS-MKT-001)
+                    let employee = await prisma.employee.findUnique({
                         where: { email: credentials.email }
                     });
+                    if (!employee) {
+                        employee = await prisma.employee.findUnique({
+                            where: { employeeId: credentials.email }
+                        });
+                    }
 
                     if (!employee || employee.status !== "ACTIVE") {
                         logger.warn('NEXTAUTH', 'Auth failed: User not found or inactive', { email: credentials.email });
