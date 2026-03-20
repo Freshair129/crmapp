@@ -146,7 +146,7 @@ export default function DailyReport({ dailyData }) {
                     {/* Combined Financial Performance Chart */}
                     <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[600px]">
                         <h3 className="text-center font-black text-white text-xs uppercase tracking-[0.2em] mb-10">Monthly Financial Overview (Spend, Revenue & ROAS)</h3>
-                        <div className="flex-1 w-full">
+                        <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -203,7 +203,7 @@ export default function DailyReport({ dailyData }) {
                     {/* Conversion Funnel: Clicks vs Conversions */}
                     <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[500px]">
                         <h3 className="text-center font-black text-white text-xs uppercase tracking-[0.2em] mb-8">Conversion Funnel (Clicks vs Conv)</h3>
-                        <div className="flex-1 w-full">
+                        <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={dailyStats} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
