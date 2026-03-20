@@ -13,6 +13,7 @@ const ibmPlexThai = IBM_Plex_Sans_Thai({
 });
 
 import Providers from "@/components/Providers";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
     title: "V School CRM v2",
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
                 <Providers>
                     {children}
                 </Providers>
+                <Analytics />
             </body>
         </html>
     );
