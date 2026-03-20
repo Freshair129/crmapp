@@ -67,7 +67,7 @@ ${customerCtx ? `ข้อมูลลูกค้า: ${customerCtx}` : ''}${re
 - ความยาวพอดี ไม่สั้นเกินหรือยาวเกิน
 - ถ้า tone เป็น sales ให้มี soft CTA แต่ไม่กดดัน`;
 
-        const model  = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model  = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const result = await model.generateContent(prompt);
         const reply  = result.response.text().trim();
 
@@ -75,6 +75,6 @@ ${customerCtx ? `ข้อมูลลูกค้า: ${customerCtx}` : ''}${re
 
     } catch (error) {
         logger.error('[AIReply]', 'POST error', error);
-        return NextResponse.json({ success: false, error: 'AI service error', _debug: error?.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: 'AI service error' }, { status: 500 });
     }
 }
