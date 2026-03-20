@@ -19,6 +19,7 @@ import FacebookAds from "@/components/FacebookAds";
 import FacebookChat from "@/components/FacebookChat";
 import CampaignTracking from "@/components/CampaignTracking";
 import Settings from "@/components/Settings";
+import AIConfigPage from "@/components/AIConfigPage";
 import UnifiedInbox from "@/components/UnifiedInbox";
 
 
@@ -324,6 +325,10 @@ export default function Home() {
 
                         {activeView === "system-config" && wrap("system-config",
                             <SystemConfig language={language} setLanguage={setLanguage} />
+                        )}
+
+                        {activeView === "ai-config" && wrap("ai-config",
+                            <AIConfigPage />
                         )}
 
                         {activeView === "settings" && wrap("settings",

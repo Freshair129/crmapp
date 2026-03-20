@@ -5,7 +5,7 @@ import {
     Users, MessageCircle, MessageSquare, Megaphone,
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
-    ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked
+    ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot
 } from 'lucide-react';
 
 const menuGroups = [
@@ -63,6 +63,7 @@ const menuGroups = [
     {
         label: 'SYSTEM',
         items: [
+            { id: 'ai-config', icon: Bot, label: 'AI Reply Config' },
             { id: 'system-config', icon: SlidersHorizontal, label: 'System Config' },
             { id: 'settings', icon: Settings, label: 'Legacy Settings' }
         ]

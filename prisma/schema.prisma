@@ -1042,3 +1042,16 @@ model AdReviewResult {
   @@index([adId])
   @@map("ad_review_results")
 }
+
+// ─────────────────────────────────────────────
+// DOMAIN: AI Config (Phase AI-Reply)
+// ─────────────────────────────────────────────
+
+model AIConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_configs")
+}
