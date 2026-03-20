@@ -852,7 +852,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     value={aiStyleEmpId}
                                     onChange={e => handleStyleSelect(e.target.value)}
                                     disabled={aiStyleAnalyzing}
-                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 pl-1.5 pr-4 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all disabled:opacity-40"
+                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 pl-1.5 pr-4 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all disabled:opacity-40 w-[88px] max-w-[88px]"
                                     title="Admin Style Mode — AI จะเลียนแบบสไตล์ของแอดมินที่เลือก"
                                 >
                                     <option value="">Style: Default</option>
