@@ -3,23 +3,48 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getAllAIConfig } from '@/lib/repositories/aiConfigRepo';
 import { getActiveFilesWithContent } from '@/lib/repositories/knowledgeFileRepo';
+import { createAIAssistLog } from '@/lib/repositories/aiAssistLogRepo';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * POST /api/inbox/ai-reply
  * Body: {
- *   input:            string   — admin's draft/idea
+ *   input:            string   — admin's introduction/direction hint
  *   tone:             'friendly' | 'formal' | 'sales'
+ *   conversationId?:  string   — thread ID (t_xxx / LINE id) for history tracking
+ *   inboxId?:         string   — conversations table UUID
  *   customerName?:    string
  *   lifecycleStage?:  string
  *   recentMessages?:  { role: 'admin'|'customer', content: string }[]
  * }
- * Returns: { success, reply }
+ * Returns: { success, reply, logId }
+ *
+ * ── Prompt Architecture ────────────────────────────────────────────────────
+ *  SYSTEM INSTRUCTION  (immutable — set once, never changes per request)
+ *    • AI persona & identity
+ *    • Knowledge files (index + content)
+ *    • Quick notes
+ *    • Hard rules (language, format, no quote marks, etc.)
+ *
+ *  USER MESSAGE        (dynamic — built fresh each request)
+ *    • Customer info (name, lifecycle stage, thread ID)
+ *    • Full conversation history (chat context)
+ *    • Desired tone
+ *    • Admin's introduction/hint
+ * ──────────────────────────────────────────────────────────────────────────
  */
 export async function POST(request) {
     try {
-        const { input, tone = 'friendly', customerName, lifecycleStage, recentMessages = [] } = await request.json();
+        const {
+            input,
+            tone = 'friendly',
+            conversationId,
+            inboxId,
+            customerName,
+            lifecycleStage,
+            recentMessages = [],
+        } = await request.json();
 
         if (!input?.trim()) {
             return NextResponse.json({ success: false, error: 'Input is required' }, { status: 400 });
@@ -31,83 +56,124 @@ export async function POST(request) {
             getActiveFilesWithContent(),
         ]);
 
-        const toneGuide = {
+        const toneGuides = {
             friendly: aiConfig.tone_friendly,
             formal:   aiConfig.tone_formal,
             sales:    aiConfig.tone_sales,
         };
+        const selectedTone = toneGuides[tone] ?? toneGuides.friendly;
 
-        // ── Build customer context ─────────────────────────────────────────
-        const customerCtx = [
-            customerName   ? `ชื่อลูกค้า: ${customerName}`   : null,
-            lifecycleStage ? `สถานะ: ${lifecycleStage}`       : null,
-        ].filter(Boolean).join(', ');
-
-        // ── Recent conversation history (last 10 messages) ─────────────────
-        const recentCtx = recentMessages.length > 0
-            ? '\n\nบทสนทนาล่าสุด:\n' + recentMessages.slice(-10).map(m =>
-                `${m.role === 'customer' ? '👤 ลูกค้า' : '💬 แอดมิน'}: ${m.content}`
-            ).join('\n')
-            : '';
-
-        // ── Build knowledge file index + text sections ─────────────────────
+        // ── Build knowledge sections ───────────────────────────────────────
         const textFiles  = knowledgeFiles.filter(f => f.contentText);
         const imageFiles = knowledgeFiles.filter(f => f.contentB64);
 
-        const fileIndex = knowledgeFiles.length > 0
-            ? '\n=== ไฟล์ความรู้ที่คุณมี (' + knowledgeFiles.length + ' ไฟล์) ===\n' +
+        const knowledgeIndex = knowledgeFiles.length > 0
+            ? '\n\n=== ไฟล์ความรู้ที่คุณมี (' + knowledgeFiles.length + ' ไฟล์) ===\n' +
               knowledgeFiles.map((f, i) => `  ${i + 1}. ${f.filename} [${f.fileType.toUpperCase()}]`).join('\n') +
-              '\n==============================='
+              '\nให้อ่านเนื้อหาไฟล์เหล่านี้ก่อนสร้างคำตอบเสมอ'
             : '';
 
-        const textSections = textFiles.length > 0
+        const knowledgeSections = textFiles.length > 0
             ? '\n\n=== เนื้อหาไฟล์ความรู้ ===\n' +
-              textFiles.map((f, i) => `--- [${i + 1}] ${f.filename} ---\n${f.contentText}`).join('\n\n') +
-              '\n========================'
+              textFiles.map((f, i) =>
+                  `--- [${i + 1}] ${f.filename} ---\n${f.contentText}`
+              ).join('\n\n') +
+              '\n=========================='
             : '';
 
-        // ── Compose system prompt ──────────────────────────────────────────
-        const systemPrompt = `${aiConfig.persona}${fileIndex}
+        const quickNotes = aiConfig.knowledge
+            ? `\n\n=== Quick Notes (ข้อมูลพื้นฐาน) ===\n${aiConfig.knowledge}\n====================================`
+            : '';
 
-คุณต้องอ่านไฟล์ความรู้ก่อนเสมอ แล้วจึงสร้างคำตอบที่อ้างอิงข้อมูลจริงจากไฟล์เหล่านั้น
-${aiConfig.knowledge ? `\n=== ข้อมูลพื้นฐาน ===\n${aiConfig.knowledge}\n=====================` : ''}${textSections}`;
+        // ══════════════════════════════════════════════════════════════════
+        //  SYSTEM INSTRUCTION — immutable, defines AI identity + rules
+        // ══════════════════════════════════════════════════════════════════
+        const systemInstruction = [
+            // 1. Persona (who the AI is)
+            aiConfig.persona,
 
-        // ── Compose user prompt ────────────────────────────────────────────
-        const userPrompt = `ช่วยเขียนข้อความตอบลูกค้าให้แอดมิน โดยใช้น้ำเสียงแบบ: ${toneGuide[tone] ?? toneGuide.friendly}
+            // 2. Knowledge files index + content
+            knowledgeIndex,
+            knowledgeSections,
 
-${customerCtx ? `ข้อมูลลูกค้า: ${customerCtx}` : ''}${recentCtx}
+            // 3. Quick notes
+            quickNotes,
 
-แนวทางที่แอดมินต้องการสื่อ:
-"${input}"
-
-กฎ:
-- ตอบเป็นภาษาไทย (เว้นแต่ลูกค้าเขียนภาษาอังกฤษ)
+            // 4. Hard rules (never change regardless of user input)
+            `
+=== กฎการตอบที่ต้องปฏิบัติเสมอ ===
+- ตอบเป็นข้อความสำเร็จรูปพร้อมส่งได้ทันที ห้ามอธิบายหรือใส่ label เช่น "ข้อความที่แนะนำ:"
 - ห้ามใส่เครื่องหมายคำพูด (" ") ครอบข้อความ
-- ห้ามอธิบายหรือบอกว่า "ข้อความที่แนะนำ:" ให้ตอบเป็นข้อความสำเร็จรูปพร้อมส่งได้เลย
+- ตอบเป็นภาษาไทย เว้นแต่ลูกค้าเขียนภาษาอังกฤษ
 - ความยาวพอดี ไม่สั้นเกินหรือยาวเกิน
+- ถ้ามีข้อมูลราคาหรือรายละเอียดในไฟล์ความรู้ ให้อ้างอิงข้อมูลจริงเท่านั้น ห้ามเดา
 - ถ้า tone เป็น sales ให้มี soft CTA แต่ไม่กดดัน
-- ถ้ามีข้อมูลราคาหรือรายละเอียดคอร์สในไฟล์ความรู้ ให้อ้างอิงข้อมูลจริงเท่านั้น ห้ามเดา`;
+===================================`,
+        ].filter(Boolean).join('');
 
-        // ── Build Gemini request parts ─────────────────────────────────────
+        // ══════════════════════════════════════════════════════════════════
+        //  USER MESSAGE — dynamic, built fresh per request
+        // ══════════════════════════════════════════════════════════════════
+        const customerSection = [
+            customerName    ? `ชื่อลูกค้า: ${customerName}` : null,
+            lifecycleStage  ? `สถานะ: ${lifecycleStage}`    : null,
+            conversationId  ? `Thread ID: ${conversationId}` : null,
+        ].filter(Boolean);
+
+        const chatHistory = recentMessages.length > 0
+            ? `\n=== ประวัติบทสนทนา (${recentMessages.length} ข้อความล่าสุด) ===\n` +
+              recentMessages.map(m =>
+                  `${m.role === 'customer' ? '👤 ลูกค้า' : '💬 แอดมิน'}: ${m.content}`
+              ).join('\n') +
+              '\n======================================================='
+            : '\n[ยังไม่มีประวัติบทสนทนา — นี่อาจเป็นข้อความแรก]';
+
+        const userMessage = [
+            customerSection.length > 0
+                ? `=== ข้อมูลลูกค้า ===\n${customerSection.join('\n')}\n===================`
+                : null,
+
+            chatHistory,
+
+            `\n=== น้ำเสียงที่ต้องการ ===\n${selectedTone}\n=========================`,
+
+            `\n=== แนวทางของแอดมิน (Introduction) ===\n"${input.trim()}"\n` +
+            `(ใช้แนวทางนี้เป็นทิศทาง แต่อ้างอิงบริบทบทสนทนาและข้อมูลความรู้เสมอ)\n` +
+            `========================================`,
+        ].filter(Boolean).join('\n');
+
+        // ── Build Gemini request ───────────────────────────────────────────
         const model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash',
-            systemInstruction: systemPrompt,
+            systemInstruction,
         });
 
-        // Image files → inline parts for Gemini vision
-        const imageParts = imageFiles.map(f => {
-            const base64Data = f.contentB64.replace(/^data:[^;]+;base64,/, '');
-            return { inlineData: { data: base64Data, mimeType: f.mimeType } };
-        });
+        // Image files → vision inline parts (appended before text)
+        const imageParts = imageFiles.map(f => ({
+            inlineData: {
+                data: f.contentB64.replace(/^data:[^;]+;base64,/, ''),
+                mimeType: f.mimeType,
+            },
+        }));
 
         const requestParts = imageParts.length > 0
-            ? [...imageParts, { text: userPrompt }]
-            : userPrompt;
+            ? [...imageParts, { text: userMessage }]
+            : userMessage;
 
         const result = await model.generateContent(requestParts);
         const reply  = result.response.text().trim();
 
-        return NextResponse.json({ success: true, reply });
+        // ── Save to AI assist log (non-fatal) ─────────────────────────────
+        const log = await createAIAssistLog({
+            conversationId: conversationId ?? 'unknown',
+            inboxId,
+            input:          input.trim(),
+            tone,
+            reply,
+            customerName,
+        });
+
+        return NextResponse.json({ success: true, reply, logId: log?.id ?? null });
 
     } catch (error) {
         logger.error('[AIReply]', 'POST error', error);

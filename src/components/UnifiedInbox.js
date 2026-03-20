@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown } from 'lucide-react';
+import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown, Clock, History } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
     const [conversations, setConversations] = useState([]);
@@ -17,11 +17,14 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const [syncResult, setSyncResult] = useState(null);
     
     // AI Reply Assistant state
-    const [aiInput,   setAiInput]   = useState('');
-    const [aiOutput,  setAiOutput]  = useState('');
-    const [aiLoading, setAiLoading] = useState(false);
-    const [aiTone,    setAiTone]    = useState('friendly');
-    const [aiCopied,  setAiCopied]  = useState(false);
+    const [aiInput,          setAiInput]          = useState('');
+    const [aiOutput,         setAiOutput]         = useState('');
+    const [aiLoading,        setAiLoading]        = useState(false);
+    const [aiTone,           setAiTone]           = useState('friendly');
+    const [aiCopied,         setAiCopied]         = useState(false);
+    const [aiTab,            setAiTab]            = useState('generate'); // 'generate' | 'history'
+    const [aiHistory,        setAiHistory]        = useState([]);
+    const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
 
     const messagesEndRef = useRef(null);
 
@@ -116,6 +119,27 @@ export default function UnifiedInbox({ language = 'TH' }) {
         } else {
             setMessages([]);
         }
+
+        // ── Clear AI state + load history for new conversation ─────────────
+        setAiInput('');
+        setAiOutput('');
+        setAiCopied(false);
+        setAiTab('generate');
+        setAiHistory([]);
+
+        if (selectedId) {
+            const conv = conversationsRef.current.find(c => c.id === selectedId);
+            const threadId = conv?.conversationId;
+            if (threadId) {
+                setAiHistoryLoading(true);
+                fetch(`/api/inbox/ai-reply/history?conversationId=${encodeURIComponent(threadId)}`)
+                    .then(r => r.json())
+                    .then(d => { if (d.success) setAiHistory(d.logs); })
+                    .catch(() => {})
+                    .finally(() => setAiHistoryLoading(false));
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedId]);
 
     useEffect(() => {
@@ -269,25 +293,43 @@ export default function UnifiedInbox({ language = 'TH' }) {
         setAiOutput('');
         try {
             const conv = conversations.find(c => c.id === selectedId);
-            const recentMessages = messages.slice(-6).map(m => ({
+
+            // Last 20 messages as chat context (more context = better reply)
+            const recentMessages = messages.slice(-20).map(m => ({
                 role: m.responderId ? 'admin' : 'customer',
                 content: m.content || (m.hasAttachment ? '[ไฟล์แนบ]' : ''),
             })).filter(m => m.content);
 
-            const res  = await fetch('/api/inbox/ai-reply', {
+            const res = await fetch('/api/inbox/ai-reply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    input: aiInput,
-                    tone:  aiTone,
+                    input:          aiInput,
+                    tone:           aiTone,
+                    conversationId: conv?.conversationId ?? null, // thread ID (t_xxx)
+                    inboxId:        selectedId,                   // conversations table UUID
                     customerName:   conv?.customer?.firstName,
                     lifecycleStage: conv?.customer?.lifecycleStage,
                     recentMessages,
                 }),
             });
             const data = await res.json();
-            if (data.success) setAiOutput(data.reply);
-            else setAiOutput('❌ ไม่สามารถ generate ได้ ลองใหม่อีกครั้ง');
+            if (data.success) {
+                setAiOutput(data.reply);
+                // Prepend to history state so it shows without refetch
+                if (data.logId) {
+                    setAiHistory(prev => [{
+                        id:           data.logId,
+                        input:        aiInput,
+                        tone:         aiTone,
+                        reply:        data.reply,
+                        customerName: conv?.customer?.firstName,
+                        createdAt:    new Date().toISOString(),
+                    }, ...prev]);
+                }
+            } else {
+                setAiOutput('❌ ไม่สามารถ generate ได้ ลองใหม่อีกครั้ง');
+            }
         } catch {
             setAiOutput('❌ เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
         } finally {
@@ -751,13 +793,13 @@ export default function UnifiedInbox({ language = 'TH' }) {
                 </div>{/* end top-half scrollable profile */}
 
                 {/* ── BOTTOM HALF: AI Reply Assistant ── */}
-                <div className="shrink-0 border-t border-white/10 bg-[#050d1a]" style={{ height: '52%' }}>
-                    <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                <div className="shrink-0 border-t border-white/10 bg-[#050d1a] flex flex-col" style={{ height: '52%' }}>
+                    {/* Header row: title + tone selector */}
+                    <div className="px-4 pt-3 pb-2 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-1.5">
                             <Sparkles size={11} className="text-[#C9A34E]" />
                             <span className="text-[9px] font-black text-[#C9A34E] uppercase tracking-[0.15em]">AI Reply Helper</span>
                         </div>
-                        {/* Tone selector */}
                         <div className="relative">
                             <select
                                 value={aiTone}
@@ -772,55 +814,133 @@ export default function UnifiedInbox({ language = 'TH' }) {
                         </div>
                     </div>
 
-                    {/* Input area */}
-                    <div className="px-4 pb-2">
-                        <textarea
-                            value={aiInput}
-                            onChange={e => setAiInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generateAiReply(); }}
-                            placeholder="พิมพ์แนวตอบ เช่น 'แจ้งว่าหลักสูตรยังมีที่ว่าง ชวนสมัครก่อนเต็ม'..."
-                            rows={3}
-                            className="w-full bg-[#0A1A2F] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#C9A34E]/40 transition-all custom-scrollbar leading-relaxed"
-                        />
-                    </div>
-
-                    {/* Generate button */}
-                    <div className="px-4 pb-2">
+                    {/* Tab switcher: Generate | History */}
+                    <div className="px-4 pb-2 flex gap-1 shrink-0">
                         <button
-                            onClick={generateAiReply}
-                            disabled={!aiInput.trim() || aiLoading}
-                            className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            style={{ background: aiLoading ? '#1e293b' : 'linear-gradient(135deg, #C9A34E, #e8bf6e)', color: aiLoading ? '#64748b' : '#0A1A2F' }}
+                            onClick={() => setAiTab('generate')}
+                            className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                                aiTab === 'generate'
+                                    ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/30'
+                                    : 'text-white/30 hover:text-white/50'
+                            }`}
                         >
-                            {aiLoading ? (
-                                <>
-                                    <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                    </svg>
-                                    กำลัง generate...
-                                </>
-                            ) : (
-                                <><Sparkles size={10} /> Generate (Ctrl+Enter)</>
-                            )}
+                            <Sparkles size={8} /> Generate
+                        </button>
+                        <button
+                            onClick={() => setAiTab('history')}
+                            className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                                aiTab === 'history'
+                                    ? 'bg-white/8 text-white/70 border border-white/15'
+                                    : 'text-white/30 hover:text-white/50'
+                            }`}
+                        >
+                            <History size={8} /> ประวัติ {aiHistory.length > 0 && <span className="ml-0.5 text-[8px] bg-white/10 px-1 rounded-full">{aiHistory.length}</span>}
                         </button>
                     </div>
 
-                    {/* Output area */}
-                    {aiOutput && (
-                        <div className="px-4 pb-3">
-                            <div className="relative bg-[#0A1A2F] border border-[#C9A34E]/20 rounded-xl p-2.5">
-                                <p className="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap pr-6">{aiOutput}</p>
+                    {/* ── Tab: Generate ── */}
+                    {aiTab === 'generate' && (
+                        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+                            {/* Introduction input */}
+                            <div className="px-4 pb-2 shrink-0">
+                                <p className="text-[8px] text-white/25 uppercase tracking-widest font-black mb-1">Introduction (แนวทาง)</p>
+                                <textarea
+                                    value={aiInput}
+                                    onChange={e => setAiInput(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generateAiReply(); }}
+                                    placeholder="พิมพ์แนวตอบ เช่น 'แจ้งว่าหลักสูตรยังมีที่ว่าง ชวนสมัครก่อนเต็ม'..."
+                                    rows={3}
+                                    className="w-full bg-[#0A1A2F] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#C9A34E]/40 transition-all custom-scrollbar leading-relaxed"
+                                />
+                            </div>
+
+                            {/* Generate button */}
+                            <div className="px-4 pb-2 shrink-0">
                                 <button
-                                    onClick={copyAiOutput}
-                                    className="absolute top-2 right-2 p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-                                    title="Copy to clipboard"
+                                    onClick={generateAiReply}
+                                    disabled={!aiInput.trim() || aiLoading}
+                                    className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                    style={{ background: aiLoading ? '#1e293b' : 'linear-gradient(135deg, #C9A34E, #e8bf6e)', color: aiLoading ? '#64748b' : '#0A1A2F' }}
                                 >
-                                    {aiCopied
-                                        ? <Check size={11} className="text-emerald-400" />
-                                        : <Copy size={11} className="text-white/40" />
-                                    }
+                                    {aiLoading ? (
+                                        <>
+                                            <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                            </svg>
+                                            กำลัง generate...
+                                        </>
+                                    ) : (
+                                        <><Sparkles size={10} /> Generate (Ctrl+Enter)</>
+                                    )}
                                 </button>
                             </div>
+
+                            {/* Output */}
+                            {aiOutput && (
+                                <div className="px-4 pb-3">
+                                    <p className="text-[8px] text-white/25 uppercase tracking-widest font-black mb-1">คำตอบที่ generate</p>
+                                    <div className="relative bg-[#0A1A2F] border border-[#C9A34E]/20 rounded-xl p-2.5">
+                                        <p className="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap pr-6">{aiOutput}</p>
+                                        <button
+                                            onClick={copyAiOutput}
+                                            className="absolute top-2 right-2 p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                                            title="Copy to clipboard"
+                                        >
+                                            {aiCopied
+                                                ? <Check size={11} className="text-emerald-400" />
+                                                : <Copy size={11} className="text-white/40" />
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Tab: History ── */}
+                    {aiTab === 'history' && (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-3">
+                            {aiHistoryLoading ? (
+                                <div className="flex items-center justify-center h-16">
+                                    <RefreshCw size={12} className="animate-spin text-white/20" />
+                                </div>
+                            ) : aiHistory.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-16 gap-1">
+                                    <Clock size={14} className="text-white/10" />
+                                    <p className="text-[9px] text-white/20">ยังไม่มีประวัติสำหรับแชทนี้</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 pt-1">
+                                    {aiHistory.map((log) => (
+                                        <div key={log.id} className="bg-[#0A1A2F] border border-white/6 rounded-xl p-2.5 space-y-1.5">
+                                            {/* Meta */}
+                                            <div className="flex items-center justify-between">
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                                                    log.tone === 'friendly' ? 'bg-emerald-500/15 text-emerald-400/70' :
+                                                    log.tone === 'formal'   ? 'bg-blue-500/15 text-blue-400/70' :
+                                                                             'bg-orange-500/15 text-orange-400/70'
+                                                }`}>{log.tone}</span>
+                                                <span className="text-[8px] text-white/20 font-mono">
+                                                    {new Date(log.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            {/* Introduction hint */}
+                                            <p className="text-[9px] text-white/35 italic truncate">"{log.input}"</p>
+                                            {/* Reply */}
+                                            <div className="relative">
+                                                <p className="text-[10px] text-white/70 leading-relaxed whitespace-pre-wrap pr-5 line-clamp-3">{log.reply}</p>
+                                                <button
+                                                    onClick={() => navigator.clipboard.writeText(log.reply)}
+                                                    className="absolute top-0 right-0 p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                                                    title="Copy"
+                                                >
+                                                    <Copy size={9} className="text-white/30" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

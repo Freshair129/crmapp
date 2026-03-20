@@ -1057,6 +1057,24 @@ model AIConfig {
 }
 
 // ─────────────────────────────────────────────
+// DOMAIN: AI Assist Logs (Phase AI-AssistHistory)
+// ─────────────────────────────────────────────
+
+model AIAssistLog {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id") // thread ID e.g. t_12345
+  inboxId        String?  @map("inbox_id")         // conversations.id (UUID)
+  input          String   @db.Text                  // admin's introduction/hint
+  tone           String   @default("friendly")
+  reply          String   @db.Text                  // AI-generated reply
+  customerName   String?  @map("customer_name")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@map("ai_assist_logs")
+}
+
+// ─────────────────────────────────────────────
 // DOMAIN: AI Knowledge Files (Phase AI-KnowledgeBase)
 // ─────────────────────────────────────────────
 
