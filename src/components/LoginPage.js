@@ -77,17 +77,18 @@ export default function LoginPage({ onLogin, error: externalError }) {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Email */}
+                        {/* Email / Employee ID */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Email Address</label>
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Email / Employee ID</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <Mail className="w-5 h-5 text-white/20" />
                                 </div>
                                 <input
                                     required
-                                    type="email"
-                                    placeholder="you@vschool.co.th"
+                                    type="text"
+                                    autoComplete="username"
+                                    placeholder="email หรือ TVS-MKT-001"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50 focus:ring-2 focus:ring-[#C9A34E]/20 transition-all"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
