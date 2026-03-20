@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
     const [conversations, setConversations] = useState([]);
@@ -16,6 +16,13 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const [syncing, setSyncing] = useState(false);
     const [syncResult, setSyncResult] = useState(null);
     
+    // AI Reply Assistant state
+    const [aiInput,   setAiInput]   = useState('');
+    const [aiOutput,  setAiOutput]  = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiTone,    setAiTone]    = useState('friendly');
+    const [aiCopied,  setAiCopied]  = useState(false);
+
     const messagesEndRef = useRef(null);
 
     const [page, setPage] = useState(1);
@@ -254,6 +261,47 @@ export default function UnifiedInbox({ language = 'TH' }) {
             setTimeout(() => setSyncResult(null), 5000);
         }
     };
+
+    // ── AI Reply Generator ─────────────────────────────────────────────────────
+    const generateAiReply = useCallback(async () => {
+        if (!aiInput.trim() || aiLoading) return;
+        setAiLoading(true);
+        setAiOutput('');
+        try {
+            const conv = conversations.find(c => c.id === selectedId);
+            const recentMessages = messages.slice(-6).map(m => ({
+                role: m.responderId ? 'admin' : 'customer',
+                content: m.content || (m.hasAttachment ? '[ไฟล์แนบ]' : ''),
+            })).filter(m => m.content);
+
+            const res  = await fetch('/api/inbox/ai-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    input: aiInput,
+                    tone:  aiTone,
+                    customerName:   conv?.customer?.firstName,
+                    lifecycleStage: conv?.customer?.lifecycleStage,
+                    recentMessages,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) setAiOutput(data.reply);
+            else setAiOutput('❌ ไม่สามารถ generate ได้ ลองใหม่อีกครั้ง');
+        } catch {
+            setAiOutput('❌ เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+        } finally {
+            setAiLoading(false);
+        }
+    }, [aiInput, aiTone, aiLoading, selectedId, conversations, messages]);
+
+    const copyAiOutput = useCallback(() => {
+        if (!aiOutput) return;
+        navigator.clipboard.writeText(aiOutput).then(() => {
+            setAiCopied(true);
+            setTimeout(() => setAiCopied(false), 2000);
+        });
+    }, [aiOutput]);
 
     return (
         <div className="flex w-full flex-1 min-h-0 bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
@@ -546,7 +594,9 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
             {/* ── Right Panel: Customer Card ── */}
             {selectedConv ? (
-                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex flex-col overflow-y-auto custom-scrollbar">
+                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex flex-col" style={{ minHeight: 0 }}>
+                {/* ── TOP HALF: Customer Profile (scrollable) ── */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
 
                     {/* Profile Header */}
                     <div className="px-5 pt-6 pb-5 border-b border-white/5 text-center">
@@ -698,7 +748,83 @@ export default function UnifiedInbox({ language = 'TH' }) {
                         </div>
                     </div>
 
+                </div>{/* end top-half scrollable profile */}
+
+                {/* ── BOTTOM HALF: AI Reply Assistant ── */}
+                <div className="shrink-0 border-t border-white/10 bg-[#050d1a]" style={{ height: '52%' }}>
+                    <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <Sparkles size={11} className="text-[#C9A34E]" />
+                            <span className="text-[9px] font-black text-[#C9A34E] uppercase tracking-[0.15em]">AI Reply Helper</span>
+                        </div>
+                        {/* Tone selector */}
+                        <div className="relative">
+                            <select
+                                value={aiTone}
+                                onChange={e => setAiTone(e.target.value)}
+                                className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest pl-2 pr-5 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all"
+                            >
+                                <option value="friendly">😊 Friendly</option>
+                                <option value="formal">🎩 Formal</option>
+                                <option value="sales">🎯 Sales</option>
+                            </select>
+                            <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* Input area */}
+                    <div className="px-4 pb-2">
+                        <textarea
+                            value={aiInput}
+                            onChange={e => setAiInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generateAiReply(); }}
+                            placeholder="พิมพ์แนวตอบ เช่น 'แจ้งว่าหลักสูตรยังมีที่ว่าง ชวนสมัครก่อนเต็ม'..."
+                            rows={3}
+                            className="w-full bg-[#0A1A2F] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#C9A34E]/40 transition-all custom-scrollbar leading-relaxed"
+                        />
+                    </div>
+
+                    {/* Generate button */}
+                    <div className="px-4 pb-2">
+                        <button
+                            onClick={generateAiReply}
+                            disabled={!aiInput.trim() || aiLoading}
+                            className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{ background: aiLoading ? '#1e293b' : 'linear-gradient(135deg, #C9A34E, #e8bf6e)', color: aiLoading ? '#64748b' : '#0A1A2F' }}
+                        >
+                            {aiLoading ? (
+                                <>
+                                    <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                    </svg>
+                                    กำลัง generate...
+                                </>
+                            ) : (
+                                <><Sparkles size={10} /> Generate (Ctrl+Enter)</>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Output area */}
+                    {aiOutput && (
+                        <div className="px-4 pb-3">
+                            <div className="relative bg-[#0A1A2F] border border-[#C9A34E]/20 rounded-xl p-2.5">
+                                <p className="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap pr-6">{aiOutput}</p>
+                                <button
+                                    onClick={copyAiOutput}
+                                    className="absolute top-2 right-2 p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                                    title="Copy to clipboard"
+                                >
+                                    {aiCopied
+                                        ? <Check size={11} className="text-emerald-400" />
+                                        : <Copy size={11} className="text-white/40" />
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+                </div>{/* end outer right panel (selectedConv branch) */}
             ) : (
                 <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex items-center justify-center">
                     <p className="text-[9px] font-black text-white/5 uppercase tracking-widest rotate-90 whitespace-nowrap">Customer Details</p>
