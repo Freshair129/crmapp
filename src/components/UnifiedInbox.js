@@ -824,7 +824,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                         </div>
                     )}
                 </div>
-                </div>{/* end outer right panel (selectedConv branch) */}
+                </div>
             ) : (
                 <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex items-center justify-center">
                     <p className="text-[9px] font-black text-white/5 uppercase tracking-widest rotate-90 whitespace-nowrap">Customer Details</p>
