@@ -1055,3 +1055,22 @@ model AIConfig {
 
   @@map("ai_configs")
 }
+
+// ─────────────────────────────────────────────
+// DOMAIN: AI Knowledge Files (Phase AI-KnowledgeBase)
+// ─────────────────────────────────────────────
+
+model KnowledgeFile {
+  id          String   @id @default(uuid())
+  filename    String                            // original file name shown to user
+  fileType    String   @map("file_type")        // docx | xlsx | txt | image
+  mimeType    String   @map("mime_type")        // MIME type e.g. image/jpeg
+  contentText String?  @db.Text @map("content_text") // extracted text (docs)
+  contentB64  String?  @db.Text @map("content_b64")  // base64 (images — kept small)
+  sizeBytes   Int      @map("size_bytes")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("knowledge_files")
+}
