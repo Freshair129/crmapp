@@ -95,15 +95,31 @@ export async function POST(request) {
             // 3. Quick notes
             quickNotes,
 
-            // 4. Hard rules (never change regardless of user input)
+            // 4. Reply length instruction
+            (() => {
+                const lengthMap = {
+                    short:  'ตอบสั้นมาก — 1 ถึง 2 ประโยคเท่านั้น กระชับที่สุด',
+                    medium: 'ตอบความยาวปานกลาง — ประมาณ 2 ถึง 4 ประโยค ครอบคลุมประเด็นสำคัญ',
+                    long:   'ตอบแบบละเอียด — หลายย่อหน้า ครอบคลุมทุกแง่มุม อาจใช้ bullet ถ้าเหมาะสม',
+                };
+                const lengthGuide = lengthMap[aiConfig.reply_length] || lengthMap.medium;
+                return `\n\n=== ความยาวการตอบ ===\n${lengthGuide}\n====================`;
+            })(),
+
+            // 5. Admin style profile (optional — only when set)
+            aiConfig.admin_style_profile?.trim()
+                ? `\n\n=== สไตล์การสื่อสารที่ต้องเลียนแบบ (จากแอดมิน ${aiConfig.admin_style_name || ''}) ===\n${aiConfig.admin_style_profile}\n=======================================================================`
+                : null,
+
+            // 6. Hard rules (never change regardless of user input)
             `
 === กฎการตอบที่ต้องปฏิบัติเสมอ ===
 - ตอบเป็นข้อความสำเร็จรูปพร้อมส่งได้ทันที ห้ามอธิบายหรือใส่ label เช่น "ข้อความที่แนะนำ:"
 - ห้ามใส่เครื่องหมายคำพูด (" ") ครอบข้อความ
 - ตอบเป็นภาษาไทย เว้นแต่ลูกค้าเขียนภาษาอังกฤษ
-- ความยาวพอดี ไม่สั้นเกินหรือยาวเกิน
-- ถ้ามีข้อมูลราคาหรือรายละเอียดในไฟล์ความรู้ ให้อ้างอิงข้อมูลจริงเท่านั้น ห้ามเดา
+- ถ้ามีข้อมูลราคาหรือรายละเอียดในเอกสารอ้างอิง ให้ใช้ข้อมูลจริงเท่านั้น ห้ามเดา
 - ถ้า tone เป็น sales ให้มี soft CTA แต่ไม่กดดัน
+- ปฏิบัติตามกฎความยาวการตอบอย่างเคร่งครัด
 ===================================`,
         ].filter(Boolean).join('');
 

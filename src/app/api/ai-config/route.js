@@ -19,7 +19,11 @@ export async function GET() {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const allowed = ['persona', 'knowledge', 'tone_friendly', 'tone_formal', 'tone_sales'];
+        const allowed = [
+            'persona', 'knowledge', 'introduction', 'reply_length',
+            'admin_style_profile', 'admin_style_name',
+            'tone_friendly', 'tone_formal', 'tone_sales',
+        ];
         const updates = Object.fromEntries(
             Object.entries(body).filter(([k, v]) => allowed.includes(k) && typeof v === 'string')
         );

@@ -4,6 +4,7 @@ import {
     Save, Upload, RefreshCw, Bot, BookOpen, MessageSquare,
     CheckCircle, AlertCircle, FileText, Image, Trash2,
     ToggleLeft, ToggleRight, File, Plus, Eye, EyeOff,
+    AlignLeft, AlignJustify, AlignRight, Sparkles, User, ChevronDown,
 } from 'lucide-react';
 
 const TONE_KEYS = [
@@ -32,7 +33,7 @@ function formatDate(iso) {
 }
 
 export default function AIConfigPage() {
-    const [config,    setConfig]    = useState({ persona: '', knowledge: '', introduction: '', tone_friendly: '', tone_formal: '', tone_sales: '' });
+    const [config,    setConfig]    = useState({ persona: '', knowledge: '', introduction: '', reply_length: 'medium', admin_style_profile: '', admin_style_name: '', tone_friendly: '', tone_formal: '', tone_sales: '' });
     const [files,     setFiles]     = useState([]);
     const [loading,   setLoading]   = useState(true);
     const [saving,    setSaving]    = useState(false);
@@ -41,14 +42,23 @@ export default function AIConfigPage() {
     const [toast,     setToast]     = useState(null);
     const fileRef = useRef(null);
 
-    // ── Load config + file list ────────────────────────────────────────────
+    // ── Admin Style state ──────────────────────────────────────────────────
+    const [employees,       setEmployees]       = useState([]);
+    const [selectedEmpId,   setSelectedEmpId]   = useState('');
+    const [analyzing,       setAnalyzing]       = useState(false);
+    const [analyzeResult,   setAnalyzeResult]   = useState(null); // { profile, adminName, messageCount }
+    const [savingStyle,     setSavingStyle]     = useState(false);
+
+    // ── Load config + files + employees ───────────────────────────────────
     useEffect(() => {
         Promise.all([
             fetch('/api/ai-config').then(r => r.json()),
             fetch('/api/ai-config/knowledge-files').then(r => r.json()),
-        ]).then(([cfg, kf]) => {
-            if (cfg.success) setConfig(cfg.config);
+            fetch('/api/ai-config/analyze-style').then(r => r.json()),
+        ]).then(([cfg, kf, emp]) => {
+            if (cfg.success) setConfig(prev => ({ ...prev, ...cfg.config }));
             if (kf.success)  setFiles(kf.files);
+            if (emp.success) setEmployees(emp.employees);
         }).finally(() => setLoading(false));
     }, []);
 
@@ -67,6 +77,58 @@ export default function AIConfigPage() {
             else showToast('err', data.error || 'บันทึกไม่สำเร็จ');
         } catch { showToast('err', 'Network error'); }
         finally { setSaving(false); }
+    };
+
+    // ── Analyze admin style ────────────────────────────────────────────────
+    const handleAnalyzeStyle = async () => {
+        if (!selectedEmpId) return;
+        setAnalyzing(true);
+        setAnalyzeResult(null);
+        try {
+            const res  = await fetch('/api/ai-config/analyze-style', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId: selectedEmpId }),
+            });
+            const data = await res.json();
+            if (data.success) setAnalyzeResult(data);
+            else showToast('err', data.error || 'วิเคราะห์ไม่สำเร็จ');
+        } catch { showToast('err', 'Network error'); }
+        finally { setAnalyzing(false); }
+    };
+
+    const handleSaveStyle = async () => {
+        if (!analyzeResult) return;
+        setSavingStyle(true);
+        try {
+            const res = await fetch('/api/ai-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    admin_style_profile: analyzeResult.profile,
+                    admin_style_name:    analyzeResult.adminName,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setConfig(prev => ({ ...prev, admin_style_profile: analyzeResult.profile, admin_style_name: analyzeResult.adminName }));
+                showToast('ok', `บันทึกสไตล์ของ ${analyzeResult.adminName} แล้ว ✓`);
+            } else showToast('err', data.error || 'บันทึกไม่สำเร็จ');
+        } catch { showToast('err', 'Network error'); }
+        finally { setSavingStyle(false); }
+    };
+
+    const handleClearStyle = async () => {
+        try {
+            await fetch('/api/ai-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_style_profile: '', admin_style_name: '' }),
+            });
+            setConfig(prev => ({ ...prev, admin_style_profile: '', admin_style_name: '' }));
+            setAnalyzeResult(null);
+            showToast('ok', 'ล้างสไตล์แล้ว');
+        } catch { showToast('err', 'Network error'); }
     };
 
     // ── File upload ────────────────────────────────────────────────────────
@@ -146,7 +208,7 @@ export default function AIConfigPage() {
                     </div>
                     <div>
                         <h1 className="text-xl font-black text-white">AI Reply Assistant — Config</h1>
-                        <p className="text-[11px] text-white/40 uppercase tracking-widest font-bold">Persona · Knowledge Files · Tone Presets</p>
+                        <p className="text-[11px] text-white/40 uppercase tracking-widest font-bold">Persona · Introduction · Length · Admin Style · Tone</p>
                     </div>
                 </div>
                 <button
@@ -328,7 +390,127 @@ export default function AIConfigPage() {
                 )}
             </div>
 
-            {/* ── Section 4: Tone Presets ── */}
+            {/* ── Section 4: Reply Length ── */}
+            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                    <AlignJustify size={15} className="text-cyan-400" />
+                    <span className="text-sm font-black text-white uppercase tracking-widest">ความยาวของการตอบ</span>
+                </div>
+                <p className="text-[11px] text-white/40">ควบคุมความยาวเริ่มต้นของคำตอบที่ AI สร้าง</p>
+                <div className="grid grid-cols-3 gap-3">
+                    {[
+                        { value: 'short',  icon: AlignLeft,    label: 'สั้น',  desc: '1–2 ประโยค', color: 'emerald' },
+                        { value: 'medium', icon: AlignJustify, label: 'กลาง',  desc: '2–4 ประโยค', color: 'blue'    },
+                        { value: 'long',   icon: AlignRight,   label: 'ยาว',   desc: 'หลายย่อหน้า', color: 'violet' },
+                    ].map(({ value, icon: Icon, label, desc, color }) => {
+                        const active = config.reply_length === value;
+                        return (
+                            <button
+                                key={value}
+                                onClick={() => setConfig(prev => ({ ...prev, reply_length: value }))}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                                    active
+                                        ? `bg-${color}-500/15 border-${color}-500/40 text-${color}-400`
+                                        : 'bg-white/3 border-white/8 text-white/30 hover:text-white/50 hover:border-white/15'
+                                }`}
+                            >
+                                <Icon size={20} />
+                                <span className="text-sm font-black">{label}</span>
+                                <span className="text-[10px] opacity-70">{desc}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* ── Section 5: Admin Style Mode ── */}
+            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                    <User size={15} className="text-rose-400" />
+                    <span className="text-sm font-black text-white uppercase tracking-widest">Admin Style Mode</span>
+                    {config.admin_style_name && (
+                        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/20">
+                            Active: {config.admin_style_name}
+                        </span>
+                    )}
+                </div>
+                <p className="text-[11px] text-white/40 leading-relaxed">
+                    AI จะวิเคราะห์ข้อความที่แอดมินคนนั้นเคยส่ง แล้วเลียนแบบสไตล์การตอบ — คำติดปาก ความยาว ภาษา สเต็บการตอบ และวิธีแก้ปัญหา
+                </p>
+
+                {/* Employee selector + analyze button */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <select
+                            value={selectedEmpId}
+                            onChange={e => setSelectedEmpId(e.target.value)}
+                            className="w-full appearance-none bg-[#060f1e] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:border-rose-500/40 pr-8"
+                        >
+                            <option value="">เลือกแอดมิน...</option>
+                            {employees.map(emp => (
+                                <option key={emp.id} value={emp.id}>
+                                    {emp.name} ({emp.employeeId}) — {emp.messageCount} ข้อความ
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                    </div>
+                    <button
+                        onClick={handleAnalyzeStyle}
+                        disabled={!selectedEmpId || analyzing}
+                        className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                        {analyzing
+                            ? <><RefreshCw size={12} className="animate-spin" /> วิเคราะห์...</>
+                            : <><Sparkles size={12} /> วิเคราะห์สไตล์</>
+                        }
+                    </button>
+                    {config.admin_style_name && (
+                        <button
+                            onClick={handleClearStyle}
+                            className="flex items-center gap-1 text-white/25 hover:text-white/50 text-xs px-3 py-2.5 rounded-xl border border-white/8 hover:border-white/20 transition-all"
+                            title="ล้าง style ที่บันทึกอยู่"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Analysis result */}
+                {analyzeResult && (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] text-rose-400 font-bold">
+                                ผลวิเคราะห์สไตล์ของ {analyzeResult.adminName} ({analyzeResult.messageCount} ข้อความ)
+                            </p>
+                            <button
+                                onClick={handleSaveStyle}
+                                disabled={savingStyle}
+                                className="flex items-center gap-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/25 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                            >
+                                {savingStyle ? <RefreshCw size={11} className="animate-spin" /> : <Save size={11} />}
+                                {savingStyle ? 'กำลังบันทึก...' : 'ใช้สไตล์นี้'}
+                            </button>
+                        </div>
+                        <textarea
+                            value={analyzeResult.profile}
+                            onChange={e => setAnalyzeResult(prev => ({ ...prev, profile: e.target.value }))}
+                            rows={8}
+                            className="w-full bg-[#060f1e] border border-rose-500/15 rounded-xl px-4 py-3 text-[11px] text-white/70 resize-none focus:outline-none focus:border-rose-500/30 font-mono leading-relaxed"
+                        />
+                    </div>
+                )}
+
+                {/* Currently active style */}
+                {!analyzeResult && config.admin_style_profile && (
+                    <div className="bg-rose-500/5 border border-rose-500/15 rounded-xl p-3">
+                        <p className="text-[10px] text-rose-400/70 uppercase tracking-widest font-bold mb-1">Style ที่ใช้อยู่ — {config.admin_style_name}</p>
+                        <p className="text-[11px] text-white/50 leading-relaxed line-clamp-4 whitespace-pre-wrap">{config.admin_style_profile}</p>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Section 6: Tone Presets ── */}
             <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2 mb-1">
                     <MessageSquare size={15} className="text-amber-400" />
