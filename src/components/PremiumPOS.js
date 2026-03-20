@@ -17,6 +17,16 @@ const CATEGORY_EMOJI = {
     'cake': '🎂',    'Cake': '🎂',
 };
 
+const CATEGORY_ICONS = {
+    'All': '🍽️',
+    'japanese_culinary': '🍱',
+    'specialty': '🍣',
+    'management': '📋',
+    'arts': '🎨',
+    'package': '🎁',
+    'full_course': '👨‍🍳',
+};
+
 function getEmoji(category = '', name = '') {
     const key = Object.keys(CATEGORY_EMOJI).find(k =>
         category.toLowerCase().includes(k.toLowerCase()) ||
@@ -487,20 +497,20 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     if (loading) {
         return (
-            <div className="flex h-full items-center justify-center bg-[#0A1A2F]/50 rounded-[2.5rem] border border-white/10">
+            <div className="flex h-full items-center justify-center bg-[#0d1626] rounded-[2.5rem]">
                 <div className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลด...</div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col lg:flex-row h-full bg-[#0A1A2F]/50 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl animate-fade-in relative">
-            {/* Success Modal */}
+        <div className="flex h-full overflow-hidden bg-[#0d1626] rounded-[2.5rem] animate-fade-in relative">
+            {/* ── Success Modal ── */}
             {checkoutSuccess && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0A1A2F]/80 backdrop-blur-md">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
                     <div className="bg-[#C9A34E] text-[#0A1A2F] p-12 rounded-[3rem] shadow-2xl flex flex-col items-center gap-6 animate-scale-up">
-                        <CheckCircle size={112} />
-                        <h2 className="text-4xl font-black italic tracking-tight">SUCCESS!</h2>
+                        <CheckCircle size={96} />
+                        <h2 className="text-4xl font-black tracking-tight">SUCCESS!</h2>
                         <div className="text-center">
                             <p className="font-bold opacity-80 uppercase tracking-widest text-xs mb-2">Transaction Processed</p>
                             {enrollmentCount > 0 && (
@@ -513,10 +523,10 @@ export default function PremiumPOS({ language = 'TH' }) {
                 </div>
             )}
 
-            {/* Customer Modal */}
+            {/* ── Customer Modal ── */}
             {showCustomerModal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0A1A2F]/90 backdrop-blur-lg p-6">
-                    <div className="bg-[#0A1A2F] border border-[#C9A34E]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6">
+                    <div className="bg-[#111827] border border-[#C9A34E]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
                         <div className="text-center">
                             <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">
                                 {showRegisterForm ? 'ลงทะเบียนลูกค้าใหม่' : 'ค้นหาลูกค้า'}
@@ -601,50 +611,58 @@ export default function PremiumPOS({ language = 'TH' }) {
                 </div>
             )}
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col p-8 overflow-hidden">
-                <div className="flex items-center justify-between mb-10">
+            {/* ── Main Content ── */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-8 pt-6 pb-4 flex-shrink-0">
                     <div>
-                        <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                        <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Premium Retail Intelligence</p>
+                        <h1 className="text-2xl font-black text-white tracking-tight">V School POS</h1>
+                        <p className="text-white/30 text-[11px] font-bold mt-0.5">
+                            {new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
                     </div>
-                    <div className="relative w-80">
-                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20" />
+                    <div className="relative">
+                        <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                         <input
                             type="text"
-                            placeholder={labels.search}
+                            placeholder="ค้นหาคอร์ส..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:bg-white/10 focus:border-[#C9A34E]/50 transition-all outline-none"
+                            className="w-72 pl-11 pr-5 py-3 bg-[#1a2535] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#C9A34E]/40 outline-none transition-all"
                         />
                     </div>
                 </div>
 
-                {/* Categories */}
-                <div className="flex gap-3 mb-10 overflow-x-auto pb-2 custom-scrollbar">
-                    {categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${activeCategory === cat ? 'bg-[#C9A34E] border-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
-                        >
-                            {categoryLabels[cat] || cat}
-                        </button>
-                    ))}
+                {/* Category Pills */}
+                <div className="flex gap-3 px-8 pb-4 overflow-x-auto flex-shrink-0 custom-scrollbar">
+                    {categories.map(cat => {
+                        const isActive = activeCategory === cat;
+                        const icon = CATEGORY_ICONS[cat] || '📚';
+                        return (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm flex-shrink-0 transition-all border-2 ${
+                                    isActive
+                                        ? 'border-[#C9A34E] bg-[#C9A34E]/10 text-white shadow-lg shadow-[#C9A34E]/10'
+                                        : 'border-white/8 bg-[#1a2535] text-white/40 hover:text-white/70 hover:border-white/20'
+                                }`}
+                            >
+                                <span className="text-xl leading-none">{icon}</span>
+                                <span>{categoryLabels[cat] || cat}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* Product Grid — POS-optimised compact cards */}
-                <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 content-start custom-scrollbar">
-                    {/* Empty / error state */}
-                    {filteredProducts.length === 0 && (
-                        <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4 text-center">
-                            <span style={{ fontSize: '3rem' }}>🍽️</span>
-                            <p className="font-black text-xs uppercase tracking-[0.2em] text-white/20">
-                                {fetchError
-                                    ? `โหลดสินค้าไม่สำเร็จ — ${fetchError}`
-                                    : search
-                                        ? `ไม่พบสินค้า "${search}"`
-                                        : 'ยังไม่มีสินค้าในระบบ'}
+                {/* Product Grid — image-first cards */}
+                <div className="flex-1 overflow-y-auto px-8 pb-6 custom-scrollbar">
+                    {filteredProducts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 gap-4">
+                            <span className="text-5xl opacity-20">🍽️</span>
+                            <p className="text-white/20 text-xs font-black uppercase tracking-[0.2em]">
+                                {fetchError ? `โหลดไม่สำเร็จ — ${fetchError}` : search ? `ไม่พบ "${search}"` : 'ยังไม่มีคอร์ส'}
                             </p>
                             {fetchError && (
                                 <button
@@ -657,70 +675,78 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             .then(data => { setProducts(Array.isArray(data) ? data : []); setLoading(false); })
                                             .catch(err => { setFetchError(err.message); setLoading(false); });
                                     }}
-                                >
-                                    ลองใหม่
-                                </button>
+                                >ลองใหม่</button>
                             )}
                         </div>
-                    )}
-                    {filteredProducts.map(product => {
-                        const emoji = getEmoji(product.category, product.name);
-                        const inCart = cart.find(i => i.id === product.id);
-                        return (
-                            <div
-                                key={product.id}
-                                onClick={() => setSelectedProduct(product)}
-                                className={`group cursor-pointer flex flex-col gap-3 rounded-2xl p-4 border transition-all duration-200 active:scale-95 select-none ${
-                                    inCart
-                                        ? 'bg-[#C9A34E]/10 border-[#C9A34E]/40'
-                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-[#C9A34E]/30'
-                                }`}
-                            >
-                                {/* Top row: emoji icon + add button */}
-                                <div className="flex items-start justify-between">
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {filteredProducts.map(product => {
+                                const inCart = cart.find(i => i.id === product.id);
+                                return (
                                     <div
-                                        className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                                        style={{ background: 'rgba(201,163,78,0.08)', border: '1px solid rgba(201,163,78,0.15)' }}
+                                        key={product.id}
+                                        onClick={() => setSelectedProduct(product)}
+                                        className="cursor-pointer group select-none"
                                     >
-                                        {emoji}
-                                    </div>
-                                    {/* + button — adds directly without opening modal */}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); addItem(product); }}
-                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+                                        {/* Image card */}
+                                        <div className={`relative w-full aspect-square rounded-2xl overflow-hidden mb-3 transition-all duration-200 ${
                                             inCart
-                                                ? 'bg-[#C9A34E] text-[#0A1A2F]'
-                                                : 'bg-white/5 border border-white/10 text-white/30 group-hover:bg-[#C9A34E] group-hover:text-[#0A1A2F] group-hover:border-transparent'
-                                        }`}
-                                    >
-                                        {inCart
-                                            ? <span className="text-[9px] font-black">{inCart.quantity}</span>
-                                            : <Plus size={10} />
-                                        }
-                                    </button>
-                                </div>
+                                                ? 'ring-2 ring-[#C9A34E]/70 shadow-lg shadow-[#C9A34E]/10'
+                                                : 'hover:ring-2 hover:ring-white/15'
+                                        }`}>
+                                            {product.image ? (
+                                                <>
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                                                </>
+                                            ) : (
+                                                <ProductPlaceholder category={product.category} name={product.name} />
+                                            )}
 
-                                {/* Product name */}
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-[#F8F8F6] text-[11px] leading-snug line-clamp-2">
-                                        {product.name}
-                                    </h4>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-white/25 mt-1">
-                                        {categoryLabels[product.category] || product.category || 'คอร์ส'}
-                                    </p>
-                                </div>
+                                            {/* Cart qty badge */}
+                                            {inCart && (
+                                                <div className="absolute top-2 left-2 bg-[#C9A34E] text-[#0A1A2F] min-w-[22px] h-[22px] px-1 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">
+                                                    {inCart.quantity}
+                                                </div>
+                                            )}
 
-                                {/* Price */}
-                                <p className="text-[#C9A34E] font-black text-sm leading-none">
-                                    ฿{Number(product.price).toLocaleString()}
-                                </p>
-                            </div>
-                        );
-                    })}
+                                            {/* Quick-add button */}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); addItem(product); }}
+                                                className="absolute bottom-2 right-2 w-9 h-9 bg-[#C9A34E] hover:bg-amber-300 text-[#0A1A2F] rounded-xl flex items-center justify-center shadow-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+
+                                        {/* Name + price */}
+                                        <div className="px-0.5">
+                                            <h4 className="text-white font-bold text-[12px] leading-snug line-clamp-2 mb-1">
+                                                {product.name}
+                                            </h4>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[#C9A34E] font-black text-sm">
+                                                    ฿{Number(product.price).toLocaleString()}
+                                                </span>
+                                                {product.hours && (
+                                                    <span className="text-white/25 text-[10px]">{product.hours} ชม.</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Product Detail Modal */}
+            {/* ── Product Detail Modal ── */}
             {selectedProduct && (
                 <ProductDetailModal
                     product={selectedProduct}
@@ -730,83 +756,105 @@ export default function PremiumPOS({ language = 'TH' }) {
                 />
             )}
 
-            {/* Cart Sidebar */}
-            <div className="w-full lg:w-[400px] bg-black/30 border-l border-white/10 backdrop-blur-xl flex flex-col p-8">
-                <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-2xl shadow-inner border border-orange-500/20">
-                            <ShoppingBasket size={24} />
-                        </div>
-                        <h3 className="text-2xl font-black text-[#F8F8F6] tracking-tight">{labels.cart}</h3>
+            {/* ── Order Panel (right) ── */}
+            <div className="w-[300px] bg-[#111827] border-l border-white/8 flex flex-col flex-shrink-0">
+
+                {/* Panel header */}
+                <div className="px-6 pt-6 pb-5 flex items-center justify-between border-b border-white/8 flex-shrink-0">
+                    <div>
+                        <h2 className="text-xl font-black text-white">Order</h2>
+                        <p className="text-white/30 text-[11px] font-bold mt-0.5">Walk In · {cart.length} รายการ</p>
                     </div>
-                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{cart.length} Items</span>
+                    <div className="w-8 h-8 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/25 flex items-center justify-center">
+                        <ShoppingBasket size={14} className="text-[#C9A34E]" />
+                    </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto space-y-4 mb-8 custom-scrollbar">
+                {/* Cart items */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 custom-scrollbar">
                     {cart.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-white/10 gap-4 opacity-40">
-                            <ShoppingCart size={48} />
-                            <p className="font-black text-xs uppercase tracking-[0.2em]">Cart Empty</p>
+                        <div className="h-full flex flex-col items-center justify-center gap-3 py-12">
+                            <ShoppingCart size={36} className="text-white/10" />
+                            <p className="text-white/15 text-[10px] font-black uppercase tracking-widest">ยังไม่มีรายการ</p>
                         </div>
                     ) : (
-                        cart.map(item => (
-                            <div key={item.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex gap-4 group hover:bg-white/10 transition-all">
-                                <img
-                                    src={item.image || 'https://via.placeholder.com/100x100?text=No+Image'}
-                                    className="w-14 h-14 rounded-xl object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all"
-                                    alt={item.name}
-                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=V'; }}
-                                />
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <h5 className="font-bold text-white text-xs mb-1 line-clamp-1">{item.name}</h5>
-                                        <button onClick={() => removeItem(item.id)} className="text-white/20 hover:text-red-500 transition-colors">
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <div className="flex items-center gap-3 bg-black/20 px-2 py-1 rounded-lg">
-                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-white/40 hover:text-[#C9A34E]">
-                                                <Minus size={10} />
-                                            </button>
-                                            <span className="text-xs font-black text-white w-4 text-center">{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-white/40 hover:text-[#C9A34E]">
-                                                <Plus size={10} />
-                                            </button>
+                        cart.map(item => {
+                            const emoji = getEmoji(item.category, item.name);
+                            return (
+                                <div key={item.id} className="flex items-start gap-3 group">
+                                    {/* Thumbnail */}
+                                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#1a2535] flex-shrink-0">
+                                        {item.image ? (
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                            />
+                                        ) : null}
+                                        <div className={`w-full h-full items-center justify-center text-2xl bg-[#1a2535] ${item.image ? 'hidden' : 'flex'}`}>
+                                            {emoji}
                                         </div>
-                                        <span className="text-[#C9A34E] font-black text-sm italic">฿{item.price * item.quantity}</span>
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-white text-[11px] font-bold leading-snug line-clamp-2">
+                                            {item.name} ({item.quantity}x)
+                                        </p>
+                                        <p className="text-white/30 text-[10px] mt-0.5">
+                                            • {categoryLabels[item.category] || item.category}
+                                        </p>
+                                        {/* Qty controls */}
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <button
+                                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#C9A34E] flex items-center justify-center transition-colors"
+                                            ><Minus size={9} /></button>
+                                            <span className="text-white/60 text-[10px] font-black w-4 text-center">{item.quantity}</span>
+                                            <button
+                                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#C9A34E] flex items-center justify-center transition-colors"
+                                            ><Plus size={9} /></button>
+                                        </div>
+                                    </div>
+
+                                    {/* Price + delete */}
+                                    <div className="text-right flex-shrink-0 pt-0.5">
+                                        <p className="text-white font-black text-sm">฿{(item.price * item.quantity).toLocaleString()}</p>
+                                        <button
+                                            onClick={() => removeItem(item.id)}
+                                            className="text-white/15 hover:text-red-400 transition-colors mt-1.5 block ml-auto"
+                                        ><Trash2 size={11} /></button>
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="mt-auto space-y-6 pt-6 border-t border-white/10">
-                    <div className="space-y-3">
-                        <div className="flex justify-between text-white/40 text-[10px] font-black uppercase tracking-widest">
-                            <span>Subtotal</span>
-                            <span>฿{subtotal.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-white/40 text-[10px] font-black uppercase tracking-widest">
-                            <span>Tax (7%)</span>
-                            <span>฿{tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="flex justify-between text-2xl font-black text-[#F8F8F6] italic pt-2 border-t border-white/5">
-                            <span className="text-[#C9A34E] uppercase tracking-tighter">Total</span>
-                            <span>฿{total.toLocaleString()}</span>
-                        </div>
+                {/* Totals + Checkout */}
+                <div className="px-6 pb-6 pt-4 border-t border-white/8 flex-shrink-0 space-y-2.5">
+                    <div className="flex justify-between text-white/40 text-[11px] font-bold">
+                        <span>Sub Total</span>
+                        <span>฿{subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between text-white/40 text-[11px] font-bold">
+                        <span>Tax (7%)</span>
+                        <span>฿{tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="border-t border-dashed border-white/15 pt-3 flex justify-between items-center">
+                        <span className="text-white font-black text-sm">Total</span>
+                        <span className="text-white font-black text-xl">฿{total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
 
                     <button
                         disabled={cart.length === 0}
                         onClick={handleCheckout}
-                        className="w-full bg-[#C9A34E] hover:bg-amber-400 disabled:bg-white/5 disabled:text-white/10 text-[#0A1A2F] py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-[#C9A34E]/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                        className="w-full mt-1 bg-[#C9A34E] hover:bg-amber-400 disabled:bg-white/8 disabled:text-white/15 text-[#0A1A2F] py-4 rounded-2xl font-black text-sm shadow-lg shadow-[#C9A34E]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                        {labels.checkout}
-                        <ArrowRight size={10} />
+                        <ShoppingBasket size={16} />
+                        ชำระเงิน
                     </button>
                 </div>
             </div>
