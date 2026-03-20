@@ -75,6 +75,6 @@ ${customerCtx ? `ข้อมูลลูกค้า: ${customerCtx}` : ''}${re
 
     } catch (error) {
         logger.error('[AIReply]', 'POST error', error);
-        return NextResponse.json({ success: false, error: 'AI service error' }, { status: 500 });
+        return NextResponse.json({ success: false, error: 'AI service error', _debug: error?.message }, { status: 500 });
     }
 }
