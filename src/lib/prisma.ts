@@ -9,7 +9,12 @@ export function getInternalPrisma(): PrismaClient {
 
   // Next.js 15 Turbopack optimization: Use Driver Adapter for 'client' engine
   // This satisfies both Node.js and Edge/Serverless environments.
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 2,                    // limit connections per serverless invocation
+    idleTimeoutMillis: 10000,  // release idle connections quickly
+    connectionTimeoutMillis: 10000,
+  })
   const adapter = new PrismaPg(pool)
   
   const client = new PrismaClient({
