@@ -288,7 +288,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
     // ── AI Reply Generator ─────────────────────────────────────────────────────
     const generateAiReply = useCallback(async () => {
-        if (!aiInput.trim() || aiLoading) return;
+        if (aiLoading) return;
         setAiLoading(true);
         setAiOutput('');
         try {
@@ -304,7 +304,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    input:          aiInput,
+                    input:          aiInput.trim() || '',  // optional override (empty = use config introduction)
                     tone:           aiTone,
                     conversationId: conv?.conversationId ?? null, // thread ID (t_xxx)
                     inboxId:        selectedId,                   // conversations table UUID
@@ -335,7 +335,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
         } finally {
             setAiLoading(false);
         }
-    }, [aiInput, aiTone, aiLoading, selectedId, conversations, messages]);
+    }, [aiInput, aiTone, aiLoading, selectedId, conversations, messages]); // aiInput kept as optional per-request override
 
     const copyAiOutput = useCallback(() => {
         if (!aiOutput) return;
@@ -841,15 +841,15 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     {/* ── Tab: Generate ── */}
                     {aiTab === 'generate' && (
                         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
-                            {/* Introduction input */}
+                            {/* Optional override input */}
                             <div className="px-4 pb-2 shrink-0">
-                                <p className="text-[8px] text-white/25 uppercase tracking-widest font-black mb-1">Introduction (แนวทาง)</p>
+                                <p className="text-[8px] text-white/25 uppercase tracking-widest font-black mb-1">Override แนวทาง <span className="normal-case font-normal">(ว่างได้ — ใช้ Introduction จาก Config)</span></p>
                                 <textarea
                                     value={aiInput}
                                     onChange={e => setAiInput(e.target.value)}
                                     onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generateAiReply(); }}
-                                    placeholder="พิมพ์แนวตอบ เช่น 'แจ้งว่าหลักสูตรยังมีที่ว่าง ชวนสมัครก่อนเต็ม'..."
-                                    rows={3}
+                                    placeholder="ปรับเฉพาะแชทนี้ เช่น 'เน้นว่ายังมีที่ว่างแค่ 2 ที่' (ถ้าว่างจะใช้ Introduction จาก Config)"
+                                    rows={2}
                                     className="w-full bg-[#0A1A2F] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#C9A34E]/40 transition-all custom-scrollbar leading-relaxed"
                                 />
                             </div>
@@ -858,7 +858,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             <div className="px-4 pb-2 shrink-0">
                                 <button
                                     onClick={generateAiReply}
-                                    disabled={!aiInput.trim() || aiLoading}
+                                    disabled={aiLoading}
                                     className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                     style={{ background: aiLoading ? '#1e293b' : 'linear-gradient(135deg, #C9A34E, #e8bf6e)', color: aiLoading ? '#64748b' : '#0A1A2F' }}
                                 >

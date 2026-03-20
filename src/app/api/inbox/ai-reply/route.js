@@ -37,7 +37,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 export async function POST(request) {
     try {
         const {
-            input,
+            input,               // optional per-request override (from inbox panel)
             tone = 'friendly',
             conversationId,
             inboxId,
@@ -45,10 +45,6 @@ export async function POST(request) {
             lifecycleStage,
             recentMessages = [],
         } = await request.json();
-
-        if (!input?.trim()) {
-            return NextResponse.json({ success: false, error: 'Input is required' }, { status: 400 });
-        }
 
         // ── Load config + knowledge files in parallel ──────────────────────
         const [aiConfig, knowledgeFiles] = await Promise.all([
@@ -137,9 +133,15 @@ export async function POST(request) {
 
             `\n=== น้ำเสียงที่ต้องการ ===\n${selectedTone}\n=========================`,
 
-            `\n=== แนวทางของแอดมิน (Introduction) ===\n"${input.trim()}"\n` +
-            `(ใช้แนวทางนี้เป็นทิศทาง แต่อ้างอิงบริบทบทสนทนาและข้อมูลความรู้เสมอ)\n` +
-            `========================================`,
+            // Introduction: per-request override takes priority over config default
+            (() => {
+                const intro = input?.trim() || aiConfig.introduction?.trim();
+                if (!intro) return null;
+                const source = input?.trim() ? 'Override จากแอดมิน' : 'แนวทางจาก Config';
+                return `\n=== แนวทางการตอบ (Introduction · ${source}) ===\n"${intro}"\n` +
+                       `(ใช้แนวทางนี้เป็นทิศทาง แต่อ้างอิงบริบทบทสนทนาและข้อมูลความรู้เสมอ)\n` +
+                       `================================================`;
+            })(),
         ].filter(Boolean).join('\n');
 
         // ── Build Gemini request ───────────────────────────────────────────
@@ -167,7 +169,7 @@ export async function POST(request) {
         const log = await createAIAssistLog({
             conversationId: conversationId ?? 'unknown',
             inboxId,
-            input:          input.trim(),
+            input:          input?.trim() || aiConfig.introduction?.trim() || '',
             tone,
             reply,
             customerName,

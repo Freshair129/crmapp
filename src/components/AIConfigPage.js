@@ -32,7 +32,7 @@ function formatDate(iso) {
 }
 
 export default function AIConfigPage() {
-    const [config,    setConfig]    = useState({ persona: '', knowledge: '', tone_friendly: '', tone_formal: '', tone_sales: '' });
+    const [config,    setConfig]    = useState({ persona: '', knowledge: '', introduction: '', tone_friendly: '', tone_formal: '', tone_sales: '' });
     const [files,     setFiles]     = useState([]);
     const [loading,   setLoading]   = useState(true);
     const [saving,    setSaving]    = useState(false);
@@ -205,6 +205,26 @@ export default function AIConfigPage() {
                 />
             </div>
 
+            {/* ── Section 2.5: Introduction Prompt ── */}
+            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                    <MessageSquare size={15} className="text-amber-400" />
+                    <span className="text-sm font-black text-white uppercase tracking-widest">Introduction (แนวทางการตอบ)</span>
+                    <span className="ml-auto text-[10px] text-white/30 font-bold">{(config.introduction?.length ?? 0).toLocaleString()} chars</span>
+                </div>
+                <p className="text-[11px] text-white/40">
+                    แนวทางที่ AI จะใช้เป็นทิศทางในการสร้างคำตอบ — เช่น สไตล์การตอบ สิ่งที่ต้องเน้น หรือข้อความ CTA ที่ต้องการ
+                    แอดมินสามารถ override ได้จากหน้า Inbox ถ้าต้องการปรับแต่งเฉพาะแชทนั้น
+                </p>
+                <textarea
+                    value={config.introduction}
+                    onChange={e => setConfig(prev => ({ ...prev, introduction: e.target.value }))}
+                    rows={4}
+                    placeholder="เช่น: เน้นความเป็นกันเอง ตอบสั้นกระชับ ถ้ามีโอกาสให้แนะนำหลักสูตรเบื้องต้นก่อนเสมอ และชวนให้ทดลองเรียน trial class"
+                    className="w-full bg-[#060f1e] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-amber-500/50 font-mono leading-relaxed"
+                />
+            </div>
+
             {/* ── Section 3: Knowledge Files ── */}
             <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
@@ -237,7 +257,7 @@ export default function AIConfigPage() {
                 <div className="flex items-start gap-2 bg-violet-500/8 border border-violet-500/15 rounded-xl px-3 py-2.5">
                     <Bot size={13} className="text-violet-400 mt-0.5 shrink-0" />
                     <p className="text-[11px] text-violet-300/70 leading-relaxed">
-                        <span className="font-bold text-violet-300">ลำดับ system prompt:</span> Persona → Quick Notes → ไฟล์ความรู้ (list + content) → คำถามลูกค้า + tone → กฎการตอบ
+                        <span className="font-bold text-violet-300">ลำดับ system prompt:</span> Persona → Quick Notes → ไฟล์ความรู้ (list + content) → ข้อมูลลูกค้า + ประวัติแชท + Introduction + Tone → กฎการตอบ
                     </p>
                 </div>
 
