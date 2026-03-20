@@ -253,14 +253,6 @@ export default function AIConfigPage() {
                     AI จะอ่านไฟล์เหล่านี้เป็น context ก่อนสร้างคำตอบทุกครั้ง — รองรับ .docx, .xlsx, .txt (ดึง text) และ .jpg, .png, .webp (ส่งเป็นรูปให้ Gemini Vision)
                 </p>
 
-                {/* System prompt order indicator */}
-                <div className="flex items-start gap-2 bg-violet-500/8 border border-violet-500/15 rounded-xl px-3 py-2.5">
-                    <Bot size={13} className="text-violet-400 mt-0.5 shrink-0" />
-                    <p className="text-[11px] text-violet-300/70 leading-relaxed">
-                        <span className="font-bold text-violet-300">ลำดับ system prompt:</span> Persona → Quick Notes → ไฟล์ความรู้ (list + content) → ข้อมูลลูกค้า + ประวัติแชท + Introduction + Tone → กฎการตอบ
-                    </p>
-                </div>
-
                 {/* File list */}
                 {files.length === 0 ? (
                     <div
