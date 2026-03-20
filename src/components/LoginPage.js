@@ -13,44 +13,6 @@ function Bolt({ size = 28, color = '#1a1a1a', style = {} }) {
     );
 }
 
-/* ── Background food illustration (SVG line-art) ── */
-function FoodLineArt() {
-    return (
-        <svg viewBox="0 0 400 500" className="absolute inset-0 w-full h-full" style={{ opacity: 0.18 }} fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Bowl */}
-            <ellipse cx="200" cy="280" rx="120" ry="30" stroke="#1a1a1a" strokeWidth="3" />
-            <path d="M80 280 Q80 380 200 390 Q320 380 320 280" stroke="#1a1a1a" strokeWidth="3" />
-            {/* Noodles / food inside */}
-            <path d="M110 295 Q140 275 170 295 Q200 315 230 295 Q260 275 290 295" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" />
-            <path d="M115 310 Q145 290 175 310 Q205 330 235 310 Q265 290 285 310" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" />
-            {/* Chopsticks */}
-            <line x1="180" y1="230" x2="210" y2="270" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-            <line x1="200" y1="225" x2="225" y2="268" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-            {/* Leaf top right */}
-            <path d="M310 80 Q360 50 370 110 Q330 130 310 80Z" stroke="#1a1a1a" strokeWidth="2" />
-            <path d="M310 80 Q340 90 370 110" stroke="#1a1a1a" strokeWidth="1.5" />
-            {/* Small circles / garnish */}
-            <circle cx="155" cy="320" r="8" stroke="#1a1a1a" strokeWidth="2" />
-            <circle cx="245" cy="315" r="6" stroke="#1a1a1a" strokeWidth="2" />
-            <circle cx="200" cy="330" r="5" stroke="#1a1a1a" strokeWidth="2" />
-            {/* Leaf bottom left */}
-            <path d="M50 380 Q30 340 70 320 Q90 360 50 380Z" stroke="#1a1a1a" strokeWidth="2" />
-            <path d="M50 380 Q60 350 70 320" stroke="#1a1a1a" strokeWidth="1.5" />
-            {/* Onion rings */}
-            <ellipse cx="330" cy="200" rx="30" ry="12" stroke="#1a1a1a" strokeWidth="2" />
-            <ellipse cx="330" cy="200" rx="20" ry="8" stroke="#1a1a1a" strokeWidth="1.5" />
-        </svg>
-    );
-}
-
-/* ── Japanese food photo cards (Unsplash) ── */
-const FOOD_PHOTOS = [
-    { url: 'https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=300&h=300&fit=crop&q=80', alt: 'Japanese bento' },
-    { url: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=300&h=300&fit=crop&q=80', alt: 'Sushi' },
-    { url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=300&h=300&fit=crop&q=80', alt: 'Japanese cooking' },
-    { url: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop&q=80', alt: 'Japanese bowl' },
-];
-
 export default function LoginPage({ onLogin, error: externalError }) {
     const [email, setEmail]       = useState('');
     const [password, setPassword] = useState('');
@@ -89,59 +51,42 @@ export default function LoginPage({ onLogin, error: externalError }) {
         <div className="min-h-screen flex overflow-hidden">
 
             {/* ══════════════════════════════════════════
-                LEFT PANEL — orange + photo strip
+                LEFT PANEL — overhead food photo
             ══════════════════════════════════════════ */}
-            <div className="hidden lg:flex w-[42%] relative overflow-hidden flex-shrink-0">
+            <div className="hidden lg:block w-[45%] relative overflow-hidden flex-shrink-0">
 
-                {/* Orange background */}
-                <div className="absolute inset-0" style={{ background: '#F5A820' }} />
+                {/* Full-bleed overhead food photo */}
+                <img
+                    src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=900&h=1200&fit=crop&q=85"
+                    alt="Japanese food overhead"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentNode.style.background = '#1a1a1a';
+                    }}
+                />
 
-                {/* Food line-art illustration overlay */}
-                <FoodLineArt />
+                {/* Warm dark overlay — bottom fade for logo legibility */}
+                <div className="absolute inset-0"
+                     style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.55) 100%)' }} />
 
-                {/* Lightning bolts — left panel */}
-                <Bolt size={22} color="#1a1a1a" style={{ position: 'absolute', top: 32, right: 88, opacity: 0.55, transform: 'rotate(-8deg)' }} />
-                <Bolt size={18} color="#1a1a1a" style={{ position: 'absolute', bottom: 60, right: 60, opacity: 0.45, transform: 'rotate(12deg)' }} />
+                {/* Subtle warm tint overlay */}
+                <div className="absolute inset-0"
+                     style={{ background: 'rgba(197,140,40,0.10)', mixBlendMode: 'multiply' }} />
 
-                {/* Dark photo strip on far left */}
-                <div
-                    className="absolute left-0 top-0 bottom-0 flex flex-col overflow-hidden"
-                    style={{ width: '42%', background: '#141414', padding: '20px 14px', gap: 12 }}
-                >
-                    {/* V School logo */}
-                    <div className="flex items-center gap-2 mb-2 flex-shrink-0">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                             style={{ background: '#C9A34E' }}>
-                            <span style={{ color: '#0A1A2F', fontWeight: 900, fontSize: 16 }}>V</span>
-                        </div>
-                        <div>
-                            <p style={{ color: 'white', fontWeight: 900, fontSize: 10, letterSpacing: '0.1em' }}>V SCHOOL</p>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Restaurant Vegetarian</p>
-                        </div>
+                {/* V School logo — bottom left */}
+                <div className="absolute bottom-8 left-8 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                         style={{ background: '#C9A34E' }}>
+                        <span style={{ color: '#0A1A2F', fontWeight: 900, fontSize: 18 }}>V</span>
                     </div>
-
-                    {/* Photo cards */}
-                    {FOOD_PHOTOS.map((photo, i) => (
-                        <div
-                            key={i}
-                            className="flex-shrink-0 w-full rounded-2xl overflow-hidden"
-                            style={{ aspectRatio: '1/1', background: '#2a2a2a' }}
-                        >
-                            <img
-                                src={photo.url}
-                                alt={photo.alt}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.parentNode.style.background = '#1e1e1e';
-                                    e.target.parentNode.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:2rem">🍱</div>`;
-                                }}
-                            />
-                        </div>
-                    ))}
+                    <div>
+                        <p style={{ color: 'white', fontWeight: 900, fontSize: 13, letterSpacing: '0.1em' }}>V SCHOOL</p>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Japanese Culinary Arts · Bangkok</p>
+                    </div>
                 </div>
 
-                {/* Curved right edge of left panel */}
+                {/* Curved right edge */}
                 <div
                     className="absolute right-0 top-0 bottom-0 w-16"
                     style={{
