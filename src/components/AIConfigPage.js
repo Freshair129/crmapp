@@ -4,7 +4,7 @@ import {
     Save, Upload, RefreshCw, Bot, BookOpen, MessageSquare,
     CheckCircle, AlertCircle, FileText, Image, Trash2,
     ToggleLeft, ToggleRight, File, Plus, Eye, EyeOff,
-    AlignLeft, AlignJustify, AlignRight, Sparkles, User, ChevronDown,
+    Sparkles, User, ChevronDown, Minus, SlidersHorizontal, List,
 } from 'lucide-react';
 
 const TONE_KEYS = [
@@ -51,14 +51,14 @@ export default function AIConfigPage() {
 
     // ── Load config + files + employees ───────────────────────────────────
     useEffect(() => {
-        Promise.all([
+        Promise.allSettled([
             fetch('/api/ai-config').then(r => r.json()),
             fetch('/api/ai-config/knowledge-files').then(r => r.json()),
             fetch('/api/ai-config/analyze-style').then(r => r.json()),
         ]).then(([cfg, kf, emp]) => {
-            if (cfg.success) setConfig(prev => ({ ...prev, ...cfg.config }));
-            if (kf.success)  setFiles(kf.files);
-            if (emp.success) setEmployees(emp.employees);
+            if (cfg.status === 'fulfilled' && cfg.value?.success)  setConfig(prev => ({ ...prev, ...cfg.value.config }));
+            if (kf.status  === 'fulfilled' && kf.value?.success)   setFiles(kf.value.files);
+            if (emp.status === 'fulfilled' && emp.value?.success)  setEmployees(emp.value.employees);
         }).finally(() => setLoading(false));
     }, []);
 
@@ -393,33 +393,47 @@ export default function AIConfigPage() {
             {/* ── Section 4: Reply Length ── */}
             <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2">
-                    <AlignJustify size={15} className="text-cyan-400" />
+                    <SlidersHorizontal size={15} className="text-cyan-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">ความยาวของการตอบ</span>
                 </div>
                 <p className="text-[11px] text-white/40">ควบคุมความยาวเริ่มต้นของคำตอบที่ AI สร้าง</p>
                 <div className="grid grid-cols-3 gap-3">
-                    {[
-                        { value: 'short',  icon: AlignLeft,    label: 'สั้น',  desc: '1–2 ประโยค', color: 'emerald' },
-                        { value: 'medium', icon: AlignJustify, label: 'กลาง',  desc: '2–4 ประโยค', color: 'blue'    },
-                        { value: 'long',   icon: AlignRight,   label: 'ยาว',   desc: 'หลายย่อหน้า', color: 'violet' },
-                    ].map(({ value, icon: Icon, label, desc, color }) => {
-                        const active = config.reply_length === value;
-                        return (
-                            <button
-                                key={value}
-                                onClick={() => setConfig(prev => ({ ...prev, reply_length: value }))}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                                    active
-                                        ? `bg-${color}-500/15 border-${color}-500/40 text-${color}-400`
-                                        : 'bg-white/3 border-white/8 text-white/30 hover:text-white/50 hover:border-white/15'
-                                }`}
-                            >
-                                <Icon size={20} />
-                                <span className="text-sm font-black">{label}</span>
-                                <span className="text-[10px] opacity-70">{desc}</span>
-                            </button>
-                        );
-                    })}
+                    <button
+                        onClick={() => setConfig(prev => ({ ...prev, reply_length: 'short' }))}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                            config.reply_length === 'short'
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                                : 'bg-white/3 border-white/8 text-white/30 hover:text-white/50 hover:border-white/15'
+                        }`}
+                    >
+                        <Minus size={20} />
+                        <span className="text-sm font-black">สั้น</span>
+                        <span className="text-[10px] opacity-70">1–2 ประโยค</span>
+                    </button>
+                    <button
+                        onClick={() => setConfig(prev => ({ ...prev, reply_length: 'medium' }))}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                            config.reply_length === 'medium'
+                                ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
+                                : 'bg-white/3 border-white/8 text-white/30 hover:text-white/50 hover:border-white/15'
+                        }`}
+                    >
+                        <List size={20} />
+                        <span className="text-sm font-black">กลาง</span>
+                        <span className="text-[10px] opacity-70">2–4 ประโยค</span>
+                    </button>
+                    <button
+                        onClick={() => setConfig(prev => ({ ...prev, reply_length: 'long' }))}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                            config.reply_length === 'long'
+                                ? 'bg-violet-500/15 border-violet-500/40 text-violet-400'
+                                : 'bg-white/3 border-white/8 text-white/30 hover:text-white/50 hover:border-white/15'
+                        }`}
+                    >
+                        <BookOpen size={20} />
+                        <span className="text-sm font-black">ยาว</span>
+                        <span className="text-[10px] opacity-70">หลายย่อหน้า</span>
+                    </button>
                 </div>
             </div>
 
