@@ -46,6 +46,7 @@ model Customer {
   timeline           TimelineEvent[]
   enrollments        Enrollment[]
   packageEnrollments PackageEnrollment[]
+  certificates       Certificate[]
 
   @@index([status])
   @@index([phonePrimary])
@@ -618,10 +619,11 @@ model Enrollment {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
-  customer Customer         @relation(fields: [customerId], references: [id])
-  product  Product          @relation(fields: [productId], references: [id])
-  soldBy   Employee?        @relation("EnrollmentSeller", fields: [soldById], references: [id])
-  items    EnrollmentItem[]
+  customer     Customer         @relation(fields: [customerId], references: [id])
+  product      Product          @relation(fields: [productId], references: [id])
+  soldBy       Employee?        @relation("EnrollmentSeller", fields: [soldById], references: [id])
+  items        EnrollmentItem[]
+  certificates Certificate[]
 
   @@index([status])
   @@index([customerId])
@@ -1091,4 +1093,40 @@ model KnowledgeFile {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("knowledge_files")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Certificate
+// ─────────────────────────────────────────────
+
+model Certificate {
+  id              String    @id @default(uuid())
+  certId          String    @unique @map("cert_id")       // CERT-YYYYMMDD-XXX
+  customerId      String    @map("customer_id")
+  enrollmentId    String?   @map("enrollment_id")        // enrollment ที่ trigger cert นี้
+
+  certLevel       String    @map("cert_level")            // 'BASIC_30H' | 'PRO_111H' | 'MASTER_201H'
+  hoursAtIssuance Float     @map("hours_at_issuance")     // snapshot ชม. ณ วันที่ได้รับ
+  issuedAt        DateTime  @default(now()) @map("issued_at")
+
+  // ── Delivery tracking ──────────────────────
+  deliveryStatus  String    @default("PENDING") @map("delivery_status")
+  // PENDING → PRINTING → READY → SHIPPED → DELIVERED
+  trackingNumber  String?   @map("tracking_number")
+  shippedAt       DateTime? @map("shipped_at")
+  deliveredAt     DateTime? @map("delivered_at")
+  deliveryAddress Json?     @map("delivery_address")      // { name, address, phone, province }
+  notes           String?
+
+  // ── Relations ──────────────────────────────
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  enrollment      Enrollment? @relation(fields: [enrollmentId], references: [id])
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([deliveryStatus])
+  @@index([certLevel])
+  @@map("certificates")
 }

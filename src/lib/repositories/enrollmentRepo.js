@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { autoIssueCertificate } from '@/lib/repositories/certificateRepo';
 
 async function generateEnrollmentId() {
     const prisma = await getPrisma();
@@ -102,11 +103,17 @@ export async function getEnrollmentById(id) {
 export async function updateEnrollmentItemHours(enrollmentItemId, hoursToAdd) {
     try {
         const prisma = await getPrisma();
-        return await prisma.$transaction(async (tx) => {
+
+        // Capture totalHours outside transaction so cert logic can use it
+        let totalHoursSnapshot = 0;
+        let enrollmentSnapshot = null;
+
+        const result = await prisma.$transaction(async (tx) => {
             // Increment hours on this item
             const updatedItem = await tx.enrollmentItem.update({
                 where: { id: enrollmentItemId },
-                data: { hoursCompleted: { increment: hoursToAdd } }
+                data: { hoursCompleted: { increment: hoursToAdd } },
+                include: { enrollment: { select: { id: true, customerId: true } } }
             });
 
             // Sum all items in enrollment for cert threshold check
@@ -115,7 +122,11 @@ export async function updateEnrollmentItemHours(enrollmentItemId, hoursToAdd) {
             });
             const totalHours = allItems.reduce((sum, i) => sum + (i.hoursCompleted || 0), 0);
 
-            // Update certLevel on the item itself (certLevel is on EnrollmentItem, not Enrollment)
+            // Snapshot for post-transaction cert logic
+            totalHoursSnapshot = totalHours;
+            enrollmentSnapshot = updatedItem.enrollment;
+
+            // Update certLevel on the item itself
             let certLevel = null;
             if (totalHours >= 201) certLevel = 3;
             else if (totalHours >= 111) certLevel = 2;
@@ -130,6 +141,17 @@ export async function updateEnrollmentItemHours(enrollmentItemId, hoursToAdd) {
 
             return tx.enrollmentItem.findUnique({ where: { id: enrollmentItemId } });
         });
+
+        // ── Auto-issue Certificate (post-transaction, idempotent, fire-and-forget) ──
+        if (totalHoursSnapshot >= 30 && enrollmentSnapshot) {
+            autoIssueCertificate({
+                customerId: enrollmentSnapshot.customerId,
+                enrollmentId: enrollmentSnapshot.id,
+                totalHours: totalHoursSnapshot,
+            }).catch(err => logger.error('[EnrollmentRepo]', 'autoIssueCertificate error (non-fatal)', err));
+        }
+
+        return result;
     } catch (error) {
         logger.error('[EnrollmentRepo]', 'Failed to update enrollment item hours', error);
         throw error;

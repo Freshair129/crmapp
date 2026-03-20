@@ -197,6 +197,31 @@ id_naming_conventions:
         description: "Stock lot/batch ID — tracks individual received shipments for FEFO/FIFO inventory"
 
   # ─────────────────────────────────────────────
+  # DOMAIN: Certificate
+  # ─────────────────────────────────────────────
+  certificate:
+    ids:
+      - name: "Certificate ID"
+        model: "Certificate"
+        format: "CERT-[YYYYMMDD]-[SERIAL]"
+        example: "CERT-20260321-001"
+        serial_padding: 3
+        scope: "daily (resets per day)"
+        generation: "certificateRepo.generateCertId()"
+        description: "Issued certificate record — auto-created when student reaches 30/111/201h threshold"
+    cert_levels:
+      - level: "BASIC_30H"
+        threshold_hours: 30
+        label: "Basic Certificate"
+      - level: "PRO_111H"
+        threshold_hours: 111
+        label: "Professional Certificate"
+      - level: "MASTER_201H"
+        threshold_hours: 201
+        label: "Master Certificate"
+    delivery_statuses: [PENDING, PRINTING, READY, SHIPPED, DELIVERED]
+
+  # ─────────────────────────────────────────────
   # DOMAIN: Asset
   # ─────────────────────────────────────────────
 
