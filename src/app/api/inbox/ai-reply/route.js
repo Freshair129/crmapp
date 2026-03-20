@@ -44,6 +44,8 @@ export async function POST(request) {
             customerName,
             lifecycleStage,
             recentMessages = [],
+            adminStyleOverride,  // per-request style profile (from Admin Style Mode in inbox)
+            adminStyleName,      // display name for the overriding admin
         } = await request.json();
 
         // ── Load config + knowledge files in parallel ──────────────────────
@@ -106,10 +108,14 @@ export async function POST(request) {
                 return `\n\n=== ความยาวการตอบ ===\n${lengthGuide}\n====================`;
             })(),
 
-            // 5. Admin style profile (optional — only when set)
-            aiConfig.admin_style_profile?.trim()
-                ? `\n\n=== สไตล์การสื่อสารที่ต้องเลียนแบบ (จากแอดมิน ${aiConfig.admin_style_name || ''}) ===\n${aiConfig.admin_style_profile}\n=======================================================================`
-                : null,
+            // 5. Admin style profile — per-request override takes priority over config saved style
+            (() => {
+                const styleProfile = adminStyleOverride?.trim() || aiConfig.admin_style_profile?.trim();
+                const styleName    = adminStyleOverride?.trim() ? (adminStyleName || '') : (aiConfig.admin_style_name || '');
+                if (!styleProfile) return null;
+                const source = adminStyleOverride?.trim() ? 'Override จาก Inbox' : 'จาก Config';
+                return `\n\n=== สไตล์การสื่อสารที่ต้องเลียนแบบ (${styleName} · ${source}) ===\n${styleProfile}\n=======================================================================`;
+            })(),
 
             // 6. Hard rules (never change regardless of user input)
             `

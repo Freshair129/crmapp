@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown, Clock, History } from 'lucide-react';
+import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown, Clock, History, User } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
     const [conversations, setConversations] = useState([]);
@@ -23,6 +23,12 @@ export default function UnifiedInbox({ language = 'TH' }) {
     const [aiTone,           setAiTone]           = useState('friendly');
     const [aiCopied,         setAiCopied]         = useState(false);
     const [aiTab,            setAiTab]            = useState('generate'); // 'generate' | 'history'
+
+    // Admin Style — per-conversation override
+    const [styleEmployees,   setStyleEmployees]   = useState([]);        // [{ id, name, employeeId, messageCount }]
+    const [aiStyleEmpId,     setAiStyleEmpId]     = useState('');        // '' = use config default
+    const [aiStyleCache,     setAiStyleCache]     = useState({});        // { [empId]: { profile, adminName } }
+    const [aiStyleAnalyzing, setAiStyleAnalyzing] = useState(false);
     const [aiHistory,        setAiHistory]        = useState([]);
     const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
 
@@ -147,6 +153,34 @@ export default function UnifiedInbox({ language = 'TH' }) {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages]);
+
+    // Load employees for Admin Style Mode (once on mount)
+    useEffect(() => {
+        fetch('/api/ai-config/analyze-style')
+            .then(r => r.json())
+            .then(d => { if (d.success) setStyleEmployees(d.employees || []); })
+            .catch(() => {});
+    }, []);
+
+    // Analyze + cache style for selected employee
+    const handleStyleSelect = async (empId) => {
+        setAiStyleEmpId(empId);
+        if (!empId) return;
+        if (aiStyleCache[empId]) return; // already cached
+        setAiStyleAnalyzing(true);
+        try {
+            const res = await fetch('/api/ai-config/analyze-style', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId: empId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAiStyleCache(prev => ({ ...prev, [empId]: { profile: data.profile, adminName: data.adminName } }));
+            }
+        } catch { /* silent — fallback to config style */ }
+        finally { setAiStyleAnalyzing(false); }
+    };
 
     const fetchConversations = async (pageNum = 1, reset = false) => {
         setLoading(pageNum === 1);
@@ -304,8 +338,10 @@ export default function UnifiedInbox({ language = 'TH' }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    input:          aiInput.trim() || '',  // optional override (empty = use config introduction)
-                    tone:           aiTone,
+                    input:               aiInput.trim() || '',  // optional override (empty = use config introduction)
+                    tone:                aiTone,
+                    adminStyleOverride:  aiStyleEmpId && aiStyleCache[aiStyleEmpId] ? aiStyleCache[aiStyleEmpId].profile  : undefined,
+                    adminStyleName:      aiStyleEmpId && aiStyleCache[aiStyleEmpId] ? aiStyleCache[aiStyleEmpId].adminName : undefined,
                     conversationId: conv?.conversationId ?? null, // thread ID (t_xxx)
                     inboxId:        selectedId,                   // conversations table UUID
                     customerName:   conv?.customer?.firstName,
@@ -335,7 +371,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
         } finally {
             setAiLoading(false);
         }
-    }, [aiInput, aiTone, aiLoading, selectedId, conversations, messages]); // aiInput kept as optional per-request override
+    }, [aiInput, aiTone, aiLoading, selectedId, conversations, messages, aiStyleEmpId, aiStyleCache]); // aiInput kept as optional per-request override
 
     const copyAiOutput = useCallback(() => {
         if (!aiOutput) return;
@@ -794,23 +830,53 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
                 {/* ── BOTTOM HALF: AI Reply Assistant ── */}
                 <div className="shrink-0 border-t border-white/10 bg-[#050d1a] flex flex-col" style={{ height: '52%' }}>
-                    {/* Header row: title + tone selector */}
+                    {/* Header row: title + style selector + tone selector */}
                     <div className="px-4 pt-3 pb-2 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-1.5">
                             <Sparkles size={11} className="text-[#C9A34E]" />
                             <span className="text-[9px] font-black text-[#C9A34E] uppercase tracking-[0.15em]">AI Reply Helper</span>
                         </div>
-                        <div className="relative">
-                            <select
-                                value={aiTone}
-                                onChange={e => setAiTone(e.target.value)}
-                                className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest pl-2 pr-5 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all"
-                            >
-                                <option value="friendly">😊 Friendly</option>
-                                <option value="formal">🎩 Formal</option>
-                                <option value="sales">🎯 Sales</option>
-                            </select>
-                            <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                        <div className="flex items-center gap-1.5">
+                            {/* Admin Style selector */}
+                            <div className="relative flex items-center gap-1">
+                                {aiStyleAnalyzing && (
+                                    <svg className="animate-spin text-rose-400" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                    </svg>
+                                )}
+                                {aiStyleEmpId && aiStyleCache[aiStyleEmpId] && !aiStyleAnalyzing && (
+                                    <span className="text-[8px] text-rose-400">●</span>
+                                )}
+                                <User size={8} className="text-white/30" />
+                                <select
+                                    value={aiStyleEmpId}
+                                    onChange={e => handleStyleSelect(e.target.value)}
+                                    disabled={aiStyleAnalyzing}
+                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 pl-1.5 pr-4 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all disabled:opacity-40"
+                                    title="Admin Style Mode — AI จะเลียนแบบสไตล์ของแอดมินที่เลือก"
+                                >
+                                    <option value="">Style: Default</option>
+                                    {styleEmployees.map(emp => (
+                                        <option key={emp.id} value={emp.id}>
+                                            {emp.name} ({emp.messageCount})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={8} className="absolute right-1 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                            </div>
+                            {/* Tone selector */}
+                            <div className="relative">
+                                <select
+                                    value={aiTone}
+                                    onChange={e => setAiTone(e.target.value)}
+                                    className="appearance-none bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest pl-2 pr-5 py-1 outline-none cursor-pointer hover:bg-white/10 transition-all"
+                                >
+                                    <option value="friendly">😊 Friendly</option>
+                                    <option value="formal">🎩 Formal</option>
+                                    <option value="sales">🎯 Sales</option>
+                                </select>
+                                <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
