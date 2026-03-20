@@ -72,12 +72,22 @@ async function generateCourseId() {
 // ──────────────────────────────────────────
 // Queries
 // ──────────────────────────────────────────
+// All category values that represent a "course" product (shared with POS COURSE_CATS)
+const COURSE_CATEGORIES = [
+    'course',
+    'japanese_culinary',
+    'specialty',
+    'management',
+    'arts',
+    'full_course',
+];
+
 export async function listCourses({ isActive } = {}) {
     try {
         const prisma = await getPrisma();
         return prisma.product.findMany({
             where: {
-                category: 'course',
+                category: { in: COURSE_CATEGORIES },
                 ...(isActive !== undefined ? { isActive } : {})
             },
             include: {
@@ -101,7 +111,7 @@ export async function getCourse(id) {
         return prisma.product.findFirst({
             where: {
                 OR: [{ id }, { productId: id }],
-                category: 'course'
+                category: { in: COURSE_CATEGORIES }
             },
             include: {
                 courseMenus: {
