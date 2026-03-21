@@ -488,6 +488,18 @@ export default function PremiumPOS({ language = 'TH' }) {
     const [showRegisterForm, setShowRegisterForm] = useState(false);
     const [regForm, setRegForm] = useState({ firstName: '', lastName: '', nickName: '' });
 
+    // Order Type Modal (step 0)
+    const [showOrderTypeModal, setShowOrderTypeModal] = useState(false);
+    const [orderTypeForm, setOrderTypeForm] = useState({
+        type: 'DINE_IN', // DINE_IN | TAKE_AWAY | DELIVERY
+        platform: '',
+        platformOrderId: '',
+        gpRate: '30', // default 30% GP for delivery
+    });
+
+    // Guest Mode
+    const [isGuestMode, setIsGuestMode] = useState(false);
+
     // Payment Modal
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [pendingCustomer, setPendingCustomer] = useState(null);
@@ -504,6 +516,11 @@ export default function PremiumPOS({ language = 'TH' }) {
         cashierId: '',
         notes: '',
     });
+
+    // Slip upload + OCR
+    const [slipFile, setSlipFile] = useState(null);
+    const [slipOcr, setSlipOcr] = useState(null);   // { amount, refNumber, date, confidence }
+    const [slipUploading, setSlipUploading] = useState(false);
 
     // Receipt Modal
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -633,9 +650,46 @@ export default function PremiumPOS({ language = 'TH' }) {
     const total = subtotal + tax;
 
     const handleCheckout = () => {
-        setShowCustomerModal(true);
-        setShowRegisterForm(false);
-        setCustomerError('');
+        setIsGuestMode(false);
+        setSlipFile(null);
+        setSlipOcr(null);
+        setShowOrderTypeModal(true);
+    };
+
+    const handleOrderTypeConfirm = () => {
+        setShowOrderTypeModal(false);
+        if (isGuestMode) {
+            // Skip customer lookup — use system GUEST customer
+            openPaymentModal({
+                id: 'guest-customer-00000000-0000-0000-0000-000000000000',
+                firstName: 'ลูกค้า', lastName: 'ทั่วไป',
+                customerId: 'WALK-IN-GUEST',
+            });
+        } else {
+            setShowCustomerModal(true);
+            setShowRegisterForm(false);
+            setCustomerError('');
+        }
+    };
+
+    const handleSlipUpload = async (file) => {
+        if (!file) return;
+        setSlipFile(file);
+        setSlipUploading(true);
+        setSlipOcr(null);
+        try {
+            const formData = new FormData();
+            formData.append('slip', file);
+            const res = await fetch('/api/payments/ocr-slip', { method: 'POST', body: formData });
+            if (res.ok) {
+                const result = await res.json();
+                setSlipOcr(result); // { amount, refNumber, date, confidence }
+            }
+        } catch (err) {
+            console.error('[POS] Slip OCR error', err);
+        } finally {
+            setSlipUploading(false);
+        }
     };
 
     const openPaymentModal = async (customer) => {
@@ -729,6 +783,13 @@ export default function PremiumPOS({ language = 'TH' }) {
         const discountApplied = discAmt > 0 ? discAmt : (discPct > 0 ? subtotal * (discPct / 100) : 0);
         const finalTotal = Math.max(0, total - discountApplied);
 
+        // Delivery GP
+        const gpRate = orderTypeForm.type === 'DELIVERY' ? Number(orderTypeForm.gpRate || 0) / 100 : 0;
+        const deliveryNetAmount = gpRate > 0 ? finalTotal * (1 - gpRate) : null;
+
+        // Transfer → PENDING until slip verified; cash/card → CLOSED
+        const orderStatus = pmtForm?.method === 'TRANSFER' ? 'PENDING' : 'CLOSED';
+
         try {
             const orderRes = await fetch('/api/orders', {
                 method: 'POST',
@@ -747,13 +808,19 @@ export default function PremiumPOS({ language = 'TH' }) {
                     salesStaffId: assignedStaff?.id || pmtForm?.salesStaffId || null,
                     cashierId: pmtForm?.cashierId || null,
                     notes: pmtForm?.notes || null,
+                    orderType: orderTypeForm.type,
+                    deliveryPlatform: orderTypeForm.type === 'DELIVERY' ? orderTypeForm.platform || null : null,
+                    deliveryOrderId: orderTypeForm.type === 'DELIVERY' ? orderTypeForm.platformOrderId || null : null,
+                    deliveryGpRate: gpRate > 0 ? gpRate : null,
+                    deliveryNetAmount,
+                    isGuestOrder: isGuestMode,
                     items: cart.map(i => ({
                         productId: i.productId || i.id,
                         name: i.name,
                         price: i.price,
                         qty: i.quantity
                     })),
-                    status: 'CLOSED',
+                    status: orderStatus,
                     date: new Date().toISOString()
                 })
             });
@@ -786,7 +853,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 setEnrollmentCount(createdEnrollments);
 
                 const orderData = await orderRes.json();
-                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart], assignedStaffSnap: assignedStaff });
+                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart], assignedStaffSnap: assignedStaff, orderTypeSnap: { ...orderTypeForm }, deliveryNetAmount, gpRate, orderStatus, slipOcrSnap: slipOcr ? { ...slipOcr } : null });
                 setLastCustomer(customer);
                 setShowPaymentModal(false);
                 setShowReceiptModal(true);
@@ -815,13 +882,20 @@ export default function PremiumPOS({ language = 'TH' }) {
             {showReceiptModal && lastOrder && lastCustomer && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
                     <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
-                        {/* Header */}
-                        <div className="bg-[#C9A34E] text-[#0A1A2F] px-8 py-5 rounded-t-[2rem] flex items-center justify-between">
+                        {/* Header — PENDING vs CLOSED */}
+                        <div className={`${lastOrder.orderStatus === 'PENDING' ? 'bg-amber-500' : 'bg-[#C9A34E]'} text-[#0A1A2F] px-8 py-5 rounded-t-[2rem] flex items-center justify-between`}>
                             <div className="flex items-center gap-3">
-                                <CheckCircle size={28} />
+                                {lastOrder.orderStatus === 'PENDING'
+                                    ? <Clock size={28} />
+                                    : <CheckCircle size={28} />
+                                }
                                 <div>
-                                    <div className="font-black text-lg uppercase tracking-wide">ชำระเงินสำเร็จ</div>
-                                    <div className="text-[10px] font-bold opacity-70 uppercase">Transaction Complete</div>
+                                    <div className="font-black text-lg uppercase tracking-wide">
+                                        {lastOrder.orderStatus === 'PENDING' ? 'รอยืนยันการโอน' : 'ชำระเงินสำเร็จ'}
+                                    </div>
+                                    <div className="text-[10px] font-bold opacity-70 uppercase">
+                                        {lastOrder.orderStatus === 'PENDING' ? 'Pending Transfer Verification' : 'Transaction Complete'}
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-right">
@@ -829,6 +903,22 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 {lastOrder.pmtForm?.isDeposit && <div className="text-[10px] font-black bg-[#0A1A2F]/20 px-2 py-0.5 rounded-full">มัดจำ ฿{Number(lastOrder.pmtForm?.depositAmount || 0).toLocaleString()}</div>}
                             </div>
                         </div>
+
+                        {/* PENDING warning banner */}
+                        {lastOrder.orderStatus === 'PENDING' && (
+                            <div className="mx-6 mt-4 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
+                                <span className="text-amber-400 text-lg mt-0.5">⏳</span>
+                                <div className="text-xs">
+                                    <div className="font-black text-amber-400 uppercase tracking-wide">ออเดอร์รอการยืนยัน</div>
+                                    <div className="text-white/50 mt-0.5">
+                                        {lastOrder.slipOcrSnap
+                                            ? `ตรวจสอบสลิปแล้ว (${Math.round((lastOrder.slipOcrSnap.confidence || 0) * 100)}%) — รอพนักงานยืนยันในระบบ`
+                                            : 'ยังไม่ได้รับสลิป — แจ้งลูกค้าโอนเงินและส่งสลิปมายัง inbox'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Receipt Body — printable */}
                         <div id="receipt-body" className="flex-1 overflow-y-auto px-8 py-6 space-y-4 text-[#F8F8F6]">
@@ -912,11 +1002,91 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     setLastCustomer(null);
                                     setAssignedStaff(null);
                                     setPaymentForm({ method: 'CASH', bankName: '', isDeposit: false, depositAmount: '', discountAmount: '', discountPercent: '', promoCode: '', closedById: '', cashierId: '', notes: '' });
+                                    setOrderTypeForm({ type: 'DINE_IN', platform: '', platformOrderId: '', gpRate: '30' });
+                                    setIsGuestMode(false);
+                                    setSlipFile(null);
+                                    setSlipOcr(null);
                                 }}
                                 className="flex flex-col items-center gap-1.5 py-3 bg-[#C9A34E] hover:bg-[#B8923D] rounded-xl transition-all text-[#0A1A2F] text-xs font-black uppercase tracking-wider"
                             >
                                 <CheckCircle className="w-5 h-5" />
                                 เสร็จสิ้น
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Order Type Modal (Step 0) ── */}
+            {showOrderTypeModal && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
+                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col">
+                        <div className="px-8 py-6 border-b border-white/10">
+                            <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">ประเภทออเดอร์</h2>
+                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest mt-1">Order Type</p>
+                        </div>
+                        <div className="px-8 py-6 space-y-5">
+                            {/* Order Type */}
+                            <div className="grid grid-cols-3 gap-2">
+                                {[['DINE_IN','🍽️','กินที่ร้าน'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']].map(([val,icon,label]) => (
+                                    <button key={val} onClick={() => setOrderTypeForm(f => ({ ...f, type: val }))}
+                                        className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                        <span className="text-2xl">{icon}</span>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Delivery fields */}
+                            {orderTypeForm.type === 'DELIVERY' && (
+                                <div className="space-y-3 bg-white/5 rounded-xl p-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">แพลตฟอร์ม *</label>
+                                        <div className="grid grid-cols-3 gap-2 flex-wrap">
+                                            {['GrabFood','Foodpanda','LINE MAN','Shopee Food','Robinhood','อื่นๆ'].map(p => (
+                                                <button key={p} onClick={() => setOrderTypeForm(f => ({ ...f, platform: p }))}
+                                                    className={`py-2 px-2 rounded-lg font-bold text-[10px] uppercase transition-all ${orderTypeForm.platform === p ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                                    {p}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <input type="text" placeholder="เลขออเดอร์จากแพลตฟอร์ม" value={orderTypeForm.platformOrderId}
+                                        onChange={e => setOrderTypeForm(f => ({ ...f, platformOrderId: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                    <div className="flex items-center gap-3">
+                                        <label className="text-[10px] font-black uppercase text-white/50 tracking-widest whitespace-nowrap">GP (%)</label>
+                                        <input type="number" min="0" max="50" value={orderTypeForm.gpRate}
+                                            onChange={e => setOrderTypeForm(f => ({ ...f, gpRate: e.target.value }))}
+                                            className="w-24 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-black outline-none focus:border-[#C9A34E]/50 transition-all text-center" />
+                                        <span className="text-white/40 text-sm font-bold">
+                                            ยอดสุทธิหลังหัก GP: ฿{(total * (1 - Number(orderTypeForm.gpRate || 0) / 100)).toLocaleString('th-TH', { minimumFractionDigits: 0 })}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Guest mode toggle */}
+                            <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
+                                <div>
+                                    <div className="font-black text-sm text-white">ลูกค้าทั่วไป (ไม่ลงทะเบียน)</div>
+                                    <div className="text-[10px] text-white/40 mt-0.5">ข้ามการกรอกเบอร์โทร / เลขสมาชิก</div>
+                                </div>
+                                <button onClick={() => setIsGuestMode(g => !g)}
+                                    className={`w-12 h-6 rounded-full transition-all relative ${isGuestMode ? 'bg-[#C9A34E]' : 'bg-white/10'}`}>
+                                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isGuestMode ? 'left-7' : 'left-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="px-8 py-5 border-t border-white/10 flex gap-3">
+                            <button onClick={() => setShowOrderTypeModal(false)}
+                                className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-white/60 font-black text-sm uppercase transition-all">
+                                ยกเลิก
+                            </button>
+                            <button onClick={handleOrderTypeConfirm}
+                                disabled={orderTypeForm.type === 'DELIVERY' && !orderTypeForm.platform}
+                                className="flex-[2] py-4 bg-[#C9A34E] hover:bg-[#B8923D] disabled:opacity-40 rounded-2xl text-[#0A1A2F] font-black text-sm uppercase transition-all">
+                                ถัดไป →
                             </button>
                         </div>
                     </div>
@@ -951,8 +1121,9 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 </div>
                             </div>
 
-                            {/* Bank (if transfer) */}
+                            {/* Bank + Slip (if transfer) */}
                             {paymentForm.method === 'TRANSFER' && (
+                                <>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">ธนาคาร</label>
                                     <select value={paymentForm.bankName} onChange={e => setPaymentForm(f => ({ ...f, bankName: e.target.value }))}
@@ -961,6 +1132,37 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         {['กสิกรไทย (KBank)','กรุงไทย (KTB)','ไทยพาณิชย์ (SCB)','กรุงเทพ (BBL)','ทหารไทยธนชาต (TTB)','ออมสิน','PromptPay','อื่นๆ'].map(b => <option key={b} value={b}>{b}</option>)}
                                     </select>
                                 </div>
+
+                                {/* Slip Upload */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">แนบสลิป <span className="text-white/30 normal-case font-normal">(ไม่บังคับ — Gemini OCR)</span></label>
+                                    <label className={`flex flex-col items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${slipFile ? 'border-[#C9A34E]/60 bg-[#C9A34E]/5' : 'border-white/15 hover:border-white/30 bg-white/3'}`}>
+                                        <input type="file" accept="image/*" className="hidden"
+                                            onChange={e => { if (e.target.files[0]) handleSlipUpload(e.target.files[0]); }} />
+                                        {slipUploading ? (
+                                            <><Loader2 size={20} className="text-[#C9A34E] animate-spin"/><span className="text-[11px] text-white/50">กำลังตรวจสอบสลิป…</span></>
+                                        ) : slipOcr ? (
+                                            <div className="w-full px-3 space-y-1 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[#C9A34E] font-black">✅ ตรวจสอบสลิปแล้ว</span>
+                                                    <span className={`px-2 py-0.5 rounded-full font-black text-[10px] ${slipOcr.confidence >= 0.8 ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                                        {Math.round((slipOcr.confidence || 0) * 100)}% match
+                                                    </span>
+                                                </div>
+                                                {slipOcr.amount && <div className="flex justify-between text-white/70"><span>ยอด</span><span className="font-bold text-white">฿{Number(slipOcr.amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>}
+                                                {slipOcr.refNumber && <div className="flex justify-between text-white/70"><span>Ref.</span><span className="font-bold text-white/80 truncate max-w-[55%]">{slipOcr.refNumber}</span></div>}
+                                                {slipOcr.date && <div className="flex justify-between text-white/70"><span>วันที่</span><span className="font-bold text-white/80">{slipOcr.date}</span></div>}
+                                                {slipOcr.bankName && <div className="flex justify-between text-white/70"><span>ธนาคาร</span><span className="font-bold text-white/80">{slipOcr.bankName}</span></div>}
+                                                {slipOcr.confidence < 0.8 && <div className="text-amber-400 text-[10px] pt-1">⚠️ ความมั่นใจต่ำ — ตรวจสอบด้วยตนเองก่อนยืนยัน</div>}
+                                                <button onClick={e => { e.preventDefault(); setSlipFile(null); setSlipOcr(null); }}
+                                                    className="mt-1 text-white/30 hover:text-red-400 text-[10px] underline">เปลี่ยนสลิป</button>
+                                            </div>
+                                        ) : (
+                                            <><span className="text-2xl">🧾</span><span className="text-[11px] text-white/40 font-bold">คลิกเพื่อแนบสลิปโอนเงิน</span><span className="text-[10px] text-white/25">รองรับ JPG / PNG / HEIC</span></>
+                                        )}
+                                    </label>
+                                </div>
+                                </>
                             )}
 
                             {/* Full / Deposit */}

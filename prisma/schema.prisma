@@ -68,6 +68,12 @@ model Order {
   paymentMethod  String?       @map("payment_method")  // CASH | TRANSFER | CREDIT_CARD
   bankName       String?       @map("bank_name")
   isDeposit      Boolean       @default(false) @map("is_deposit")
+  orderType      String        @default("DINE_IN") @map("order_type")  // DINE_IN | TAKE_AWAY | DELIVERY
+  deliveryPlatform String?     @map("delivery_platform")  // GrabFood, Foodpanda, LINE MAN, Shopee Food, etc.
+  deliveryOrderId  String?     @map("delivery_order_id")  // platform's own order ID
+  deliveryGpRate   Float?      @map("delivery_gp_rate")   // 0.0–1.0 e.g. 0.30 = 30% GP
+  deliveryNetAmount Float?     @map("delivery_net_amount") // totalAmount after GP deduction
+  isGuestOrder   Boolean       @default(false) @map("is_guest_order")
   items          Json          @default("[]")
   closedById     String?       @map("closed_by_id")    // พนักงานปิดการขาย
   salesStaffId   String?       @map("sales_staff_id")  // พนักงานดูแล
