@@ -269,7 +269,12 @@ model Product {
   durationUnit        String?    @map("duration_unit")
   linkedMenuIds       String[]   @default([]) @map("linked_menu_ids") // id_standards: COURSE-TO-MENU link
   fallbackCategory    String?    @map("fallback_category")            // e.g. "JP", "TH"
-  fallbackSubCategory String?    @map("fallback_sub_category")        // e.g. "H", "C"
+  fallbackSubCategory String?    @map("fallback_sub_category")        // e.g. "H", "C" | equipment: knife/kitchen/fish_tool/sushi/sharpening
+  brand               String?                                         // ยี่ห้อสินค้า
+  size                String?                                         // ขนาดบรรจุภัณฑ์: S | S+ | M | L | XL | Mini
+  dimension           String?                                         // ขนาดตัวสินค้า เช่น "5.5×18 cm"
+  unitAmount          Float?     @map("unit_amount")                  // ปริมาณต่อหน่วย เช่น 262
+  unitType            String?    @map("unit_type")                    // หน่วย: g | ml | piece | set
   metadata            Json?      @default("{}")
   isActive            Boolean    @default(true) @map("is_active")
   createdAt           DateTime   @default(now()) @map("created_at")
