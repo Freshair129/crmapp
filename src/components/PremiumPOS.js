@@ -15,6 +15,10 @@ const CATEGORY_EMOJI = {
     'bakery': '🥐',  'Bakery': '🥐',
     'beverage': '🍵','Beverage': '🍵',
     'cake': '🎂',    'Cake': '🎂',
+    'food': '🍜',    'side_dish': '🥗',
+    'equipment': '🔪','knife': '🗡️',
+    'kitchen': '🍳', 'fish_tool': '🐟',
+    'sushi_eqt': '🍣','sharpening': '⚙️',
 };
 
 const CATEGORY_ICONS = {
@@ -320,29 +324,61 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     // ── Category definitions per mode ──────────────────────────────────────
     const COURSE_CATS = ['japanese_culinary', 'specialty', 'management', 'arts', 'package', 'full_course', 'course'];
-    const FOOD_CATS   = ['food', 'beverage', 'snack', 'dessert'];
+    const FOOD_CATS   = ['food', 'side_dish', 'beverage', 'snack', 'dessert'];
+    const EQT_CATS    = ['equipment'];
 
-    const courseSubCats = ['All', 'japanese_culinary', 'specialty', 'management', 'arts', 'package', 'full_course'];
-    const foodSubCats   = ['All', 'food', 'beverage', 'snack', 'dessert'];
+    const courseSubCats = ['All', 'japanese_culinary', 'specialty', 'management', 'arts', 'package', 'full_course', 'course'];
+    const foodSubCats   = ['All', 'food', 'side_dish', 'beverage', 'snack', 'dessert'];
+    const eqtSubCats    = ['All', 'knife', 'kitchen', 'fish_tool', 'sushi', 'sharpening'];
 
-    const categories = mainMode === 'course' ? courseSubCats : foodSubCats;
+    const categories = mainMode === 'course' ? courseSubCats
+                     : mainMode === 'food'   ? foodSubCats
+                     : eqtSubCats;
 
-    const COURSE_ICONS = { All: '🎓', japanese_culinary: '🍱', specialty: '🍣', management: '📋', arts: '🎨', package: '🎁', full_course: '👨‍🍳' };
-    const FOOD_ICONS   = { All: '🍽️', food: '🍜', beverage: '🍵', snack: '🍘', dessert: '🍰' };
-    const subCatIcons  = mainMode === 'course' ? COURSE_ICONS : FOOD_ICONS;
+    const COURSE_ICONS = {
+        All: '🎓', japanese_culinary: '🍱', specialty: '🍣',
+        management: '📋', arts: '🎨', package: '🎁', full_course: '👨‍🍳', course: '📚'
+    };
+    const FOOD_ICONS = {
+        All: '🍽️', food: '🍜', side_dish: '🥗', beverage: '🍵', snack: '🍘', dessert: '🍰'
+    };
+    const EQT_ICONS = {
+        All: '🔪', knife: '🗡️', kitchen: '🍳', fish_tool: '🐟', sushi: '🍣', sharpening: '⚙️'
+    };
+    const subCatIcons = mainMode === 'course' ? COURSE_ICONS
+                      : mainMode === 'food'   ? FOOD_ICONS
+                      : EQT_ICONS;
 
-    const categoryLabels = mainMode === 'course'
-        ? { All: 'ทั้งหมด', japanese_culinary: 'อาหารญี่ปุ่น', specialty: 'พิเศษ', management: 'การจัดการ', arts: 'ศิลปะ', package: 'แพ็คเกจ', full_course: 'คอร์สเต็ม' }
-        : { All: 'ทั้งหมด', food: 'อาหาร', beverage: 'เครื่องดื่ม', snack: 'ของว่าง', dessert: 'ของหวาน' };
+    const COURSE_LABELS = {
+        All: 'ทั้งหมด', japanese_culinary: 'อาหารญี่ปุ่น', specialty: 'พิเศษ',
+        management: 'การจัดการ', arts: 'ศิลปะ', package: 'แพ็คเกจ', full_course: 'คอร์สเต็ม', course: 'คอร์สทั่วไป'
+    };
+    const FOOD_LABELS = {
+        All: 'ทั้งหมด', food: 'เมนูหลัก', side_dish: 'เครื่องเคียง', beverage: 'เครื่องดื่ม', snack: 'ของว่าง', dessert: 'ของหวาน'
+    };
+    const EQT_LABELS = {
+        All: 'ทั้งหมด', knife: 'มีด', kitchen: 'อุปกรณ์ครัว', fish_tool: 'อุปกรณ์แล่ปลา', sushi: 'อุปกรณ์ซูชิ', sharpening: 'ลับมีด'
+    };
+    const categoryLabels = mainMode === 'course' ? COURSE_LABELS
+                         : mainMode === 'food'   ? FOOD_LABELS
+                         : EQT_LABELS;
 
     const filteredProducts = useMemo(() => {
         const isCourseProd = (p) => COURSE_CATS.includes(p.category);
-        const isFoodProd   = (p) => FOOD_CATS.includes(p.category) || !COURSE_CATS.includes(p.category);
+        const isFoodProd   = (p) => FOOD_CATS.includes(p.category);
+        const isEqtProd    = (p) => EQT_CATS.includes(p.category);
 
         return products.filter(p => {
             const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-            const matchesMode = mainMode === 'course' ? isCourseProd(p) : isFoodProd(p);
-            const matchesSub  = activeCategory === 'All' || p.category === activeCategory;
+            const matchesMode = mainMode === 'course' ? isCourseProd(p)
+                              : mainMode === 'food'   ? isFoodProd(p)
+                              : isEqtProd(p);
+            // Equipment filters by fallbackSubCategory; others filter by category
+            const matchesSub = activeCategory === 'All'
+                ? true
+                : mainMode === 'equipment'
+                    ? (p.fallbackSubCategory === activeCategory)
+                    : p.category === activeCategory;
             return matchesSearch && matchesMode && matchesSub;
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -627,7 +663,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                         <input
                             type="text"
-                            placeholder="ค้นหาคอร์ส..."
+                            placeholder={mainMode === 'course' ? 'ค้นหาคอร์ส...' : mainMode === 'food' ? 'ค้นหาเมนูอาหาร...' : 'ค้นหาอุปกรณ์...'}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-72 pl-11 pr-5 py-3 bg-[#1a2535] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#C9A34E]/40 outline-none transition-all"
@@ -635,16 +671,20 @@ export default function PremiumPOS({ language = 'TH' }) {
                     </div>
                 </div>
 
-                {/* ── Main Mode Toggle: คอร์สเรียน / อาหาร ── */}
-                <div className="flex items-center gap-3 px-8 pb-4 flex-shrink-0">
+                {/* ── Main Mode Toggle ── */}
+                <div className="flex items-center gap-2.5 px-8 pb-4 flex-shrink-0 flex-wrap">
                     {[
-                        { key: 'course', label: 'คอร์สเรียน', icon: '🎓' },
-                        { key: 'food',   label: 'อาหาร',     icon: '🍜' },
-                    ].map(({ key, label, icon }) => (
+                        { key: 'course',    label: 'คอร์สเรียน', icon: '🎓',
+                          count: products.filter(p => ['japanese_culinary','specialty','management','arts','package','full_course','course'].includes(p.category)).length },
+                        { key: 'food',      label: 'อาหาร',      icon: '🍜',
+                          count: products.filter(p => ['food','side_dish','beverage','snack','dessert'].includes(p.category)).length },
+                        { key: 'equipment', label: 'อุปกรณ์',    icon: '🔪',
+                          count: products.filter(p => p.category === 'equipment').length },
+                    ].map(({ key, label, icon, count }) => (
                         <button
                             key={key}
                             onClick={() => { setMainMode(key); setActiveCategory('All'); }}
-                            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-2xl font-black text-sm flex-shrink-0 transition-all ${
+                            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-black text-sm flex-shrink-0 transition-all ${
                                 mainMode === key
                                     ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
                                     : 'bg-[#1a2535] text-white/35 hover:text-white/60 border border-white/8'
@@ -652,6 +692,9 @@ export default function PremiumPOS({ language = 'TH' }) {
                         >
                             <span className="text-base leading-none">{icon}</span>
                             <span>{label}</span>
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg ${
+                                mainMode === key ? 'bg-[#0A1A2F]/20 text-[#0A1A2F]' : 'bg-white/8 text-white/25'
+                            }`}>{count}</span>
                         </button>
                     ))}
                     <div className="flex-1 h-px mx-2" style={{ background: 'rgba(255,255,255,0.05)' }} />
@@ -686,9 +729,17 @@ export default function PremiumPOS({ language = 'TH' }) {
                 <div className="flex-1 overflow-y-auto px-8 pb-6 custom-scrollbar">
                     {filteredProducts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 gap-4">
-                            <span className="text-5xl opacity-20">{mainMode === 'food' ? '🍜' : '🎓'}</span>
+                            <span className="text-5xl opacity-20">
+                                {mainMode === 'food' ? '🍜' : mainMode === 'equipment' ? '🔪' : '🎓'}
+                            </span>
                             <p className="text-white/20 text-xs font-black uppercase tracking-[0.2em]">
-                                {fetchError ? `โหลดไม่สำเร็จ — ${fetchError}` : search ? `ไม่พบ "${search}"` : mainMode === 'food' ? 'ยังไม่มีรายการอาหาร' : 'ยังไม่มีคอร์ส'}
+                                {fetchError
+                                    ? `โหลดไม่สำเร็จ — ${fetchError}`
+                                    : search
+                                    ? `ไม่พบ "${search}"`
+                                    : mainMode === 'food' ? 'ยังไม่มีรายการอาหาร'
+                                    : mainMode === 'equipment' ? 'ยังไม่มีรายการอุปกรณ์'
+                                    : 'ยังไม่มีคอร์ส'}
                             </p>
                             {fetchError && (
                                 <button
