@@ -204,19 +204,6 @@ export default function PermissionMatrix({ currentUserRole }) {
         </table>
       </div>
 
-      {/* Info box */}
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-        <div className="flex gap-3">
-          <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-white/80 text-xs font-bold mb-1">Inherited Permissions</p>
-            <p className="text-white/50 text-[10px]">
-              สิทธิ์ที่แสดงเป็นค่า inherit จาก role ที่เลือก — ประเมิน ณ เวลา request
-              ผ่าน <code className="bg-black/30 px-1.5 py-0.5 rounded text-[9px]">canWithMeta()</code>
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
