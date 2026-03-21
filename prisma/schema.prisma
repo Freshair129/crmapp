@@ -598,6 +598,32 @@ model AuditLog {
 }
 
 // ─────────────────────────────────────────────
+// DOMAIN: Ads Optimize (ADR-045: Phase 29d)
+// ─────────────────────────────────────────────
+
+model AdsOptimizeRequest {
+  id          String    @id @default(uuid())
+  requestId   String    @unique @map("request_id")    // OPT-YYYYMMDD-NNN
+  requestedBy String    @map("requested_by")          // Employee ID
+  type        String                                   // LIFETIME_BUDGET | DAILY_BUDGET | BID
+  targetId    String    @map("target_id")             // campaign_id or adset_id
+  targetName  String    @map("target_name")
+  currentVal  Float     @map("current_val")           // Current value (THB)
+  proposedVal Float     @map("proposed_val")          // Proposed value (THB)
+  status      String    @default("PENDING")           // PENDING | APPROVED | REJECTED
+  reviewedBy  String?   @map("reviewed_by")           // Employee ID of approver
+  reviewedAt  DateTime? @map("reviewed_at")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([requestedBy])
+  @@index([targetId])
+  @@map("ads_optimize_requests")
+}
+
+// ─────────────────────────────────────────────
 // DOMAIN: Notifications
 // ─────────────────────────────────────────────
 
