@@ -495,6 +495,7 @@ export default function PremiumPOS({ language = 'TH' }) {
         platform: '',
         platformOrderId: '',
         gpRate: '30', // default 30% GP for delivery
+        includeUtensils: false, // ช้อนซ่อม
     });
 
     // Guest Mode
@@ -827,6 +828,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                     deliveryGpRate: gpRate > 0 ? gpRate : null,
                     deliveryNetAmount,
                     isGuestOrder: isGuestMode,
+                    includeUtensils: orderTypeForm.includeUtensils || false,
                     items: cart.map(i => ({
                         productId: i.productId || i.id,
                         name: i.name,
@@ -967,6 +969,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 {lastOrder.pmtForm?.bankName && <div className="flex justify-between"><span className="text-white/60">ธนาคาร</span><span className="font-bold">{lastOrder.pmtForm.bankName}</span></div>}
                                 {lastOrder.pmtForm?.isDeposit && <div className="flex justify-between text-amber-400"><span>ชำระมัดจำ</span><span>฿{Number(lastOrder.pmtForm.depositAmount || 0).toLocaleString()}</span></div>}
                                 {lastOrder.pmtForm?.notes && <div className="flex justify-between"><span className="text-white/60">หมายเหตุ</span><span className="text-right max-w-[60%] text-white/80">{lastOrder.pmtForm.notes}</span></div>}
+                                {(lastOrder.orderTypeSnap?.type === 'TAKE_AWAY' || lastOrder.orderTypeSnap?.type === 'DELIVERY') && (
+                                    <div className="flex justify-between">
+                                        <span className="text-white/60">ช้อนซ่อม</span>
+                                        <span className={`font-bold ${lastOrder.orderTypeSnap?.includeUtensils ? 'text-green-400' : 'text-white/40'}`}>
+                                            {lastOrder.orderTypeSnap?.includeUtensils ? '✅ รับ' : '❌ ไม่รับ'}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Staff */}
@@ -1015,7 +1025,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     setLastCustomer(null);
                                     setAssignedStaff(null);
                                     setPaymentForm({ method: 'CASH', bankName: '', isDeposit: false, depositAmount: '', discountAmount: '', discountPercent: '', promoCode: '', closedById: '', cashierId: '', notes: '' });
-                                    setOrderTypeForm({ type: 'DINE_IN', platform: '', platformOrderId: '', gpRate: '30' });
+                                    setOrderTypeForm({ type: 'DINE_IN', platform: '', platformOrderId: '', gpRate: '30', includeUtensils: false });
                                     setIsGuestMode(false);
                                     setSlipFile(null);
                                     setSlipOcr(null);
@@ -1076,6 +1086,20 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             ยอดสุทธิหลังหัก GP: ฿{(total * (1 - Number(orderTypeForm.gpRate || 0) / 100)).toLocaleString('th-TH', { minimumFractionDigits: 0 })}
                                         </span>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* ช้อนซ่อม — Take Away / Delivery เท่านั้น */}
+                            {(orderTypeForm.type === 'TAKE_AWAY' || orderTypeForm.type === 'DELIVERY') && (
+                                <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
+                                    <div>
+                                        <div className="font-black text-sm text-white">รับช้อนซ่อม / ตะเกียบ</div>
+                                        <div className="text-[10px] text-white/40 mt-0.5">ใส่ช้อนซ่อมในถุงด้วย</div>
+                                    </div>
+                                    <button onClick={() => setOrderTypeForm(f => ({ ...f, includeUtensils: !f.includeUtensils }))}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${orderTypeForm.includeUtensils ? 'bg-[#C9A34E]' : 'bg-white/10'}`}>
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${orderTypeForm.includeUtensils ? 'left-7' : 'left-1'}`} />
+                                    </button>
                                 </div>
                             )}
 
