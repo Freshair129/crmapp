@@ -333,7 +333,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         style={{
                             position: 'absolute',
                             width: '100%',
-                            height: 370,
+                            height: 372,
                             cursor: isActive ? 'grab' : 'default',
                             transformOrigin: '50% 110%',
                             pointerEvents: isActive ? 'auto' : 'none',
@@ -416,11 +416,14 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         <div className="h-full relative"
                             style={{ zIndex: 1, filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none' }}>
 
-                            {/* SVG layer: folder notch shape + glass fills + border + sheen */}
-                            {/* viewBox 372×370, preserveAspectRatio=none → scales to any card width */}
-                            {/* Path: Q bezier rounded corners (R=28) + top-right notch (150px diagonal) */}
+                            {/* SVG layer: folder shape + glass fills + border + sheen */}
+                            {/* viewBox 372×372 (A:372 B:372), preserveAspectRatio=none → scales responsively */}
+                            {/* Path: top-left Q-rounded + 3 cut corners:                                   */}
+                            {/*   top-right folder tab  (C:322 → 372, D:100)                               */}
+                            {/*   bottom-right diagonal  (372,322 → 322,372)  E:50                         */}
+                            {/*   bottom-left  diagonal  (50,372  → 0,322)    E:50                         */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none"
-                                viewBox="0 0 372 370" preserveAspectRatio="none"
+                                viewBox="0 0 372 372" preserveAspectRatio="none"
                                 xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
                                 <defs>
                                     <linearGradient id={`gf-${i}`} x1="0" y1="0" x2="0.6" y2="1">
@@ -435,31 +438,35 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 </defs>
 
                                 {/* ① Dark glass base fill — opacity 0.92 */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
                                     fill="rgba(10,10,22,0.92)" />
                                 {/* ② Role-color tint */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
                                     fill={`url(#gf-${i})`} />
                                 {/* ③ Soft outer glow (active only) */}
                                 {isActive && (
-                                    <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
+                                    <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
                                         fill="none"
                                         stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.18"
                                         strokeLinejoin="round" />
                                 )}
                                 {/* ④ Border line */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
                                     fill="none"
                                     stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.10)'}
                                     strokeWidth={isActive ? '1.2' : '0.8'}
                                     strokeOpacity={isActive ? '0.55' : '1'}
                                     strokeLinejoin="round" />
                                 {/* ⑤ Glass sheen (top-left triangle) */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 148 L 240 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 150 L 260 0 Z"
                                     fill={`url(#gs-${i})`} />
-                                {/* ⑥ Notch edge shimmer */}
-                                <line x1="222" y1="1" x2="371" y2="149"
-                                    stroke="rgba(255,255,255,0.20)" strokeWidth="1" />
+                                {/* ⑥ Edge shimmers — top-right tab + bottom-right + bottom-left */}
+                                <line x1="323" y1="1"   x2="371" y2="99"
+                                    stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
+                                <line x1="323" y1="371" x2="371" y2="323"
+                                    stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+                                <line x1="1"   y1="323" x2="49"  y2="371"
+                                    stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
                             </svg>
 
                             {/* Content sits on top of SVG */}
@@ -565,11 +572,11 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
             {/* ── Nav arrows ─────────────────────────────────────────── */}
             <button onClick={onPrev}
-                className="absolute left-0 top-[180px] -translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                className="absolute left-0 top-[186px] -translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
                 <ChevronLeft size={15} />
             </button>
             <button onClick={onNext}
-                className="absolute right-0 top-[180px] translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                className="absolute right-0 top-[186px] translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
                 <ChevronRight size={15} />
             </button>
         </div>
