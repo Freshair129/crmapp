@@ -33,7 +33,14 @@ export async function PUT(request, { params }) {
         if (body.dimension     !== undefined) updateData.dimension     = body.dimension;
         if (body.unitAmount    !== undefined) updateData.unitAmount    = body.unitAmount;
         if (body.unitType      !== undefined) updateData.unitType      = body.unitType;
-        if (body.originCountry !== undefined) updateData.originCountry = body.originCountry;
+        if (body.originCountry    !== undefined) updateData.originCountry    = body.originCountry;
+        if (body.hand             !== undefined) updateData.hand             = body.hand;
+        if (body.material         !== undefined) updateData.material         = body.material;
+        if (body.boxDimW          !== undefined) updateData.boxDimW          = body.boxDimW;
+        if (body.boxDimL          !== undefined) updateData.boxDimL          = body.boxDimL;
+        if (body.boxDimH          !== undefined) updateData.boxDimH          = body.boxDimH;
+        if (body.boxWeightG       !== undefined) updateData.boxWeightG       = body.boxWeightG;
+        if (body.shippingWeightG  !== undefined) updateData.shippingWeightG  = body.shippingWeightG;
 
         // Merge metadata (preserve existing keys, allow images update)
         if (body.metadata !== undefined) {

@@ -252,40 +252,110 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                         </div>
                     )}
 
-                    {/* ── Equipment Specs Panel ── */}
+                    {/* ── Equipment Full Spec Panel ── */}
                     {isEquipment && (
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-3">
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-4">
                             <p className="text-[9px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
-                                🔪 ข้อมูลอุปกรณ์
+                                🔪 ข้อมูลสินค้า
                             </p>
 
-                            {/* read-only chips row */}
-                            <div className="flex flex-wrap gap-2">
-                                {product.size && (
-                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
-                                        📦 {product.size}
-                                    </span>
+                            {/* ── read-only spec grid ── */}
+                            <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                {/* hand */}
+                                {product.hand && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                        <span className="text-base leading-none">{product.hand === 'LEFT' ? '✋' : '🤚'}</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">มือที่ใช้</p>
+                                            <p className="font-bold text-white/70">{product.hand === 'LEFT' ? 'มือซ้าย' : product.hand === 'RIGHT' ? 'มือขวา' : 'สองมือ'}</p>
+                                        </div>
+                                    </div>
                                 )}
+                                {/* material */}
+                                {product.material && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                        <span className="text-base leading-none">⚙️</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">วัสดุ</p>
+                                            <p className="font-bold text-white/70">{product.material}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* product dimension */}
                                 {product.dimension && (
-                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
-                                        📐 {product.dimension}
-                                    </span>
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                        <span className="text-base leading-none">📐</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">ขนาดสินค้า</p>
+                                            <p className="font-bold text-white/70">{product.dimension}</p>
+                                        </div>
+                                    </div>
                                 )}
-                                {product.unitAmount && product.unitType && (
-                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
-                                        ⚖️ {product.unitAmount} {product.unitType}
-                                    </span>
+                                {/* product weight */}
+                                {product.unitAmount && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                        <span className="text-base leading-none">⚖️</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">น้ำหนักสินค้า</p>
+                                            <p className="font-bold text-white/70">{product.unitAmount} {product.unitType || 'g'}</p>
+                                        </div>
+                                    </div>
                                 )}
-                                {(product.originCountry || specEdit.originCountry) && (
-                                    <span className="px-2.5 py-1 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/20 text-[10px] font-black text-[#C9A34E]">
-                                        {COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.flag} {COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.label}
-                                    </span>
+                                {/* box size */}
+                                {product.size && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                        <span className="text-base leading-none">📦</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">ขนาดกล่อง</p>
+                                            <p className="font-bold text-white/70">{product.size}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* country */}
+                                {(specEdit.originCountry || product.originCountry) && (
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#C9A34E]/8 border border-[#C9A34E]/20">
+                                        <span className="text-base leading-none">{COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.flag}</span>
+                                        <div>
+                                            <p className="text-[8px] font-black uppercase text-white/25">ผู้ผลิต</p>
+                                            <p className="font-bold text-[#C9A34E]">{COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.label}</p>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
-                            {/* editable: brand + country */}
+                            {/* ── Shipping section ── */}
+                            {(product.shippingWeightG || product.boxDimW) && (
+                                <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 space-y-2">
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-blue-400/60 flex items-center gap-1.5">
+                                        🚚 ข้อมูลจัดส่ง
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        {product.shippingWeightG && (
+                                            <div>
+                                                <p className="text-[8px] text-white/25 font-black uppercase">น้ำหนักรวม</p>
+                                                <p className="font-black text-blue-300">{product.shippingWeightG} g</p>
+                                            </div>
+                                        )}
+                                        {product.boxWeightG && (
+                                            <div>
+                                                <p className="text-[8px] text-white/25 font-black uppercase">น้ำหนักกล่อง</p>
+                                                <p className="font-bold text-white/50">{product.boxWeightG} g</p>
+                                            </div>
+                                        )}
+                                        {product.boxDimW && (
+                                            <div className="col-span-2">
+                                                <p className="text-[8px] text-white/25 font-black uppercase mb-0.5">ขนาดกล่อง (กว้าง × ยาว × สูง)</p>
+                                                <p className="font-black text-blue-300">
+                                                    {product.boxDimW} × {product.boxDimL} × {product.boxDimH} cm
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── editable: brand + country ── */}
                             <div className="grid grid-cols-2 gap-2">
-                                {/* Brand */}
                                 <div>
                                     <label className="text-[8px] font-black uppercase tracking-widest text-white/20 block mb-1">ยี่ห้อ</label>
                                     <input
@@ -297,8 +367,6 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                         className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#C9A34E]/40 transition-all"
                                     />
                                 </div>
-
-                                {/* Origin country dropdown */}
                                 <div>
                                     <label className="text-[8px] font-black uppercase tracking-widest text-white/20 block mb-1">ประเทศผู้ผลิต</label>
                                     <select
@@ -312,17 +380,14 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                     >
                                         <option value="">— เลือกประเทศ —</option>
                                         {ORIGIN_COUNTRIES.map(c => (
-                                            <option key={c.code} value={c.code}>
-                                                {c.flag} {c.label}
-                                            </option>
+                                            <option key={c.code} value={c.code}>{c.flag} {c.label}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            {/* save indicator */}
                             {(specSaving || specSaved) && (
-                                <p className={`text-[9px] font-black text-right transition-all ${specSaved ? 'text-green-400' : 'text-white/30'}`}>
+                                <p className={`text-[9px] font-black text-right ${specSaved ? 'text-green-400' : 'text-white/30'}`}>
                                     {specSaving ? '⏳ กำลังบันทึก...' : '✓ บันทึกแล้ว'}
                                 </p>
                             )}
@@ -912,6 +977,19 @@ export default function PremiumPOS({ language = 'TH' }) {
                                                 </div>
                                             )}
 
+                                            {/* Hand dominance badge (top-right on image) */}
+                                            {product.hand && (
+                                                <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[9px] font-black shadow-md ${
+                                                    product.hand === 'LEFT'
+                                                        ? 'bg-blue-500/80 text-white'
+                                                        : product.hand === 'RIGHT'
+                                                        ? 'bg-violet-500/80 text-white'
+                                                        : 'bg-white/20 text-white'
+                                                }`}>
+                                                    {product.hand === 'LEFT' ? '✋L' : product.hand === 'RIGHT' ? 'R✋' : 'L/R'}
+                                                </div>
+                                            )}
+
                                             {/* Quick-add button */}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); addItem(product); }}
@@ -919,6 +997,13 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             >
                                                 <Plus size={16} />
                                             </button>
+
+                                            {/* Shipping weight tag (bottom-left on image) — equipment only */}
+                                            {product.shippingWeightG && (
+                                                <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm text-white/70 px-1.5 py-0.5 rounded-md text-[9px] font-bold">
+                                                    📦 {product.shippingWeightG}g
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Name + price */}
@@ -926,7 +1011,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             <h4 className="text-white font-bold text-[12px] leading-snug line-clamp-2 mb-1">
                                                 {product.name}
                                             </h4>
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-[#C9A34E] font-black text-sm">
                                                     ฿{Number(product.price).toLocaleString()}
                                                 </span>
@@ -934,6 +1019,26 @@ export default function PremiumPOS({ language = 'TH' }) {
                                                     <span className="text-white/25 text-[10px]">{product.hours} ชม.</span>
                                                 )}
                                             </div>
+                                            {/* Equipment spec micro-tags */}
+                                            {product.category === 'equipment' && (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {product.material && (
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                            {product.material}
+                                                        </span>
+                                                    )}
+                                                    {product.size && (
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                            {product.size}
+                                                        </span>
+                                                    )}
+                                                    {product.originCountry && COUNTRY_MAP[product.originCountry] && (
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                            {COUNTRY_MAP[product.originCountry].flag}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );

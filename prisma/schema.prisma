@@ -276,6 +276,13 @@ model Product {
   unitAmount          Float?     @map("unit_amount")                  // ปริมาณต่อหน่วย เช่น 262
   unitType            String?    @map("unit_type")                    // หน่วย: g | ml | piece | set
   originCountry       String?    @map("origin_country")               // ประเทศผู้ผลิต: JP | CN | KR | DE | TW | TH | ...
+  hand                String?                                         // มือที่ใช้: LEFT | RIGHT | BOTH
+  material            String?                                         // วัสดุ: เหล็กกล้า | สแตนเลส | อลูมิเนียม | ทองเหลือง | ไม้ | หิน | พลาสติก
+  boxDimW             Float?     @map("box_dim_w")                    // กว้างกล่อง cm
+  boxDimL             Float?     @map("box_dim_l")                    // ยาวกล่อง cm
+  boxDimH             Float?     @map("box_dim_h")                    // สูงกล่อง cm
+  boxWeightG          Float?     @map("box_weight_g")                 // น้ำหนักกล่องเปล่า (g)
+  shippingWeightG     Float?     @map("shipping_weight_g")            // น้ำหนักรวมจัดส่ง (g) = สินค้า + กล่อง
   metadata            Json?      @default("{}")
   isActive            Boolean    @default(true) @map("is_active")
   createdAt           DateTime   @default(now()) @map("created_at")
