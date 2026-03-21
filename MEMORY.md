@@ -28,6 +28,28 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-22] Claude — MCP Server v1.7.0 — stdio + Streamable HTTP + Bearer auth ✅
+- **สิ่งที่ทำ**:
+  - สร้าง `src/mcp/vschool-mcp-server.js` — stdio transport, 15 tools, 5 domains (Customer/Schedule/Kitchen/Inventory/Procurement)
+  - สร้าง `src/app/api/mcp/route.js` — Vercel-compatible stateless JSON-RPC (GET health check + POST dispatch)
+  - เพิ่ม Bearer token auth (`MCP_SECRET` env var) ใน `/api/mcp` POST handler
+  - เพิ่ม `mcp:start` script ใน `package.json` (npx tsx --tsconfig tsconfig.json)
+  - เขียน Claude Desktop config ที่ `/Library/Application Support/Claude/claude_desktop_config.json`
+  - Fix: whitelist `/api/mcp` ใน `src/middleware.js` (เดิมตกไปที่ catch-all → 401)
+  - Deploy สำเร็จ `dpl_AYYjCzUmB8VfHiKiuSo4kXJzSZtz` → READY ✅
+  - Health check ยืนยัน: `{"status":"ok","server":"vschool-crm-mcp","version":"1.6.0","tools":15,"transport":"streamable-http"}`
+- **ไฟล์ที่เปลี่ยน**:
+  - `src/mcp/vschool-mcp-server.js` (new)
+  - `src/app/api/mcp/route.js` (new)
+  - `src/middleware.js` — เพิ่ม `/api/mcp` whitelist
+  - `package.json` — เพิ่ม `mcp:start` script
+- **Breaking Changes**: ไม่มี
+- **⚠️ Known Gotcha — MCP_SECRET**: ถ้าตั้ง env var `MCP_SECRET` ใน Vercel → ทุก POST request ต้องมี `Authorization: Bearer <secret>` — ถ้าไม่มีจะได้ 401 เสมอ
+- **⚠️ Known Gotcha — Local stdio**: ต้องใช้ `npx tsx --tsconfig tsconfig.json` เสมอ (ไม่งั้น `@/` path alias resolve ไม่ได้)
+- **⚠️ Known Gotcha — module boundary**: อย่าสร้าง `src/mcp/package.json` ที่มี `"type":"module"` — จะทำให้ CJS/ESM boundary แตก
+- **Production URL**: `https://crmapp-pi.vercel.app/api/mcp` (GET = health check, ไม่ต้องการ auth)
+- **ทำต่อ**: ตั้ง `MCP_SECRET` ใน Vercel Dashboard (Settings → Environment Variables) ถ้าต้องการ auth บน production, แล้ว update `claude_desktop_config.json` ให้ใช้ HTTP URL แทน stdio
+
 ### [2026-03-22 ~session] Claude — Employee Card UX Polish + Interactive Permissions + jobTitle (v1.6.1) ✅
 - **สิ่งที่ทำ**:
   - **Card UX**: shimmer (front only), bg card opacity ลด (abs=1→0.35, abs=2→0.12), FAB ย้ายเข้าใน card (top:14 right:14), FAB gradient match avatar, ลบ pseudo-concave bg-circle
