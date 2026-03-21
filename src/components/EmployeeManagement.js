@@ -211,10 +211,11 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                     emp.facebookName && { icon: Facebook, label: emp.facebookName },
                 ].filter(Boolean);
 
-                // Status dots: ACTIVE = full rainbow, INACTIVE = all grey
-                const dotColors = isInactive
-                    ? ['#2a2a35','#2a2a35','#2a2a35','#2a2a35','#2a2a35']
-                    : ['#f472b6','#fb923c','#fbbf24','#86efac','#4ade80'];
+                // Permission level bar
+                const levelStr  = meta.level; // e.g. 'L5', 'L2.5'
+                const levelNum  = parseFloat(levelStr.replace('L', ''));
+                const fillPct   = Math.round((levelNum / 5) * 100);
+                const barColor  = avatarColors[0];
 
                 return (
                     <motion.div
@@ -277,59 +278,74 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 <h2 className="text-white font-bold text-[1.6rem] leading-tight tracking-tight truncate">
                                     {emp.firstName} {emp.lastName}
                                 </h2>
-                                <p className="text-white/40 text-[13px] mt-1 truncate">
+                                <p className="text-white/40 text-[13px] mt-0.5 truncate">
                                     {meta.label}{emp.department ? ` · ${emp.department}` : ''}
                                     {emp.nickName ? ` · "${emp.nickName}"` : ''}
                                 </p>
+                                {emp.employeeId && (
+                                    <p className="text-white/22 text-[10px] mt-0.5 font-mono tracking-wider truncate">
+                                        {emp.employeeId}
+                                    </p>
+                                )}
                             </div>
 
-                            {/* ── BOTTOM ROW: contacts left · status dots right ── */}
+                            {/* ── BOTTOM ROW: contacts+toggle left · permission bar right ── */}
                             <div className="flex items-end justify-between gap-3 mt-auto pt-3">
-                                {/* Contact pills */}
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold mb-2">Contact</p>
-                                    <div className="flex gap-2 flex-wrap">
-                                        {contactItems.length > 0 ? contactItems.map(({ icon: Ic, label }, idx) => (
-                                            <span key={idx} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/65 text-[10px] font-semibold shrink-0"
-                                                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}>
-                                                <Ic size={9} className="shrink-0" />{label}
-                                            </span>
-                                        )) : (
-                                            <span className="text-white/20 text-[10px]">—</span>
-                                        )}
+
+                                {/* LEFT: contacts (top) + active toggle (bottom) */}
+                                <div className="min-w-0 flex-1 flex flex-col gap-2">
+                                    {/* Contact pills */}
+                                    <div>
+                                        <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold mb-1.5">Contact</p>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                            {contactItems.length > 0 ? contactItems.map(({ icon: Ic, label: cLabel }, idx) => (
+                                                <span key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white/65 text-[10px] font-semibold shrink-0"
+                                                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}>
+                                                    <Ic size={9} className="shrink-0" />{cLabel}
+                                                </span>
+                                            )) : (
+                                                <span className="text-white/20 text-[10px]">—</span>
+                                            )}
+                                        </div>
                                     </div>
+                                    {/* Active toggle */}
+                                    <StatusToggle
+                                        status={emp.status}
+                                        onCard
+                                        disabled={!canManage || togglingStatus}
+                                        onChange={(next) => {
+                                            if (!canManage || togglingStatus) return;
+                                            onStatusToggle && onStatusToggle(emp, next);
+                                        }}
+                                    />
                                 </div>
 
-                                {/* Status dots */}
-                                <div className="flex flex-col items-end gap-2 shrink-0">
-                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">
-                                        {isInactive ? 'Inactive' : 'Active'}
-                                    </p>
-                                    <motion.button
-                                        whileTap={(!canManage || togglingStatus) ? {} : { scale: 0.9 }}
-                                        onClick={() => {
-                                            if (!canManage || togglingStatus) return;
-                                            onStatusToggle && onStatusToggle(emp, isInactive ? 'ACTIVE' : 'INACTIVE');
-                                        }}
-                                        disabled={!canManage || togglingStatus}
-                                        title={canManage ? (isInactive ? 'คลิกเพื่อ Activate' : 'คลิกเพื่อ Deactivate') : 'ไม่มีสิทธิ์'}
-                                        className="flex items-center gap-[5px] px-3 py-[7px] rounded-full"
-                                        style={{
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            background: 'rgba(255,255,255,0.04)',
-                                            cursor: canManage ? 'pointer' : 'default',
-                                        }}
-                                    >
-                                        {dotColors.map((color, idx) => (
-                                            <motion.span
-                                                key={idx}
-                                                animate={{ backgroundColor: color }}
-                                                transition={{ duration: 0.4, delay: idx * 0.04 }}
-                                                style={{ backgroundColor: color }}
-                                                className="w-[14px] h-[14px] rounded-full block"
+                                {/* RIGHT: permission level bar */}
+                                <div className="flex flex-col items-end gap-1.5 shrink-0 w-[96px]">
+                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">Permission</p>
+                                    {/* Bar + circle */}
+                                    <div className="flex items-center gap-2 w-full">
+                                        {/* Track */}
+                                        <div className="relative flex-1 h-[5px] rounded-full overflow-hidden"
+                                            style={{ background: 'rgba(255,255,255,0.08)' }}>
+                                            <motion.div
+                                                className="absolute inset-y-0 left-0 rounded-full"
+                                                style={{ background: barColor, boxShadow: `0 0 6px ${barColor}88` }}
+                                                animate={{ width: `${fillPct}%` }}
+                                                transition={{ type: 'spring', stiffness: 260, damping: 28 }}
                                             />
-                                        ))}
-                                    </motion.button>
+                                        </div>
+                                        {/* Level circle */}
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[9px] font-black"
+                                            style={{
+                                                background: `${barColor}22`,
+                                                border: `1.5px solid ${barColor}66`,
+                                                color: barColor,
+                                                boxShadow: `0 0 8px ${barColor}44`,
+                                            }}>
+                                            {levelStr}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
