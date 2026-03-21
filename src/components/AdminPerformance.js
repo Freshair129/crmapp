@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     RefreshCw, MessageSquareMore,
     Loader2, Inbox, Clock, TrendingUp, BarChart3,
@@ -115,30 +115,47 @@ const NEON_PALETTE = [
 ];
 
 function MonthlyLineChart({ data, colors, months, height = 140 }) {
-    if (!data || data.length === 0 || !months || months.length === 0) return null;
+    // ── ResizeObserver: measure container, fill it exactly ─────────────────
+    const wrapRef = useRef(null);
+    const [svgW, setSvgW] = useState(500);
+
+    useEffect(() => {
+        const el = wrapRef.current;
+        if (!el) return;
+        // initial measurement
+        setSvgW(el.clientWidth || 500);
+        const ro = new ResizeObserver(([entry]) => {
+            setSvgW(Math.floor(entry.contentRect.width) || 500);
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    if (!data || data.length === 0 || !months || months.length === 0) return <div ref={wrapRef} style={{ width: '100%', height: '100%' }} />;
 
     // Use neon palette for multi-line (main chart), fall back to incoming color for mini single-line charts
     const neonColors = data.map((_, i) =>
         data.length > 1 ? NEON_PALETTE[i % NEON_PALETTE.length] : (colors[i] || NEON_PALETTE[0])
     );
 
-    const maxVal   = Math.max(...data.flatMap(d => months.map(m => d.stats?.monthly?.[m] || 0)), 1);
-    const padL     = 42;
-    const padR     = 16;
-    const padT     = 16;
-    const padB     = 28;
-    const chartW   = Math.max(months.length * 72, 240);
-    const totalW   = padL + chartW + padR;
-    const totalH   = padT + height + padB;
-    const stepX    = months.length > 1 ? chartW / (months.length - 1) : chartW / 2;
+    const maxVal    = Math.max(...data.flatMap(d => months.map(m => d.stats?.monthly?.[m] || 0)), 1);
+    const padL      = 42;
+    const padR      = 16;
+    const padT      = 14;
+    const padB      = 26;
+    // chartW fills the full measured container width
+    const chartW    = Math.max(svgW - padL - padR, 80);
+    const totalW    = svgW;          // SVG pixel width = container width
+    const totalH    = padT + height + padB;
+    const stepX     = months.length > 1 ? chartW / (months.length - 1) : chartW / 2;
     const gridLines = 4;
     const gridVals  = Array.from({ length: gridLines + 1 }, (_, i) => Math.round((maxVal / gridLines) * i));
 
     return (
-        <svg width="100%" height="100%"
+        <div ref={wrapRef} style={{ width: '100%', height: '100%' }}>
+        <svg width={totalW} height={totalH}
              viewBox={`0 0 ${totalW} ${totalH}`}
-             preserveAspectRatio="xMidYMid meet"
-             style={{ display: 'block' }}>
+             style={{ display: 'block', overflow: 'visible' }}>
             <defs>
                 {/* Glow filter per neon color */}
                 {neonColors.map((c, i) => (
@@ -272,6 +289,7 @@ function MonthlyLineChart({ data, colors, months, height = 140 }) {
                 </text>
             ))}
         </svg>
+        </div>
     );
 }
 
@@ -506,8 +524,8 @@ export default function AdminPerformance() {
                                 })}
                             </div>
                         </div>
-                        <div style={{ height: '220px', width: '100%' }}>
-                            <MonthlyLineChart data={top6} colors={top6Colors} months={summary.allMonths} height={178} />
+                        <div style={{ width: '100%' }}>
+                            <MonthlyLineChart data={top6} colors={top6Colors} months={summary.allMonths} height={190} />
                         </div>
                     </div>
                     <div style={S.card}>
