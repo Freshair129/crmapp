@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { PERMISSIONS, ROLES, DOMAINS, canWithMeta } from '@/lib/permissionMatrix'
-import { CheckCircle2, XCircle, Eye, AlertTriangle, Lock, Info } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { PERMISSIONS, ROLES, DOMAINS } from '@/lib/permissionMatrix'
+import { CheckCircle2, XCircle, Eye, AlertTriangle, Loader2, Save } from 'lucide-react'
 
 const DOMAIN_ICONS = {
   business: '📊',
@@ -24,61 +24,84 @@ const DOMAIN_LABELS = {
   system: 'System',
 }
 
-/**
- * Helper to render permission status with icon
- */
-function PermissionCell({ role, domain, action }) {
-  const meta = canWithMeta(role, domain, action)
-
-  if (!meta.allowed) {
-    return (
-      <div className="flex items-center justify-center" title="Denied">
-        <XCircle className="w-5 h-5 text-red-400" />
-      </div>
-    )
-  }
-
-  if (meta.requiresApproval) {
-    return (
-      <div className="flex items-center justify-center" title="Requires approval">
-        <AlertTriangle className="w-5 h-5 text-amber-400" />
-      </div>
-    )
-  }
-
-  if (meta.requiresLog) {
-    return (
-      <div className="flex items-center justify-center" title="Audit log required">
-        <AlertTriangle className="w-5 h-5 text-blue-400" />
-      </div>
-    )
-  }
-
-  if (meta.ownOnly) {
-    return (
-      <div className="flex items-center justify-center" title="Own records only">
-        <Eye className="w-5 h-5 text-purple-400" />
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex items-center justify-center" title="Allowed">
-      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-    </div>
-  )
+// State cycle: true → false → 'own' → 'log' → 'request' → true
+const STATES = [true, false, 'own', 'log', 'request']
+function cycleState(current) {
+  const idx = STATES.indexOf(current)
+  return STATES[(idx + 1) % STATES.length]
 }
 
-/**
- * Main PermissionMatrix Component
- *
- * Read-only matrix viewer showing 8 roles × 7 domains × 5 actions
- * Includes role selector tabs and legend
- */
-export default function PermissionMatrix({ currentUserRole }) {
-  const [selectedRole, setSelectedRole] = useState('MANAGER')
+function cellStyle(val) {
+  if (!val)             return { icon: XCircle,      color: 'text-red-400',    bg: 'hover:bg-red-500/10',     title: 'Denied' }
+  if (val === 'own')    return { icon: Eye,           color: 'text-purple-400', bg: 'hover:bg-purple-500/10',  title: 'Own only' }
+  if (val === 'log')    return { icon: AlertTriangle, color: 'text-blue-400',   bg: 'hover:bg-blue-500/10',    title: 'Audit log' }
+  if (val === 'request')return { icon: AlertTriangle, color: 'text-amber-400',  bg: 'hover:bg-amber-500/10',   title: 'Requires approval' }
+  return                       { icon: CheckCircle2,  color: 'text-emerald-400',bg: 'hover:bg-emerald-500/10', title: 'Allowed' }
+}
 
-  const rolePerms = PERMISSIONS[selectedRole] || {}
+export default function PermissionMatrix({ currentUserRole }) {
+  const [selectedRole, setSelectedRole]   = useState('MANAGER')
+  const [draft, setDraft]                 = useState(null)   // full permissions object
+  const [loading, setLoading]             = useState(true)
+  const [saving, setSaving]               = useState(false)
+  const [isDirty, setIsDirty]             = useState(false)
+
+  // Deep clone helper
+  const clonePerms = (p) => JSON.parse(JSON.stringify(p))
+
+  // Load from API on mount
+  useEffect(() => {
+    fetch('/api/permissions')
+      .then(r => r.json())
+      .then(data => {
+        setDraft(clonePerms(data.permissions || PERMISSIONS))
+        setLoading(false)
+      })
+      .catch(() => {
+        setDraft(clonePerms(PERMISSIONS))
+        setLoading(false)
+      })
+  }, [])
+
+  // Click a cell → cycle its value
+  const toggleCell = useCallback((domain, action) => {
+    setDraft(prev => {
+      const next = clonePerms(prev)
+      const cur = next[selectedRole]?.[domain]?.[action]
+      if (!next[selectedRole]) next[selectedRole] = {}
+      if (!next[selectedRole][domain]) next[selectedRole][domain] = {}
+      next[selectedRole][domain][action] = cycleState(cur ?? false)
+      return next
+    })
+    setIsDirty(true)
+  }, [selectedRole])
+
+  // Save to DB
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await fetch('/api/permissions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: draft }),
+      })
+      setIsDirty(false)
+    } catch (err) {
+      console.error('[PermissionMatrix] save failed', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+      </div>
+    )
+  }
+
+  const rolePerms = draft?.[selectedRole] || {}
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -87,9 +110,20 @@ export default function PermissionMatrix({ currentUserRole }) {
         <h3 className="text-white font-black text-lg uppercase tracking-widest">
           Permission Matrix
         </h3>
-        <p className="text-white/40 text-xs font-bold">
-          Viewing: <span className="text-[#C9A34E]">{selectedRole}</span>
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-white/40 text-xs font-bold">
+            Editing: <span className="text-[#C9A34E]">{selectedRole}</span>
+          </p>
+          {isDirty && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-[#C9A34E]/20">
+              {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Role Selector Tabs */}
@@ -112,29 +146,21 @@ export default function PermissionMatrix({ currentUserRole }) {
       {/* Legend */}
       <div className="bg-white/5 border border-white/8 rounded-2xl p-4">
         <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-3">
-          Legend
+          Legend — กดที่ไอคอนเพื่อเปลี่ยนสิทธิ์
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span className="text-white/70 text-xs">Allowed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <span className="text-white/70 text-xs">Denied</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-purple-400 flex-shrink-0" />
-            <span className="text-white/70 text-xs">Own only</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-blue-400 flex-shrink-0" />
-            <span className="text-white/70 text-xs">Audit log</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span className="text-white/70 text-xs">Approval</span>
-          </div>
+          {[
+            { icon: CheckCircle2, color: 'text-emerald-400', label: 'Allowed' },
+            { icon: XCircle,      color: 'text-red-400',     label: 'Denied' },
+            { icon: Eye,          color: 'text-purple-400',  label: 'Own only' },
+            { icon: AlertTriangle,color: 'text-blue-400',    label: 'Audit log' },
+            { icon: AlertTriangle,color: 'text-amber-400',   label: 'Approval' },
+          ].map(({ icon: Icon, color, label }) => (
+            <div key={label} className="flex items-center gap-2">
+              <Icon className={`w-4 h-4 ${color} flex-shrink-0`} />
+              <span className="text-white/70 text-xs">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -146,35 +172,22 @@ export default function PermissionMatrix({ currentUserRole }) {
               <th className="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/60">
                 Domain
               </th>
-              <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
-                View
-              </th>
-              <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
-                Create
-              </th>
-              <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
-                Edit
-              </th>
-              <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
-                Delete
-              </th>
-              <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
-                Approve
-              </th>
+              {['view', 'create', 'edit', 'delete', 'approve'].map(a => (
+                <th key={a} className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-white/60">
+                  {a}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {DOMAINS.map((domain, idx) => {
+            {DOMAINS.map((domain) => {
               const domainPerms = rolePerms[domain] || {}
-              const hasAccess =
-                domainPerms.view || domainPerms.create || domainPerms.edit || domainPerms.delete
+              const hasAccess = domainPerms.view || domainPerms.create || domainPerms.edit || domainPerms.delete
 
               return (
                 <tr
                   key={domain}
-                  className={`border-b border-white/8 hover:bg-white/3 transition-colors ${
-                    !hasAccess ? 'opacity-50' : ''
-                  }`}
+                  className={`border-b border-white/8 transition-colors ${!hasAccess ? 'opacity-50' : ''}`}
                 >
                   <td className="px-6 py-4 font-bold text-white/80">
                     <div className="flex items-center gap-2">
@@ -182,28 +195,27 @@ export default function PermissionMatrix({ currentUserRole }) {
                       <span>{DOMAIN_LABELS[domain]}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <PermissionCell role={selectedRole} domain={domain} action="view" />
-                  </td>
-                  <td className="px-4 py-4">
-                    <PermissionCell role={selectedRole} domain={domain} action="create" />
-                  </td>
-                  <td className="px-4 py-4">
-                    <PermissionCell role={selectedRole} domain={domain} action="edit" />
-                  </td>
-                  <td className="px-4 py-4">
-                    <PermissionCell role={selectedRole} domain={domain} action="delete" />
-                  </td>
-                  <td className="px-4 py-4">
-                    <PermissionCell role={selectedRole} domain={domain} action="approve" />
-                  </td>
+                  {['view', 'create', 'edit', 'delete', 'approve'].map(action => {
+                    const val = domainPerms[action] ?? false
+                    const { icon: Icon, color, bg, title } = cellStyle(val)
+                    return (
+                      <td key={action} className="px-4 py-3">
+                        <button
+                          onClick={() => toggleCell(domain, action)}
+                          title={`${title} — คลิกเพื่อเปลี่ยน`}
+                          className={`w-full flex items-center justify-center p-2 rounded-xl transition-all ${bg} cursor-pointer`}
+                        >
+                          <Icon className={`w-5 h-5 ${color}`} />
+                        </button>
+                      </td>
+                    )
+                  })}
                 </tr>
               )
             })}
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }
