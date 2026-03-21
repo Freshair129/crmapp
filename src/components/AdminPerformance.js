@@ -431,9 +431,9 @@ export default function AdminPerformance() {
     const openModal = useCallback((admin, color) => { setModalAdmin(admin); setModalColor(color); }, []);
 
     // ── Separate "Admin" scraper placeholder (unattributed messages) ──────────
-    // TVS-EMP-2026-0001 / firstName="Admin" = ข้อความที่ scraper ยังไม่ดึงชื่อผู้ส่ง
+    // TVS-EMP-0001 / firstName="Admin" = ข้อความที่ scraper ยังไม่ดึงชื่อผู้ส่ง
     const isAdminPlaceholder = (emp) =>
-        emp.employeeId === 'TVS-EMP-2026-0001' ||
+        emp.employeeId === 'TVS-EMP-0001' ||
         (emp.firstName === 'Admin' && (emp.lastName === 'User' || !emp.lastName));
 
     const allSorted = [...performanceData].sort((a, b) => {

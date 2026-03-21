@@ -21,8 +21,9 @@ async function generateEmployeeId(prisma, department) {
         orderBy: { employeeId: 'desc' },
         select: { employeeId: true },
     });
-    const serial = latest
-        ? String(parseInt(latest.employeeId.split('-')[2] || '0', 10) + 1).padStart(3, '0')
+    const parts  = latest ? latest.employeeId.split('-') : [];
+    const serial = parts.length
+        ? String(parseInt(parts[parts.length - 1] || '0', 10) + 1).padStart(3, '0')
         : '001';
     return `${prefix}${serial}`;
 }
