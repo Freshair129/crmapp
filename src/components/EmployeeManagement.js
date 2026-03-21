@@ -393,78 +393,34 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </>
                         )}
 
-                        {/* ── FAB button — floats in concave arc top-right (partially outside card) ── */}
-                        <motion.button
-                            onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
-                            whileHover={{ scale: 1.10 }}
-                            whileTap={{ scale: 0.92 }}
-                            className="absolute flex items-center justify-center z-20"
+                        {/* ── Rounded rect glass card (pseudo-concave via bg-circle overlay) ── */}
+                        <div className="h-full relative overflow-hidden"
                             style={{
-                                top: -8, right: -20, width: 72, height: 72,
-                                borderRadius: '50%',
-                                background: 'rgba(14,14,20,0.96)',
-                                boxShadow: `0 6px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)`,
-                                border: '1.5px solid rgba(255,255,255,0.12)',
-                                cursor: 'pointer',
-                            }}
-                            title="เปิด Full Dashboard"
-                        >
-                            <ArrowUpRight size={22} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
-                        </motion.button>
+                                borderRadius: 32,
+                                background: 'rgba(10,10,22,0.92)',
+                                border: isActive
+                                    ? `1.5px solid ${avatarColors[0]}80`
+                                    : '1px solid rgba(255,255,255,0.10)',
+                                boxShadow: isActive
+                                    ? `0 0 0 1px ${avatarColors[0]}15, 0 20px 40px rgba(0,0,0,0.5)`
+                                    : '0 8px 24px rgba(0,0,0,0.4)',
+                                filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none',
+                                zIndex: 1,
+                            }}>
 
-                        {/* ── Glass card (SVG folder shape — responsive) ───── */}
-                        <div className="h-full relative"
-                            style={{ zIndex: 1, filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none' }}>
+                            {/* ① Role-color tint gradient */}
+                            <div className="absolute inset-0 pointer-events-none" style={{
+                                background: `linear-gradient(135deg, ${avatarColors[0]}${isActive ? '2e' : '12'} 0%, ${avatarColors[1]}10 100%)`,
+                                borderRadius: 'inherit',
+                            }} />
+                            {/* ② Glass sheen — top-left diagonal highlight */}
+                            <div className="absolute pointer-events-none" style={{
+                                top: 0, left: 0, width: '68%', height: '42%',
+                                background: 'linear-gradient(135deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)',
+                                borderTopLeftRadius: 32,
+                            }} />
 
-                            {/* SVG layer: concave-arc shape + glass fills + border + sheen              */}
-                            {/* viewBox 372×372, preserveAspectRatio=none → scales responsively            */}
-                            {/* Path: 3 Q-bezier rounded corners (R=42) + 1 concave arc top-right          */}
-                            {/*   top-right: A 110 110 0 0 1 372 130 — CW sweep = concave bite at top-right */}
-                            {/*   top-left / bottom-left / bottom-right: Q bezier radius 42                 */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none"
-                                viewBox="0 0 372 372" preserveAspectRatio="none"
-                                xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-                                <defs>
-                                    <linearGradient id={`gf-${i}`} x1="0" y1="0" x2="0.6" y2="1">
-                                        <stop offset="0%" stopColor={avatarColors[0]} stopOpacity={isActive ? '0.18' : '0.07'} />
-                                        <stop offset="100%" stopColor={avatarColors[1]} stopOpacity="0.06" />
-                                    </linearGradient>
-                                    <linearGradient id={`gs-${i}`} x1="0" y1="0" x2="0.55" y2="0.65">
-                                        <stop offset="0%" stopColor="white" stopOpacity="0.18" />
-                                        <stop offset="50%" stopColor="white" stopOpacity="0.05" />
-                                        <stop offset="100%" stopColor="white" stopOpacity="0" />
-                                    </linearGradient>
-                                </defs>
-
-                                {/* ① Dark glass base fill — opacity 0.92 */}
-                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
-                                    fill="rgba(10,10,22,0.92)" />
-                                {/* ② Role-color tint */}
-                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
-                                    fill={`url(#gf-${i})`} />
-                                {/* ③ Soft outer glow (active only) */}
-                                {isActive && (
-                                    <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
-                                        fill="none"
-                                        stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.18"
-                                        strokeLinejoin="round" />
-                                )}
-                                {/* ④ Border line */}
-                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
-                                    fill="none"
-                                    stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.10)'}
-                                    strokeWidth={isActive ? '1.2' : '0.8'}
-                                    strokeOpacity={isActive ? '0.55' : '1'}
-                                    strokeLinejoin="round" />
-                                {/* ⑤ Glass sheen (top-left triangle) */}
-                                <path d="M 42 0 Q 0 0 0 42 L 0 150 L 220 0 Z"
-                                    fill={`url(#gs-${i})`} />
-                                {/* ⑥ Concave arc edge shimmer (top-right curve) */}
-                                <path d="M 272 0 A 110 110 0 0 1 372 132"
-                                    fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
-                            </svg>
-
-                            {/* Content sits on top of SVG */}
+                            {/* Content sits on top */}
                             <div className="relative flex flex-col h-full p-6" style={{ zIndex: 1 }}>
 
                             {/* ── TOP ROW: avatar left · name/role/id right ── */}
@@ -560,7 +516,37 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </div>
 
                             </div>{/* ── close inner content div ── */}
-                        </div>{/* ── close outer SVG card div ── */}
+                        </div>{/* ── close glass card div ── */}
+
+                        {/* ── Pseudo-concave mask: circle same color as page bg ── */}
+                        {/* Center aligns with FAB center → card corner looks "bitten off" */}
+                        <div className="absolute pointer-events-none" style={{
+                            top: -34, right: -40,
+                            width: 120, height: 120,
+                            borderRadius: '50%',
+                            background: '#0A1A2F',
+                            zIndex: 15,
+                        }} />
+
+                        {/* ── FAB button — floats in pseudo-concave area (top-right) ── */}
+                        <motion.button
+                            onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
+                            whileHover={{ scale: 1.10 }}
+                            whileTap={{ scale: 0.92 }}
+                            className="absolute flex items-center justify-center"
+                            style={{
+                                top: -10, right: -16, width: 72, height: 72,
+                                borderRadius: '50%',
+                                background: 'rgba(14,14,20,0.96)',
+                                boxShadow: `0 6px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)`,
+                                border: '1.5px solid rgba(255,255,255,0.12)',
+                                cursor: 'pointer',
+                                zIndex: 20,
+                            }}
+                            title="เปิด Full Dashboard"
+                        >
+                            <ArrowUpRight size={22} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
+                        </motion.button>
                     </motion.div>
                 );
             })}
@@ -685,13 +671,16 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', employmentType: 'employee', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     const handleAdd = async () => {
         if (!form.firstName || !form.lastName || !form.email || !form.password) {
             setError('firstName, lastName, email, password จำเป็นต้องกรอก'); return;
+        }
+        if (!form.agentCode || form.agentCode.length < 3 || form.agentCode.length > 4) {
+            setError('Agent Code ต้องเป็น 3-4 ตัวอักษร (เช่น AOI, FAH)'); return;
         }
         setSaving(true); setError('');
         try {
@@ -723,17 +712,20 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         { key: 'firstName', label: 'ชื่อ *' },
                         { key: 'lastName', label: 'นามสกุล *' },
                         { key: 'nickName', label: 'ชื่อเล่น' },
+                        { key: 'agentCode', label: 'Agent Code * (3-4 ตัวอักษร เช่น AOI, FAH)', maxLength: 4 },
                         { key: 'email', label: 'Email *' },
                         { key: 'phone', label: 'โทรศัพท์' },
                         { key: 'password', label: 'รหัสผ่าน *', type: 'password' },
-                    ].map(({ key, label, type }) => (
+                    ].map(({ key, label, type, maxLength }) => (
                         <div key={key}>
                             <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">{label}</label>
                             <input
                                 type={type || 'text'}
+                                maxLength={maxLength}
                                 value={form[key] || ''}
-                                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                                className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                                onChange={e => setForm(f => ({ ...f, [key]: key === 'agentCode' ? e.target.value.toUpperCase().replace(/[^A-Z]/g, '') : e.target.value }))}
+                                className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
+                                placeholder={key === 'agentCode' ? 'เช่น AOI, FAH, PNP' : ''}
                             />
                         </div>
                     ))}
@@ -1023,6 +1015,8 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: Phone,     label: 'Phone',       val: emp.phone || '—' },
                                         { icon: Building2, label: 'Dept',        val: emp.department || '—' },
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
+                                        { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
+                                        { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
