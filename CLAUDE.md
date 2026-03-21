@@ -37,10 +37,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.0.0` | Production Ready — Docs Hardening + ADR-041 (Phase 28) | ✅ released |
 | `v1.1.0` | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
 | `v1.2.0` | Equipment Domain POS — hand/material/specs + shipping fields (ADR-043) | ✅ released |
-| `v1.3.0` | Web Push Inbox Real-time — ลบ SSE+polling, VAPID (ADR-044) | ✅ released ← HEAD |
+| `v1.3.0` | Web Push Inbox Real-time — ลบ SSE+polling, VAPID (ADR-044) | ✅ released |
+| `v1.4.0` | RBAC Redesign — Domain Roles + Ads Optimize Write (ADR-045) | 🔄 planned ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
+
+
+### v1.4.0 — สิ่งที่จะทำ (Phase 29) 🔄 — PLANNED
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/lib/permissionMatrix.js` | 🔄 planned | Central permission config + can() helper |
+| `src/lib/rbac.js` | 🔄 planned | Update VALID_ROLES → 8 roles uppercase |
+| `src/lib/authOptions.js` | 🔄 planned | Role validation uppercase |
+| `src/components/TopBar.js` | 🔄 planned | ROLE_LABEL เพิ่ม MARKETING, HEAD_CHEF |
+| `src/app/page.js` + components | 🔄 planned | แทน hardcoded role checks → can() |
+| `src/app/api/ads/*/route.js` | 🔄 planned | Ads Optimize write routes (6 routes) |
+| `src/lib/repositories/adsOptimizeRepo.js` | 🔄 planned | Meta API write wrapper |
+| `prisma/schema.prisma` → AdsOptimizeRequest | 🔄 planned | Lifetime budget approval model |
+| `docs/adr/045-rbac-redesign-ads-optimize.md` | ✅ done | ADR-045 |
+| `docs/implement_plan_phase29.md` | ✅ done | Implementation plan |
+
+> ⚠️ **Known Breaking Change — Role Migration**: ต้องรัน DB migration แก้ role values → UPPERCASE + เปลี่ยน NEXTAUTH_SECRET เพื่อ force re-login ทุก session
+> ⚠️ **Known Gotcha — 8 Roles**: MARKETING (L2.5) + HEAD_CHEF (L2.5) เป็น domain specialist — ไม่ได้สูงกว่า ADMIN แต่ full access ในโดเมนของตัวเอง
 
 ### v1.3.0 — สิ่งที่ทำแล้ว (2026-03-21) ✅ — by Claude
 | ไฟล์ | สถานะ | หมายเหตุ |
@@ -314,6 +333,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-037 | Product-as-Course-Catalog: reuse Product model, certLevel 30/111/201h |
 | ADR-043 | Equipment Domain POS: hand/material/specs/shipping fields, ORIGIN_COUNTRIES dropdown |
 | ADR-044 | Web Push Inbox: VAPID, Service Worker, ลบ SSE+polling ออก |
+| ADR-045 | RBAC Redesign: 8 roles, permissionMatrix.js, Ads Optimize write (Meta API) |
 
 ---
 

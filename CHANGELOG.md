@@ -1,4 +1,4 @@
-**LATEST:** CL-20260321-002 | v1.3.0 | 2026-03-21
+**LATEST:** CL-20260321-003 | v1.4.0 planned | 2026-03-21
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260321-003 | RBAC Redesign + Ads Optimize (ADR-045) | v1.4.0 planned | 2026-03-21 | MINOR | #rbac #marketing #ads #roles |
 | CL-20260321-002 | Web Push Inbox Real-time (ADR-044) | v1.3.0 | 2026-03-21 | MINOR | #inbox #push #realtime |
 | CL-20260321-001 | Equipment Domain POS + Spec Fields | v1.2.0 | 2026-03-21 | MINOR | #pos #equipment #ui |
 | CL-20260319-006 | POS Modal + Sheet ID Generation | v1.1.0 | 2026-03-19 | MINOR | #pos #sheets #id-generation |

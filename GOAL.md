@@ -240,6 +240,28 @@
 
 ---
 
+
+## 🔄 Phase 29: RBAC Redesign + Ads Optimize (v1.4.0)
+> **ADR:** ADR-045  
+> **Goal:** Domain-based roles (8 roles), centralized permissionMatrix.js, Ads Optimize write access to Meta API  
+> **Implement Plan:** `docs/implement_plan_phase29.md`  
+> **Status:** Planned
+
+| Sub-phase | งาน | สถานะ |
+|---|---|---|
+| 29a | DB Migration — normalize role → UPPERCASE + เพิ่ม MARKETING/HEAD_CHEF | ⏳ |
+| 29b | `permissionMatrix.js` + `can()` helper + unit tests | ⏳ |
+| 29c | Refactor RBAC guards ทั่ว codebase → ใช้ `can()` | ⏳ |
+| 29d | Ads Optimize API routes (6 routes) + adsOptimizeRepo.js | ⏳ |
+| 29e | Ads Optimize UI — campaign card actions + budget modal | ⏳ |
+| 29f | Permission Management UI (read-only) ใน Employee section | ⏳ |
+| 29g | Tests + Audit log + Docs update | ⏳ |
+
+**New Roles:** `MARKETING` (L2.5, domain: marketing) · `HEAD_CHEF` (L2.5, domain: kitchen)  
+**Breaking Change:** Role values ใน DB → UPPERCASE · Force re-login ทุก session
+
+---
+
 ## 📋 Backlog / Known Issues
 
 | ID | Issue | Priority |
