@@ -418,10 +418,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
                             {/* SVG layer: folder shape + glass fills + border + sheen */}
                             {/* viewBox 372×372 (A:372 B:372), preserveAspectRatio=none → scales responsively */}
-                            {/* Path: top-left Q-rounded + 3 cut corners:                                   */}
-                            {/*   top-right folder tab  (C:322 → 372, D:100)                               */}
-                            {/*   bottom-right diagonal  (372,322 → 322,372)  E:50                         */}
-                            {/*   bottom-left  diagonal  (50,372  → 0,322)    E:50                         */}
+                            {/* Path: 3 Q-bezier rounded corners (R=28) + 1 folder tab cut top-right        */}
+                            {/*   top-right: folder tab  (C:322,0) → (372,D:100) — diagonal straight        */}
+                            {/*   top-left / bottom-left / bottom-right: Q bezier radius 28                 */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none"
                                 viewBox="0 0 372 372" preserveAspectRatio="none"
                                 xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
@@ -438,20 +437,20 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 </defs>
 
                                 {/* ① Dark glass base fill — opacity 0.92 */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
                                     fill="rgba(10,10,22,0.92)" />
                                 {/* ② Role-color tint */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
                                     fill={`url(#gf-${i})`} />
                                 {/* ③ Soft outer glow (active only) */}
                                 {isActive && (
-                                    <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
+                                    <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
                                         fill="none"
                                         stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.18"
                                         strokeLinejoin="round" />
                                 )}
                                 {/* ④ Border line */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 322 L 50 372 L 322 372 L 372 322 L 372 100 L 322 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
                                     fill="none"
                                     stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.10)'}
                                     strokeWidth={isActive ? '1.2' : '0.8'}
@@ -460,13 +459,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 {/* ⑤ Glass sheen (top-left triangle) */}
                                 <path d="M 28 0 Q 0 0 0 28 L 0 150 L 260 0 Z"
                                     fill={`url(#gs-${i})`} />
-                                {/* ⑥ Edge shimmers — top-right tab + bottom-right + bottom-left */}
-                                <line x1="323" y1="1"   x2="371" y2="99"
+                                {/* ⑥ Tab edge shimmer only (top-right folder tab) */}
+                                <line x1="323" y1="1" x2="371" y2="99"
                                     stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
-                                <line x1="323" y1="371" x2="371" y2="323"
-                                    stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-                                <line x1="1"   y1="323" x2="49"  y2="371"
-                                    stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
                             </svg>
 
                             {/* Content sits on top of SVG */}
@@ -690,7 +685,7 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', employmentType: 'employee', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -730,7 +725,6 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         { key: 'nickName', label: 'ชื่อเล่น' },
                         { key: 'email', label: 'Email *' },
                         { key: 'phone', label: 'โทรศัพท์' },
-                        { key: 'department', label: 'แผนก' },
                         { key: 'password', label: 'รหัสผ่าน *', type: 'password' },
                     ].map(({ key, label, type }) => (
                         <div key={key}>
@@ -743,6 +737,42 @@ function AddEmployeeModal({ onClose, onSaved }) {
                             />
                         </div>
                     ))}
+                    {/* Employment Type select */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ประเภทการจ้าง</label>
+                        <select
+                            value={form.employmentType}
+                            onChange={e => setForm(f => ({ ...f, employmentType: e.target.value }))}
+                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                        >
+                            <option value="employee">พนักงานประจำ (EMP)</option>
+                            <option value="freelance">ฟรีแลนซ์ (FL)</option>
+                            <option value="contract">สัญญาจ้าง (CT)</option>
+                        </select>
+                    </div>
+                    {/* Department select */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก / ตำแหน่ง</label>
+                        <select
+                            value={form.department}
+                            onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
+                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                        >
+                            <option value="">-- เลือกแผนก --</option>
+                            <option value="marketing">Marketing (MKT)</option>
+                            <option value="management">Management (MGT)</option>
+                            <option value="purchasing">Purchasing (PD)</option>
+                            <option value="sales">Sales (SLS)</option>
+                            <option value="assistant manager">Assistant Manager (AM)</option>
+                            <option value="admin">Admin (ADM)</option>
+                            <option value="graphic design">Graphic Design (GD)</option>
+                            <option value="computer graphic">Computer Graphic (CG)</option>
+                            <option value="multimedia">Multimedia (MM)</option>
+                            <option value="motion graphic">Motion Graphic (MGFX)</option>
+                            <option value="editor">Editor (ED)</option>
+                            <option value="content creator">Content Creator (CC)</option>
+                        </select>
+                    </div>
                     {/* Role select */}
                     <div>
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Role</label>
