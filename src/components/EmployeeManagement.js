@@ -260,7 +260,7 @@ function KpiBlock({ emp, linked, barColor }) {
 }
 
 // ─── File-folder Stacked Card Deck (Framer Motion) ───────────────────────────
-function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus, customers = [], onOpenDetail }) {
+function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus, customers = [], onOpenDetail, onEditDirect, currentUser }) {
     const n = employees.length;
     if (n === 0) return null;
 
@@ -296,6 +296,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                 if (abs > 3) return null;   // skip far-off cards entirely
 
                 const isActive = offset === 0;
+                const isMyCard = !!(currentUser?.email && emp.email === currentUser.email);
                 const meta     = getRoleMeta(emp.role);
                 const animate  = getAnimate(offset);
                 const isInactive = emp.status === 'INACTIVE';
@@ -528,9 +529,32 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </div>
 
                             </div>{/* ── close inner content div ── */}
+
+                            {/* ── "My Card" indicator ── */}
+                            {isMyCard && (
+                                <>
+                                    {/* Gold accent line at top */}
+                                    <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
+                                        style={{
+                                            background: 'linear-gradient(90deg, transparent, #C9A34E, transparent)',
+                                            borderTopLeftRadius: 32, borderTopRightRadius: 32,
+                                        }} />
+                                    {/* YOU pill — bottom center */}
+                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                                        <div className="flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[8px] font-black uppercase tracking-widest"
+                                            style={{
+                                                background: 'rgba(201,163,78,0.16)',
+                                                border: '1px solid rgba(201,163,78,0.50)',
+                                                color: '#C9A34E',
+                                            }}>
+                                            ◆ การ์ดของคุณ
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>{/* ── close glass card div ── */}
 
-                        {/* ── FAB button — inside card, top-right corner ── */}
+                        {/* ── FAB button — top-right corner ── */}
                         <motion.button
                             onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
                             whileHover={{ scale: 1.10 }}
@@ -548,6 +572,28 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         >
                             <ArrowUpRight size={18} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
                         </motion.button>
+
+                        {/* ── Edit button — canManage + active card only ── */}
+                        {canManage && isActive && (
+                            <motion.button
+                                onClick={(e) => { e.stopPropagation(); onEditDirect && onEditDirect(emp); }}
+                                whileHover={{ scale: 1.12 }}
+                                whileTap={{ scale: 0.90 }}
+                                className="absolute flex items-center justify-center"
+                                style={{
+                                    bottom: 14, right: 14, width: 36, height: 36,
+                                    borderRadius: '50%',
+                                    background: 'rgba(14,14,28,0.88)',
+                                    boxShadow: '0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.10)',
+                                    border: '1.5px solid rgba(255,255,255,0.14)',
+                                    cursor: 'pointer',
+                                    zIndex: 20,
+                                }}
+                                title="แก้ไขข้อมูลพนักงาน"
+                            >
+                                <Pen size={14} className="text-white/70" />
+                            </motion.button>
+                        )}
                     </motion.div>
                 );
             })}
@@ -946,8 +992,14 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             canManage={canManage}
                             togglingStatus={togglingStatus}
                             customers={customers}
+                            currentUser={currentUser}
+                            onEditDirect={(targetEmp) => {
+                                const idx = filtered.findIndex(e => e.id === targetEmp.id);
+                                if (idx >= 0) setActiveIndex(idx);
+                                setEditForm({ ...targetEmp });
+                                setIsEditing(true);
+                            }}
                             onOpenDetail={(targetEmp) => {
-                                // sync active card then scroll to detail panel
                                 const idx = filtered.findIndex(e => e.id === targetEmp.id);
                                 if (idx >= 0) setActiveIndex(idx);
                                 setTimeout(() => {
@@ -1139,20 +1191,44 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 { key: 'firstName', label: 'ชื่อ' },
                                 { key: 'lastName', label: 'นามสกุล' },
                                 { key: 'nickName', label: 'ชื่อเล่น' },
+                                { key: 'agentCode', label: 'Agent Code (3-4 ตัวอักษร)' },
                                 { key: 'email', label: 'Email' },
                                 { key: 'phone', label: 'โทรศัพท์' },
-                                { key: 'department', label: 'แผนก' },
                             ].map(({ key, label }) => (
                                 <div key={key}>
                                     <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">{label}</label>
                                     <input
                                         type="text"
                                         value={editForm[key] || ''}
-                                        onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                                        onChange={e => setEditForm(f => ({ ...f, [key]: key === 'agentCode' ? e.target.value.toUpperCase().replace(/[^A-Z]/g, '') : e.target.value }))}
+                                        maxLength={key === 'agentCode' ? 4 : undefined}
+                                        className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
                                     />
                                 </div>
                             ))}
+                            {/* Department select (edit) */}
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก / ตำแหน่ง</label>
+                                <select
+                                    value={editForm.department || ''}
+                                    onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))}
+                                    className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                                >
+                                    <option value="">-- เลือกแผนก --</option>
+                                    <option value="marketing">Marketing (MKT)</option>
+                                    <option value="management">Management (MGT)</option>
+                                    <option value="purchasing">Purchasing (PD)</option>
+                                    <option value="sales">Sales (SLS)</option>
+                                    <option value="assistant manager">Assistant Manager (AM)</option>
+                                    <option value="admin">Admin (ADM)</option>
+                                    <option value="graphic design">Graphic Design (GD)</option>
+                                    <option value="computer graphic">Computer Graphic (CG)</option>
+                                    <option value="multimedia">Multimedia (MM)</option>
+                                    <option value="motion graphic">Motion Graphic (MGFX)</option>
+                                    <option value="editor">Editor (ED)</option>
+                                    <option value="content creator">Content Creator (CC)</option>
+                                </select>
+                            </div>
 
                             {/* Facebook fields */}
                             <div className="border-t border-white/8 pt-4">
