@@ -393,34 +393,34 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </>
                         )}
 
-                        {/* ── FAB button — sits in the folder notch (top-right) ── */}
+                        {/* ── FAB button — floats in concave arc top-right (partially outside card) ── */}
                         <motion.button
                             onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
-                            whileHover={{ scale: 1.12 }}
+                            whileHover={{ scale: 1.10 }}
                             whileTap={{ scale: 0.92 }}
                             className="absolute flex items-center justify-center z-20"
                             style={{
-                                top: 44, right: 20, width: 42, height: 42,
+                                top: -8, right: -20, width: 72, height: 72,
                                 borderRadius: '50%',
-                                background: `radial-gradient(circle at 35% 35%, ${avatarColors[0]}cc, ${avatarColors[1]}ee)`,
-                                boxShadow: `0 4px 16px ${avatarColors[0]}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
-                                border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(14,14,20,0.96)',
+                                boxShadow: `0 6px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)`,
+                                border: '1.5px solid rgba(255,255,255,0.12)',
                                 cursor: 'pointer',
                             }}
                             title="เปิด Full Dashboard"
                         >
-                            <ArrowUpRight size={16} className="text-white" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+                            <ArrowUpRight size={22} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
                         </motion.button>
 
                         {/* ── Glass card (SVG folder shape — responsive) ───── */}
                         <div className="h-full relative"
                             style={{ zIndex: 1, filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none' }}>
 
-                            {/* SVG layer: folder shape + glass fills + border + sheen */}
-                            {/* viewBox 372×372 (A:372 B:372), preserveAspectRatio=none → scales responsively */}
-                            {/* Path: 3 Q-bezier rounded corners (R=28) + 1 folder tab cut top-right        */}
-                            {/*   top-right: folder tab  (C:322,0) → (372,D:100) — diagonal straight        */}
-                            {/*   top-left / bottom-left / bottom-right: Q bezier radius 28                 */}
+                            {/* SVG layer: concave-arc shape + glass fills + border + sheen              */}
+                            {/* viewBox 372×372, preserveAspectRatio=none → scales responsively            */}
+                            {/* Path: 3 Q-bezier rounded corners (R=42) + 1 concave arc top-right          */}
+                            {/*   top-right: A 110 110 0 0 1 372 130 — CW sweep = concave bite at top-right */}
+                            {/*   top-left / bottom-left / bottom-right: Q bezier radius 42                 */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none"
                                 viewBox="0 0 372 372" preserveAspectRatio="none"
                                 xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
@@ -437,31 +437,31 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 </defs>
 
                                 {/* ① Dark glass base fill — opacity 0.92 */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
+                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
                                     fill="rgba(10,10,22,0.92)" />
                                 {/* ② Role-color tint */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
+                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
                                     fill={`url(#gf-${i})`} />
                                 {/* ③ Soft outer glow (active only) */}
                                 {isActive && (
-                                    <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
+                                    <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
                                         fill="none"
                                         stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.18"
                                         strokeLinejoin="round" />
                                 )}
                                 {/* ④ Border line */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z"
+                                <path d="M 42 0 L 270 0 A 110 110 0 0 1 372 130 L 372 330 Q 372 372 330 372 L 42 372 Q 0 372 0 330 L 0 42 Q 0 0 42 0 Z"
                                     fill="none"
                                     stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.10)'}
                                     strokeWidth={isActive ? '1.2' : '0.8'}
                                     strokeOpacity={isActive ? '0.55' : '1'}
                                     strokeLinejoin="round" />
                                 {/* ⑤ Glass sheen (top-left triangle) */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 150 L 260 0 Z"
+                                <path d="M 42 0 Q 0 0 0 42 L 0 150 L 220 0 Z"
                                     fill={`url(#gs-${i})`} />
-                                {/* ⑥ Tab edge shimmer only (top-right folder tab) */}
-                                <line x1="323" y1="1" x2="371" y2="99"
-                                    stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
+                                {/* ⑥ Concave arc edge shimmer (top-right curve) */}
+                                <path d="M 272 0 A 110 110 0 0 1 372 132"
+                                    fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
                             </svg>
 
                             {/* Content sits on top of SVG */}
