@@ -27,6 +27,7 @@ import {
     Facebook,
     BadgeCheck,
     Lock,
+    ArrowUpRight,
 } from 'lucide-react';
 import PermissionMatrix from './PermissionMatrix';
 import { can } from '@/lib/permissionMatrix';
@@ -44,6 +45,18 @@ const ROLE_META = {
 };
 
 const ALL_ROLES = ['DEVELOPER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOYEE','AGENT','GUEST'];
+
+// Avatar gradient colors (for card dark-bg design)
+const ROLE_AVATAR = {
+    DEVELOPER: ['#7c3aed','#4c1d95'],
+    MANAGER:   ['#2563eb','#1e3a8a'],
+    ADMIN:     ['#C9A34E','#92400e'],
+    MARKETING: ['#db2777','#831843'],
+    HEAD_CHEF: ['#f97316','#9a3412'],
+    EMPLOYEE:  ['#14b8a6','#134e4a'],
+    AGENT:     ['#ef4444','#7f1d1d'],
+    GUEST:     ['#64748b','#1e293b'],
+};
 
 function getRoleMeta(role) {
     return ROLE_META[role] || ROLE_META.GUEST;
@@ -191,6 +204,18 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                 const animate  = getAnimate(offset);
                 const isInactive = emp.status === 'INACTIVE';
 
+                const avatarColors = ROLE_AVATAR[emp.role] || ROLE_AVATAR.GUEST;
+                const contactItems = [
+                    emp.phone        && { icon: Phone,    label: emp.phone },
+                    emp.email        && { icon: Mail,     label: 'Email' },
+                    emp.facebookName && { icon: Facebook, label: emp.facebookName },
+                ].filter(Boolean);
+
+                // Status dots: ACTIVE = full rainbow, INACTIVE = all grey
+                const dotColors = isInactive
+                    ? ['#2a2a35','#2a2a35','#2a2a35','#2a2a35','#2a2a35']
+                    : ['#f472b6','#fb923c','#fbbf24','#86efac','#4ade80'];
+
                 return (
                     <motion.div
                         key={emp.id}
@@ -199,91 +224,112 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         transition={{ type: 'spring', stiffness: 340, damping: 30 }}
                         drag={isActive ? 'x' : false}
                         dragConstraints={{ left: 0, right: 0 }}
-                        dragElastic={0.2}
+                        dragElastic={0.18}
                         onDragEnd={(_, info) => {
                             if (info.offset.x < -55) onNext();
                             else if (info.offset.x > 55) onPrev();
                         }}
-                        whileDrag={{ scale: 1.04, boxShadow: '0 35px 70px rgba(0,0,0,0.6)' }}
+                        whileDrag={{ scale: 1.03, boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}
                         style={{
                             position: 'absolute',
                             width: '100%',
                             height: 300,
                             cursor: isActive ? 'grab' : 'default',
-                            transformOrigin: '50% 50%',
+                            transformOrigin: '50% 110%',
                             pointerEvents: isActive ? 'auto' : 'none',
-                            filter: (!isActive && isInactive) ? 'grayscale(0.5)' : 'none',
                         }}
                     >
-                        {/* ── Folder card ───────────────────────────── */}
+                        {/* ── Dark card matching reference design ───── */}
                         <div
-                            className={`h-full flex flex-col rounded-[1.75rem] overflow-hidden ${isInactive && isActive ? 'opacity-70 grayscale' : ''}`}
+                            className="h-full rounded-[2rem] flex flex-col p-6"
                             style={{
+                                background: '#0e0e18',
                                 boxShadow: isActive
-                                    ? '0 28px 56px rgba(0,0,0,0.55), 0 6px 18px rgba(0,0,0,0.3)'
-                                    : '0 6px 18px rgba(0,0,0,0.3)',
+                                    ? '0 32px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4)'
+                                    : '0 8px 20px rgba(0,0,0,0.35)',
+                                border: isActive
+                                    ? '1px solid rgba(255,255,255,0.09)'
+                                    : '1px solid rgba(255,255,255,0.04)',
+                                filter: isInactive ? 'grayscale(0.5) brightness(0.75)' : 'none',
                             }}
                         >
-                            {/* ── Folder tab (top strip) ──────────────── */}
-                            <div className={`bg-gradient-to-r ${meta.bg} relative shrink-0`}>
-                                <div className="absolute inset-0 bg-black/30" />
-                                <div className="relative z-10 px-5 py-2.5 flex items-center justify-between border-b border-white/10">
-                                    <div className="flex items-center gap-2">
-                                        <IdCard size={10} className="text-white/40 shrink-0" />
-                                        <span className="text-white/70 text-[9px] font-mono tracking-[0.2em] font-bold">
-                                            {emp.employeeId}
-                                        </span>
-                                    </div>
-                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${meta.badge}`}>
-                                        {meta.label} · {meta.level}
-                                    </span>
+                            {/* ── TOP ROW: avatar left · arrow btn right ── */}
+                            <div className="flex items-start justify-between">
+                                {/* Circular avatar */}
+                                <div
+                                    className="w-[60px] h-[60px] rounded-full overflow-hidden flex items-center justify-center ring-[2px] ring-white/10 shrink-0 shadow-lg"
+                                    style={{ background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})` }}
+                                >
+                                    {emp.profilePicture
+                                        ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
+                                        : <span className="text-white font-black text-2xl select-none leading-none">{(emp.firstName || 'E').charAt(0)}</span>
+                                    }
+                                </div>
+                                {/* Arrow button — top right */}
+                                <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                                    style={{ background: '#1a1a28', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <ArrowUpRight size={16} className="text-white/50" />
                                 </div>
                             </div>
 
-                            {/* ── Card body ───────────────────────────── */}
-                            <div className={`flex-1 bg-gradient-to-br ${meta.bg} relative overflow-hidden`}>
-                                {/* Subtle paper noise */}
-                                <div className="absolute inset-0 opacity-[0.045]"
-                                    style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
-                                />
-                                {/* Shine line at the top */}
-                                <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
+                            {/* ── NAME BLOCK ── */}
+                            <div className="mt-4 flex-1 min-w-0">
+                                <h2 className="text-white font-bold text-[1.6rem] leading-tight tracking-tight truncate">
+                                    {emp.firstName} {emp.lastName}
+                                </h2>
+                                <p className="text-white/40 text-[13px] mt-1 truncate">
+                                    {meta.label}{emp.department ? ` · ${emp.department}` : ''}
+                                    {emp.nickName ? ` · "${emp.nickName}"` : ''}
+                                </p>
+                            </div>
 
-                                <div className="relative z-10 px-6 py-5 h-full flex flex-col justify-between">
-                                    {/* Avatar + Name */}
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/25 overflow-hidden flex items-center justify-center shadow-lg shrink-0">
-                                            {emp.profilePicture
-                                                ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
-                                                : <span className="text-white font-black text-xl select-none">{(emp.firstName || 'E').charAt(0)}</span>
-                                            }
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h2 className="text-white font-black text-lg leading-tight truncate tracking-tight">
-                                                {emp.firstName} {emp.lastName}
-                                            </h2>
-                                            {emp.nickName && (
-                                                <p className="text-white/55 text-xs font-semibold">"{emp.nickName}"</p>
-                                            )}
-                                            <p className="text-white/40 text-[9px] uppercase tracking-[0.18em] mt-0.5 truncate">
-                                                {emp.department || '—'}
-                                            </p>
-                                        </div>
+                            {/* ── BOTTOM ROW: contacts left · status dots right ── */}
+                            <div className="flex items-end justify-between gap-3 mt-auto pt-3">
+                                {/* Contact pills */}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold mb-2">Contact</p>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {contactItems.length > 0 ? contactItems.map(({ icon: Ic, label }, idx) => (
+                                            <span key={idx} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/65 text-[10px] font-semibold shrink-0"
+                                                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}>
+                                                <Ic size={9} className="shrink-0" />{label}
+                                            </span>
+                                        )) : (
+                                            <span className="text-white/20 text-[10px]">—</span>
+                                        )}
                                     </div>
+                                </div>
 
-                                    {/* Bottom: email + status toggle */}
-                                    <div className="flex items-end justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className="text-white/30 text-[8px] uppercase tracking-widest mb-0.5">Email</p>
-                                            <p className="text-white/70 text-[10px] font-mono truncate max-w-[150px]">{emp.email || '—'}</p>
-                                        </div>
-                                        <StatusToggle
-                                            status={emp.status || 'ACTIVE'}
-                                            onChange={(s) => onStatusToggle && onStatusToggle(emp, s)}
-                                            disabled={!canManage || togglingStatus}
-                                            onCard
-                                        />
-                                    </div>
+                                {/* Status dots */}
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">
+                                        {isInactive ? 'Inactive' : 'Active'}
+                                    </p>
+                                    <motion.button
+                                        whileTap={(!canManage || togglingStatus) ? {} : { scale: 0.9 }}
+                                        onClick={() => {
+                                            if (!canManage || togglingStatus) return;
+                                            onStatusToggle && onStatusToggle(emp, isInactive ? 'ACTIVE' : 'INACTIVE');
+                                        }}
+                                        disabled={!canManage || togglingStatus}
+                                        title={canManage ? (isInactive ? 'คลิกเพื่อ Activate' : 'คลิกเพื่อ Deactivate') : 'ไม่มีสิทธิ์'}
+                                        className="flex items-center gap-[5px] px-3 py-[7px] rounded-full"
+                                        style={{
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'rgba(255,255,255,0.04)',
+                                            cursor: canManage ? 'pointer' : 'default',
+                                        }}
+                                    >
+                                        {dotColors.map((color, idx) => (
+                                            <motion.span
+                                                key={idx}
+                                                animate={{ backgroundColor: color }}
+                                                transition={{ duration: 0.4, delay: idx * 0.04 }}
+                                                style={{ backgroundColor: color }}
+                                                className="w-[14px] h-[14px] rounded-full block"
+                                            />
+                                        ))}
+                                    </motion.button>
                                 </div>
                             </div>
                         </div>
@@ -629,12 +675,6 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="text-white font-black text-sm uppercase tracking-widest">Profile</h3>
                                         <div className="flex items-center gap-3">
-                                            {/* Status toggle — canManage only */}
-                                            <StatusToggle
-                                                status={emp.status || 'ACTIVE'}
-                                                onChange={(newStatus) => handleStatusToggle(emp, newStatus)}
-                                                disabled={!canManage || togglingStatus}
-                                            />
                                             {/* Edit button — canManage only */}
                                             {canManage && (
                                                 <button
