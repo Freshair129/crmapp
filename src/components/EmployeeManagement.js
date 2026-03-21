@@ -419,6 +419,16 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 background: 'linear-gradient(135deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)',
                                 borderTopLeftRadius: 32,
                             }} />
+                            {/* ③ Linear shimmer sweep — Framer Motion */}
+                            <motion.div
+                                className="absolute inset-0 pointer-events-none"
+                                style={{
+                                    background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.13) 50%, transparent 65%)',
+                                    borderRadius: 'inherit',
+                                }}
+                                animate={{ x: ['-110%', '210%'] }}
+                                transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 3.5 }}
+                            />
 
                             {/* Content sits on top */}
                             <div className="relative flex flex-col h-full p-6" style={{ zIndex: 1 }}>
@@ -518,34 +528,24 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </div>{/* ── close inner content div ── */}
                         </div>{/* ── close glass card div ── */}
 
-                        {/* ── Pseudo-concave mask: circle same color as page bg ── */}
-                        {/* Center aligns with FAB center → card corner looks "bitten off" */}
-                        <div className="absolute pointer-events-none" style={{
-                            top: -34, right: -40,
-                            width: 120, height: 120,
-                            borderRadius: '50%',
-                            background: '#0A1A2F',
-                            zIndex: 15,
-                        }} />
-
-                        {/* ── FAB button — floats in pseudo-concave area (top-right) ── */}
+                        {/* ── FAB button — inside card, top-right corner ── */}
                         <motion.button
                             onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
                             whileHover={{ scale: 1.10 }}
                             whileTap={{ scale: 0.92 }}
                             className="absolute flex items-center justify-center"
                             style={{
-                                top: -10, right: -16, width: 72, height: 72,
+                                top: 14, right: 14, width: 44, height: 44,
                                 borderRadius: '50%',
-                                background: 'rgba(14,14,20,0.96)',
-                                boxShadow: `0 6px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)`,
-                                border: '1.5px solid rgba(255,255,255,0.12)',
+                                background: `radial-gradient(circle at 38% 35%, ${avatarColors[0]}55, rgba(14,14,28,0.88))`,
+                                boxShadow: `0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15), 0 0 12px ${avatarColors[0]}33`,
+                                border: `1.5px solid ${avatarColors[0]}50`,
                                 cursor: 'pointer',
                                 zIndex: 20,
                             }}
                             title="เปิด Full Dashboard"
                         >
-                            <ArrowUpRight size={22} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
+                            <ArrowUpRight size={18} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
                         </motion.button>
                     </motion.div>
                 );
