@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
@@ -350,17 +350,91 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
     );
 }
 
-// ─── Dot Pagination ───────────────────────────────────────────────────────────
-function DotPager({ count, active, onSelect }) {
+// ─── Thumbnail Strip Carousel (centered wheel) ───────────────────────────────
+function ThumbnailStrip({ employees, activeIndex, onSelect }) {
+    const ITEM_W  = 52;
+    const GAP     = 14;
+    const STRIDE  = ITEM_W + GAP;
+
+    const containerRef = useRef(null);
+    const [containerW, setContainerW] = useState(0);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const ro = new ResizeObserver(entries => {
+            setContainerW(entries[0].contentRect.width);
+        });
+        ro.observe(containerRef.current);
+        return () => ro.disconnect();
+    }, []);
+
+    // x offset that keeps activeIndex centered in container
+    const offsetX = containerW / 2 - activeIndex * STRIDE - ITEM_W / 2;
+
     return (
-        <div className="flex items-center justify-center gap-2 mt-6">
-            {Array.from({ length: count }).map((_, i) => (
-                <button key={i} onClick={() => onSelect(i)}
-                    className={`rounded-full transition-all duration-300 ${i === active
-                        ? 'w-6 h-2 bg-[#C9A34E]'
-                        : 'w-2 h-2 bg-white/20 hover:bg-white/40'}`}
-                />
-            ))}
+        <div ref={containerRef} className="relative overflow-hidden mt-5" style={{ height: 70 }}>
+            {/* Left fade mask */}
+            <div className="absolute inset-y-0 left-0 w-14 z-10 pointer-events-none"
+                style={{ background: 'linear-gradient(to right, #0A1A2F 30%, transparent)' }} />
+            {/* Right fade mask */}
+            <div className="absolute inset-y-0 right-0 w-14 z-10 pointer-events-none"
+                style={{ background: 'linear-gradient(to left, #0A1A2F 30%, transparent)' }} />
+
+            {/* Center highlight ring */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[26px] w-[52px] h-[52px] rounded-full pointer-events-none z-0"
+                style={{ border: '1.5px solid rgba(201,163,78,0.35)', boxShadow: '0 0 12px rgba(201,163,78,0.15)' }} />
+
+            {/* Animated row */}
+            <motion.div
+                className="absolute flex items-center"
+                style={{ gap: GAP, top: 0, bottom: 0, left: 0 }}
+                animate={{ x: containerW ? offsetX : 0 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+            >
+                {employees.map((e, i) => {
+                    const dist       = Math.abs(i - activeIndex);
+                    const isActive   = dist === 0;
+                    const avatarColors = ROLE_AVATAR[e.role] || ROLE_AVATAR.GUEST;
+                    const isInactive = e.status === 'INACTIVE';
+
+                    return (
+                        <motion.button
+                            key={e.id}
+                            onClick={() => onSelect(i)}
+                            animate={{
+                                scale:   isActive ? 1.12 : Math.max(0.58, 1 - dist * 0.15),
+                                opacity: Math.max(0.08, 1 - dist * 0.27),
+                            }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                            className="flex-shrink-0 flex flex-col items-center gap-1 focus:outline-none"
+                            style={{ width: ITEM_W }}
+                        >
+                            <div
+                                className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-black text-sm"
+                                style={{
+                                    background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})`,
+                                    border: isActive ? '2px solid rgba(255,255,255,0.35)' : '2px solid transparent',
+                                    boxShadow: isActive ? `0 0 14px ${avatarColors[0]}66` : 'none',
+                                    filter: isInactive ? 'grayscale(0.7)' : 'none',
+                                }}
+                            >
+                                {e.profilePicture
+                                    ? <img src={e.profilePicture} alt="" className="w-full h-full object-cover" />
+                                    : (e.firstName || 'E').charAt(0)
+                                }
+                            </div>
+                            <motion.span
+                                animate={{ opacity: isActive ? 1 : 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="text-[9px] text-white/65 font-bold whitespace-nowrap truncate text-center"
+                                style={{ maxWidth: ITEM_W }}
+                            >
+                                {e.nickName || e.firstName}
+                            </motion.span>
+                        </motion.button>
+                    );
+                })}
+            </motion.div>
         </div>
     );
 }
@@ -615,27 +689,13 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             canManage={canManage}
                             togglingStatus={togglingStatus}
                         />
-                        <DotPager count={filtered.length} active={safeIndex} onSelect={setActiveIndex} />
                     </div>
 
-                    {/* Thumbnail strip */}
-                    <div className="flex gap-3 mt-6 overflow-x-auto pb-2 px-2 custom-scrollbar">
-                        {filtered.map((e, i) => {
-                            const meta = getRoleMeta(e.role);
-                            const isInactive = e.status === 'INACTIVE';
-                            return (
-                                <button key={e.employeeId} onClick={() => setActiveIndex(i)}
-                                    className={`flex-shrink-0 flex flex-col items-center gap-1.5 transition-all ${i === safeIndex ? 'opacity-100 scale-105' : 'opacity-40 hover:opacity-70'}`}>
-                                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${meta.bg} flex items-center justify-center text-white font-black text-sm border-2 ${i === safeIndex ? 'border-white/50' : 'border-transparent'} shadow-lg ${isInactive ? 'grayscale opacity-70' : ''}`}>
-                                        {e.profilePicture
-                                            ? <img src={e.profilePicture} alt="" className="w-full h-full object-cover rounded-2xl" />
-                                            : (e.firstName || 'E').charAt(0)}
-                                    </div>
-                                    <span className="text-[9px] text-white/60 font-bold">{e.nickName || e.firstName}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
+                    <ThumbnailStrip
+                        employees={filtered}
+                        activeIndex={safeIndex}
+                        onSelect={setActiveIndex}
+                    />
                 </div>
 
                 {/* RIGHT — Dashboard */}
