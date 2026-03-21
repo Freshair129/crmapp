@@ -235,13 +235,16 @@ model ChatEpisode {
 
 model Employee {
   id           String    @id @default(uuid())
-  employeeId   String    @unique @map("employee_id") // HR standard code, e.g. TVS-MKT-001
+  employeeId   String    @unique @map("employee_id") // HR standard code, e.g. TVS-EMP-MKT-001
+  agentId      String?   @unique @map("agent_id")    // Agent code, e.g. AGT-HM-2603-001
+  agentCode    String?   @unique @map("agent_code")  // 3-4 letter IATA-style code, e.g. AOI, FAH
   firstName    String    @map("first_name")
   lastName     String    @map("last_name")
   nickName     String?   @map("nick_name")
   email        String    @unique
   phone        String?
   department   String?
+  jobTitle     String?   @map("job_title") // ตำแหน่งงาน เช่น "Pastry Chef", "Marketing Officer"
   passwordHash String    @map("password_hash")
   role         String    @default("AGENT") // ADR-026: Developer|Manager|Supervisor|Admin|Agent|Guest
   status       String    @default("ACTIVE")
@@ -267,6 +270,18 @@ model Employee {
   assignedAssets           Asset[]            @relation("AssetAssignee")
   packageEnrollmentsSold   PackageEnrollment[] @relation("PackageEnrollmentSeller")
   pushSubscriptions        PushSubscription[]
+  stockMovements           StockMovement[]    @relation("StockPerformer")
+  stockCounts              StockCount[]       @relation("StockCounter")
+  stockCountApprovals      StockCount[]       @relation("StockApprover")
+  purchaseOrdersCreated    PurchaseOrderV2[]  @relation("POCreator")
+  poApprovalsV2            POApproval[]       @relation("POApproverV2")
+  poAcceptances            POAcceptance[]     @relation("POPurchaser")
+  grnsReceived             GoodsReceivedNote[] @relation("GRNReceiver")
+  poReturns                POReturn[]         @relation("POReturner")
+  poIssuesReported         POIssue[]          @relation("IssueReporter")
+  advancesPaid             Advance[]          @relation("AdvancePayer")
+  advancesApproved         Advance[]          @relation("AdvanceApprover")
+  advancesReimbursed       Advance[]          @relation("AdvanceReimburser")
 
   @@index([status])
   @@index([department])
@@ -322,6 +337,10 @@ model Product {
   courseEquipment           CourseEquipment[]
   packageCourses            PackageCourse[]
   packageEnrollmentCourses  PackageEnrollmentCourse[]
+  warehouseStocks           WarehouseStock[]
+  stockMovements            StockMovement[]
+  stockCountItems           StockCountItem[]
+  barcodes                  ProductBarcode[]
 
   @@index([category])
   @@index([isActive])
@@ -1214,4 +1233,387 @@ model PushSubscription {
 
   @@index([employeeId])
   @@map("push_subscriptions")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Inventory Control & Distribution
+// ─────────────────────────────────────────────
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  warehouseId String   @unique @map("warehouse_id")  // WH-[CODE]
+  name        String                                   // "สำนักงานใหญ่", "คลัง BKK2"
+  code        String   @unique                         // HQ, BKK2
+  address     String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  stockLevels   WarehouseStock[]
+  movementsFrom StockMovement[]  @relation("MovementFrom")
+  movementsTo   StockMovement[]  @relation("MovementTo")
+  stockCounts   StockCount[]
+
+  @@map("warehouses")
+}
+
+model WarehouseStock {
+  id          String    @id @default(uuid())
+  warehouseId String    @map("warehouse_id")
+  productId   String    @map("product_id")
+  quantity    Float     @default(0)
+  minStock    Float     @default(0)  @map("min_stock")
+  maxStock    Float?    @map("max_stock")
+  lastCountAt DateTime? @map("last_count_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([warehouseId, productId])
+  @@index([productId])
+  @@map("warehouse_stocks")
+}
+
+model StockMovement {
+  id              String    @id @default(uuid())
+  movementId      String    @unique @map("movement_id")   // MOV-YYYYMMDD-NNN
+  type            String                                    // RECEIVE | ISSUE | TRANSFER | ADJUSTMENT | RETURN
+  productId       String    @map("product_id")
+  fromWarehouseId String?   @map("from_warehouse_id")
+  toWarehouseId   String?   @map("to_warehouse_id")
+  quantity        Float
+  unitCost        Float?    @map("unit_cost")
+  reason          String?                                   // SALE | DAMAGE | EXPIRED | GIFT | CLASS_USE | COUNT_ADJUST
+  referenceId     String?   @map("reference_id")           // orderId, scheduleId, stockCountId
+  referenceType   String?   @map("reference_type")         // ORDER | SCHEDULE | STOCK_COUNT
+  barcodeScanned  String?   @map("barcode_scanned")
+  notes           String?
+  performedById   String?   @map("performed_by_id")
+  performedAt     DateTime  @default(now()) @map("performed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  product       Product    @relation(fields: [productId], references: [id])
+  fromWarehouse Warehouse? @relation("MovementFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouse   Warehouse? @relation("MovementTo", fields: [toWarehouseId], references: [id])
+  performedBy   Employee?  @relation("StockPerformer", fields: [performedById], references: [id])
+
+  @@index([productId])
+  @@index([type])
+  @@index([performedAt])
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+  @@map("stock_movements")
+}
+
+model StockCount {
+  id           String    @id @default(uuid())
+  countId      String    @unique @map("count_id")   // CNT-YYYYMMDD-NNN
+  warehouseId  String    @map("warehouse_id")
+  status       String    @default("IN_PROGRESS")     // IN_PROGRESS | COMPLETED | CANCELLED
+  countedById  String?   @map("counted_by_id")
+  approvedById String?   @map("approved_by_id")
+  notes        String?
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  warehouse  Warehouse       @relation(fields: [warehouseId], references: [id])
+  countedBy  Employee?       @relation("StockCounter", fields: [countedById], references: [id])
+  approvedBy Employee?       @relation("StockApprover", fields: [approvedById], references: [id])
+  items      StockCountItem[]
+
+  @@index([warehouseId])
+  @@index([status])
+  @@map("stock_counts")
+}
+
+model StockCountItem {
+  id           String  @id @default(uuid())
+  stockCountId String  @map("stock_count_id")
+  productId    String  @map("product_id")
+  systemQty    Float   @map("system_qty")
+  physicalQty  Float   @map("physical_qty")
+  variance     Float                            // physicalQty - systemQty
+  notes        String?
+
+  stockCount StockCount @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id])
+
+  @@unique([stockCountId, productId])
+  @@map("stock_count_items")
+}
+
+model ProductBarcode {
+  id        String   @id @default(uuid())
+  productId String   @map("product_id")
+  barcode   String   @unique
+  type      String   @default("EAN13")   // EAN13 | UPC | QR | CUSTOM
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@map("product_barcodes")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Procurement (PO Lifecycle)
+// ─────────────────────────────────────────────
+
+model Supplier {
+  id          String   @id @default(uuid())
+  supplierId  String   @unique @map("supplier_id")   // SUP-NNN
+  name        String
+  contactName String?  @map("contact_name")
+  phone       String?
+  email       String?
+  address     String?
+  taxId       String?  @map("tax_id")
+  bankAccount String?  @map("bank_account")
+  notes       String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  purchaseOrders    PurchaseOrderV2[]
+  goodsReceivedNotes GoodsReceivedNote[]
+  returns           POReturn[]
+  creditNotes       CreditNote[]
+  trackings         POTracking[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrderV2 {
+  id          String   @id @default(uuid())
+  poId        String   @unique @map("po_id")          // PO-YYYYMMDD-NNN
+  classId     String?  @map("class_id")                // CLS-YYYYMM-NNN reference
+  supplierId  String?  @map("supplier_id")
+  status      String   @default("DRAFT")               // DRAFT|REQUEST_REVIEW|APPROVED|REJECTED|ORDERING|ORDERED|RECEIVING|RECEIVED|PARTIAL|CLOSED|ISSUE
+  totalAmount Float?   @map("total_amount")
+  currency    String   @default("THB")
+  notes       String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  supplier    Supplier?    @relation(fields: [supplierId], references: [id])
+  createdBy   Employee?    @relation("POCreator", fields: [createdById], references: [id])
+  items       POItem[]
+  approvals   POApproval[]
+  acceptance  POAcceptance?
+  trackings   POTracking[]
+  grns        GoodsReceivedNote[]
+  returns     POReturn[]
+  creditNotes CreditNote[]
+  issues      POIssue[]
+  advances    Advance[]
+
+  @@index([status])
+  @@index([classId])
+  @@index([supplierId])
+  @@map("purchase_orders_v2")
+}
+
+model POItem {
+  id           String  @id @default(uuid())
+  poId         String  @map("po_id")
+  ingredientId String? @map("ingredient_id")
+  productId    String? @map("product_id")
+  description  String
+  quantity     Float
+  unit         String?
+  unitPrice    Float?  @map("unit_price")
+  totalPrice   Float?  @map("total_price")
+  notes        String?
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id], onDelete: Cascade)
+
+  @@map("po_items")
+}
+
+model POApproval {
+  id          String   @id @default(uuid())
+  approvalId  String   @unique @map("approval_id")   // APV-YYYYMMDD-NNN
+  poId        String   @map("po_id")
+  action      String                                   // APPROVED | REJECTED
+  approverId  String   @map("approver_id")            // Chef who approves
+  reason      String?                                  // rejection reason or approval note
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  approver      Employee        @relation("POApproverV2", fields: [approverId], references: [id])
+
+  @@index([poId])
+  @@map("po_approvals")
+}
+
+model POAcceptance {
+  id                   String   @id @default(uuid())
+  acceptanceId         String   @unique @map("acceptance_id")   // ACC-YYYYMMDD-NNN
+  poId                 String   @unique @map("po_id")
+  purchaserId          String   @map("purchaser_id")            // ฝ่ายจัดซื้อ
+  orderDate            DateTime @map("order_date")
+  expectedDeliveryDate DateTime @map("expected_delivery_date")
+  actualOrderRef       String?  @map("actual_order_ref")        // เลข invoice/ref จาก supplier
+  notes                String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  purchaser     Employee        @relation("POPurchaser", fields: [purchaserId], references: [id])
+
+  @@map("po_acceptances")
+}
+
+model POTracking {
+  id               String    @id @default(uuid())
+  trackingId       String    @unique @map("tracking_id")   // TRK-YYYYMMDD-NNN
+  poId             String    @map("po_id")
+  supplierId       String?   @map("supplier_id")
+  carrier          String?                                   // Kerry, Flash, ไปรษณีย์, รถส่วนตัว
+  trackingNumber   String?   @map("tracking_number")        // เลข tracking จริงจากขนส่ง
+  status           String    @default("PREPARING")           // PREPARING|SHIPPED|IN_TRANSIT|DELIVERED
+  estimatedDate    DateTime? @map("estimated_date")
+  actualDate       DateTime? @map("actual_date")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+
+  @@index([poId])
+  @@map("po_trackings")
+}
+
+model GoodsReceivedNote {
+  id           String    @id @default(uuid())
+  grnId        String    @unique @map("grn_id")       // GRN-YYYYMMDD-NNN
+  poId         String    @map("po_id")
+  supplierId   String?   @map("supplier_id")
+  isPartial    Boolean   @default(false) @map("is_partial")
+  receivedById String    @map("received_by_id")
+  receivedAt   DateTime  @default(now()) @map("received_at")
+  notes        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  receivedBy    Employee        @relation("GRNReceiver", fields: [receivedById], references: [id])
+  items         GRNItem[]
+
+  @@index([poId])
+  @@map("goods_received_notes")
+}
+
+model GRNItem {
+  id            String  @id @default(uuid())
+  grnId         String  @map("grn_id")
+  ingredientId  String? @map("ingredient_id")
+  productId     String? @map("product_id")
+  description   String
+  orderedQty    Float   @map("ordered_qty")
+  receivedQty   Float   @map("received_qty")
+  unit          String?
+  lotId         String? @map("lot_id")          // LOT-YYYYMMDD-NNN created on receive
+  expiresAt     DateTime? @map("expires_at")
+  notes         String?
+
+  grn GoodsReceivedNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
+
+  @@map("grn_items")
+}
+
+model POReturn {
+  id          String   @id @default(uuid())
+  returnId    String   @unique @map("return_id")     // RTN-YYYYMMDD-NNN
+  poId        String   @map("po_id")
+  supplierId  String?  @map("supplier_id")
+  reason      String                                   // WRONG_ITEM|DAMAGED|EXPIRED|QUALITY_ISSUE
+  items       Json     @default("[]")                  // [{ description, qty, unit }]
+  returnedById String  @map("returned_by_id")
+  status      String   @default("PENDING")             // PENDING|SHIPPED|RECEIVED_BY_SUPPLIER|RESOLVED
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  returnedBy    Employee        @relation("POReturner", fields: [returnedById], references: [id])
+  creditNotes   CreditNote[]
+
+  @@index([poId])
+  @@map("po_returns")
+}
+
+model CreditNote {
+  id            String   @id @default(uuid())
+  creditNoteId  String   @unique @map("credit_note_id")   // CN-YYYYMMDD-NNN
+  poId          String   @map("po_id")
+  supplierId    String?  @map("supplier_id")
+  returnId      String?  @map("return_id")                 // linked POReturn if applicable
+  amount        Float
+  currency      String   @default("THB")
+  reason        String?
+  status        String   @default("PENDING")               // PENDING|APPROVED|RECEIVED|CANCELLED
+  receivedAt    DateTime? @map("received_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  linkedReturn  POReturn?       @relation(fields: [returnId], references: [id])
+
+  @@index([poId])
+  @@map("credit_notes")
+}
+
+model POIssue {
+  id          String   @id @default(uuid())
+  issueId     String   @unique @map("issue_id")     // ISS-YYYYMMDD-NNN
+  poId        String   @map("po_id")
+  issueType   String   @map("issue_type")            // OUT_OF_STOCK|WRONG_ITEM|PRICE_CHANGE|LATE_DELIVERY|QUALITY_ISSUE
+  description String
+  severity    String   @default("MEDIUM")             // LOW|MEDIUM|HIGH|CRITICAL
+  status      String   @default("OPEN")               // OPEN|IN_PROGRESS|RESOLVED|CLOSED
+  resolution  String?
+  reportedById String  @map("reported_by_id")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  purchaseOrder PurchaseOrderV2 @relation(fields: [poId], references: [id])
+  reportedBy    Employee        @relation("IssueReporter", fields: [reportedById], references: [id])
+
+  @@index([poId])
+  @@index([issueType])
+  @@map("po_issues")
+}
+
+model Advance {
+  id             String    @id @default(uuid())
+  advanceId      String    @unique @map("advance_id")     // ADV-YYYYMMDD-NNN
+  poId           String?   @map("po_id")                  // linked PO (optional)
+  paidById       String    @map("paid_by_id")             // ใครจ่าย
+  amount         Float
+  currency       String    @default("THB")
+  description    String?
+  receiptImage   String?   @map("receipt_image")          // URL รูปใบเสร็จ
+  status         String    @default("PENDING")             // PENDING|APPROVED|REIMBURSED|REJECTED
+  approvedById   String?   @map("approved_by_id")
+  reimbursedAt   DateTime? @map("reimbursed_at")
+  reimbursedById String?   @map("reimbursed_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  purchaseOrder PurchaseOrderV2? @relation(fields: [poId], references: [id])
+  paidBy        Employee         @relation("AdvancePayer", fields: [paidById], references: [id])
+  approvedBy    Employee?        @relation("AdvanceApprover", fields: [approvedById], references: [id])
+  reimbursedBy  Employee?        @relation("AdvanceReimburser", fields: [reimbursedById], references: [id])
+
+  @@index([poId])
+  @@index([status])
+  @@map("advances")
 }

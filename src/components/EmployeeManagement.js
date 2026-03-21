@@ -28,6 +28,7 @@ import {
     BadgeCheck,
     Lock,
     ArrowUpRight,
+    Briefcase,
 } from 'lucide-react';
 import PermissionMatrix from './PermissionMatrix';
 import { can } from '@/lib/permissionMatrix';
@@ -458,7 +459,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                         {emp.firstName} {emp.lastName}
                                     </h2>
                                     <p className="text-white/50 text-[11px] mt-0.5 truncate">
-                                        {meta.label}{emp.department ? ` · ${emp.department}` : ''}
+                                        {meta.label}{emp.jobTitle ? ` · ${emp.jobTitle}` : emp.department ? ` · ${emp.department}` : ''}
                                         {emp.nickName ? ` · "${emp.nickName}"` : ''}
                                     </p>
                                     {emp.employeeId && (
@@ -697,7 +698,7 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -770,7 +771,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                     </div>
                     {/* Department select */}
                     <div>
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก / ตำแหน่ง</label>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก (Department)</label>
                         <select
                             value={form.department}
                             onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
@@ -790,6 +791,17 @@ function AddEmployeeModal({ onClose, onSaved }) {
                             <option value="editor">Editor (ED)</option>
                             <option value="content creator">Content Creator (CC)</option>
                         </select>
+                    </div>
+                    {/* Job Title input */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ตำแหน่ง (Job Title)</label>
+                        <input
+                            type="text"
+                            placeholder="เช่น Pastry Chef, Marketing Officer"
+                            value={form.jobTitle}
+                            onChange={e => setForm(f => ({ ...f, jobTitle: e.target.value }))}
+                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                        />
                     </div>
                     {/* Role select */}
                     <div>
@@ -1045,7 +1057,8 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     {[
                                         { icon: Mail,      label: 'Email',       val: emp.email },
                                         { icon: Phone,     label: 'Phone',       val: emp.phone || '—' },
-                                        { icon: Building2, label: 'Dept',        val: emp.department || '—' },
+                                        { icon: Building2, label: 'แผนก',        val: emp.department || '—' },
+                                        { icon: Briefcase,  label: 'ตำแหน่ง',     val: emp.jobTitle || '—' },
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                         { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
                                         { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
@@ -1187,7 +1200,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             ))}
                             {/* Department select (edit) */}
                             <div>
-                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก / ตำแหน่ง</label>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">แผนก (Department)</label>
                                 <select
                                     value={editForm.department || ''}
                                     onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))}
@@ -1207,6 +1220,17 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     <option value="editor">Editor (ED)</option>
                                     <option value="content creator">Content Creator (CC)</option>
                                 </select>
+                            </div>
+                            {/* Job Title input (edit) */}
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ตำแหน่ง (Job Title)</label>
+                                <input
+                                    type="text"
+                                    placeholder="เช่น Pastry Chef, Marketing Officer"
+                                    value={editForm.jobTitle || ''}
+                                    onChange={e => setEditForm(f => ({ ...f, jobTitle: e.target.value }))}
+                                    className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                                />
                             </div>
 
                             {/* Facebook fields */}

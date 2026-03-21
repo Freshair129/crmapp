@@ -16,7 +16,7 @@ export async function PATCH(req, { params }) {
 
         const updateData = {};
         const allowed = [
-            'firstName', 'lastName', 'nickName', 'phone', 'department',
+            'firstName', 'lastName', 'nickName', 'phone', 'department', 'jobTitle',
             'role', 'status', 'facebookName', 'facebookUrl',
         ];
         for (const key of allowed) {
@@ -38,6 +38,7 @@ export async function PATCH(req, { params }) {
                 email: true,
                 phone: true,
                 department: true,
+                jobTitle: true,
                 role: true,
                 status: true,
                 facebookName: true,

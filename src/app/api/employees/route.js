@@ -1,32 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
+import { generateEmployeeId, generateAgentId } from '@/lib/idGenerators';
 import bcrypt from 'bcryptjs';
-
-// Department code map → TVS-[CODE]-[SERIAL]
-const DEPT_CODE = {
-    marketing: 'MKT',
-    sales: 'SLS',
-    admin: 'ADM',
-    manager: 'MGR',
-    developer: 'DEV',
-    support: 'SPT',
-};
-
-async function generateEmployeeId(prisma, department) {
-    const code = DEPT_CODE[(department || '').toLowerCase()] || 'GEN';
-    const prefix = `TVS-${code}-`;
-    const latest = await prisma.employee.findFirst({
-        where: { employeeId: { startsWith: prefix } },
-        orderBy: { employeeId: 'desc' },
-        select: { employeeId: true },
-    });
-    const parts  = latest ? latest.employeeId.split('-') : [];
-    const serial = parts.length
-        ? String(parseInt(parts[parts.length - 1] || '0', 10) + 1).padStart(3, '0')
-        : '001';
-    return `${prefix}${serial}`;
-}
 
 /**
  * GET /api/employees - List all employees (all statuses)
@@ -40,12 +16,15 @@ export async function GET(req) {
             select: {
                 id: true,
                 employeeId: true,
+                agentId: true,
+                agentCode: true,
                 firstName: true,
                 lastName: true,
                 nickName: true,
                 email: true,
                 phone: true,
                 department: true,
+                jobTitle: true,
                 role: true,
                 status: true,
                 facebookName: true,
@@ -71,11 +50,18 @@ export async function POST(req) {
     try {
         const prisma = await getPrisma();
         const body = await req.json();
-        const { firstName, lastName, nickName, email, phone, department, role, password, facebookName, facebookUrl } = body;
+        const { firstName, lastName, nickName, email, phone, department, jobTitle, role, password, facebookName, facebookUrl, employmentType, agentCode, agentType } = body;
 
         if (!firstName || !lastName || !email || !password) {
             return NextResponse.json(
                 { error: 'firstName, lastName, email, password are required' },
+                { status: 400 }
+            );
+        }
+
+        if (!agentCode || agentCode.length < 3 || agentCode.length > 4) {
+            return NextResponse.json(
+                { error: 'agentCode ต้องเป็น 3-4 ตัวอักษร (เช่น AOI, FAH)' },
                 { status: 400 }
             );
         }
@@ -85,18 +71,27 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
         }
 
-        const employeeId = await generateEmployeeId(prisma, department);
+        const existingCode = await prisma.employee.findUnique({ where: { agentCode: agentCode.toUpperCase() } });
+        if (existingCode) {
+            return NextResponse.json({ error: `Agent code "${agentCode.toUpperCase()}" ถูกใช้แล้ว` }, { status: 409 });
+        }
+
+        const employeeId = await generateEmployeeId(department, employmentType);
+        const agentId = await generateAgentId(agentType);
         const passwordHash = await bcrypt.hash(password, 10);
 
         const employee = await prisma.employee.create({
             data: {
                 employeeId,
+                agentId,
+                agentCode: agentCode.toUpperCase(),
                 firstName,
                 lastName,
                 nickName: nickName || null,
                 email,
                 phone: phone || null,
                 department: department || null,
+                jobTitle: jobTitle || null,
                 role: role || 'AGENT',
                 status: 'ACTIVE',
                 passwordHash,
@@ -106,12 +101,15 @@ export async function POST(req) {
             select: {
                 id: true,
                 employeeId: true,
+                agentId: true,
+                agentCode: true,
                 firstName: true,
                 lastName: true,
                 nickName: true,
                 email: true,
                 phone: true,
                 department: true,
+                jobTitle: true,
                 role: true,
                 status: true,
                 facebookName: true,
