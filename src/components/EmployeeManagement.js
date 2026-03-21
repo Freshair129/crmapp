@@ -260,7 +260,7 @@ function KpiBlock({ emp, linked, barColor }) {
 }
 
 // ─── File-folder Stacked Card Deck (Framer Motion) ───────────────────────────
-function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus, customers = [] }) {
+function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus, customers = [], onOpenDetail }) {
     const n = employees.length;
     if (n === 0) return null;
 
@@ -393,27 +393,62 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             </>
                         )}
 
-                        {/* ── Dark card matching reference design ───── */}
+                        {/* ── FAB button — sits in the folder notch (top-right) ── */}
+                        <motion.button
+                            onClick={(e) => { e.stopPropagation(); onOpenDetail && onOpenDetail(emp); }}
+                            whileHover={{ scale: 1.12 }}
+                            whileTap={{ scale: 0.92 }}
+                            className="absolute flex items-center justify-center z-20"
+                            style={{
+                                top: 6, right: 6, width: 38, height: 38,
+                                borderRadius: '50%',
+                                background: `radial-gradient(circle at 35% 35%, ${avatarColors[0]}cc, ${avatarColors[1]}ee)`,
+                                boxShadow: `0 4px 16px ${avatarColors[0]}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                cursor: 'pointer',
+                            }}
+                            title="เปิด Full Dashboard"
+                        >
+                            <ArrowUpRight size={15} className="text-white" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+                        </motion.button>
+
+                        {/* ── Glass card ───── */}
                         <div
-                            className="h-full rounded-[2rem] flex flex-col p-6"
+                            className="h-full flex flex-col p-6 overflow-hidden"
                             style={{
                                 position: 'relative', zIndex: 1,
-                                background: '#0e0e18',
+                                borderRadius: '2rem',
+                                clipPath: 'polygon(0 0, calc(100% - 50px) 0, 100% 50px, 100% 100%, 0 100%)',
+                                background: isActive
+                                    ? `linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 60%), linear-gradient(to bottom, ${avatarColors[0]}0d, transparent 40%)`
+                                    : 'rgba(255,255,255,0.04)',
+                                backdropFilter: 'blur(28px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(28px) saturate(180%)',
                                 boxShadow: isActive
-                                    ? `0 32px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px ${avatarColors[0]}22, 0 0 40px ${avatarColors[0]}28, 0 0 80px ${avatarColors[0]}12`
-                                    : '0 8px 20px rgba(0,0,0,0.35)',
+                                    ? `inset 0 1px 0 rgba(255,255,255,0.15), inset 1px 0 0 rgba(255,255,255,0.06), 0 32px 64px rgba(0,0,0,0.5), 0 0 40px ${avatarColors[0]}28, 0 0 80px ${avatarColors[0]}10`
+                                    : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 20px rgba(0,0,0,0.3)',
                                 border: isActive
-                                    ? `1px solid ${avatarColors[0]}30`
-                                    : '1px solid rgba(255,255,255,0.04)',
-                                filter: isInactive ? 'grayscale(0.5) brightness(0.75)' : 'none',
+                                    ? `1px solid rgba(255,255,255,0.16)`
+                                    : '1px solid rgba(255,255,255,0.07)',
+                                filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none',
                             }}
                         >
-                            {/* ── TOP ROW: avatar left · name/role/id right · arrow absolute ── */}
+                            {/* Glass sheen — top-left diagonal highlight */}
+                            <div className="absolute inset-0 pointer-events-none"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 30%, transparent 55%)',
+                                    borderRadius: '2rem',
+                                }} />
+
+                            {/* ── TOP ROW: avatar left · name/role/id right ── */}
                             <div className="relative flex items-start gap-3">
                                 {/* Circular avatar */}
                                 <div
-                                    className="w-[56px] h-[56px] rounded-full overflow-hidden flex items-center justify-center ring-[2px] ring-white/10 shrink-0 shadow-lg"
-                                    style={{ background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})` }}
+                                    className="w-[56px] h-[56px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xl"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})`,
+                                        boxShadow: `0 4px 20px ${avatarColors[0]}55, 0 0 0 2px rgba(255,255,255,0.12)`,
+                                    }}
                                 >
                                     {emp.profilePicture
                                         ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
@@ -421,24 +456,20 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     }
                                 </div>
                                 {/* Name / role / ID — right of avatar */}
-                                <div className="flex-1 min-w-0 pt-0.5 pr-10">
-                                    <h2 className="text-white font-bold text-[1.35rem] leading-tight tracking-tight truncate">
+                                <div className="flex-1 min-w-0 pt-0.5">
+                                    <h2 className="text-white font-bold text-[1.35rem] leading-tight tracking-tight truncate"
+                                        style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
                                         {emp.firstName} {emp.lastName}
                                     </h2>
-                                    <p className="text-white/40 text-[11px] mt-0.5 truncate">
+                                    <p className="text-white/50 text-[11px] mt-0.5 truncate">
                                         {meta.label}{emp.department ? ` · ${emp.department}` : ''}
                                         {emp.nickName ? ` · "${emp.nickName}"` : ''}
                                     </p>
                                     {emp.employeeId && (
-                                        <p className="text-white/22 text-[9px] mt-0.5 font-mono tracking-wider truncate">
+                                        <p className="text-white/28 text-[9px] mt-0.5 font-mono tracking-wider truncate">
                                             {emp.employeeId}
                                         </p>
                                     )}
-                                </div>
-                                {/* Arrow button — absolute top-right */}
-                                <div className="absolute top-0 right-0 w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                                    style={{ background: '#1a1a28', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                    <ArrowUpRight size={14} className="text-white/50" />
                                 </div>
                             </div>
 
@@ -449,7 +480,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
                             {/* ── BOTTOM ROW: contacts+toggle left · priority bar right ── */}
                             <div className="flex items-end justify-between gap-3 mt-3 pt-2"
-                                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
 
                                 {/* LEFT: contact pills + active toggle */}
                                 <div className="min-w-0 flex-1 flex flex-col gap-1.5">
@@ -739,6 +770,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function EmployeeManagement({ employees = [], customers = [], onRefresh, currentUser }) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const detailPanelRef = useRef(null);
     const [search, setSearch] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
@@ -857,6 +889,14 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             canManage={canManage}
                             togglingStatus={togglingStatus}
                             customers={customers}
+                            onOpenDetail={(targetEmp) => {
+                                // sync active card then scroll to detail panel
+                                const idx = filtered.findIndex(e => e.id === targetEmp.id);
+                                if (idx >= 0) setActiveIndex(idx);
+                                setTimeout(() => {
+                                    detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 80);
+                            }}
                         />
                     </div>
 
@@ -869,7 +909,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
 
                 {/* RIGHT — Dashboard */}
                 {emp && (
-                    <div className="space-y-5">
+                    <div ref={detailPanelRef} className="space-y-5">
                         {/* Tab bar */}
                         <div className="flex gap-1 bg-white/5 border border-white/8 rounded-2xl p-1">
                             {[
