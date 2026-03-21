@@ -150,124 +150,155 @@ function StatusToggle({ status, onChange, disabled, onCard = false }) {
     );
 }
 
-// ─── Stacked Card Deck ────────────────────────────────────────────────────────
+// ─── File-folder Stacked Card Deck (Framer Motion) ───────────────────────────
 function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus }) {
-    const dragStartX = useRef(null);
+    const n = employees.length;
+    if (n === 0) return null;
 
-    const handleDragStart = (e) => {
-        dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    // Circular shortest offset from activeIndex
+    const getOffset = (i) => {
+        let off = i - activeIndex;
+        if (off > n / 2)  off -= n;
+        if (off < -n / 2) off += n;
+        return off;
     };
-    const handleDragEnd = (e) => {
-        if (dragStartX.current === null) return;
-        const endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-        const delta = dragStartX.current - endX;
-        if (Math.abs(delta) > 40) delta > 0 ? onNext() : onPrev();
-        dragStartX.current = null;
+
+    // Spring targets for each card based on its offset
+    const getAnimate = (offset) => {
+        const abs = Math.abs(offset);
+        const sign = offset < 0 ? -1 : 1;
+        return {
+            scale:   abs === 0 ? 1      : 1 - abs * 0.065,
+            y:       abs === 0 ? 0      : abs * 24,
+            rotateZ: abs === 0 ? 0      : sign * abs * 3.5,
+            opacity: abs > 2   ? 0      : 1 - abs * 0.22,
+            zIndex:  abs === 0 ? 30     : 30 - abs * 6,
+            x: 0,
+        };
     };
 
     return (
-        <div
-            className="relative select-none"
-            style={{ height: 320, width: '100%' }}
-            onMouseDown={handleDragStart} onMouseUp={handleDragEnd}
-            onTouchStart={handleDragStart} onTouchEnd={handleDragEnd}
-        >
-            {/* Ghost cards */}
-            {[2, 1].map((offset) => {
-                const idx = (activeIndex + offset) % employees.length;
-                const emp = employees[idx];
-                if (!emp || offset >= employees.length) return null;
-                const meta = getRoleMeta(emp.role);
-                const scale = 1 - offset * 0.04;
-                const translateY = offset * 14;
-                const opacity = 1 - offset * 0.25;
+        <div className="relative select-none" style={{ height: 358, width: '100%' }}>
+
+            {/* Cards — rendered back→front via zIndex, all employees keyed by id */}
+            {employees.map((emp, i) => {
+                const offset  = getOffset(i);
+                const abs     = Math.abs(offset);
+                if (abs > 3) return null;   // skip far-off cards entirely
+
+                const isActive = offset === 0;
+                const meta     = getRoleMeta(emp.role);
+                const animate  = getAnimate(offset);
+                const isInactive = emp.status === 'INACTIVE';
+
                 return (
-                    <div
-                        key={`ghost-${offset}`}
-                        className={`absolute inset-x-0 mx-auto rounded-[2rem] bg-gradient-to-br ${meta.bg}`}
-                        style={{
-                            width: '100%', height: 280,
-                            transform: `scale(${scale}) translateY(${translateY}px)`,
-                            transformOrigin: 'top center',
-                            opacity,
-                            zIndex: 10 - offset,
+                    <motion.div
+                        key={emp.id}
+                        animate={animate}
+                        initial={false}
+                        transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+                        drag={isActive ? 'x' : false}
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.2}
+                        onDragEnd={(_, info) => {
+                            if (info.offset.x < -55) onNext();
+                            else if (info.offset.x > 55) onPrev();
                         }}
-                    />
+                        whileDrag={{ scale: 1.04, boxShadow: '0 35px 70px rgba(0,0,0,0.6)' }}
+                        style={{
+                            position: 'absolute',
+                            width: '100%',
+                            height: 300,
+                            cursor: isActive ? 'grab' : 'default',
+                            transformOrigin: '50% 50%',
+                            pointerEvents: isActive ? 'auto' : 'none',
+                            filter: (!isActive && isInactive) ? 'grayscale(0.5)' : 'none',
+                        }}
+                    >
+                        {/* ── Folder card ───────────────────────────── */}
+                        <div
+                            className={`h-full flex flex-col rounded-[1.75rem] overflow-hidden ${isInactive && isActive ? 'opacity-70 grayscale' : ''}`}
+                            style={{
+                                boxShadow: isActive
+                                    ? '0 28px 56px rgba(0,0,0,0.55), 0 6px 18px rgba(0,0,0,0.3)'
+                                    : '0 6px 18px rgba(0,0,0,0.3)',
+                            }}
+                        >
+                            {/* ── Folder tab (top strip) ──────────────── */}
+                            <div className={`bg-gradient-to-r ${meta.bg} relative shrink-0`}>
+                                <div className="absolute inset-0 bg-black/30" />
+                                <div className="relative z-10 px-5 py-2.5 flex items-center justify-between border-b border-white/10">
+                                    <div className="flex items-center gap-2">
+                                        <IdCard size={10} className="text-white/40 shrink-0" />
+                                        <span className="text-white/70 text-[9px] font-mono tracking-[0.2em] font-bold">
+                                            {emp.employeeId}
+                                        </span>
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${meta.badge}`}>
+                                        {meta.label} · {meta.level}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* ── Card body ───────────────────────────── */}
+                            <div className={`flex-1 bg-gradient-to-br ${meta.bg} relative overflow-hidden`}>
+                                {/* Subtle paper noise */}
+                                <div className="absolute inset-0 opacity-[0.045]"
+                                    style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
+                                />
+                                {/* Shine line at the top */}
+                                <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
+
+                                <div className="relative z-10 px-6 py-5 h-full flex flex-col justify-between">
+                                    {/* Avatar + Name */}
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-white/20 border-2 border-white/25 overflow-hidden flex items-center justify-center shadow-lg shrink-0">
+                                            {emp.profilePicture
+                                                ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
+                                                : <span className="text-white font-black text-xl select-none">{(emp.firstName || 'E').charAt(0)}</span>
+                                            }
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h2 className="text-white font-black text-lg leading-tight truncate tracking-tight">
+                                                {emp.firstName} {emp.lastName}
+                                            </h2>
+                                            {emp.nickName && (
+                                                <p className="text-white/55 text-xs font-semibold">"{emp.nickName}"</p>
+                                            )}
+                                            <p className="text-white/40 text-[9px] uppercase tracking-[0.18em] mt-0.5 truncate">
+                                                {emp.department || '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom: email + status toggle */}
+                                    <div className="flex items-end justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-white/30 text-[8px] uppercase tracking-widest mb-0.5">Email</p>
+                                            <p className="text-white/70 text-[10px] font-mono truncate max-w-[150px]">{emp.email || '—'}</p>
+                                        </div>
+                                        <StatusToggle
+                                            status={emp.status || 'ACTIVE'}
+                                            onChange={(s) => onStatusToggle && onStatusToggle(emp, s)}
+                                            disabled={!canManage || togglingStatus}
+                                            onCard
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                 );
             })}
 
-            {/* Active Card */}
-            {employees.length > 0 && (() => {
-                const emp = employees[activeIndex];
-                const meta = getRoleMeta(emp.role);
-                const isInactive = emp.status === 'INACTIVE';
-                return (
-                    <div
-                        className={`absolute inset-x-0 mx-auto rounded-[2rem] bg-gradient-to-br ${meta.bg} shadow-2xl cursor-grab active:cursor-grabbing ${isInactive ? 'opacity-60 grayscale' : ''}`}
-                        style={{ width: '100%', height: 280, zIndex: 20, transition: 'transform 0.3s ease' }}
-                    >
-                        <div className="absolute inset-0 rounded-[2rem] opacity-5"
-                            style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.75\' numOctaves=\'4\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")' }} />
-
-                        <div className="relative z-10 p-8 h-full flex flex-col justify-between">
-                            {/* Top row */}
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.25em] mb-1">Employee</p>
-                                    <p className="text-white/90 text-[10px] font-mono">{emp.employeeId}</p>
-                                </div>
-                                {/* Role badge with level */}
-                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${meta.badge}`}>
-                                    {meta.label} · {meta.level}
-                                </span>
-                            </div>
-
-                            {/* Avatar + Name center */}
-                            <div className="flex items-center gap-5">
-                                <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/30 overflow-hidden flex items-center justify-center shadow-xl flex-shrink-0">
-                                    {emp.profilePicture
-                                        ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
-                                        : <span className="text-white font-black text-2xl">{(emp.firstName || 'E').charAt(0)}</span>
-                                    }
-                                </div>
-                                <div>
-                                    <h2 className="text-white font-black text-xl tracking-tight leading-none mb-1">
-                                        {emp.firstName} {emp.lastName}
-                                    </h2>
-                                    {emp.nickName && (
-                                        <p className="text-white/60 text-xs font-bold">"{emp.nickName}"</p>
-                                    )}
-                                    <p className="text-white/50 text-[10px] uppercase tracking-widest mt-1">{emp.department || '—'}</p>
-                                </div>
-                            </div>
-
-                            {/* Bottom row — email + status toggle */}
-                            <div className="flex items-end justify-between">
-                                <div>
-                                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Email</p>
-                                    <p className="text-white/80 text-xs font-mono truncate max-w-[160px]">{emp.email || '—'}</p>
-                                </div>
-                                {/* Framer Motion status toggle — on card */}
-                                <StatusToggle
-                                    status={emp.status || 'ACTIVE'}
-                                    onChange={(newStatus) => onStatusToggle && onStatusToggle(emp, newStatus)}
-                                    disabled={!canManage || togglingStatus}
-                                    onCard
-                                />
-                            </div>
-                        </div>
-                    </div>
-                );
-            })()}
-
-            {/* Nav arrows */}
+            {/* ── Nav arrows ─────────────────────────────────────────── */}
             <button onClick={onPrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
-                <ChevronLeft size={16} />
+                className="absolute left-0 top-[140px] -translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                <ChevronLeft size={15} />
             </button>
             <button onClick={onNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 z-30 w-10 h-10 rounded-full bg-white/10 border border-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
-                <ChevronRight size={16} />
+                className="absolute right-0 top-[140px] translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                <ChevronRight size={15} />
             </button>
         </div>
     );
