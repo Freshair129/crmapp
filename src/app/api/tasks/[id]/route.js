@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { VALID_PRIORITIES, VALID_STATUSES, VALID_TYPES } from '../route';
+import { VALID_PRIORITIES, VALID_STATUSES, VALID_TYPES } from '@/lib/taskConstants';
 
 /**
  * PATCH /api/tasks/[id]

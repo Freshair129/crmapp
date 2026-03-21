@@ -1,19 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { VALID_PRIORITIES, VALID_STATUSES, VALID_TYPES } from '@/lib/taskConstants';
 
-/**
- * Priority levels — L0 (Critical) → L5 (Optional)
- * L0: Critical/Emergency  — หยุดงานอื่นทำทันที
- * L1: High/Urgent         — ต้องทำวันนี้
- * L2: High/Important      — สำคัญ วางแผนต่อจาก L1
- * L3: Medium/Routine      — งานประจำ
- * L4: Low/Deferrable      — เลื่อนออกไปได้
- * L5: Low/Optional        — ทำเมื่อมีเวลาว่าง
- */
-export const VALID_PRIORITIES = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'];
-export const VALID_STATUSES   = ['PENDING', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
-export const VALID_TYPES      = ['FOLLOW_UP', 'MEETING', 'CALL', 'EMAIL', 'PURCHASE', 'REVIEW', 'OTHER'];
+export { VALID_PRIORITIES, VALID_STATUSES, VALID_TYPES };
 
 /**
  * Generate task ID: TSK-YYYYMMDD-NNN
