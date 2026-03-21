@@ -1,15 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const ROLES = ['AGENT', 'SUPERVISOR', 'MANAGER', 'ADMIN', 'DEVELOPER', 'GUEST'];
+const ROLES = ['DEVELOPER', 'ADMIN', 'MANAGER', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
 const DEPARTMENTS = ['marketing', 'sales', 'admin', 'manager', 'developer', 'support'];
 
 const ROLE_BADGE = {
-    AGENT: 'bg-blue-100 text-blue-700',
-    SUPERVISOR: 'bg-purple-100 text-purple-700',
-    MANAGER: 'bg-indigo-100 text-indigo-700',
-    ADMIN: 'bg-red-100 text-red-700',
     DEVELOPER: 'bg-gray-100 text-gray-700',
+    ADMIN: 'bg-red-100 text-red-700',
+    MANAGER: 'bg-indigo-100 text-indigo-700',
+    MARKETING: 'bg-pink-100 text-pink-700',
+    HEAD_CHEF: 'bg-orange-100 text-orange-700',
+    EMPLOYEE: 'bg-emerald-100 text-emerald-700',
+    AGENT: 'bg-blue-100 text-blue-700',
     GUEST: 'bg-yellow-100 text-yellow-700',
 };
 

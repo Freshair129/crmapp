@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { can, getAccessibleModules } from "@/lib/permissionMatrix";
 
 import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
@@ -108,7 +109,7 @@ export default function Home() {
         if (!currentUser) return;
         setLoading(true);
         try {
-            const hasManagerAccess = ['SUPERVISOR', 'MANAGER', 'ADMIN', 'DEVELOPER'].includes(currentUser.role);
+            const hasManagerAccess = can(currentUser.role, 'system', 'view');
 
             const fetchPromises = [
                 fetch("/api/customers"),

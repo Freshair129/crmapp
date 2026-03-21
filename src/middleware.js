@@ -1,11 +1,11 @@
 /**
- * Next.js Middleware — Route-Level RBAC Guard (Phase 7 — ADR-026)
+ * Next.js Middleware — Route-Level RBAC Guard (Phase 29 — ADR-045)
  * Enforces authentication and role requirements before requests reach API routes.
  *
- * Role matrix (ADR-026 D4):
+ * Role matrix (ADR-045 — 8-role hierarchy):
  *   /api/employees/*   → MANAGER+
- *   /api/marketing/*   → SUPERVISOR+
- *   /api/analytics/*   → SUPERVISOR+
+ *   /api/marketing/*   → MANAGER+
+ *   /api/analytics/*   → MANAGER+
  *   /api/customers/*   → AGENT+
  *   /api/webhooks/*    → skip RBAC (signature-based auth per handler)
  *   all others         → AGENT+ (authenticated)
@@ -26,8 +26,8 @@ const ROUTE_ROLES = [
   { prefix: '/api/health',           role: null },   // public — health check
   { prefix: '/api/products',         role: 'AGENT' },
   { prefix: '/api/employees',        role: 'MANAGER' },
-  { prefix: '/api/marketing',        role: 'SUPERVISOR' },
-  { prefix: '/api/analytics',        role: 'SUPERVISOR' },
+  { prefix: '/api/marketing',        role: 'MANAGER' },
+  { prefix: '/api/analytics',        role: 'MANAGER' },
   { prefix: '/api/customers',        role: 'AGENT' },
   { prefix: '/api',                  role: 'AGENT' }, // catch-all: any authenticated user
 ];
@@ -35,10 +35,12 @@ const ROUTE_ROLES = [
 const ROLE_LEVEL = {
   DEVELOPER:  5,
   MANAGER:    4,
-  SUPERVISOR: 3,
-  ADMIN:      4, // school owner/director — same access as MANAGER
+  ADMIN:      3,
+  MARKETING:  2.5,
+  HEAD_CHEF:  2.5,
+  EMPLOYEE:   1.5,
   AGENT:      1,
-  GUEST:      1, // Read-only demo — GET only, all writes blocked at middleware
+  GUEST:      0,
 };
 
 /** HTTP methods that mutate state — blocked for GUEST role */

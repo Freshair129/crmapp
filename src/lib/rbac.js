@@ -16,8 +16,8 @@ const ROLE_HIERARCHY = {
   GUEST:      0,
 };
 
-/** Valid role names (all UPPERCASE). Used for role validation. */
-const VALID_ROLES = ['DEVELOPER', 'MANAGER', 'ADMIN', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
+/** Valid role names (all UPPERCASE). Used for role validation. Synced with permissionMatrix.js ROLES. */
+const VALID_ROLES = ['DEVELOPER', 'ADMIN', 'MANAGER', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
 
 /**
  * Returns the numeric level of a role. Unknown roles default to GUEST (0).

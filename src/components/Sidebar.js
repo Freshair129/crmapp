@@ -7,6 +7,7 @@ import {
     Timer, SlidersHorizontal, Settings, LogOut,
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot
 } from 'lucide-react';
+import { can } from '@/lib/permissionMatrix';
 
 const menuGroups = [
     {
@@ -96,7 +97,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                             const isActive = activeView === item.id;
                             const Icon = item.icon;
                             const canAccess = item.id === 'analytics'
-                                ? (currentUser?.permissions?.can_access_analytics || currentUser?.permissions?.can_manage_analytics || currentUser?.permissions?.is_admin)
+                                ? can(currentUser?.role || 'GUEST', 'business', 'view')
                                 : true;
 
                             if (!canAccess) return null;
