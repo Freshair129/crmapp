@@ -412,33 +412,58 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             <ArrowUpRight size={15} className="text-white" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
                         </motion.button>
 
-                        {/* ── Glass card ───── */}
-                        <div
-                            className="h-full flex flex-col p-6 overflow-hidden"
-                            style={{
-                                position: 'relative', zIndex: 1,
-                                borderRadius: '2rem',
-                                clipPath: 'polygon(0 0, calc(100% - 50px) 0, 100% 50px, 100% 100%, 0 100%)',
-                                background: isActive
-                                    ? `linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 60%), linear-gradient(to bottom, ${avatarColors[0]}0d, transparent 40%)`
-                                    : 'rgba(255,255,255,0.04)',
-                                backdropFilter: 'blur(28px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-                                boxShadow: isActive
-                                    ? `inset 0 1px 0 rgba(255,255,255,0.15), inset 1px 0 0 rgba(255,255,255,0.06), 0 32px 64px rgba(0,0,0,0.5), 0 0 40px ${avatarColors[0]}28, 0 0 80px ${avatarColors[0]}10`
-                                    : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 20px rgba(0,0,0,0.3)',
-                                border: isActive
-                                    ? `1px solid rgba(255,255,255,0.16)`
-                                    : '1px solid rgba(255,255,255,0.07)',
-                                filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none',
-                            }}
-                        >
-                            {/* Glass sheen — top-left diagonal highlight */}
-                            <div className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 30%, transparent 55%)',
-                                    borderRadius: '2rem',
-                                }} />
+                        {/* ── Glass card (SVG folder shape — responsive) ───── */}
+                        <div className="h-full relative"
+                            style={{ zIndex: 1, filter: isInactive ? 'grayscale(0.45) brightness(0.75)' : 'none' }}>
+
+                            {/* SVG layer: folder notch shape + glass fills + border + sheen */}
+                            {/* viewBox 372×370, preserveAspectRatio=none → scales to any card width */}
+                            {/* Path: Q bezier rounded corners (R=28) + top-right notch (50px diagonal) */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none"
+                                viewBox="0 0 372 370" preserveAspectRatio="none"
+                                xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+                                <defs>
+                                    <linearGradient id={`gf-${i}`} x1="0" y1="0" x2="0.6" y2="1">
+                                        <stop offset="0%" stopColor={avatarColors[0]} stopOpacity={isActive ? '0.14' : '0.05'} />
+                                        <stop offset="100%" stopColor={avatarColors[1]} stopOpacity="0.04" />
+                                    </linearGradient>
+                                    <linearGradient id={`gs-${i}`} x1="0" y1="0" x2="0.55" y2="0.65">
+                                        <stop offset="0%" stopColor="white" stopOpacity="0.16" />
+                                        <stop offset="50%" stopColor="white" stopOpacity="0.04" />
+                                        <stop offset="100%" stopColor="white" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+
+                                {/* ① Dark glass base fill */}
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                    fill="rgba(10,10,22,0.74)" />
+                                {/* ② Role-color tint */}
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                    fill={`url(#gf-${i})`} />
+                                {/* ③ Soft outer glow (active only) */}
+                                {isActive && (
+                                    <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                        fill="none"
+                                        stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.15"
+                                        strokeLinejoin="round" />
+                                )}
+                                {/* ④ Border line */}
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                    fill="none"
+                                    stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.08)'}
+                                    strokeWidth={isActive ? '1.2' : '0.8'}
+                                    strokeOpacity={isActive ? '0.5' : '1'}
+                                    strokeLinejoin="round" />
+                                {/* ⑤ Glass sheen (top-left triangle) */}
+                                <path d="M 28 0 Q 0 0 0 28 L 0 148 L 240 0 Z"
+                                    fill={`url(#gs-${i})`} />
+                                {/* ⑥ Notch edge shimmer */}
+                                <line x1="322" y1="1" x2="371" y2="50"
+                                    stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+                            </svg>
+
+                            {/* Content sits on top of SVG */}
+                            <div className="relative flex flex-col h-full p-6" style={{ zIndex: 1 }}>
 
                             {/* ── TOP ROW: avatar left · name/role/id right ── */}
                             <div className="relative flex items-start gap-3">
@@ -531,7 +556,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     </div>
                                 </div>
                             </div>
-                        </div>
+
+                            </div>{/* ── close inner content div ── */}
+                        </div>{/* ── close outer SVG card div ── */}
                     </motion.div>
                 );
             })}
