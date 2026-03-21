@@ -1,16 +1,8 @@
 import path from 'node:path'
 import { defineConfig } from 'prisma/config'
 
+// Prisma v7.5.0: migrate.adapter removed from PrismaConfig type
+// Driver adapter is configured in src/lib/prisma.ts (PrismaClient constructor)
 export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
-  migrate: {
-    async adapter(env) {
-      const { PrismaPg } = await import('@prisma/adapter-pg')
-      const pg = await import('pg')
-      const pool = new pg.default.Pool({
-        connectionString: env.DIRECT_URL || env.DATABASE_URL,
-      })
-      return new PrismaPg(pool)
-    },
-  },
 })
