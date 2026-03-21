@@ -288,7 +288,27 @@ export async function GET(request) {
             ? rtEntries.reduce((s, e) => s + e.stats.avgResponseTimeMinutes, 0) / rtEntries.length
             : 0;
 
-        const allMonths = [...new Set(data.flatMap(e => Object.keys(e.stats.monthly)))].sort();
+        // Generate all months in the date range (not just months with data)
+        // so the chart always shows a full timeline even if some months are empty
+        const allMonths = (() => {
+            const dataMonths = [...new Set(data.flatMap(e => Object.keys(e.stats.monthly)))].sort();
+            if (!dateGte || !dateLte) return dataMonths;
+
+            const months = [];
+            const start = new Date(dateGte);
+            const end = new Date(dateLte);
+            const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+            while (cursor <= end) {
+                const yyyy = cursor.getFullYear();
+                const mm = String(cursor.getMonth() + 1).padStart(2, '0');
+                months.push(`${yyyy}-${mm}`);
+                cursor.setMonth(cursor.getMonth() + 1);
+            }
+            // Only include months up to the current month (don't show future empty months)
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            return months.filter(m => m <= currentMonth);
+        })();
         const hourMap   = {};
         for (const r of hourRows) hourMap[Number(r.hour_bkk)] = Number(r.messages);
         const hours = Array.from({ length: 24 }, (_, i) => ({ hour: i, messages: hourMap[i] || 0 }));
