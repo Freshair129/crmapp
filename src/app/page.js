@@ -41,6 +41,7 @@ import AssetPanel from "@/components/AssetPanel";
 import RecipePage from "@/components/RecipePage";
 import PackagePage from "@/components/PackagePage";
 import CoursePage from "@/components/CoursePage";
+import TaskPanel from "@/components/TaskPanel";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -106,6 +107,7 @@ export default function Home() {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [urgentTaskCount, setUrgentTaskCount] = useState(0);
 
     const fetchData = async () => {
         if (!currentUser) return;
@@ -138,6 +140,11 @@ export default function Home() {
             setProducts(prodData.success ? prodData.data : Array.isArray(prodData) ? prodData : []);
             setEmployees(Array.isArray(empData) ? empData : empData.data ?? []);
             setOrders(Array.isArray(ordData) ? ordData : ordData.data ?? []);
+
+            // Fetch urgent task count (L0+L1) for Sidebar badge — non-blocking
+            fetch('/api/tasks?limit=1').then(r => r.json()).then(d => {
+                if (d.urgentCount !== undefined) setUrgentTaskCount(d.urgentCount);
+            }).catch(() => {});
         } catch (err) {
             console.error("fetchData failed:", err);
         } finally {
@@ -214,6 +221,7 @@ export default function Home() {
                 onViewChange={handleViewChange}
                 currentUser={currentUser}
                 cartCount={cart.reduce((s, i) => s + i.qty, 0)}
+                pendingTaskCount={urgentTaskCount}
                 onLogout={handleLogout}
             />
 
@@ -362,6 +370,10 @@ export default function Home() {
 
                         {activeView === "assets" && wrap("assets",
                             <AssetPanel language={language} />
+                        )}
+
+                        {activeView === "tasks" && wrap("tasks",
+                            <TaskPanel employees={employees} customers={customers} currentUser={currentUser} />
                         )}
 
                     </AnimatePresence>

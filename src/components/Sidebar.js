@@ -7,7 +7,7 @@ import {
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot,
-    PanelLeftOpen, PanelLeftClose, MousePointer2,
+    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList,
 } from 'lucide-react';
 import { can } from '@/lib/permissionMatrix';
 
@@ -59,6 +59,7 @@ const menuGroups = [
         label: 'HR',
         items: [
             { id: 'employees',           icon: UserCircle,        label: 'Employees' },
+            { id: 'tasks',               icon: ClipboardList,     label: 'Task Board' },
             { id: 'team-kpi',            icon: Settings2,         label: 'Team KPI' },
             { id: 'admin-performance',   icon: Timer,             label: 'Admin Perf.' },
         ],
@@ -216,9 +217,9 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                         </span>
 
                                         {/* Badges */}
-                                        {item.id === 'dashboard' && pendingTaskCount > 0 && (
+                                        {item.id === 'tasks' && pendingTaskCount > 0 && (
                                             <span className={`${isOpen ? 'ml-auto' : 'absolute -top-1 -right-1'} w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-black shrink-0`}>
-                                                {pendingTaskCount}
+                                                {pendingTaskCount > 9 ? '9+' : pendingTaskCount}
                                             </span>
                                         )}
                                     </button>
