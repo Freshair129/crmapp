@@ -1,7 +1,10 @@
 # Domain Boundaries & Dependency Map — V School CRM v2
 
+> ⚠️ **DEPRECATED (v1.3.0)** — ไฟล์นี้ถูกรวมเข้ากับ [`domain-architecture.md`](./domain-architecture.md) แล้ว
+> อ่านเอกสารล่าสุดที่ **`domain-architecture.md`** แทนไฟล์นี้
+
 > **Lead Architect:** Claude
-> **Last updated:** 2026-03-19 — v1.1.0
+> **Last updated:** 2026-03-19 — v1.1.0 (superseded by domain-architecture.md v1.3.0)
 > อ่านร่วมกับ [`domain-flows.md`](./domain-flows.md) · [`arc42-main.md`](./arc42-main.md)
 
 ---

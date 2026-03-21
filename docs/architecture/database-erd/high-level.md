@@ -1,6 +1,6 @@
 # Database ERD — High-Level Overview
 
-**Last Updated:** 2026-03-19
+**Last Updated:** 2026-03-21 — v1.3.0
 **Reference:** `prisma/schema.prisma`
 
 ---
@@ -13,20 +13,22 @@ erDiagram
     Customer ||--o{ Conversation : "chats"
     Customer ||--o{ Enrollment : "enrolls"
     Customer ||--o{ PackageEnrollment : "buys package"
-    
+
     Employee ||--o{ Order : "closes"
     Employee ||--o{ Conversation : "handles"
-    
+    Employee ||--o{ PushSubscription : "subscribes"
+
     Conversation ||--o{ Order : "leads to"
-    
+    Conversation }o--|| Ad : "firstTouchAdId (REQ-07)"
+
     Order ||--o{ Transaction : "processed by"
-    
+
     Product ||--o{ Enrollment : "enrolled in"
     Product ||--o{ CourseSchedule : "scheduled for"
-    
+
     Package ||--o{ PackageCourse : "contains"
     Package ||--o{ PackageEnrollment : "enrolled in"
-    
+
     CourseSchedule ||--o{ PurchaseRequest : "triggers"
     Recipe ||--o{ CourseMenu : "used in"
 ```
@@ -68,6 +70,7 @@ erDiagram
     Employee ||--o{ PurchaseRequest   : "อนุมัติ (PRApprover)"
     Employee ||--o{ Asset             : "รับผิดชอบอุปกรณ์ (AssetAssignee)"
     Employee ||--o{ PackageEnrollment : "ขายแพ็กเกจ (PackageEnrollmentSeller)"
+    Employee ||--o{ PushSubscription  : "ลงทะเบียน Web Push (ADR-044)"
 
     %% ═══════════════════════════════
     %% DOMAIN: Order / Sales
@@ -108,8 +111,9 @@ erDiagram
     CourseSchedule    ||--o{ PurchaseRequest : "สร้าง PR วัตถุดิบ"
 
     %% ═══════════════════════════════
-    %% DOMAIN: Kitchen Ops (Phase 15)
+    %% DOMAIN: Kitchen Ops (Phase 15 + 20)
     %% ═══════════════════════════════
+    Ingredient        ||--o{ IngredientLot       : "มี Lot การรับเข้า (LOT-YYYYMMDD-XXX)"
     Ingredient        ||--o{ PurchaseRequestItem : "ต้องสั่งซื้อ"
     Ingredient        ||--o{ RecipeIngredient    : "ใช้ใน recipe (MenuBOM)"
     PurchaseRequest   ||--o{ PurchaseRequestItem : "มีรายการสั่งซื้อ"
@@ -128,6 +132,11 @@ erDiagram
     Package           ||--o{ PackageGift              : "มีของแถม"
     Package           ||--o{ PackageEnrollment        : "ลูกค้าลงทะเบียน"
     PackageEnrollment ||--o{ PackageEnrollmentCourse  : "เลือกคอร์สไว้"
+
+    %% ═══════════════════════════════
+    %% DOMAIN: Web Push (ADR-044)
+    %% ═══════════════════════════════
+    Employee ||--o{ PushSubscription : "browser subscriptions"
 ```
 
 ---
@@ -148,4 +157,18 @@ erDiagram
 | Notification | NotificationRule | 1 model |
 | Tasks | Task | 1 model |
 | Audit | AuditLog, StockDeductionLog | 2 models |
-| **Total** | **46 models** | |
+| Web Push (ADR-044) | PushSubscription | 1 model |
+| **Total** | **47 models** | v1.3.0 |
+
+---
+
+## 4. Key Architecture Decisions
+
+| Phase | ADR | Schema Impact |
+|---|---|---|
+| v0.13.0 | ADR-028 | Conversation + Message — `$transaction`, P2002 handled |
+| v0.15.0 | ADR-037 | Product.hours, sessionType — unified course catalog |
+| v0.20.0 | — | IngredientLot (LOT-YYYYMMDD-XXX), CourseSchedule.classId |
+| v0.26.0 | ADR-039 | Conversation.firstTouchAdId (REQ-07), Transaction.slipStatus |
+| v1.2.0 | ADR-043 | Product equipment spec fields (hand, material, box dims, shipping) |
+| v1.3.0 | ADR-044 | PushSubscription — Employee browser push subscriptions |

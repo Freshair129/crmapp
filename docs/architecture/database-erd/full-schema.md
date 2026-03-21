@@ -1,7 +1,8 @@
 # Database Schema — Full Reference
 
-**Last Updated:** 2026-03-19
+**Last Updated:** 2026-03-21 — v1.3.0
 **Reference:** `prisma/schema.prisma`
+**Model Count:** 47 models
 
 ---
 
@@ -54,7 +55,8 @@ erDiagram
         String   type                "PAYMENT | REFUND | CREDIT"
         String   method              "Transfer | Cash | QR"
         String   slipStatus          "PENDING | VERIFIED | FAILED"
-        Json     slipData            "Slip OCR result"
+        Json     slipData            "Slip OCR result (Gemini Vision)"
+        String   refNumber           "unique — prevents duplicate slip"
         DateTime date
     }
 ```
@@ -101,6 +103,15 @@ erDiagram
         Float    revenue
         Float    roas
     }
+
+    Conversation {
+        String   id              PK
+        String   conversationId  UK  "t_{15_digit_uid}"
+        String   customerId      FK
+        String   channel             "facebook | line"
+        String   firstTouchAdId      "REQ-07 — immutable ad attribution"
+        DateTime createdAt
+    }
 ```
 
 ### DOMAIN: Operations & Enrollment
@@ -109,7 +120,7 @@ erDiagram
 erDiagram
     Enrollment {
         String   id            PK
-        String   enrollmentId  UK
+        String   enrollmentId  UK  "ENR-YYYY-SERIAL"
         String   customerId    FK
         String   productId     FK
         String   soldById      FK
@@ -129,11 +140,12 @@ erDiagram
         Int      maxStudents
         Int      confirmedStudents
         String   status
-        String   classId           "Batch ID for inventory"
+        String   classId           "CLS-YYYYMM-XXX — batch cohort grouping"
+        String   sessionType       "MORNING | AFTERNOON | EVENING"
     }
 
     Ingredient {
-        String   id PK
+        String   id          PK
         String   ingredientId UK
         String   name
         Float    currentStock
@@ -141,14 +153,61 @@ erDiagram
     }
 
     IngredientLot {
-        String   id PK
-        String   lotId UK "LOT-YYYYMMDD-XXX"
+        String   id          PK
+        String   lotId       UK  "LOT-YYYYMMDD-XXX"
         String   ingredientId FK
         Float    initialQty
         Float    remainingQty
         DateTime expiresAt
-        String   status "ACTIVE | CONSUMED | EXPIRED"
+        String   status          "ACTIVE | CONSUMED | EXPIRED | RECALLED"
     }
+```
+
+### DOMAIN: Product (Unified Catalog)
+
+```mermaid
+erDiagram
+    Product {
+        String   id              PK  "UUID"
+        String   productId       UK  "TVS-[CATEGORY]-[PACK]-[SUBCAT]-[SERIAL]"
+        String   name
+        String   category            "course | food | side_dish | equipment | package"
+        String   fallbackSubCategory "sub-filter: knife | kitchen | fish_tool | sushi | sharpening"
+        Float    basePrice
+        Float    hours               "ชั่วโมงเรียน (course only)"
+        String   sessionType         "MORNING | AFTERNOON | EVENING"
+        String   brand               "ยี่ห้อ (equipment)"
+        String   size                "ขนาด (equipment)"
+        String   dimension           "ไดเมนชั่น (equipment)"
+        Float    unitAmount          "ปริมาณ (ml/g/piece)"
+        String   unitType            "ml | g | piece"
+        String   originCountry       "ประเทศผู้ผลิต — ORIGIN_COUNTRIES list"
+        String   hand                "LEFT | RIGHT | BOTH"
+        String   material            "วัสดุ เช่น เหล็ก ไม้ ทองแดง"
+        Float    boxDimW             "กว้างกล่อง (cm)"
+        Float    boxDimL             "ยาวกล่อง (cm)"
+        Float    boxDimH             "สูงกล่อง (cm)"
+        Float    boxWeightG          "น้ำหนักกล่อง (g)"
+        Float    shippingWeightG     "น้ำหนักรวมสำหรับจัดส่ง (g)"
+    }
+```
+
+### DOMAIN: Web Push Notifications (ADR-044)
+
+```mermaid
+erDiagram
+    PushSubscription {
+        String   id          PK  "UUID"
+        String   employeeId  FK  "→ Employee"
+        String   endpoint    UK  "browser push endpoint URL"
+        String   p256dh          "ECDH public key"
+        String   auth            "auth secret"
+        String   userAgent       "browser UA (optional)"
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    Employee ||--o{ PushSubscription : "subscribes"
 ```
 
 ---
@@ -156,13 +215,13 @@ erDiagram
 ## 2. Shared Modules (Context Diagrams)
 
 ### Module 1: Sales & Marketing Core
-Focus on the relationship between Customers, Ads, and Transactions.
+Focus on the relationship between Customers, Ads, Conversations (firstTouchAdId), and Transactions.
 
 ### Module 2: Operations & Kitchen
-Focus on the relationship between Products, Recipes, Stock (Lots), and PRs.
+Focus on the relationship between Products, Recipes, Stock Lots (FEFO), and Purchase Requests.
 
 ### Module 3: Enrollment & Packages
-Focus on the hierarchy of Packages and Course Enrollments.
+Focus on the hierarchy of Packages → PackageCourse → Enrollment → EnrollmentItem.
 
 ---
 
@@ -170,28 +229,40 @@ Focus on the hierarchy of Packages and Course Enrollments.
 
 ### Stock Deduction Flow (FEFO)
 1. `CourseSchedule` COMPLETED
-2. Fetch `RecipeIngredient` (MenuBOM)
-3. Deduct from `IngredientLot` (Order by `expiresAt ASC`)
+2. Fetch `RecipeIngredient` via `CourseBOM` (MenuBOM)
+3. Deduct from `IngredientLot` (Order by `expiresAt ASC` — FEFO)
 4. Log to `StockDeductionLog`
 5. Update `Ingredient.currentStock`
 
-### Attribution Flow
-1. Facebook Ad Click
-2. Webhook -> `Conversation.firstTouchAdId`
-3. Sales -> `Order.conversationId`
-4. Payment -> `Transaction` (Revenue)
-5. Aggregate -> `Ad.revenue`
+### Chat-First Revenue Attribution Flow (Phase 26)
+1. Facebook Ad Click → `Conversation.firstTouchAdId` (REQ-07, immutable)
+2. ลูกค้าส่งสลิปในแชท → Gemini Vision OCR → `Transaction` (PENDING)
+3. พนักงาน verify → `Transaction.slipStatus = VERIFIED`
+4. `Order.paidAmount` อัปเดต
+5. `analyticsRepo` aggregate: `SUM(Transaction.amount WHERE slipStatus=VERIFIED)`
+6. ROAS = verified revenue / Ad.spend (ไม่ใช่ Meta estimated)
+
+### Web Push Real-time Flow (ADR-044)
+1. FB/LINE Webhook ได้รับข้อความใหม่
+2. `notifyInbox()` fire-and-forget → `web-push` → Google/Mozilla Push Server
+3. Service Worker (`/public/sw.js`) ได้รับ push event
+4. แสดง OS notification → user click → `PUSH_NAVIGATE` postMessage
+5. `UnifiedInbox.js` refetch conversations
 
 ---
 
 ## 4. Architecture Decisions (ADR Mapping)
 
-| ADR | Decision | Impact |
+| ADR | Decision | Model Impact |
 |---|---|---|
-| 024 | Bottom-Up Aggregation | Campaign calculations derived from Ad level |
-| 025 | Identity Resolution | `Customer.originId` for tracking |
-| 030 | Revenue Split | `Order.conversationId` defines revenue channel |
-| 039 | Chat-First Revenue | `Transaction.slipStatus` as truth |
-| 040 | Upstash Infra | Redis/QStash move |
+| 024 | Bottom-Up Aggregation | `AdDailyMetric` → `Ad.roas` derivation |
+| 025 | Identity Resolution | `Customer.originId`, phone E.164 |
+| 028 | FB Webhook < 200ms | `Conversation` + `Message` upsert in `$transaction` |
+| 030 | Revenue Channel Split | `Order.conversationId` null=Store / not null=Ads |
+| 037 | Product-as-Course-Catalog | `Product.hours`, `Product.sessionType` |
+| 039 | Chat-First Revenue | `Transaction.slipStatus` as truth — not Meta estimate |
+| 040 | Upstash Infra | Redis/QStash — no local Docker |
+| 043 | Equipment Domain POS | `Product.hand/material/boxDim*/shippingWeightG` |
+| 044 | Web Push Inbox | `PushSubscription` model — ลบ SSE+polling |
 
 ---

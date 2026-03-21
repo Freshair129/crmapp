@@ -1,5 +1,8 @@
 # Domain Data Flow Diagrams — V School CRM v2
 
+> ⚠️ **DEPRECATED (v1.3.0)** — ไฟล์นี้ถูกรวมเข้ากับ [`domain-architecture.md`](./domain-architecture.md) แล้ว
+> อ่านเอกสารล่าสุดที่ **`domain-architecture.md`** แทนไฟล์นี้
+
 Diagram เฉพาะ domain แต่ละส่วน (Mermaid)
 อ่านร่วมกับ [`arc42-main.md`](./arc42-main.md) และ [`../overview.md`](../overview.md)
 
