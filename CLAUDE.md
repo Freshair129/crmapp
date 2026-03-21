@@ -428,6 +428,41 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 
 ---
 
+## Docs Ownership Table
+
+ตารางนี้บอกว่า "เมื่อ code เปลี่ยนแบบนี้ → ต้องอัปเดต doc ไหนบ้าง" เพื่อป้องกัน docs drift
+
+| เมื่อ Code เปลี่ยน | ต้องอัปเดต Doc เหล่านี้ |
+|---|---|
+| เพิ่ม Prisma model ใหม่ | `prisma/schema.prisma` → `docs/architecture/database-erd/high-level.md`, `full-schema.md`, `domain-architecture.md` (section boundaries) |
+| เพิ่ม field ใน model | `docs/architecture/database-erd/full-schema.md` (entity detail section) |
+| API route ใหม่ | `GEMINI.md` (Directory section), `docs/API_REFERENCE.md` |
+| ตัดสินใจ Architecture ใหม่ (ADR) | สร้างไฟล์ `docs/adr/0NN-title.md` + เพิ่ม entry ใน `CLAUDE.md` (ADR table) |
+| Domain boundary เปลี่ยน | `docs/architecture/domain-architecture.md` (Part 1 + Part 3 version history) |
+| Data flow เปลี่ยน (webhook, queue, cache) | `docs/architecture/domain-architecture.md` (Part 2 flow diagrams) |
+| Revenue/Attribution logic เปลี่ยน | `docs/architecture/revenue-attribution-model.md` |
+| ID format ใหม่ / เปลี่ยน | `id_standards.yaml` (root SSOT) — **ห้ามแก้ `docs/id_standards.yaml`** (ถูกลบแล้ว) |
+| Phase/Version เสร็จ | `CLAUDE.md` (version table + changelog section), `GOAL.md`, `CHANGELOG.md` |
+| Known Gotcha พบใหม่ | `CLAUDE.md` ทันที (ภายใต้ phase ที่เกี่ยวข้อง) |
+| NFR / Performance rule เปลี่ยน | `CLAUDE.md` (Non-Functional Requirements section) |
+
+### Docs Location Map (SSOT)
+
+| Document | Path | Owner | หมายเหตุ |
+|---|---|---|---|
+| Functional requirements | `system_requirements.yaml` (root) | Boss + Claude | **ห้ามแก้ `docs/system_requirements.yaml`** (ถูกลบแล้ว) |
+| ID standards | `id_standards.yaml` (root) | Claude | SSOT เดียว — v1.3.0 header |
+| DB ERD high-level | `docs/architecture/database-erd/high-level.md` | Claude | อัปเดตทุกครั้งที่ model เปลี่ยน |
+| DB ERD full schema | `docs/architecture/database-erd/full-schema.md` | Claude | entity + field detail |
+| Domain boundaries + flows | `docs/architecture/domain-architecture.md` | Claude | merged จาก domain-boundaries + domain-flows |
+| Revenue attribution model | `docs/architecture/revenue-attribution-model.md` | Claude | business-facing, audience ≠ ERD |
+| ADR (v2, active) | `docs/adr/024` → latest | Claude | ทุก Architecture decision ต้องมี ADR |
+| ADR (v1, archived) | `docs/archive/adr-v1/` | Read-only | ADR 001-023 — ไม่แก้ไข |
+| Version history | `CHANGELOG.md` + `changelog/CL-*.md` | Claude | sliding window 5 entries |
+| Agent context | `CLAUDE.md`, `GEMINI.md`, `ANTIGRAVITY.md` | Claude | sync หลัง commit ทุกครั้ง |
+
+---
+
 ## Development Commands
 
 ```bash
@@ -446,19 +481,26 @@ npm run worker              # BullMQ worker (terminal แยก)
 ## Docs Structure
 
 ```
-E:\crm\
-  system_requirements.yaml   ← spec หลัก
-  id_standards.yaml          ← naming หลัก
+crm/
+  system_requirements.yaml   ← spec หลัก (SSOT — ห้ามมี docs/ copy)
+  id_standards.yaml          ← naming หลัก (SSOT — ห้ามมี docs/ copy)
   CLAUDE.md                  ← this file
   ANTIGRAVITY.md             ← Senior Agent context
   GEMINI.md                  ← Gemini sub-agent context
-  CHANGELOG.md               ← version history
-  architect_plan.md          ← implementation roadmap (7 phases)
+  CHANGELOG.md               ← version history (sliding window 5)
+  architect_plan.md          ← implementation roadmap
   prisma/schema.prisma       ← database schema
   docs/
-    adr/                     ← Architecture Decision Records
-    architecture/            ← arc42 + C4 diagrams
-    database_erd.md          ← ERD (Mermaid)
+    adr/                     ← ADR 024–latest (v2 active)
+    archive/
+      adr-v1/                ← ADR 001–023 (v1 archived, read-only)
+    architecture/
+      database-erd/
+        high-level.md        ← conceptual ERD
+        full-schema.md       ← full entity + field detail
+      domain-architecture.md ← domain boundaries + data flows (merged)
+      revenue-attribution-model.md ← ROAS + attribution business model
+  changelog/                 ← CL-YYYYMMDD-NNN.md entries
   automation/                ← Playwright scripts
-  crm-app/                   ← Next.js app (build here)
+  src/                       ← Next.js app
 ```
