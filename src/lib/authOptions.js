@@ -139,12 +139,47 @@ export const authOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
+                // ── First login: seed token from authorize() return value ──
                 token.role        = user.role;
                 token.employeeId  = user.employeeId;
                 token.firstName   = user.firstName;
                 token.lastName    = user.lastName;
                 token.nickName    = user.nickName;
                 token.lastLoginAt = user.lastLoginAt;
+                token.refreshedAt = Date.now();
+            } else {
+                // ── Subsequent requests: refresh from DB every 5 minutes ──
+                // This ensures name/role changes in the Employee table are
+                // reflected without requiring the user to log out.
+                const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+                const stale = !token.refreshedAt || (Date.now() - token.refreshedAt) > REFRESH_MS;
+                if (stale) {
+                    try {
+                        const prisma = await getPrisma();
+                        const emp = await prisma.employee.findUnique({
+                            where: { id: token.sub },
+                            select: {
+                                role: true,
+                                firstName: true,
+                                lastName: true,
+                                nickName: true,
+                                employeeId: true,
+                                status: true,
+                            },
+                        });
+                        if (emp && emp.status === 'ACTIVE' && isValidRole(emp.role)) {
+                            token.role        = emp.role;
+                            token.firstName   = emp.firstName;
+                            token.lastName    = emp.lastName;
+                            token.nickName    = emp.nickName;
+                            token.employeeId  = emp.employeeId;
+                        }
+                        token.refreshedAt = Date.now();
+                    } catch (err) {
+                        logger.error('NEXTAUTH', 'JWT refresh from DB failed', err);
+                        // Do NOT update refreshedAt on error → retry on next request
+                    }
+                }
             }
             return token;
         },
