@@ -1,7 +1,8 @@
 # Revenue Attribution & Ad Analytics Model — V School CRM v2
 
-**Last Updated:** 2026-03-19
-**Reference:** `Prisma Schema`, `Ads API Integration`, `paymentRepo.js`
+**Last Updated:** 2026-03-21 — v1.3.0
+**Reference:** `Prisma Schema`, `paymentRepo.js`, `analyticsRepository.js`
+**อ่านร่วมกับ:** [`domain-architecture.md`](./domain-architecture.md) (section 2.5-2.6) · [`../adr/044`](../adr/)
 
 เอกสารนี้รวบรวมโมเดลการจัดสรรรายได้ (Revenue Attribution) และการคำนวณตัวชี้วัดประสิทธิภาพโฆษณา (Ad Analytics) เพื่อให้เห็นภาพการไหลของข้อมูลตั้งแต่ "เงินที่โอนเข้า" ไปจนถึง "ROAS ของแคมเปญ"
 
