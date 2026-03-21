@@ -1041,7 +1041,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <div className="px-8 py-6 space-y-5">
                             {/* Order Type */}
                             <div className="grid grid-cols-3 gap-2">
-                                {[['DINE_IN','🍽️','กินที่ร้าน'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']].map(([val,icon,label]) => (
+                                {[['DINE_IN','🍽️','Walk In'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']].map(([val,icon,label]) => (
                                     <button key={val} onClick={() => setOrderTypeForm(f => ({ ...f, type: val }))}
                                         className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                         <span className="text-2xl">{icon}</span>
