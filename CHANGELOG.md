@@ -1,4 +1,4 @@
-**LATEST:** CL-20260321-005 | v1.4.1 | 2026-03-21
+**LATEST:** CL-20260321-006 | v1.5.0-pre | 2026-03-21
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260321-006 | V Point Loyalty + UI Overhaul (TopBar slim, Sidebar 3-mode) | v1.5.0-pre | 2026-03-21 | MINOR | #pos #loyalty #ui #sidebar #topbar |
 | CL-20260321-005 | Admin Performance Fix (Monthly Message Trend) | v1.4.1 | 2026-03-21 | PATCH | #bugfix #analytics #dashboard |
 | CL-20260321-004 | POS Receipt & Printer Plan (ADR-046) | v1.5.0 planned | 2026-03-21 | MINOR | #pos #receipt #printing #plan |
 | CL-20260321-003 | RBAC Redesign + Ads Optimize (ADR-045) | v1.4.0 | 2026-03-21 | MINOR | #rbac #marketing #ads #roles |
@@ -26,6 +27,27 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260321-006] v1.5.0-pre — V Point Loyalty + UI Overhaul
+**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #loyalty #ui #sidebar #topbar
+
+#### Changes
+- **V Point Loyalty System (Phase 30)**: `vpPoints`, `totalVpEarned`, `totalSpend` columns added to `customers` table. `awardVPoints()` + `calcVPoints()` + `calculateTier()` functions in `customerRepo.js`. API route `POST /api/customers/[id]/vpoints`. Fire-and-forget VP award after processOrder in POS.
+- **POS CustomerCard**: Pre-select customer in cart panel by name/phone search. Shows tier badge, VP balance, spend milestone progress bar. VP reset on "เสร็จสิ้น".
+- **Receipt VP display**: ⭐ V Point ที่ได้รับ card shown on receipt when `earnedVp > 0`.
+- **Monthly Message Trend**: Futuristic neon redesign — SVG glow filters, neon palette (`NEON_PALETTE`), dark panel background, scanline overlay, glowing dots, container height 220px.
+- **TopBar slim**: Height reduced to `h-10`. Breadcrumb left (V logo + "V School CRM" + role badge). Search center. Controls right (lang, theme, bell, user). Cleaner compact layout.
+- **Sidebar 3-mode**: `expanded` (w-220px always), `collapsed` (w-72px always), `hover` (w-72px → w-220px on mouse enter). Mode persisted to `localStorage`. Bottom control icon toggles popup menu with 3 options. Labels animate in/out with `max-width` + `opacity` transitions. Group dividers show/hide based on open state. Tooltip shown in collapsed/hover-closed state.
+
+#### Files Changed
+- `src/components/PremiumPOS.js` — VP award, receipt VP card, customerCard, reset
+- `src/lib/repositories/customerRepo.js` — TIER_CONFIG, VP_RATE, calcVPoints, calculateTier, awardVPoints
+- `src/app/api/customers/[id]/vpoints/route.js` — NEW
+- `src/components/AdminPerformance.js` — NEON_PALETTE, MonthlyLineChart neon redesign, container h-220px
+- `src/components/TopBar.js` — slim h-10, breadcrumb left, search center
+- `src/components/Sidebar.js` — 3-mode (expanded/collapsed/hover), localStorage persist, animated labels
+
+---
 
 ### [CL-20260321-005] v1.4.1 — Admin Performance Dashboard Fix (Monthly Message Trend)
 **Date:** 2026-03-21 | **Severity:** PATCH | **Tags:** #bugfix #analytics #dashboard

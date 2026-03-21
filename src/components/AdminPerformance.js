@@ -102,38 +102,110 @@ function HourHeatmap({ hours }) {
 }
 
 // ─── Monthly SVG Line Chart (Trend) ───────────────────────────────────────────
+// Neon palette for futuristic chart — overrides incoming colors for multi-line view
+const NEON_PALETTE = [
+    '#00f5ff', // cyan
+    '#ff2d78', // hot pink
+    '#39ff14', // lime
+    '#ff9900', // orange
+    '#bf00ff', // purple
+    '#ffff00', // yellow
+    '#00ffcc', // teal
+    '#ff4545', // red
+];
+
 function MonthlyLineChart({ data, colors, months, height = 140 }) {
     if (!data || data.length === 0 || !months || months.length === 0) return null;
 
+    // Use neon palette for multi-line (main chart), fall back to incoming color for mini single-line charts
+    const neonColors = data.map((_, i) =>
+        data.length > 1 ? NEON_PALETTE[i % NEON_PALETTE.length] : (colors[i] || NEON_PALETTE[0])
+    );
+
     const maxVal   = Math.max(...data.flatMap(d => months.map(m => d.stats?.monthly?.[m] || 0)), 1);
-    const padL     = 38;   // left padding for Y-axis labels
-    const padR     = 12;
-    const padT     = 8;
-    const padB     = 24;   // bottom padding for X-axis labels
-    const chartW   = Math.max(months.length * 60, 200);
+    const padL     = 42;
+    const padR     = 16;
+    const padT     = 16;
+    const padB     = 28;
+    const chartW   = Math.max(months.length * 72, 240);
     const totalW   = padL + chartW + padR;
     const totalH   = padT + height + padB;
     const stepX    = months.length > 1 ? chartW / (months.length - 1) : chartW / 2;
-
-    // Y-axis grid lines (4 lines)
     const gridLines = 4;
     const gridVals  = Array.from({ length: gridLines + 1 }, (_, i) => Math.round((maxVal / gridLines) * i));
 
     return (
-        <svg width="100%" viewBox={`0 0 ${totalW} ${totalH}`} preserveAspectRatio="xMidYMid meet">
-            {/* Grid lines */}
+        <svg width="100%" height="100%"
+             viewBox={`0 0 ${totalW} ${totalH}`}
+             preserveAspectRatio="xMidYMid meet"
+             style={{ display: 'block' }}>
+            <defs>
+                {/* Glow filter per neon color */}
+                {neonColors.map((c, i) => (
+                    <filter key={`glow-${i}`} id={`neon-glow-${i}`} x="-80%" y="-80%" width="260%" height="260%">
+                        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                ))}
+                {/* Scanline overlay pattern */}
+                <pattern id="scanlines" x="0" y="0" width="2" height="4" patternUnits="userSpaceOnUse">
+                    <rect width="2" height="2" fill="transparent"/>
+                    <rect y="2" width="2" height="2" fill="#000" fillOpacity="0.06"/>
+                </pattern>
+                {/* Area gradient per color */}
+                {neonColors.map((c, i) => (
+                    <linearGradient key={`ngrad-${i}`} id={`ngrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor={c} stopOpacity={0.22}/>
+                        <stop offset="60%"  stopColor={c} stopOpacity={0.06}/>
+                        <stop offset="100%" stopColor={c} stopOpacity={0}/>
+                    </linearGradient>
+                ))}
+            </defs>
+
+            {/* Dark panel background */}
+            <rect x={padL} y={padT} width={chartW} height={height}
+                  fill="#020c18" rx="4" opacity="0.8"/>
+            {/* Scanlines overlay */}
+            <rect x={padL} y={padT} width={chartW} height={height}
+                  fill="url(#scanlines)" rx="4"/>
+
+            {/* Horizontal grid lines */}
             {gridVals.map((val, i) => {
                 const y = padT + height - (val / maxVal) * height;
+                const isBaseline = i === 0;
                 return (
                     <g key={`grid-${i}`}>
-                        <line x1={padL} y1={y} x2={padL + chartW} y2={y} stroke="#1e293b" strokeWidth={1} />
-                        <text x={padL - 6} y={y + 3} textAnchor="end" fontSize="8" fill="#475569">{val}</text>
+                        <line
+                            x1={padL} y1={y} x2={padL + chartW} y2={y}
+                            stroke={isBaseline ? '#0d4f6e' : '#051a2e'}
+                            strokeWidth={isBaseline ? 1 : 0.6}
+                            strokeDasharray={isBaseline ? 'none' : '5 5'}/>
+                        <text x={padL - 7} y={y + 3.5}
+                              textAnchor="end" fontSize="8"
+                              fill="#1a7a99" fontFamily="'Courier New', monospace" fontWeight="700">
+                            {val}
+                        </text>
                     </g>
                 );
             })}
 
-            {/* Lines + dots per employee */}
+            {/* Vertical grid lines at each month */}
+            {months.map((m, mi) => {
+                const x = padL + (months.length > 1 ? mi * stepX : chartW / 2);
+                return (
+                    <line key={`vgrid-${mi}`}
+                          x1={x} y1={padT} x2={x} y2={padT + height}
+                          stroke="#051a2e" strokeWidth={0.5} strokeDasharray="3 6"/>
+                );
+            })}
+
+            {/* Lines + area fills + dots per employee */}
             {data.map((emp, ei) => {
+                const col    = neonColors[ei];
                 const points = months.map((m, mi) => {
                     const val = emp.stats?.monthly?.[m] || 0;
                     const x   = padL + (months.length > 1 ? mi * stepX : chartW / 2);
@@ -142,31 +214,45 @@ function MonthlyLineChart({ data, colors, months, height = 140 }) {
                 });
 
                 const lineD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-                const color = colors[ei] || '#94a3b8';
-
-                // Gradient area fill
                 const areaD = lineD
                     + ` L ${points[points.length - 1].x} ${padT + height}`
                     + ` L ${points[0].x} ${padT + height} Z`;
 
                 return (
                     <g key={`line-${ei}`}>
-                        {/* Area fill (subtle) */}
-                        <defs>
-                            <linearGradient id={`grad-${ei}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor={color} stopOpacity={0.15} />
-                                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-                            </linearGradient>
-                        </defs>
-                        <path d={areaD} fill={`url(#grad-${ei})`} />
-                        {/* Line */}
-                        <path d={lineD} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" opacity={0.9} />
-                        {/* Dots with value labels */}
+                        {/* Area fill */}
+                        <path d={areaD} fill={`url(#ngrad-${ei})`}/>
+                        {/* Outer glow halo on line */}
+                        <path d={lineD} fill="none"
+                              stroke={col} strokeWidth={5}
+                              strokeLinecap="round" strokeLinejoin="round"
+                              opacity={0.12}/>
+                        {/* Main neon line */}
+                        <path d={lineD} fill="none"
+                              stroke={col} strokeWidth={1.8}
+                              strokeLinecap="round" strokeLinejoin="round"
+                              filter={`url(#neon-glow-${ei})`}
+                              opacity={0.95}/>
+                        {/* Dots */}
                         {points.map((p, pi) => (
                             <g key={`dot-${ei}-${pi}`}>
-                                <circle cx={p.x} cy={p.y} r={3.5} fill={color} stroke="#0f172a" strokeWidth={1.5} />
+                                {/* Outer glow ring */}
+                                <circle cx={p.x} cy={p.y} r={8} fill={col} opacity={0.08}/>
+                                <circle cx={p.x} cy={p.y} r={5} fill={col} opacity={0.18}/>
+                                {/* Core dot */}
+                                <circle cx={p.x} cy={p.y} r={2.8}
+                                        fill={col} filter={`url(#neon-glow-${ei})`}/>
+                                {/* Dark center */}
+                                <circle cx={p.x} cy={p.y} r={1.2} fill="#020c18"/>
+                                {/* Value label */}
                                 {p.val > 0 && (
-                                    <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="8" fill={color} fontWeight="700">{p.val}</text>
+                                    <text x={p.x} y={p.y - 12}
+                                          textAnchor="middle" fontSize="8"
+                                          fill={col} fontWeight="800"
+                                          fontFamily="'Courier New', monospace"
+                                          filter={`url(#neon-glow-${ei})`}>
+                                        {p.val}
+                                    </text>
                                 )}
                             </g>
                         ))}
@@ -178,8 +264,10 @@ function MonthlyLineChart({ data, colors, months, height = 140 }) {
             {months.map((m, mi) => (
                 <text key={m}
                     x={padL + (months.length > 1 ? mi * stepX : chartW / 2)}
-                    y={padT + height + 16}
-                    textAnchor="middle" fontSize="9" fill="#64748b" fontWeight="600">
+                    y={padT + height + 19}
+                    textAnchor="middle" fontSize="9"
+                    fill="#1a7a99" fontWeight="700"
+                    fontFamily="'Courier New', monospace">
                     {thMonth(m)}
                 </text>
             ))}
@@ -394,20 +482,23 @@ export default function AdminPerformance() {
             {/* ── Charts Row ──────────────────────────────────────────────────── */}
             {!loading && summary.allMonths?.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px' }}>
-                    <div style={S.card}>
-                        <div style={S.cardTitle}>
+                    <div style={{ ...S.card, background: '#030e1c', border: '1px solid #0d3a50', boxShadow: '0 0 18px rgba(0,245,255,0.06), inset 0 0 40px rgba(0,0,0,0.4)' }}>
+                        <div style={{ ...S.cardTitle, color: '#00f5ff', textShadow: '0 0 8px rgba(0,245,255,0.5)' }}>
                             <TrendingUp size={13} /> Monthly Message Trend
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginLeft: 'auto' }}>
-                                {top6.map((emp, i) => (
-                                    <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: top6Colors[i] }} />
-                                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>{emp.firstName}</span>
-                                    </div>
-                                ))}
+                                {top6.map((emp, i) => {
+                                    const nc = NEON_PALETTE[i % NEON_PALETTE.length];
+                                    return (
+                                        <div key={emp.id} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: nc, boxShadow: `0 0 6px ${nc}` }} />
+                                            <span style={{ fontSize: '10px', color: nc, fontWeight: 700, fontFamily: "'Courier New', monospace", opacity: 0.85 }}>{emp.firstName}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
-                        <div style={{ height: '180px' }}>
-                            <MonthlyLineChart data={top6} colors={top6Colors} months={summary.allMonths} height={150} />
+                        <div style={{ height: '220px', width: '100%' }}>
+                            <MonthlyLineChart data={top6} colors={top6Colors} months={summary.allMonths} height={178} />
                         </div>
                     </div>
                     <div style={S.card}>

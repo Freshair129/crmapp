@@ -33,6 +33,10 @@ model Customer {
   walletBalance  Float           @default(0) @map("wallet_balance")
   walletPoints   Int             @default(0) @map("wallet_points")
   walletCurrency String          @default("THB") @map("wallet_currency")
+  // VP Points & Loyalty Tier (Phase 30)
+  vpPoints       Int             @default(0) @map("vp_points")        // คะแนนสะสมปัจจุบัน
+  totalVpEarned  Int             @default(0) @map("total_vp_earned")  // VP ที่เคยได้รับรวมทั้งหมด
+  totalSpend     Float           @default(0) @map("total_spend")      // ยอดใช้จ่ายสะสม (THB)
   intelligence   Json?           @default("{}")
   conversationId String?         @map("conversation_id")
   createdAt      DateTime        @default(now()) @map("created_at")

@@ -38,12 +38,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.1.0` | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
 | `v1.2.0` | Equipment Domain POS — hand/material/specs + shipping fields (ADR-043) | ✅ released |
 | `v1.3.0` | Web Push Inbox Real-time — ลบ SSE+polling, VAPID (ADR-044) | ✅ released |
-| `v1.4.0` | RBAC Redesign — Domain Roles + Ads Optimize Write (ADR-045) | ✅ released ← HEAD |
+| `v1.4.0` | RBAC Redesign — Domain Roles + Ads Optimize Write (ADR-045) | ✅ released |
+| `v1.4.1` | Admin Performance Dashboard Fix (Monthly Message Trend) | ✅ released |
+| `v1.5.0-pre` | V Point Loyalty + UI Overhaul (TopBar slim + Sidebar 3-mode + Neon Chart) | ✅ released ← HEAD |
 | `v1.5.0` | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
 
+
+### v1.5.0-pre — สิ่งที่ทำแล้ว (Phase 30) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Customer vpPoints/totalVpEarned/totalSpend | ✅ done | 3 columns, Supabase migration applied |
+| `src/lib/repositories/customerRepo.js` | ✅ done | TIER_CONFIG, VP_RATE, calcVPoints, calculateTier, awardVPoints |
+| `src/app/api/customers/[id]/vpoints/route.js` | ✅ new | POST — award VP after order, returns updated balance |
+| `src/components/PremiumPOS.js` | ✅ updated | CartCustomerSearch + CustomerCard (tier/VP/milestone), VP receipt card, reset on done |
+| `src/components/TopBar.js` | ✅ redesigned | Slim h-10, breadcrumb left, search center, compact controls right |
+| `src/components/Sidebar.js` | ✅ redesigned | 3-mode (expanded/collapsed/hover), localStorage persist, animated labels, mode control popup |
+| `src/components/AdminPerformance.js` | ✅ updated | NEON_PALETTE, MonthlyLineChart futuristic neon (glow filters, scanlines), container h-220px |
+
+> ⚠️ **Known Gotcha — Sidebar mode**: default mode = `hover`. ลูกค้าสามารถเปลี่ยนได้จาก control icon ซ้ายล่าง → บันทึกใน `localStorage` key `sidebarMode`
+> ⚠️ **Known Gotcha — VP fire-and-forget**: VP award ไม่ block receipt display — errors logged ใน console เท่านั้น ไม่มี retry
+> ⚠️ **Known Gotcha — Neon chart**: `NEON_PALETTE` ถูก import เฉพาะใน `AdminPerformance.js` — ถ้า mini-chart (single-line) ใช้ index 0 = cyan `#00f5ff`
 
 ### v1.4.0 — สิ่งที่ทำแล้ว (Phase 29) ✅ — by Claude
 | ไฟล์ | สถานะ | หมายเหตุ |

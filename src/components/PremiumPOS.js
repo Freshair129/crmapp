@@ -533,6 +533,12 @@ export default function PremiumPOS({ language = 'TH' }) {
     // assignedStaff = read-only, auto-resolved from customer's latest conversation
     const [assignedStaff, setAssignedStaff] = useState(null); // { id, firstName, lastName, employeeId }
 
+    // Customer pre-selection in cart panel
+    const [cartCustomerSearch, setCartCustomerSearch] = useState('');
+    const [cartCustomer, setCartCustomer] = useState(null);       // selected customer for this order
+    const [cartCustomerLoading, setCartCustomerLoading] = useState(false);
+    const [cartCustomerResults, setCartCustomerResults] = useState([]);
+
     useEffect(() => {
         fetch('/api/employees')
             .then(r => r.json())
@@ -650,11 +656,52 @@ export default function PremiumPOS({ language = 'TH' }) {
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
+    // ── Cart customer search ──────────────────────────────────────────────
+    const TIER_META = {
+        TIER1: { label: 'V Member',   color: '#9CA3AF', bg: 'bg-gray-500/20',   badge: '🥈' },
+        TIER2: { label: 'V Silver',   color: '#C0C0C0', bg: 'bg-gray-300/20',   badge: '🥈' },
+        TIER3: { label: 'V Gold',     color: '#C9A34E', bg: 'bg-amber-500/20',  badge: '🥇' },
+        TIER4: { label: 'V Platinum', color: '#E5E4E2', bg: 'bg-slate-300/20',  badge: '💎' },
+        TIER5: { label: 'V Black',    color: '#9b8cff', bg: 'bg-purple-500/20', badge: '⬛' },
+    };
+
+    const searchCartCustomer = async (q) => {
+        setCartCustomerSearch(q);
+        if (q.length < 2) { setCartCustomerResults([]); return; }
+        setCartCustomerLoading(true);
+        try {
+            const res = await fetch(`/api/customers?search=${encodeURIComponent(q)}&limit=5`);
+            const data = await res.json();
+            setCartCustomerResults(Array.isArray(data) ? data : data.customers || []);
+        } catch { setCartCustomerResults([]); }
+        finally { setCartCustomerLoading(false); }
+    };
+
+    const selectCartCustomer = (c) => {
+        setCartCustomer(c);
+        setCartCustomerSearch('');
+        setCartCustomerResults([]);
+    };
+
     const handleCheckout = () => {
         // ไม่ reset isGuestMode ที่นี่ — ให้ user set ได้จากตะกร้า
         setSlipFile(null);
         setSlipOcr(null);
         setShowOrderTypeModal(true);
+    };
+
+    const handleOrderTypeConfirmWithCartCustomer = () => {
+        // ถ้าเลือกลูกค้าไว้แล้วในตะกร้า → ข้าม customer modal
+        setShowOrderTypeModal(false);
+        if (isGuestMode) {
+            openPaymentModal({ id: 'guest-customer-00000000-0000-0000-0000-000000000000', firstName: 'ลูกค้า', lastName: 'ทั่วไป', customerId: 'WALK-IN-GUEST' });
+        } else if (cartCustomer) {
+            openPaymentModal(cartCustomer);
+        } else {
+            setShowCustomerModal(true);
+            setShowRegisterForm(false);
+            setCustomerError('');
+        }
     };
 
     // Guest shortcut — ข้าม OrderType modal + ข้าม Customer modal เลย
@@ -868,7 +915,18 @@ export default function PremiumPOS({ language = 'TH' }) {
                 setEnrollmentCount(createdEnrollments);
 
                 const orderData = await orderRes.json();
-                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart], assignedStaffSnap: assignedStaff, orderTypeSnap: { ...orderTypeForm }, deliveryNetAmount, gpRate, orderStatus, slipOcrSnap: slipOcr ? { ...slipOcr } : null });
+
+                // Award V Points (fire-and-forget — ไม่ block receipt)
+                const earnedVp = !isGuestMode ? Math.floor(finalTotal / 150) * 300 : 0;
+                if (!isGuestMode && customer?.id) {
+                    fetch('/api/customers/' + customer.id + '/vpoints', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderAmount: finalTotal }),
+                    }).catch(e => console.error('[POS] VPoint award failed', e));
+                }
+
+                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart], assignedStaffSnap: assignedStaff, orderTypeSnap: { ...orderTypeForm }, deliveryNetAmount, gpRate, orderStatus, slipOcrSnap: slipOcr ? { ...slipOcr } : null, earnedVp });
                 setLastCustomer(customer);
                 setShowPaymentModal(false);
                 setShowReceiptModal(true);
@@ -989,6 +1047,21 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 </div>
                             )}
                             {enrollmentCount > 0 && <div className="text-center text-green-400 font-bold text-sm py-2">✅ ลงทะเบียนคอร์ส {enrollmentCount} รายการแล้ว</div>}
+                            {lastOrder.earnedVp > 0 && (
+                                <div className="bg-gradient-to-r from-[#C9A34E]/15 to-[#C9A34E]/5 border border-[#C9A34E]/30 rounded-xl px-4 py-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">⭐</span>
+                                        <div>
+                                            <div className="text-[10px] text-[#C9A34E]/70 font-black uppercase tracking-widest">V Point ที่ได้รับ</div>
+                                            <div className="text-white/50 text-[10px]">สะสมทุก ฿150 = 300 VP</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[#C9A34E] font-black text-xl">+{lastOrder.earnedVp.toLocaleString()}</div>
+                                        <div className="text-[#C9A34E]/60 text-[10px] font-bold">V POINTS</div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Action Buttons */}
@@ -1029,6 +1102,9 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     setIsGuestMode(false);
                                     setSlipFile(null);
                                     setSlipOcr(null);
+                                    setCartCustomer(null);
+                                    setCartCustomerSearch('');
+                                    setCartCustomerResults([]);
                                 }}
                                 className="flex flex-col items-center gap-1.5 py-3 bg-[#C9A34E] hover:bg-[#B8923D] rounded-xl transition-all text-[#0A1A2F] text-xs font-black uppercase tracking-wider"
                             >
@@ -1120,7 +1196,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-white/60 font-black text-sm uppercase transition-all">
                                 ยกเลิก
                             </button>
-                            <button onClick={handleOrderTypeConfirm}
+                            <button onClick={handleOrderTypeConfirmWithCartCustomer}
                                 disabled={orderTypeForm.type === 'DELIVERY' && !orderTypeForm.platform}
                                 className="flex-[2] py-4 bg-[#C9A34E] hover:bg-[#B8923D] disabled:opacity-40 rounded-2xl text-[#0A1A2F] font-black text-sm uppercase transition-all">
                                 ถัดไป →
@@ -1638,6 +1714,101 @@ export default function PremiumPOS({ language = 'TH' }) {
                     <div className="w-8 h-8 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/25 flex items-center justify-center">
                         <ShoppingBasket size={14} className="text-[#C9A34E]" />
                     </div>
+                </div>
+
+                {/* ── Customer Card / Search ── */}
+                <div className="px-4 py-3 border-b border-white/8 flex-shrink-0">
+                    {cartCustomer ? (
+                        // Customer Card
+                        <div className="bg-white/5 rounded-2xl p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-[#C9A34E]/20 flex items-center justify-center text-sm font-black text-[#C9A34E]">
+                                        {(cartCustomer.firstName || '?')[0]}
+                                    </div>
+                                    <div>
+                                        <div className="font-black text-white text-sm leading-tight">
+                                            {cartCustomer.firstName} {cartCustomer.lastName || ''}
+                                            {cartCustomer.nickName ? <span className="text-white/40 font-normal text-[10px] ml-1">({cartCustomer.nickName})</span> : null}
+                                        </div>
+                                        <div className="text-white/30 text-[10px]">{cartCustomer.phonePrimary || cartCustomer.customerId}</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setCartCustomer(null)} className="text-white/20 hover:text-white/60 transition-colors"><X size={14}/></button>
+                            </div>
+
+                            {/* Tier + VP */}
+                            {(() => {
+                                const tier = cartCustomer.membershipTier || 'TIER1';
+                                const meta = TIER_META[tier] || TIER_META['TIER1'];
+                                const vp = cartCustomer.vpPoints || 0;
+                                const spend = cartCustomer.totalSpend || 0;
+                                const NEXT_SPEND = { TIER1: 20000, TIER2: 50000, TIER3: 100000, TIER4: 200000, TIER5: null };
+                                const nextSpend = NEXT_SPEND[tier];
+                                const spendPct = nextSpend ? Math.min(100, Math.round((spend / nextSpend) * 100)) : 100;
+                                return (
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${meta.bg}`} style={{ color: meta.color }}>
+                                                {meta.badge} {meta.label}
+                                            </span>
+                                            <span className="text-[#C9A34E] font-black text-[11px]">
+                                                {vp.toLocaleString()} <span className="text-white/40 font-normal">V Point</span>
+                                            </span>
+                                        </div>
+                                        {/* Milestone bar */}
+                                        {nextSpend && (
+                                            <div className="space-y-0.5">
+                                                <div className="flex justify-between text-[9px] text-white/30">
+                                                    <span>ยอดสะสม ฿{spend.toLocaleString()}</span>
+                                                    <span>เป้า ฿{nextSpend.toLocaleString()}</span>
+                                                </div>
+                                                <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                                                    <div className="h-full rounded-full transition-all" style={{ width: `${spendPct}%`, background: meta.color }}/>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    ) : (
+                        // Search input
+                        <div className="relative">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/8 focus-within:border-[#C9A34E]/40 transition-all">
+                                <Search size={13} className="text-white/30 flex-shrink-0"/>
+                                <input
+                                    type="text"
+                                    value={cartCustomerSearch}
+                                    onChange={e => searchCartCustomer(e.target.value)}
+                                    placeholder="ค้นหาสมาชิก (ชื่อ / เบอร์)"
+                                    className="flex-1 bg-transparent text-white text-xs font-bold outline-none placeholder:text-white/20"
+                                />
+                                {cartCustomerLoading && <Loader2 size={12} className="text-white/30 animate-spin flex-shrink-0"/>}
+                            </div>
+                            {cartCustomerResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-[#1a2535] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                                    {cartCustomerResults.map(c => {
+                                        const tier = c.membershipTier || 'TIER1';
+                                        const meta = TIER_META[tier] || TIER_META['TIER1'];
+                                        return (
+                                            <button key={c.id} onClick={() => selectCartCustomer(c)}
+                                                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-colors text-left">
+                                                <div className="w-7 h-7 rounded-full bg-[#C9A34E]/15 flex items-center justify-center text-xs font-black text-[#C9A34E] flex-shrink-0">
+                                                    {(c.firstName || '?')[0]}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-white text-xs font-bold truncate">{c.firstName} {c.lastName || ''} {c.nickName ? `(${c.nickName})` : ''}</div>
+                                                    <div className="text-white/30 text-[10px]">{c.phonePrimary || ''}</div>
+                                                </div>
+                                                <span className="text-[9px] font-black flex-shrink-0" style={{ color: meta.color }}>{meta.badge}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Cart items */}
