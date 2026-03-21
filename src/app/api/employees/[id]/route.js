@@ -5,7 +5,8 @@ import bcrypt from 'bcryptjs';
 
 /**
  * PATCH /api/employees/[id]
- * Update employee fields (firstName, lastName, nickName, phone, department, role, status, password)
+ * Update employee fields (firstName, lastName, nickName, phone, department,
+ *   role, status, password, facebookName, facebookUrl)
  */
 export async function PATCH(req, { params }) {
     try {
@@ -14,24 +15,15 @@ export async function PATCH(req, { params }) {
         const body = await req.json();
 
         const updateData = {};
-        const allowed = ['firstName', 'lastName', 'nickName', 'phone', 'department', 'role', 'status'];
+        const allowed = [
+            'firstName', 'lastName', 'nickName', 'phone', 'department',
+            'role', 'status', 'facebookName', 'facebookUrl',
+        ];
         for (const key of allowed) {
-            if (key in body) updateData[key] = body[key];
+            if (key in body) updateData[key] = body[key] || null;
         }
         if (body.password) {
             updateData.passwordHash = await bcrypt.hash(body.password, 10);
-        }
-        if ('facebookName' in body) {
-            // Merge into identities JSONB: keep existing keys, update facebook.name
-            const emp = await prisma.employee.findUnique({ where: { id }, select: { identities: true } });
-            const existing = (emp?.identities && typeof emp.identities === 'object') ? emp.identities : {};
-            updateData.identities = {
-                ...existing,
-                facebook: {
-                    ...(existing.facebook || {}),
-                    name: body.facebookName || null,
-                },
-            };
         }
 
         const employee = await prisma.employee.update({
@@ -48,6 +40,8 @@ export async function PATCH(req, { params }) {
                 department: true,
                 role: true,
                 status: true,
+                facebookName: true,
+                facebookUrl: true,
             },
         });
 

@@ -47,6 +47,8 @@ export async function GET(req) {
                 department: true,
                 role: true,
                 status: true,
+                facebookName: true,
+                facebookUrl: true,
                 identities: true,
                 createdAt: true,
             },
@@ -62,13 +64,13 @@ export async function GET(req) {
 
 /**
  * POST /api/employees - Register new employee
- * Body: { firstName, lastName, nickName?, email, phone?, department, role, password }
+ * Body: { firstName, lastName, nickName?, email, phone?, department, role, password, facebookName?, facebookUrl? }
  */
 export async function POST(req) {
     try {
         const prisma = await getPrisma();
         const body = await req.json();
-        const { firstName, lastName, nickName, email, phone, department, role, password, facebookName } = body;
+        const { firstName, lastName, nickName, email, phone, department, role, password, facebookName, facebookUrl } = body;
 
         if (!firstName || !lastName || !email || !password) {
             return NextResponse.json(
@@ -85,8 +87,6 @@ export async function POST(req) {
         const employeeId = await generateEmployeeId(prisma, department);
         const passwordHash = await bcrypt.hash(password, 10);
 
-        const identities = facebookName ? { facebook: { name: facebookName } } : {};
-
         const employee = await prisma.employee.create({
             data: {
                 employeeId,
@@ -99,7 +99,8 @@ export async function POST(req) {
                 role: role || 'AGENT',
                 status: 'ACTIVE',
                 passwordHash,
-                identities,
+                facebookName: facebookName || null,
+                facebookUrl: facebookUrl || null,
             },
             select: {
                 id: true,
@@ -112,6 +113,8 @@ export async function POST(req) {
                 department: true,
                 role: true,
                 status: true,
+                facebookName: true,
+                facebookUrl: true,
                 createdAt: true,
             },
         });

@@ -306,7 +306,7 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', role: 'AGENT', password: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -371,6 +371,35 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <option key={r} value={r}>{ROLE_META[r].label} ({ROLE_META[r].level})</option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Facebook fields */}
+                    <div className="border-t border-white/8 pt-4">
+                        <p className="text-[9px] text-[#1877F2]/60 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <Facebook size={10} /> Facebook (ไม่บังคับ)
+                        </p>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
+                                <input
+                                    type="text"
+                                    placeholder="เช่น สมชาย ใจดี"
+                                    value={form.facebookName || ''}
+                                    onChange={e => setForm(f => ({ ...f, facebookName: e.target.value }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
+                                <input
+                                    type="text"
+                                    placeholder="facebook.com/username"
+                                    value={form.facebookUrl || ''}
+                                    onChange={e => setForm(f => ({ ...f, facebookUrl: e.target.value }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 transition-all font-mono"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-3 mt-6">
@@ -586,11 +615,10 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         </div>
                                     </div>
                                     {[
-                                        { icon: Mail, label: 'Email', val: emp.email },
-                                        { icon: Phone, label: 'Phone', val: emp.phone || '—' },
-                                        { icon: Building2, label: 'Dept', val: emp.department || '—' },
-                                        { icon: Facebook, label: 'Facebook', val: emp.facebookName || '—' },
-                                        { icon: BadgeCheck, label: 'Employee ID', val: emp.employeeId },
+                                        { icon: Mail,      label: 'Email',       val: emp.email },
+                                        { icon: Phone,     label: 'Phone',       val: emp.phone || '—' },
+                                        { icon: Building2, label: 'Dept',        val: emp.department || '—' },
+                                        { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
@@ -602,6 +630,29 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* Facebook section */}
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-8 h-8 rounded-xl bg-[#1877F2]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <Facebook size={13} className="text-[#1877F2]/70" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] text-white/30 font-black uppercase tracking-widest mb-0.5">Facebook</p>
+                                            <p className="text-white/80 text-xs font-bold truncate">{emp.facebookName || '—'}</p>
+                                            {emp.facebookUrl ? (
+                                                <a
+                                                    href={emp.facebookUrl.startsWith('http') ? emp.facebookUrl : `https://${emp.facebookUrl}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[#1877F2]/70 hover:text-[#1877F2] text-[10px] font-mono truncate block transition-colors"
+                                                >
+                                                    {emp.facebookUrl}
+                                                </a>
+                                            ) : (
+                                                <p className="text-white/20 text-[10px]">ไม่มี URL</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -703,6 +754,35 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     />
                                 </div>
                             ))}
+
+                            {/* Facebook fields */}
+                            <div className="border-t border-white/8 pt-4">
+                                <p className="text-[9px] text-[#1877F2]/60 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                    <Facebook size={10} /> Facebook
+                                </p>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
+                                        <input
+                                            type="text"
+                                            placeholder="เช่น สมชาย ใจดี"
+                                            value={editForm.facebookName || ''}
+                                            onChange={e => setEditForm(f => ({ ...f, facebookName: e.target.value }))}
+                                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
+                                        <input
+                                            type="text"
+                                            placeholder="facebook.com/username หรือ https://..."
+                                            value={editForm.facebookUrl || ''}
+                                            onChange={e => setEditForm(f => ({ ...f, facebookUrl: e.target.value }))}
+                                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 transition-all font-mono"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Role selector */}
                             <div>
