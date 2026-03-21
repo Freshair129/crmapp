@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-004 | v1.6.1 | 2026-03-22
+**LATEST:** CL-20260322-005 | v1.7.0 | 2026-03-22
 
 ---
 
@@ -6,6 +6,8 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260322-005 | MCP Server v1.7.0 — Dual Transport stdio + Streamable HTTP (ADR-050) | v1.7.0 | 2026-03-22 | MINOR | #mcp #api #infrastructure #auth #middleware |
+| CL-20260321-006 | V Point Loyalty + UI Overhaul (TopBar slim, Sidebar 3-mode) | v1.5.0-pre | 2026-03-21 | MINOR | #pos #loyalty #ui #sidebar #topbar |
 | CL-20260322-003 | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | v1.6.0 | 2026-03-22 | MAJOR | #inventory #procurement #po #bom #warehouse #supplier |
 | CL-20260322-002 | Centralized ID Generators + Agent ID/Code + Customer ID YYMM | v1.5.3 | 2026-03-22 | MINOR | #refactor #id-generation #employee #schema |
 | CL-20260322-001 | Employee Card Full Redesign + Task Board + SVG Folder Shape Fix | v1.5.2 | 2026-03-22 | MINOR | #employee #ui #card #tasks #svgshape |
@@ -31,6 +33,24 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-005] v1.7.0 — MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050)
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #mcp #api #infrastructure #auth #middleware
+
+#### Changes
+- **`src/mcp/vschool-mcp-server.js`** (NEW): stdio transport, 15 tools, 5 domains (Customer/Schedule/Kitchen/Inventory/Procurement)
+- **`src/app/api/mcp/route.js`** (NEW): Vercel HTTP endpoint — GET health check + POST JSON-RPC dispatch + Bearer token auth (`MCP_SECRET`)
+- **middleware.js fix**: whitelist `/api/mcp` → `role: null` (เดิมตกไปที่ catch-all → 401)
+- **`package.json`**: เพิ่ม `mcp:start` script (`npx tsx --tsconfig tsconfig.json`)
+- **Claude Desktop config**: เขียน `claude_desktop_config.json` สำหรับ local stdio mode
+
+#### Verification
+```bash
+curl https://crmapp-pi.vercel.app/api/mcp
+# → {"status":"ok","server":"vschool-crm-mcp","version":"1.6.0","tools":15,"transport":"streamable-http"}
+```
+
+---
 
 ### [CL-20260322-004] v1.6.1 — Employee Card UX + Interactive Permissions + jobTitle
 **Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #employee #ui #card #permissions #schema #bugfix
@@ -103,54 +123,6 @@ Employee ID format เปลี่ยนเป็น `TVS-[TYPE]-[DEPT]-[NNN]` p
 - `src/app/api/employees/route.js` — generateEmployeeId() ใหม่
 - `id_standards.yaml` — employee ID format updated
 - `docs/adr/047-employee-id-v3.md` — NEW
-
----
-
-### [CL-20260321-006] v1.5.0-pre — V Point Loyalty + UI Overhaul
-**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #loyalty #ui #sidebar #topbar
-
-#### Changes
-- **V Point Loyalty System (Phase 30)**: `vpPoints`, `totalVpEarned`, `totalSpend` columns added to `customers` table. `awardVPoints()` + `calcVPoints()` + `calculateTier()` functions in `customerRepo.js`. API route `POST /api/customers/[id]/vpoints`. Fire-and-forget VP award after processOrder in POS.
-- **POS CustomerCard**: Pre-select customer in cart panel by name/phone search. Shows tier badge, VP balance, spend milestone progress bar. VP reset on "เสร็จสิ้น".
-- **Receipt VP display**: ⭐ V Point ที่ได้รับ card shown on receipt when `earnedVp > 0`.
-- **Monthly Message Trend**: Futuristic neon redesign — SVG glow filters, neon palette (`NEON_PALETTE`), dark panel background, scanline overlay, glowing dots, container height 220px.
-- **TopBar slim**: Height reduced to `h-10`. Breadcrumb left (V logo + "V School CRM" + role badge). Search center. Controls right (lang, theme, bell, user). Cleaner compact layout.
-- **Sidebar 3-mode**: `expanded` (w-220px always), `collapsed` (w-72px always), `hover` (w-72px → w-220px on mouse enter). Mode persisted to `localStorage`. Bottom control icon toggles popup menu with 3 options. Labels animate in/out with `max-width` + `opacity` transitions. Group dividers show/hide based on open state. Tooltip shown in collapsed/hover-closed state.
-
-#### Files Changed
-- `src/components/PremiumPOS.js` — VP award, receipt VP card, customerCard, reset
-- `src/lib/repositories/customerRepo.js` — TIER_CONFIG, VP_RATE, calcVPoints, calculateTier, awardVPoints
-- `src/app/api/customers/[id]/vpoints/route.js` — NEW
-- `src/components/AdminPerformance.js` — NEON_PALETTE, MonthlyLineChart neon redesign, container h-220px
-- `src/components/TopBar.js` — slim h-10, breadcrumb left, search center
-- `src/components/Sidebar.js` — 3-mode (expanded/collapsed/hover), localStorage persist, animated labels
-
----
-
-### [CL-20260321-004] v1.5.0 — POS Receipt & Printer Integration Plan (ADR-046)
-**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #receipt #printing #thermal #line #plan
-
-วางแผน Phase 30 — ระบบออกบิล/ใบเสร็จจาก POS + เชื่อมต่อ thermal printer 80mm + ส่งบิลทาง LINE
-
-#### Phase 30 Sub-phases
-- **30a** Prisma Receipt model + `receiptRepo.js`
-- **30b** Receipt API Routes (5 endpoints)
-- **30c** Receipt Component + Print Preview Modal
-- **30d** Thermal Printer 80mm (ESC/POS via Web Serial)
-- **30e** LINE Receipt Send (PNG image)
-- **30f** Receipt History Page + Sidebar nav
-- **30g** POS Integration + Tests + Docs
-
-#### Key Decisions (ADR-046)
-- Receipt ผูก Order 1:1 — Receipt ID: `RCP-YYYYMMDD-XXX`
-- 3 print channels: Thermal (Web Serial) / Browser (`window.print`) / LINE (PNG push)
-- ESC/POS encode ฝั่ง client (zero backend dependency)
-- Thai text: TIS-620 charset (code page 26)
-
-#### Files Changed
-- `docs/adr/046-pos-receipt-printing.md` (new)
-- `docs/implement_plan_phase30.md` (new)
-- `system_requirements.yaml`, `id_standards.yaml`, `CLAUDE.md`, `GOAL.md` (updated)
 
 ---
 

@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-21)
+## Version Status (อัพเดท: 2026-03-22)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -43,11 +43,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.5.0-pre` | V Point Loyalty + UI Overhaul (TopBar slim + Sidebar 3-mode + Neon Chart) | ✅ released |
 | `v1.5.1` | Employee ID v3 Format — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) | ✅ released |
 | `v1.5.2` | POS Receipt & Printer Integration (ADR-046) | ✅ released |
-| `v1.5.3` | Synchronized PRD & API Reference Audit | ✅ released ← HEAD |
+| `v1.5.3` | Synchronized PRD & API Reference Audit | ✅ released |
+| `v1.6.0` | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
+| `v1.6.1` | Employee Card UX + Interactive Permissions + jobTitle | ✅ released |
+| `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
 
+
+### v1.7.0 — สิ่งที่ทำแล้ว (Phase 31 — MCP) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/mcp/vschool-mcp-server.js` | ✅ new | stdio transport, 15 tools, 5 domains |
+| `src/app/api/mcp/route.js` | ✅ new | Vercel HTTP endpoint, GET health + POST JSON-RPC, Bearer auth |
+| `src/middleware.js` | ✅ updated | whitelist `/api/mcp` → `role: null` |
+| `package.json` | ✅ updated | `mcp:start` script (npx tsx --tsconfig) |
+| `docs/adr/050-mcp-server-dual-transport.md` | ✅ new | ADR-050 |
+| `changelog/CL-20260322-005.md` | ✅ new | changelog entry |
+
+> ⚠️ **Known Gotcha — MCP_SECRET**: ถ้าตั้ง env var นี้ใน Vercel → ทุก POST ต้องมี `Authorization: Bearer <secret>`
+> ⚠️ **Known Gotcha — Local stdio**: ต้องใช้ `npx tsx --tsconfig tsconfig.json` เสมอ — ไม่งั้น `@/` aliases resolve ไม่ได้
+> ⚠️ **Known Gotcha — module boundary**: อย่าสร้าง `src/mcp/package.json` ที่มี `"type":"module"` — CJS/ESM boundary แตก
+> 📍 **Production health check**: `curl https://crmapp-pi.vercel.app/api/mcp`
 
 ### v1.5.0-pre — สิ่งที่ทำแล้ว (Phase 30) ✅ — by Claude
 | ไฟล์ | สถานะ | หมายเหตุ |
@@ -356,6 +374,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-045 | RBAC Redesign: 8 roles, permissionMatrix.js, Ads Optimize write (Meta API) |
 | ADR-046 | POS Receipt & Printer: Receipt model, thermal 80mm ESC/POS, LINE send, history |
 | ADR-047 | Employee ID v3: TVS-[TYPE]-[DEPT]-[NNN] — employment type + department in ID |
+| ADR-048 | Inventory Control & Distribution: multi-warehouse, stock movement, barcode/QR |
+| ADR-049 | Procurement PO Lifecycle: Chef approval, purchasing flow, GRN, returns, advances |
+| ADR-050 | MCP Server: Dual Transport (stdio + Streamable HTTP), 15 tools, Bearer auth |
 
 ---
 
