@@ -129,21 +129,36 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
             onMouseLeave={handleMouseLeave}
             className="bg-[#0A1A2F] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100] overflow-x-hidden overflow-y-hidden select-none"
         >
-            {/* ── Logo ──────────────────────────────────────────────────── */}
-            <div className="h-10 flex items-center border-b border-white/5 shrink-0 px-4 gap-3">
-                <div className="w-6 h-6 rounded-md bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-xs shadow-sm shadow-[#C9A34E]/30 shrink-0">
-                    V
-                </div>
+            {/* ── Client Identity ───────────────────────────────────────── */}
+            <div className="h-10 flex items-center border-b border-white/5 shrink-0 px-4 gap-2">
+                {/* Collapsed: show abbreviated client ID */}
                 <span
-                    className="text-[#C9A34E] font-black text-[11px] uppercase tracking-[0.15em] whitespace-nowrap overflow-hidden"
+                    className="text-[#C9A34E] font-black text-[10px] uppercase tracking-[0.18em] whitespace-nowrap shrink-0"
+                    style={{
+                        opacity: isOpen ? 0 : 1,
+                        maxWidth: isOpen ? 0 : 40,
+                        transition: 'opacity 120ms, max-width 180ms cubic-bezier(0.4,0,0.2,1)',
+                        overflow: 'hidden',
+                    }}
+                >
+                    TVS
+                </span>
+                {/* Expanded: full client name + ID */}
+                <div
+                    className="flex flex-col justify-center overflow-hidden"
                     style={{
                         opacity: isOpen ? 1 : 0,
-                        maxWidth: isOpen ? 160 : 0,
+                        maxWidth: isOpen ? 200 : 0,
                         transition: 'opacity 140ms, max-width 180ms cubic-bezier(0.4,0,0.2,1)',
                     }}
                 >
-                    V School
-                </span>
+                    <span className="text-[#C9A34E] font-black text-[11px] tracking-[0.1em] whitespace-nowrap leading-none">
+                        The V School
+                    </span>
+                    <span className="text-white/25 font-mono text-[8px] tracking-widest whitespace-nowrap leading-none mt-0.5">
+                        {process.env.NEXT_PUBLIC_CLIENT_ID || 'TVS-001'}
+                    </span>
+                </div>
             </div>
 
             {/* ── Navigation ────────────────────────────────────────────── */}
