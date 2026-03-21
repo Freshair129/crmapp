@@ -262,6 +262,27 @@
 
 ---
 
+## 📋 Phase 30: POS Receipt & Printer Integration (v1.5.0)
+> **ADR:** ADR-046
+> **Goal:** ออกบิล/ใบเสร็จจาก POS, เชื่อมต่อ thermal printer 80mm, ส่งบิลทาง LINE
+> **Implement Plan:** `docs/implement_plan_phase30.md`
+> **Status:** Planned
+
+| Sub-phase | งาน | สถานะ |
+|---|---|---|
+| 30a | Prisma Schema (Receipt model) + `receiptRepo.js` | ⏳ |
+| 30b | Receipt API Routes (5 endpoints) | ⏳ |
+| 30c | Receipt Component + Print Preview Modal | ⏳ |
+| 30d | Thermal Printer 80mm (ESC/POS via Web Serial API) | ⏳ |
+| 30e | LINE Receipt Send (PNG image via LINE Messaging API) | ⏳ |
+| 30f | Receipt History Page + Sidebar nav | ⏳ |
+| 30g | POS Integration + Tests + Docs | ⏳ |
+
+**New Model:** `Receipt` (1:1 กับ Order) — `RCP-YYYYMMDD-XXX`
+**Print Channels:** Thermal 80mm (Web Serial) · Browser Print (fallback) · LINE Send (PNG)
+
+---
+
 ## 📋 Backlog / Known Issues
 
 | ID | Issue | Priority |
