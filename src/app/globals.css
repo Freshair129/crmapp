@@ -116,3 +116,18 @@
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.1s ease;
 }
+
+/* ── Print Receipt Styles ── */
+@media print {
+  body > * { display: none !important; }
+  #receipt-print-area { display: block !important; }
+  #receipt-print-area { 
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+    padding: 16px;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}

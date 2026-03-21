@@ -37,14 +37,19 @@ export async function GET(request) {
         const mkMGte = () => dateGte ? Prisma.sql`AND m.created_at >= ${dateGte}` : Prisma.sql``;
         const mkMLte = () => dateLte ? Prisma.sql`AND m.created_at <= ${dateLte}` : Prisma.sql``;
 
-        // 1. Get all active chat-admin employees (MKT + developer/Boss)
+        // 1. Get all active employees who have responded to messages
+        //    (ไม่ filter department — Fafah/Aoi เป็น AGENT แต่ตอบแชท)
+        const responderIds = await prisma.$queryRaw`
+            SELECT DISTINCT responder_id FROM messages
+            WHERE responder_id IS NOT NULL
+            ${mkGte()} ${mkLte()}
+        `;
+        const responderIdSet = new Set(responderIds.map(r => r.responder_id));
+
         const employees = await prisma.employee.findMany({
             where: {
                 status: 'ACTIVE',
-                OR: [
-                    { employeeId: { startsWith: 'TVS-MKT-' } },
-                    { employeeId: { startsWith: 'TVS-EMP-' }, department: 'developer' },
-                ],
+                id: { in: [...responderIdSet] },
             },
             select: { id: true, employeeId: true, firstName: true, lastName: true, nickName: true, role: true, department: true },
             orderBy: { employeeId: 'asc' },

@@ -48,14 +48,24 @@ export async function POST(request) {
         const order = await prisma.$transaction(async (tx) => {
             return tx.order.create({
                 data: {
-                    orderId: crypto.randomUUID(), // Standard says UUID
+                    orderId: crypto.randomUUID(),
                     customerId: body.customerId,
                     date: body.date ? new Date(body.date) : new Date(),
                     status: body.status || 'PENDING',
                     totalAmount: body.totalAmount,
-                    paidAmount: body.paidAmount || 0,
+                    paidAmount: body.paidAmount || (body.isDeposit ? Number(body.depositAmount || 0) : body.totalAmount) || 0,
+                    discountAmount: Number(body.discountAmount || 0),
+                    discountPercent: body.discountPercent ? Number(body.discountPercent) : null,
+                    promoCode: body.promoCode || null,
+                    paymentMethod: body.paymentMethod || null,
+                    bankName: body.bankName || null,
+                    isDeposit: body.isDeposit || false,
                     items: body.items || [],
-                    conversationId: body.conversationId,
+                    closedById: body.closedById || null,
+                    salesStaffId: body.salesStaffId || null,
+                    cashierId: body.cashierId || null,
+                    conversationId: body.conversationId || null,
+                    notes: body.notes || null,
                 }
             });
         });

@@ -488,6 +488,44 @@ export default function PremiumPOS({ language = 'TH' }) {
     const [showRegisterForm, setShowRegisterForm] = useState(false);
     const [regForm, setRegForm] = useState({ firstName: '', lastName: '', nickName: '' });
 
+    // Payment Modal
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [pendingCustomer, setPendingCustomer] = useState(null);
+    const [paymentForm, setPaymentForm] = useState({
+        method: 'CASH',
+        bankName: '',
+        isDeposit: false,
+        depositAmount: '',
+        discountAmount: '',
+        discountPercent: '',
+        promoCode: '',
+        salesStaffId: '',
+        closedById: '',
+        cashierId: '',
+        notes: '',
+    });
+
+    // Receipt Modal
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [lastOrder, setLastOrder] = useState(null);
+    const [lastCustomer, setLastCustomer] = useState(null);
+
+    // Employee list for dropdowns
+    const [employees, setEmployees] = useState([]);
+
+    useEffect(() => {
+        fetch('/api/employees')
+            .then(r => r.json())
+            .then(data => setEmployees(Array.isArray(data) ? data : data.employees || []))
+            .catch(() => {});
+        // Load html2canvas for receipt image export
+        if (!window.html2canvas) {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            document.head.appendChild(s);
+        }
+    }, []);
+
     useEffect(() => {
         fetch('/api/products')
             .then(r => {
@@ -598,6 +636,19 @@ export default function PremiumPOS({ language = 'TH' }) {
         setCustomerError('');
     };
 
+    const openPaymentModal = (customer) => {
+        setPendingCustomer(customer);
+        setShowCustomerModal(false);
+        setCustomerPhone('');
+        setCustomerError('');
+        // Pre-fill cashier with current logged-in user if employee
+        setPaymentForm(f => ({
+            ...f,
+            cashierId: session?.user?.employeeId || '',
+        }));
+        setShowPaymentModal(true);
+    };
+
     const handleRegisterCustomer = async () => {
         if (!regForm.firstName || !regForm.lastName || !customerPhone) {
             setCustomerError('กรุณากรอกข้อมูลให้ครบถ้วน');
@@ -616,7 +667,7 @@ export default function PremiumPOS({ language = 'TH' }) {
             });
             const customer = await res.json();
             if (customer.id) {
-                await processOrder(customer);
+                openPaymentModal(customer);
             } else {
                 setCustomerError('ไม่สามารถสร้างลูกค้าได้');
             }
@@ -643,7 +694,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 return;
             }
 
-            await processOrder(customer);
+            openPaymentModal(customer);
         } catch (error) {
             setCustomerError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
         } finally {
@@ -651,14 +702,30 @@ export default function PremiumPOS({ language = 'TH' }) {
         }
     };
 
-    const processOrder = async (customer) => {
+    const processOrder = async (customer, pmtForm) => {
+        const discAmt = Number(pmtForm?.discountAmount || 0);
+        const discPct = Number(pmtForm?.discountPercent || 0);
+        const discountApplied = discAmt > 0 ? discAmt : (discPct > 0 ? subtotal * (discPct / 100) : 0);
+        const finalTotal = Math.max(0, total - discountApplied);
+
         try {
             const orderRes = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     customerId: customer.id,
-                    totalAmount: total,
+                    totalAmount: finalTotal,
+                    discountAmount: discountApplied,
+                    discountPercent: discPct || null,
+                    promoCode: pmtForm?.promoCode || null,
+                    paymentMethod: pmtForm?.method || 'CASH',
+                    bankName: pmtForm?.bankName || null,
+                    isDeposit: pmtForm?.isDeposit || false,
+                    depositAmount: pmtForm?.isDeposit ? Number(pmtForm.depositAmount || 0) : finalTotal,
+                    closedById: pmtForm?.closedById || null,
+                    salesStaffId: pmtForm?.salesStaffId || null,
+                    cashierId: pmtForm?.cashierId || null,
+                    notes: pmtForm?.notes || null,
                     items: cart.map(i => ({
                         productId: i.productId || i.id,
                         name: i.name,
@@ -697,15 +764,11 @@ export default function PremiumPOS({ language = 'TH' }) {
                 }
                 setEnrollmentCount(createdEnrollments);
 
-                setShowCustomerModal(false);
-                setCustomerPhone('');
-                setCustomerError('');
-                setCheckoutSuccess(true);
-                setTimeout(() => {
-                    setCheckoutSuccess(false);
-                    setCart([]);
-                    setEnrollmentCount(0);
-                }, 4000);
+                const orderData = await orderRes.json();
+                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart] });
+                setLastCustomer(customer);
+                setShowPaymentModal(false);
+                setShowReceiptModal(true);
             }
         } catch (err) {
             setCustomerError('เกิดข้อผิดพลาดในการสั่งซื้อ');
@@ -727,19 +790,226 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     return (
         <div className="flex h-full overflow-hidden bg-[#0d1626] rounded-[2.5rem] animate-fade-in relative">
-            {/* ── Success Modal ── */}
-            {checkoutSuccess && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-                    <div className="bg-[#C9A34E] text-[#0A1A2F] p-12 rounded-[3rem] shadow-2xl flex flex-col items-center gap-6 animate-scale-up">
-                        <CheckCircle size={96} />
-                        <h2 className="text-4xl font-black tracking-tight">SUCCESS!</h2>
-                        <div className="text-center">
-                            <p className="font-bold opacity-80 uppercase tracking-widest text-xs mb-2">Transaction Processed</p>
-                            {enrollmentCount > 0 && (
-                                <p className="font-black text-sm border-t border-[#0A1A2F]/10 pt-2">
-                                    ✅ ลงทะเบียนคอร์ส {enrollmentCount} รายการแล้ว
-                                </p>
+            {/* ── Receipt Modal ── */}
+            {showReceiptModal && lastOrder && lastCustomer && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
+                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-[#C9A34E] text-[#0A1A2F] px-8 py-5 rounded-t-[2rem] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle size={28} />
+                                <div>
+                                    <div className="font-black text-lg uppercase tracking-wide">ชำระเงินสำเร็จ</div>
+                                    <div className="text-[10px] font-bold opacity-70 uppercase">Transaction Complete</div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-black text-2xl">฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
+                                {lastOrder.pmtForm?.isDeposit && <div className="text-[10px] font-black bg-[#0A1A2F]/20 px-2 py-0.5 rounded-full">มัดจำ ฿{Number(lastOrder.pmtForm?.depositAmount || 0).toLocaleString()}</div>}
+                            </div>
+                        </div>
+
+                        {/* Receipt Body — printable */}
+                        <div id="receipt-body" className="flex-1 overflow-y-auto px-8 py-6 space-y-4 text-[#F8F8F6]">
+                            {/* Customer */}
+                            <div className="bg-white/5 rounded-xl px-4 py-3 flex justify-between items-center">
+                                <span className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest">ลูกค้า</span>
+                                <span className="font-bold text-sm">{lastCustomer.firstName} {lastCustomer.lastName}</span>
+                            </div>
+
+                            {/* Items */}
+                            <div className="space-y-1">
+                                <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">รายการสินค้า</div>
+                                {(lastOrder.cartSnapshot || []).map((item, i) => (
+                                    <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
+                                        <span className="text-white/80">{item.name} × {item.quantity}</span>
+                                        <span className="font-bold">฿{(item.price * item.quantity).toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Summary */}
+                            <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
+                                <div className="flex justify-between text-white/60"><span>ยอดรวม</span><span>฿{(lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0).toLocaleString()}</span></div>
+                                <div className="flex justify-between text-white/60"><span>VAT 7%</span><span>฿{(((lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0)) * 0.07).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+                                {lastOrder.discountApplied > 0 && <div className="flex justify-between text-green-400"><span>ส่วนลด{lastOrder.pmtForm?.promoCode ? ` (${lastOrder.pmtForm.promoCode})` : ''}</span><span>-฿{lastOrder.discountApplied.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>}
+                                <div className="flex justify-between font-black text-[#C9A34E] text-base border-t border-white/10 pt-2"><span>ยอดสุทธิ</span><span>฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+                            </div>
+
+                            {/* Payment Info */}
+                            <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
+                                <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">วิธีชำระเงิน</div>
+                                <div className="flex justify-between"><span className="text-white/60">ประเภท</span><span className="font-bold">{{ CASH: 'เงินสด', TRANSFER: 'โอนเงิน', CREDIT_CARD: 'บัตรเครดิต' }[lastOrder.pmtForm?.method] || '-'}</span></div>
+                                {lastOrder.pmtForm?.bankName && <div className="flex justify-between"><span className="text-white/60">ธนาคาร</span><span className="font-bold">{lastOrder.pmtForm.bankName}</span></div>}
+                                {lastOrder.pmtForm?.isDeposit && <div className="flex justify-between text-amber-400"><span>ชำระมัดจำ</span><span>฿{Number(lastOrder.pmtForm.depositAmount || 0).toLocaleString()}</span></div>}
+                                {lastOrder.pmtForm?.notes && <div className="flex justify-between"><span className="text-white/60">หมายเหตุ</span><span className="text-right max-w-[60%] text-white/80">{lastOrder.pmtForm.notes}</span></div>}
+                            </div>
+
+                            {/* Staff */}
+                            {(lastOrder.pmtForm?.salesStaffId || lastOrder.pmtForm?.closedById || lastOrder.pmtForm?.cashierId) && (
+                                <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
+                                    <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">พนักงาน</div>
+                                    {lastOrder.pmtForm?.salesStaffId && <div className="flex justify-between"><span className="text-white/60">ดูแลลูกค้า</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.salesStaffId)?.firstName || '-'}</span></div>}
+                                    {lastOrder.pmtForm?.closedById && <div className="flex justify-between"><span className="text-white/60">ปิดการขาย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.closedById)?.firstName || '-'}</span></div>}
+                                    {lastOrder.pmtForm?.cashierId && <div className="flex justify-between"><span className="text-white/60">แคชเชีย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.cashierId)?.firstName || '-'}</span></div>}
+                                </div>
                             )}
+                            {enrollmentCount > 0 && <div className="text-center text-green-400 font-bold text-sm py-2">✅ ลงทะเบียนคอร์ส {enrollmentCount} รายการแล้ว</div>}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="px-8 py-5 border-t border-white/10 grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => { window.print(); }}
+                                className="flex flex-col items-center gap-1.5 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-xs font-black uppercase tracking-wider"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                พิมพ์
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const el = document.getElementById('receipt-body');
+                                    if (!el || !window.html2canvas) { alert('กำลังโหลด กรุณาลองอีกครั้ง'); return; }
+                                    window.html2canvas(el, { backgroundColor: '#111827', scale: 2 }).then(canvas => {
+                                        const a = document.createElement('a');
+                                        a.download = `receipt-${lastOrder.orderId?.slice(0,8) || Date.now()}.png`;
+                                        a.href = canvas.toDataURL();
+                                        a.click();
+                                    });
+                                }}
+                                className="flex flex-col items-center gap-1.5 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-white text-xs font-black uppercase tracking-wider"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                บันทึกรูป
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowReceiptModal(false);
+                                    setCart([]);
+                                    setEnrollmentCount(0);
+                                    setLastOrder(null);
+                                    setLastCustomer(null);
+                                    setPaymentForm({ method: 'CASH', bankName: '', isDeposit: false, depositAmount: '', discountAmount: '', discountPercent: '', promoCode: '', salesStaffId: '', closedById: '', cashierId: '', notes: '' });
+                                }}
+                                className="flex flex-col items-center gap-1.5 py-3 bg-[#C9A34E] hover:bg-[#B8923D] rounded-xl transition-all text-[#0A1A2F] text-xs font-black uppercase tracking-wider"
+                            >
+                                <CheckCircle className="w-5 h-5" />
+                                เสร็จสิ้น
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Payment Details Modal ── */}
+            {showPaymentModal && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
+                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+                        <div className="px-8 py-6 border-b border-white/10">
+                            <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">รายละเอียดการชำระเงิน</h2>
+                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest mt-1">Payment Details</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+                            {/* Summary */}
+                            <div className="bg-[#C9A34E]/10 border border-[#C9A34E]/30 rounded-xl px-4 py-3 flex justify-between items-center">
+                                <span className="text-white/60 text-sm font-bold">ยอดรวม (incl. VAT 7%)</span>
+                                <span className="text-[#C9A34E] text-xl font-black">฿{total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+                            </div>
+
+                            {/* Payment Method */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">วิธีชำระเงิน *</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[['CASH','เงินสด','💵'],['TRANSFER','โอนเงิน','🏦'],['CREDIT_CARD','บัตรเครดิต','💳']].map(([val,label,icon]) => (
+                                        <button key={val} onClick={() => setPaymentForm(f => ({ ...f, method: val }))}
+                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.method === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                            {icon} {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Bank (if transfer) */}
+                            {paymentForm.method === 'TRANSFER' && (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">ธนาคาร</label>
+                                    <select value={paymentForm.bankName} onChange={e => setPaymentForm(f => ({ ...f, bankName: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        <option value="">-- เลือกธนาคาร --</option>
+                                        {['กสิกรไทย (KBank)','กรุงไทย (KTB)','ไทยพาณิชย์ (SCB)','กรุงเทพ (BBL)','ทหารไทยธนชาต (TTB)','ออมสิน','PromptPay','อื่นๆ'].map(b => <option key={b} value={b}>{b}</option>)}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Full / Deposit */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">ประเภทการชำระ</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[[false,'ชำระเต็ม','💯'],[true,'มัดจำ','📋']].map(([val,label,icon]) => (
+                                        <button key={String(val)} onClick={() => setPaymentForm(f => ({ ...f, isDeposit: val }))}
+                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.isDeposit === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                            {icon} {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {paymentForm.isDeposit && (
+                                    <input type="number" placeholder="จำนวนมัดจำ (฿)" value={paymentForm.depositAmount}
+                                        onChange={e => setPaymentForm(f => ({ ...f, depositAmount: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                )}
+                            </div>
+
+                            {/* Discount */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">ส่วนลด</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input type="number" placeholder="ส่วนลด (฿)" value={paymentForm.discountAmount}
+                                        onChange={e => setPaymentForm(f => ({ ...f, discountAmount: e.target.value, discountPercent: '' }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                    <input type="number" placeholder="ส่วนลด (%)" value={paymentForm.discountPercent}
+                                        onChange={e => setPaymentForm(f => ({ ...f, discountPercent: e.target.value, discountAmount: '' }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                </div>
+                                <input type="text" placeholder="โค้ดโปรโมชั่น" value={paymentForm.promoCode}
+                                    onChange={e => setPaymentForm(f => ({ ...f, promoCode: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all uppercase" />
+                            </div>
+
+                            {/* Staff */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">พนักงาน</label>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {[['salesStaffId','👤 พนักงานดูแลลูกค้า'],['closedById','🏆 พนักงานปิดการขาย'],['cashierId','🧾 แคชเชีย (ออกบิล)']].map(([field, label]) => (
+                                        <select key={field} value={paymentForm[field]} onChange={e => setPaymentForm(f => ({ ...f, [field]: e.target.value }))}
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                            <option value="">{label}</option>
+                                            {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
+                                        </select>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">หมายเหตุ</label>
+                                <textarea placeholder="หมายเหตุ (ถ้ามี)" value={paymentForm.notes}
+                                    onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))} rows={2}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all resize-none" />
+                            </div>
+                        </div>
+
+                        {/* Footer buttons */}
+                        <div className="px-8 py-5 border-t border-white/10 flex gap-3">
+                            <button onClick={() => { setShowPaymentModal(false); setShowCustomerModal(true); }}
+                                className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-white/60 font-black text-sm uppercase transition-all">
+                                ← ย้อนกลับ
+                            </button>
+                            <button
+                                onClick={() => processOrder(pendingCustomer, paymentForm)}
+                                disabled={paymentForm.isDeposit && !paymentForm.depositAmount}
+                                className="flex-[2] py-4 bg-[#C9A34E] hover:bg-[#B8923D] disabled:opacity-40 rounded-2xl text-[#0A1A2F] font-black text-sm uppercase transition-all">
+                                ✅ ยืนยันชำระเงิน
+                            </button>
                         </div>
                     </div>
                 </div>

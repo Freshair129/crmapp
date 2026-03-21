@@ -62,14 +62,25 @@ model Order {
   status         String        @default("PENDING")
   totalAmount    Float         @map("total_amount")
   paidAmount     Float         @default(0) @map("paid_amount")
+  discountAmount Float         @default(0) @map("discount_amount")
+  discountPercent Float?       @map("discount_percent")
+  promoCode      String?       @map("promo_code")
+  paymentMethod  String?       @map("payment_method")  // CASH | TRANSFER | CREDIT_CARD
+  bankName       String?       @map("bank_name")
+  isDeposit      Boolean       @default(false) @map("is_deposit")
   items          Json          @default("[]")
-  closedById     String?       @map("closed_by_id")
+  closedById     String?       @map("closed_by_id")    // พนักงานปิดการขาย
+  salesStaffId   String?       @map("sales_staff_id")  // พนักงานดูแล
+  cashierId      String?       @map("cashier_id")       // แคชเชีย
   conversationId String?       @map("conversation_id")
+  notes          String?
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   closedBy     Employee?     @relation("OrderCloser", fields: [closedById], references: [id])
+  salesStaff   Employee?     @relation("OrderSalesStaff", fields: [salesStaffId], references: [id])
+  cashier      Employee?     @relation("OrderCashier", fields: [cashierId], references: [id])
   conversation Conversation? @relation("OrderConversation", fields: [conversationId], references: [id])
   transactions Transaction[]
 
@@ -236,6 +247,8 @@ model Employee {
   respondedMessages     Message[]        @relation("MessageResponder")
   assignedConversations Conversation[]   @relation("ConversationAssignee")
   closedOrders          Order[]          @relation("OrderCloser")
+  salesOrders           Order[]          @relation("OrderSalesStaff")
+  cashierOrders         Order[]          @relation("OrderCashier")
   soldEnrollments       Enrollment[]     @relation("EnrollmentSeller")
   instructedSchedules   CourseSchedule[] @relation("ScheduleInstructor")
   approvedRequests         PurchaseRequest[]  @relation("PRApprover")
