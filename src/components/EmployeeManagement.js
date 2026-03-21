@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
     Search,
@@ -84,34 +85,73 @@ function getLinkedData(emp, customers = []) {
     return { assignedCustomers, sales, totalRevenue };
 }
 
-// ─── Status Toggle Slider ─────────────────────────────────────────────────────
-function StatusToggle({ status, onChange, disabled }) {
+// ─── Status Toggle Slider (Framer Motion) ────────────────────────────────────
+function StatusToggle({ status, onChange, disabled, onCard = false }) {
     const isActive = status === 'ACTIVE';
+    // onCard variant: glass style works on colored gradient card background
+    const buttonClass = onCard
+        ? `relative flex items-center gap-2 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest transition-colors duration-150 ${
+              disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          } ${
+              isActive
+                  ? 'bg-white/20 border-white/40 text-white hover:bg-white/30'
+                  : 'bg-black/20 border-white/15 text-white/50 hover:bg-black/30'
+          }`
+        : `relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${
+              disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+          } ${
+              isActive
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
+                  : 'bg-white/5 border-white/15 text-white/40 hover:bg-white/10'
+          }`;
+
     return (
-        <button
+        <motion.button
+            whileTap={disabled ? {} : { scale: 0.93 }}
             onClick={() => !disabled && onChange(isActive ? 'INACTIVE' : 'ACTIVE')}
             disabled={disabled}
             title={disabled ? 'ไม่มีสิทธิ์เปลี่ยน status' : (isActive ? 'คลิกเพื่อ Deactivate' : 'คลิกเพื่อ Activate')}
-            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
-                disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-            } ${
-                isActive
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
-                    : 'bg-white/5 border-white/15 text-white/40 hover:bg-white/10'
-            }`}
+            className={buttonClass}
         >
-            {/* Knob */}
-            <span className={`w-3.5 h-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${
-                isActive ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]' : 'bg-white/20'
-            }`} />
-            {isActive ? 'Active' : 'Inactive'}
-            {disabled && <Lock size={9} className="ml-1 opacity-60" />}
-        </button>
+            {/* Toggle track + sliding knob */}
+            <span className={`relative flex items-center rounded-full px-0.5 shrink-0 transition-colors duration-200 ${
+                onCard
+                    ? `w-8 h-4 ${isActive ? 'bg-white/30' : 'bg-black/30'}`
+                    : `w-9 h-[18px] ${isActive ? 'bg-emerald-500/30' : 'bg-white/10'}`
+            }`}>
+                <motion.span
+                    className={`rounded-full shadow-md shrink-0 ${
+                        onCard
+                            ? `w-3 h-3 ${isActive ? 'bg-white shadow-white/40' : 'bg-white/40'}`
+                            : `w-3.5 h-3.5 ${isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]' : 'bg-white/30'}`
+                    }`}
+                    initial={false}
+                    animate={{ x: isActive ? (onCard ? 16 : 18) : 0 }}
+                    transition={{ type: 'spring', stiffness: 600, damping: 30 }}
+                    style={{ willChange: 'transform' }}
+                />
+            </span>
+
+            {/* Label with crossfade */}
+            <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                    key={String(isActive)}
+                    initial={{ opacity: 0, y: 3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ duration: 0.1 }}
+                >
+                    {isActive ? 'Active' : 'Inactive'}
+                </motion.span>
+            </AnimatePresence>
+
+            {disabled && <Lock size={onCard ? 8 : 9} className="opacity-50" />}
+        </motion.button>
     );
 }
 
 // ─── Stacked Card Deck ────────────────────────────────────────────────────────
-function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev }) {
+function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus }) {
     const dragStartX = useRef(null);
 
     const handleDragStart = (e) => {
@@ -201,16 +241,19 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev }) {
                                 </div>
                             </div>
 
-                            {/* Bottom row */}
+                            {/* Bottom row — email + status toggle */}
                             <div className="flex items-end justify-between">
                                 <div>
                                     <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Email</p>
-                                    <p className="text-white/80 text-xs font-mono truncate max-w-[180px]">{emp.email || '—'}</p>
+                                    <p className="text-white/80 text-xs font-mono truncate max-w-[160px]">{emp.email || '—'}</p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Phone</p>
-                                    <p className="text-white/80 text-xs font-mono">{emp.phone || '—'}</p>
-                                </div>
+                                {/* Framer Motion status toggle — on card */}
+                                <StatusToggle
+                                    status={emp.status || 'ACTIVE'}
+                                    onChange={(newStatus) => onStatusToggle && onStatusToggle(emp, newStatus)}
+                                    disabled={!canManage || togglingStatus}
+                                    onCard
+                                />
                             </div>
                         </div>
                     </div>
@@ -462,6 +505,9 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             activeIndex={safeIndex}
                             onNext={goNext}
                             onPrev={goPrev}
+                            onStatusToggle={handleStatusToggle}
+                            canManage={canManage}
+                            togglingStatus={togglingStatus}
                         />
                         <DotPager count={filtered.length} active={safeIndex} onSelect={setActiveIndex} />
                     </div>

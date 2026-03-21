@@ -186,7 +186,9 @@ export const authOptions = {
 
         async session({ session, token }) {
             if (session.user) {
-                session.user.role        = token.role;
+                // Normalize role to UPPERCASE — guards against stale JWTs that stored
+                // Title-case roles (e.g. 'Admin' → 'ADMIN') from older login sessions
+                session.user.role        = token.role ? String(token.role).toUpperCase() : undefined;
                 session.user.employeeId  = token.employeeId;
                 session.user.firstName   = token.firstName;
                 session.user.lastName    = token.lastName;
