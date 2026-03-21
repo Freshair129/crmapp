@@ -998,22 +998,32 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                 {/* RIGHT — Dashboard */}
                 {emp && (
                     <div ref={detailPanelRef} className="space-y-5">
-                        {/* Tab bar */}
-                        <div className="flex gap-1 bg-white/5 border border-white/8 rounded-2xl p-1">
-                            {[
-                                { id: 'overview', icon: IdCard, label: 'Overview' },
-                                ...(can(currentUser?.role, 'system', 'view') ? [{ id: 'permissions', icon: Shield, label: 'Permissions' }] : []),
-                                { id: 'customers', icon: Users, label: `Customers (${assignedCustomers.length})` },
-                                { id: 'sales', icon: Receipt, label: `Sales (${sales.length})` },
-                            ].map(tab => (
-                                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id
-                                        ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
-                                        : 'text-white/40 hover:text-white'}`}>
-                                    <tab.icon size={12} />
-                                    <span className="hidden md:inline">{tab.label}</span>
+                        {/* Tab bar + Edit button */}
+                        <div className="flex items-center gap-2">
+                            <div className="flex flex-1 gap-1 bg-white/5 border border-white/8 rounded-2xl p-1">
+                                {[
+                                    { id: 'overview', icon: IdCard, label: 'Overview' },
+                                    ...(can(currentUser?.role, 'system', 'view') ? [{ id: 'permissions', icon: Shield, label: 'Permissions' }] : []),
+                                    { id: 'customers', icon: Users, label: `Customers (${assignedCustomers.length})` },
+                                    { id: 'sales', icon: Receipt, label: `Sales (${sales.length})` },
+                                ].map(tab => (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id
+                                            ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
+                                            : 'text-white/40 hover:text-white'}`}>
+                                        <tab.icon size={12} />
+                                        <span className="hidden md:inline">{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Edit button — always visible when canManage */}
+                            {canManage && (
+                                <button
+                                    onClick={() => { setEditForm({ ...emp }); setIsEditing(true); }}
+                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-[#C9A34E] hover:border-[#C9A34E]/30 text-[10px] font-black uppercase tracking-widest transition-all shrink-0">
+                                    <Pen size={11} />แก้ไข
                                 </button>
-                            ))}
+                            )}
                         </div>
 
                         {/* TAB: Overview */}
@@ -1031,16 +1041,6 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 <div className="bg-white/5 border border-white/8 rounded-2xl p-6 space-y-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="text-white font-black text-sm uppercase tracking-widest">Profile</h3>
-                                        <div className="flex items-center gap-3">
-                                            {/* Edit button — canManage only */}
-                                            {canManage && (
-                                                <button
-                                                    onClick={() => { setEditForm({ ...emp }); setIsEditing(true); }}
-                                                    className="text-[10px] text-white/40 hover:text-[#C9A34E] font-black uppercase tracking-widest transition-colors flex items-center gap-1">
-                                                    <Pen size={10} />Edit
-                                                </button>
-                                            )}
-                                        </div>
                                     </div>
                                     {[
                                         { icon: Mail,      label: 'Email',       val: emp.email },
