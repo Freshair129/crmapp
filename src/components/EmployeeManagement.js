@@ -573,27 +573,6 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             <ArrowUpRight size={18} className="text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
                         </motion.button>
 
-                        {/* ── Edit button — canManage + active card only ── */}
-                        {canManage && isActive && (
-                            <motion.button
-                                onClick={(e) => { e.stopPropagation(); onEditDirect && onEditDirect(emp); }}
-                                whileHover={{ scale: 1.12 }}
-                                whileTap={{ scale: 0.90 }}
-                                className="absolute flex items-center justify-center"
-                                style={{
-                                    bottom: 14, right: 14, width: 36, height: 36,
-                                    borderRadius: '50%',
-                                    background: 'rgba(14,14,28,0.88)',
-                                    boxShadow: '0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.10)',
-                                    border: '1.5px solid rgba(255,255,255,0.14)',
-                                    cursor: 'pointer',
-                                    zIndex: 20,
-                                }}
-                                title="แก้ไขข้อมูลพนักงาน"
-                            >
-                                <Pen size={14} className="text-white/70" />
-                            </motion.button>
-                        )}
                     </motion.div>
                 );
             })}
