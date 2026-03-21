@@ -1,6 +1,7 @@
 # V SCHOOL CRM v2 — ID FORMATTING & NAMING CONVENTIONS
 # Source of Truth for all identifier formats and casing rules
-# Last updated: 2026-03-19 (v0.27.0 — LOT + CLS + ADR-038/039/040)
+# Last updated: 2026-03-21 (v1.3.0 — PushSubscription + Equipment specs)
+# CANONICAL LOCATION: /id_standards.yaml (root) — ห้ามแก้ copy ใน docs/
 # ─────────────────────────────────────────────────────────
 
 id_naming_conventions:

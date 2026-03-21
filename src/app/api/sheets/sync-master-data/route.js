@@ -97,6 +97,17 @@ export async function POST(request) {
 
                 const tags = row.tags ? row.tags.split('|').map(t => t.trim()).filter(Boolean) : undefined;
 
+                // Parse extra images from Sheet column "images" (pipe-separated URLs, max 5)
+                const extraImages = row.images
+                    ? row.images.split('|').map(u => u.trim()).filter(Boolean).slice(0, 5)
+                    : undefined;
+
+                // Build metadata: merge tags + images
+                const metadataObj = {};
+                if (tags) metadataObj.tags = tags;
+                if (extraImages && extraImages.length > 0) metadataObj.images = extraImages;
+                const hasMetadata = Object.keys(metadataObj).length > 0;
+
                 const sharedFields = {
                     name:     row.name.trim(),
                     category: inferredCategory,
@@ -107,7 +118,7 @@ export async function POST(request) {
                     ...(row.sessionType  ? { sessionType:  row.sessionType.trim() }     : {}),
                     ...(row.description  ? { description:  row.description.trim() }     : {}),
                     ...(row.image        ? { image:        row.image.trim() }           : {}),
-                    ...(tags             ? { metadata: { tags } }                       : {}),
+                    ...(hasMetadata      ? { metadata: metadataObj }                    : {}),
                     ...(row.isActive !== undefined && row.isActive !== ''
                         ? { isActive: row.isActive !== 'false' && row.isActive !== '0' && row.isActive !== 'FALSE' }
                         : {}),

@@ -1,16 +1,18 @@
 import { getPrisma } from '@/lib/db';
 import { generateCustomerId } from '@/utils/idGenerator';
+import { normalizeThai, bestMatchScore, rankByNameMatch } from '@/lib/thaiNameMatcher';
 
 /**
- * @param {{ limit?: number, offset?: number, search?: string }} opts
+ * @param {{ limit?: number, offset?: number, search?: string, fuzzy?: boolean }} opts
  */
 export async function getAllCustomers(opts = {}) {
     const prisma = await getPrisma();
-    const { limit, offset, search } = opts;
+    const { limit, offset, search, fuzzy } = opts;
 
-    return prisma.customer.findMany({
-        take: limit,
-        skip: offset,
+    // Standard exact/contains search
+    const customers = await prisma.customer.findMany({
+        take: fuzzy && search ? 100 : limit,  // Fetch wider for fuzzy re-ranking
+        skip: fuzzy ? undefined : offset,
         where: search ? {
             OR: [
                 { firstName: { contains: search, mode: 'insensitive' } },
@@ -21,6 +23,36 @@ export async function getAllCustomers(opts = {}) {
         } : undefined,
         orderBy: { createdAt: 'desc' }
     });
+
+    // If fuzzy mode and exact search returned few results, broaden + re-rank
+    if (fuzzy && search && customers.length < 3) {
+        const broadResults = await prisma.customer.findMany({
+            take: 100,
+            orderBy: { createdAt: 'desc' },
+            where: {
+                OR: [
+                    // Use first 2 chars as a loose prefix filter for Thai names
+                    { firstName: { not: null } },
+                ]
+            }
+        });
+
+        const ranked = rankByNameMatch(search, broadResults.map(c => ({
+            ...c,
+            facebookName: c.facebookName || undefined,
+        })), 0.6);
+
+        // Merge: exact matches first, then fuzzy matches (deduplicated)
+        const seenIds = new Set(customers.map(c => c.id));
+        const fuzzyExtras = ranked
+            .filter(r => !seenIds.has(r.record.id))
+            .map(r => r.record);
+
+        const merged = [...customers, ...fuzzyExtras];
+        return limit ? merged.slice(0, limit) : merged;
+    }
+
+    return customers;
 }
 
 /**

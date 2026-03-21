@@ -1,17 +1,23 @@
 /**
- * Role-Based Access Control (Phase 7 — ADR-026)
- * Role hierarchy: DEVELOPER > MANAGER > SUPERVISOR > ADMIN > AGENT > GUEST
+ * Role-Based Access Control (Phase 29 — ADR-045)
+ * Role hierarchy: DEVELOPER > MANAGER > ADMIN > MARKETING (L2.5) > HEAD_CHEF (L2.5) > EMPLOYEE > AGENT > GUEST
+ * MARKETING and HEAD_CHEF are domain specialists at L2.5 — full access within their domains.
  */
 
 /** Numeric permission level per role. Higher = more access. */
 const ROLE_HIERARCHY = {
   DEVELOPER:  5,
   MANAGER:    4,
-  SUPERVISOR: 3,
   ADMIN:      2,
+  MARKETING:  2.5,
+  HEAD_CHEF:  2.5,
+  EMPLOYEE:   1.5,
   AGENT:      1,
   GUEST:      0,
 };
+
+/** Valid role names (all UPPERCASE). Used for role validation. */
+const VALID_ROLES = ['DEVELOPER', 'MANAGER', 'ADMIN', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
 
 /**
  * Returns the numeric level of a role. Unknown roles default to GUEST (0).
@@ -20,6 +26,15 @@ const ROLE_HIERARCHY = {
  */
 function getRoleLevel(role) {
   return ROLE_HIERARCHY[role] ?? 0;
+}
+
+/**
+ * Returns true if the provided role is valid (exists in VALID_ROLES).
+ * @param {string} role
+ * @returns {boolean}
+ */
+function isValidRole(role) {
+  return VALID_ROLES.includes(role);
 }
 
 /**
@@ -35,4 +50,4 @@ function hasPermission(userRole, requiredRole) {
   return getRoleLevel(userRole) >= getRoleLevel(requiredRole);
 }
 
-export { ROLE_HIERARCHY, hasPermission, getRoleLevel };
+export { ROLE_HIERARCHY, VALID_ROLES, hasPermission, getRoleLevel, isValidRole };

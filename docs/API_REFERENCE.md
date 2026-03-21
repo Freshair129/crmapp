@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-03-19 (v1.1.0 — Phase 20/26/27 + ADR-042 ProductDetailModal + Sheet auto-ID)
+> อัปเดตล่าสุด: 2026-03-20 (v1.2.0-dev — ADR-042 + ADR-043 Fuzzy Thai Name Matching + Product Images)
 
 ---
 
@@ -56,9 +56,11 @@
 
 | Field | Value |
 |---|---|
+| Query | `?search=` — ค้นหาชื่อ/นามสกุล/ชื่อเล่น/เบอร์/ID (fuzzy Thai matching, ADR-043) |
+| Query | `?fuzzy=true` — เปิด fuzzy mode (default: exact contains → fallback fuzzy เมื่อ 0 results) |
 | Query | `?index=true` (optional — return lightweight index เท่านั้น) |
-| Response | `Customer[]` พร้อม `_source: 'cache'` สำหรับ cache hits |
-| Dependencies | `getAllCustomers()`, `readCacheList()`, Facebook Graph API |
+| Response | `Customer[]` — fuzzy mode เพิ่ม `_matchScore` ต่อ record, เรียงตาม score DESC |
+| Dependencies | `getAllCustomers()`, `thaiNameMatcher.js`, `readCacheList()`, Facebook Graph API |
 
 ### `POST /api/customers`
 
@@ -189,6 +191,40 @@ Sync Facebook Messenger conversations → สร้าง customer profiles
 | Dependencies | `getAllProducts()`, `readCacheEntry()`, `writeCacheEntry()` |
 
 ---
+
+### `PUT /api/products/[id]`
+
+อัปเดตข้อมูลสินค้า — partial update, รองรับ metadata.images (ADR-043 / Product Images)
+
+| Field | Value |
+|---|---|
+| Path Param | `id` — UUID |
+| Body | `{ name?, price?, category?, description?, image?, hours?, days?, sessionType?, basePrice?, metadata?: { images?: string[], tags?: string[] } }` |
+| Response | `Product` (updated) |
+| Note | `metadata` จะ merge กับ existing (ไม่ overwrite ทั้ง object), images max 5 (+ 1 main = 6 total) |
+
+### `POST /api/products/[id]/images`
+
+Upload รูปสินค้า → compress เป็น WebP → เก็บใน Supabase Storage bucket `product-images`
+
+| Field | Value |
+|---|---|
+| Path Param | `id` — UUID |
+| Content-Type | `multipart/form-data` |
+| Body | field `file` — image file (max 5MB) |
+| Response | `{ url, index, images[] }` |
+| Note | รูปแรกไปที่ `Product.image`, รูปที่ 2-6 ไปที่ `Product.metadata.images[]` |
+
+### `DELETE /api/products/[id]/images`
+
+ลบรูปสินค้าตาม index
+
+| Field | Value |
+|---|---|
+| Path Param | `id` — UUID |
+| Body | `{ index: number }` (0 = main image, 1-5 = extras) |
+| Response | `{ images[], deleted: url }` |
+| Note | ลบจาก Supabase Storage + reorder images อัตโนมัติ |
 
 ### `GET /api/products/[id]/stats`
 

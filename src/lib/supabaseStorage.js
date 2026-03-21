@@ -101,3 +101,91 @@ export function getAdImageUrl(adId, ext = 'webp') {
     .getPublicUrl(`ads/${adId}.${ext}`)
   return data.publicUrl
 }
+
+// ─── Product Images ─────────────────────────────────────────────
+
+const PRODUCT_BUCKET = 'product-images'
+
+/**
+ * Upload product image from raw buffer → compress to WebP → Supabase Storage
+ * @param {Buffer|ArrayBuffer} buffer - Raw image bytes
+ * @param {string} productId - Human-readable product ID (e.g. TVS-JP-...)
+ * @param {number} index - Image slot index (0 = main, 1-5 = extra)
+ * @returns {string|null} Public URL in Supabase Storage
+ */
+export async function uploadProductImage(buffer, productId, index = 0) {
+  try {
+    const rawBuffer = Buffer.from(buffer)
+    const isTiny = rawBuffer.byteLength < 5120
+
+    let finalBuffer, finalContentType, ext
+    if (isTiny) {
+      finalBuffer = rawBuffer
+      finalContentType = 'image/jpeg'
+      ext = 'jpg'
+    } else {
+      finalBuffer = await compressToWebP(rawBuffer)
+      finalContentType = 'image/webp'
+      ext = 'webp'
+    }
+
+    // Sanitize productId for path safety
+    const safeName = productId.replace(/[^a-zA-Z0-9_-]/g, '_')
+    const path = `products/${safeName}_${index}.${ext}`
+    const supabase = getClient()
+
+    const { error } = await supabase.storage
+      .from(PRODUCT_BUCKET)
+      .upload(path, finalBuffer, {
+        contentType: finalContentType,
+        upsert: true,
+      })
+
+    if (error) throw error
+
+    const { data } = supabase.storage.from(PRODUCT_BUCKET).getPublicUrl(path)
+    return data.publicUrl
+  } catch (err) {
+    console.error('[supabaseStorage] uploadProductImage failed', productId, index, err.message)
+    return null
+  }
+}
+
+/**
+ * Upload product image from external URL → compress → Supabase Storage
+ * @param {string} imageUrl - Source URL (Google Drive, CDN, etc.)
+ * @param {string} productId - Human-readable product ID
+ * @param {number} index - Image slot index (0 = main, 1-5 = extra)
+ * @returns {string|null} Public URL
+ */
+export async function uploadProductImageFromUrl(imageUrl, productId, index = 0) {
+  try {
+    const res = await fetch(imageUrl)
+    if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
+    const buffer = await res.arrayBuffer()
+    return uploadProductImage(buffer, productId, index)
+  } catch (err) {
+    console.error('[supabaseStorage] uploadProductImageFromUrl failed', productId, err.message)
+    return null
+  }
+}
+
+/**
+ * Delete a product image from Supabase Storage
+ * @param {string} publicUrl - Full public URL to parse path from
+ * @returns {boolean} success
+ */
+export async function deleteProductImage(publicUrl) {
+  try {
+    const supabase = getClient()
+    // Extract path after bucket name
+    const match = publicUrl.match(/product-images\/(.+)$/)
+    if (!match) return false
+    const { error } = await supabase.storage.from(PRODUCT_BUCKET).remove([match[1]])
+    if (error) throw error
+    return true
+  } catch (err) {
+    console.error('[supabaseStorage] deleteProductImage failed', err.message)
+    return false
+  }
+}

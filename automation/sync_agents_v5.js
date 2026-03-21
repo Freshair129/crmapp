@@ -14,6 +14,7 @@
             * --from=YYYY - MM - DD         วันเริ่ม(ใช้กับ--mode = db)
                 * --to=YYYY - MM - DD           วันสิ้นสุด(ใช้กับ--mode = db)
                     * --force                   ทำซ้ำทุก thread แม้เคย cache แล้ว
+                    * --profile=Name            ชื่อโปรไฟล์ Chrome (เช่น Profile 1)
                         * ─────────────────────────────────────────────────────────────────────────────
  *
  * DOM Strategy(Business Suite ใช้ virtual list):
@@ -45,6 +46,7 @@ const FROM = args.find(a => a.startsWith('--from='))?.split('=')[1] || '';  // �
 const TO = args.find(a => a.startsWith('--to='))?.split('=')[1] || '';    // เช่น 2026-02-28
 const PAGE_ID = args.find(a => a.startsWith('--page-id='))?.split('=')[1] || '';
 const FILE_PATH = args.find(a => a.startsWith('--file='))?.split('=')[1] || ''; // โหลด Target ID จาก JSON file
+const PROFILE_NAME = args.find(a => a.startsWith('--profile='))?.split('=')[1] || '';
 
 // ─── Helper: Random Wait (Anti-Bot) ──────────────────────────────────────────
 function randomWait(min, max) {
@@ -279,7 +281,34 @@ async function extractSenders(page) {
     const result = await page.evaluate(() => {
         const pairs = [];
         const seen = new Set();
-        const debugInfo = { labelsFound: 0, skippedNoName: 0, skippedNoMsg: 0, extracted: 0, strategyA: 0, strategyB: 0, fiberHits: 0 };
+        const debugInfo = { labelsFound: 0, skippedNoName: 0, skippedNoMsg: 0, extracted: 0, strategyA: 0, strategyB: 0, fiberHits: 0, strategyDirect: 0 };
+
+        // ── Strategy DIRECT: a.uiLinkSubtle[data-hovercard] (FB Business Suite 2026) ──
+        // Structure: div.x78zum5... > span > "ส่งโดย " + a.uiLinkSubtle
+        try {
+            const adminLinks = document.querySelectorAll('a.uiLinkSubtle[data-hovercard]');
+            for (const link of adminLinks) {
+                const name = (link.textContent || '').trim();
+                if (!name || name.length > 60) continue;
+                const spanText = link.parentElement?.textContent || '';
+                if (!spanText.includes('ส่งโดย') && !spanText.includes('Sent by')) continue;
+                const container = link.closest('div[class*="x78zum5"]') || link.parentElement?.parentElement;
+                let msgText = '';
+                if (container) {
+                    const prev = container.previousElementSibling;
+                    if (prev) msgText = (prev.innerText || prev.textContent || '').trim().slice(0, 150);
+                }
+                const key = name + '|' + msgText.slice(0, 40);
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    pairs.push({ name, msgText, msgId: null, strategy: 'direct' });
+                    debugInfo.strategyDirect++;
+                    debugInfo.extracted++;
+                }
+            }
+        } catch (e) { /* ignore */ }
+
+        if (pairs.length > 0) return { pairs, debugInfo };
 
         const SENT_BY = /^(?:ส่งโดย|Sent by)\s+/;
         const SKIP_NAMES = /ข้อความตอบกลับอัตโนมัติ|auto-reply|assigned this/i;
@@ -590,6 +619,7 @@ async function fetchConvsFromDB(from, to, limit) {
 async function syncAgents() {
     console.log('\n🚀 V School Agent Sync v2');
     console.log(`   โหมด : ${MODE === 'db' ? `DB-driven (${FROM} → ${TO})` : ATTACH ? `Attach (port ${PORT})` : HEADLESS ? 'Headless' : 'New browser'}`);
+    if (PROFILE_NAME) console.log(`   Profile: ${PROFILE_NAME}`);
     console.log(`   Limit: ${LIMIT} conversations`);
     console.log(`   Loop : ${LOOP ? `Enabled (every ${DELAY}m)` : 'Disabled'}`);
     if (FORCE) console.log(`   Force: ✅ ทำซ้ำทุก thread แม้เคย cache แล้ว`);
@@ -612,9 +642,12 @@ async function syncAgents() {
         console.log(`📌 Tab: ${page.url()}\n`);
     } else {
         ownsBrowser = true;
+        const launchArgs = ['--disable-blink-features=AutomationControlled'];
+        if (PROFILE_NAME) launchArgs.push(`--profile-directory=${PROFILE_NAME}`);
+
         context = await chromium.launchPersistentContext(USER_DATA, {
             headless: HEADLESS, viewport: { width: 1440, height: 900 },
-            args: ['--disable-blink-features=AutomationControlled']
+            args: launchArgs
         });
         page = await context.newPage();
         await page.goto('https://business.facebook.com/latest/inbox/all', { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -874,14 +907,29 @@ async function syncAgents() {
                     let chatLoaded = false;
 
                     for (const candidate of idCandidates) {
-                        const url = `https://business.facebook.com/latest/inbox/all?asset_id=${convInbox}&selected_item_id=${candidate}&mailbox_id=${convInbox}&thread_type=${threadType}`;
+                        const url = `https://business.facebook.com/latest/inbox/all/?asset_id=${convInbox}&selected_item_id=${candidate}&mailbox_id=${convInbox}&thread_type=${threadType}`;
                         try {
-                            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                            // Wait for the URL to settle (FB often redirects or cleans params)
+                            // Use client-side navigation (history.pushState) to trigger FB's React Router
+                            // page.goto() causes hard reload which doesn't trigger chat panel to open
+                            const currentUrl = page.url();
+                            const alreadyOnInbox = currentUrl.includes('business.facebook.com/latest/inbox');
+                            if (alreadyOnInbox) {
+                                // SPA navigation: pushState + popstate event to trigger React Router
+                                await page.evaluate((navUrl) => {
+                                    window.history.pushState({}, '', navUrl);
+                                    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+                                }, url);
+                                await page.waitForTimeout(4000);
+                            } else {
+                                // First load: hard navigate
+                                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                                await page.waitForTimeout(5000);
+                            }
+                            // Verify URL settled
                             let settled = false;
-                            for (let s = 0; s < 5; s++) {
+                            for (let s = 0; s < 3; s++) {
                                 const urlBefore = page.url();
-                                await page.waitForTimeout(2000);
+                                await page.waitForTimeout(1500);
                                 if (page.url() === urlBefore) { settled = true; break; }
                             }
 
@@ -936,6 +984,34 @@ async function syncAgents() {
                         saveSyncCache(threadID, { success: true, agents: [] });
                         continue;
                     }
+
+                    // [DB Mode] Click the correct row using React Fiber to trigger chat pane
+                    try {
+                        const targetPsid = urlPsid || convIdStrip;
+                        await page.evaluate((targetId) => {
+                            const rows = document.querySelectorAll('a[role="row"]');
+                            // ลอง React Fiber หา row ที่ตรงกับ threadID/PSID ก่อน
+                            for (const row of rows) {
+                                const fk = Object.keys(row).find(k => k.startsWith('__reactFiber'));
+                                if (!fk) continue;
+                                let cur = row[fk];
+                                for (let j = 0; j < 50 && cur; j++) {
+                                    const p = cur.memoizedProps || cur.pendingProps;
+                                    const pid = p?.threadID || p?.threadId || p?.participantId || p?.id;
+                                    if (pid && (String(pid) === String(targetId) || String(pid).replace(/^t_/,'') === String(targetId).replace(/^t_/,''))) {
+                                        row.scrollIntoView({ block: 'nearest' });
+                                        row.click();
+                                        return true;
+                                    }
+                                    cur = cur.return;
+                                }
+                            }
+                            // Fallback: click first row ถ้าหาไม่เจอ
+                            if (rows[0]) { rows[0].click(); return false; }
+                            return false;
+                        }, targetPsid);
+                        await page.waitForTimeout(2500);
+                    } catch (ce) { /* ignore */ }
                 }
 
                 // [ANTI-BOT] Random wait หลัง navigate (ลดลงเพราะรอ container แล้ว)
@@ -949,9 +1025,16 @@ async function syncAgents() {
                     console.log(`   [URL] selected_item_id="${urlPsid}" | fiberID="${threadID}"`);
                 }
 
-                // รอให้ "ส่งโดย" ปรากฏ (timeout นานขึ้นเพราะต้อง scroll โหลด msg เก่า)
+                // รอให้ admin sender ปรากฏ — เช็คทั้ง a.uiLinkSubtle และ text-based
                 try {
                     await page.waitForFunction(() => {
+                        // Strategy DIRECT: a.uiLinkSubtle[data-hovercard] (FB Business Suite 2026)
+                        const links = document.querySelectorAll('a.uiLinkSubtle[data-hovercard]');
+                        for (const link of links) {
+                            const spanText = link.parentElement?.textContent || '';
+                            if (spanText.includes('ส่งโดย') || spanText.includes('Sent by')) return true;
+                        }
+                        // Fallback: text-based
                         const all = document.querySelectorAll('span, div');
                         for (const el of all) {
                             const t = (el.textContent || '').trim();

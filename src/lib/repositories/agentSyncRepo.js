@@ -10,6 +10,7 @@
  */
 
 import { getPrisma } from '@/lib/db';
+import { bestMatchScore } from '@/lib/thaiNameMatcher';
 
 // ── Employee Resolution ────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ export async function resolveEmployeeByName(name, cache = new Map()) {
       return byFb[0].id;
     }
 
-    // 2. Fallback: nickName / firstName / lastName
+    // 2. Fallback: nickName / firstName / lastName (exact)
     const emp = await prisma.employee.findFirst({
       where: {
         status: 'ACTIVE',
@@ -53,8 +54,36 @@ export async function resolveEmployeeByName(name, cache = new Map()) {
       select: { id: true },
     });
 
-    cache.set(name, emp?.id ?? null);
-    return emp?.id ?? null;
+    if (emp) {
+      cache.set(name, emp.id);
+      return emp.id;
+    }
+
+    // 3. Fuzzy fallback (ADR-043) — threshold ≥0.8 for attribution accuracy
+    const allActive = await prisma.employee.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true, firstName: true, lastName: true, nickName: true, identities: true },
+    });
+
+    let bestId = null;
+    let bestScore = 0;
+    for (const e of allActive) {
+      const fbName = e.identities?.facebook?.name || undefined;
+      const score = bestMatchScore(name, {
+        firstName: e.firstName,
+        lastName: e.lastName,
+        nickName: e.nickName,
+        facebookName: fbName,
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = e.id;
+      }
+    }
+
+    const resolvedId = bestScore >= 0.8 ? bestId : null;
+    cache.set(name, resolvedId);
+    return resolvedId;
   } catch (error) {
     console.error('[agentSyncRepo] resolveEmployeeByName failed', error);
     cache.set(name, null);
@@ -69,14 +98,13 @@ export async function resolveEmployeeByName(name, cache = new Map()) {
  * @returns {Promise<number>} count of updated messages
  */
 export async function attributeByMsgId(convInternalId, msgId, employeeId, fallbackName) {
+  if (!employeeId) return 0; // wait for fix_responder_ids.mjs bulk pass
+
   try {
     const prisma = await getPrisma();
     const result = await prisma.message.updateMany({
-      where: { conversationId: convInternalId, messageId: msgId },
-      data: {
-        responderId: employeeId,
-        ...(employeeId ? {} : { fromName: fallbackName }),
-      },
+      where: { conversationId: convInternalId, messageId: msgId, responderId: null },
+      data: { responderId: employeeId },
     });
     return result.count;
   } catch (error) {
@@ -87,9 +115,17 @@ export async function attributeByMsgId(convInternalId, msgId, employeeId, fallba
 
 /**
  * Attribute a message by content prefix (fuzzy match — first 80 chars).
+ * Only sets responderId when employeeId is non-null; never overwrites fromName
+ * (the backfill already populated it correctly from the FB sender name).
  * @returns {Promise<number>} count of updated messages
  */
 export async function attributeByText(convInternalId, msgText, employeeId, fallbackName) {
+  // If we have no employee UUID yet, skip message-level update entirely.
+  // The conversation-level fallback in processAgentAttribution will still
+  // record the name in assignedAgent, and fix_responder_ids.mjs handles
+  // bulk back-fill once employees are registered.
+  if (!employeeId) return 0;
+
   try {
     const prisma = await getPrisma();
     const snippet = msgText.slice(0, 80);
@@ -97,11 +133,9 @@ export async function attributeByText(convInternalId, msgText, employeeId, fallb
       where: {
         conversationId: convInternalId,
         content: { startsWith: snippet },
+        responderId: null, // only touch unattributed messages
       },
-      data: {
-        responderId: employeeId,
-        ...(employeeId ? {} : { fromName: fallbackName }),
-      },
+      data: { responderId: employeeId },
     });
     return result.count;
   } catch (error) {
@@ -205,7 +239,9 @@ export async function processAgentAttribution({ conversationId, senders, partici
 
     const empCache = new Map();
     let updated = 0;
-    const convLevelNames = [];
+    // All unique senders get tracked at conversation level regardless of
+    // whether message-level attribution succeeded.
+    const convSenderMap = new Map(); // name → employeeId|null
 
     // 3. Process each sender
     for (const sender of senders) {
@@ -214,20 +250,25 @@ export async function processAgentAttribution({ conversationId, senders, partici
 
       const employeeId = await resolveEmployeeByName(name, empCache);
 
+      // Track for conv-level regardless of message-level outcome
+      if (!convSenderMap.has(name)) {
+        convSenderMap.set(name, employeeId);
+      } else if (!convSenderMap.get(name) && employeeId) {
+        convSenderMap.set(name, employeeId); // upgrade null → resolved
+      }
+
       if (msgId) {
         updated += await attributeByMsgId(conversation.id, msgId, employeeId, name);
       } else if (msgText) {
         updated += await attributeByText(conversation.id, msgText, employeeId, name);
-      } else {
-        convLevelNames.push({ name, employeeId });
       }
     }
 
-    // 4. Conv-level fallback
+    // 4. Always update conversation-level assignedAgent when we have senders
     let convLevelAgent = null;
-    if (convLevelNames.length > 0) {
-      const names = convLevelNames.map(s => s.name);
-      const primaryEmpId = convLevelNames.find(s => s.employeeId)?.employeeId ?? null;
+    if (convSenderMap.size > 0) {
+      const names = [...convSenderMap.keys()];
+      const primaryEmpId = [...convSenderMap.values()].find(Boolean) ?? null;
       await setConversationAgent(conversation.id, names, primaryEmpId);
       convLevelAgent = names.join(', ');
     }

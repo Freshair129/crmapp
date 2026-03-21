@@ -2,9 +2,15 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { generateCustomerId } from '@/utils/idGenerator';
+import { rankByNameMatch } from '@/lib/thaiNameMatcher';
 
 /**
  * GET /api/customers - List customers
+ * Query params:
+ *   search  — name/phone substring
+ *   stage   — lifecycle stage filter
+ *   tier    — membership tier filter
+ *   fuzzy   — "true" to enable fuzzy Thai name matching (ADR-043)
  */
 export async function GET(request) {
     try {
@@ -14,7 +20,17 @@ export async function GET(request) {
         const search = searchParams.get('search') || '';
         const stage = searchParams.get('stage') || undefined;
         const tier = searchParams.get('tier') || undefined;
+        const fuzzy = searchParams.get('fuzzy') === 'true';
 
+        // Base filters (stage, tier) — applied in both exact and fuzzy modes
+        const baseWhere = {
+            AND: [
+                stage ? { lifecycleStage: stage } : {},
+                tier ? { membershipTier: tier } : {}
+            ]
+        };
+
+        // Standard exact/contains search
         const customers = await prisma.customer.findMany({
             where: {
                 AND: [
@@ -27,13 +43,34 @@ export async function GET(request) {
                             { phonePrimary: { contains: search } }
                         ]
                     } : {},
-                    stage ? { lifecycleStage: stage } : {},
-                    tier ? { membershipTier: tier } : {}
+                    ...baseWhere.AND
                 ]
             },
             orderBy: { createdAt: 'desc' },
-            take: 50 // Limit for now
+            take: 50
         });
+
+        // Fuzzy fallback: when exact returns few results, broaden and re-rank (ADR-043)
+        if (fuzzy && search && customers.length < 3) {
+            const broadResults = await prisma.customer.findMany({
+                where: baseWhere,
+                orderBy: { createdAt: 'desc' },
+                take: 100
+            });
+
+            const ranked = rankByNameMatch(search, broadResults.map(c => ({
+                ...c,
+                facebookName: c.facebookName || undefined,
+            })), 0.6);
+
+            // Merge: exact first, then fuzzy extras (deduplicated)
+            const seenIds = new Set(customers.map(c => c.id));
+            const fuzzyExtras = ranked
+                .filter(r => !seenIds.has(r.record.id))
+                .map(r => r.record);
+
+            return NextResponse.json([...customers, ...fuzzyExtras].slice(0, 50));
+        }
 
         return NextResponse.json(customers);
     } catch (error) {

@@ -7,7 +7,9 @@ const ROLE_LABEL = {
     DEVELOPER:  { th: 'Developer',   color: 'text-purple-400',  bg: 'bg-purple-500/10 border-purple-500/20' },
     ADMIN:      { th: 'Admin',        color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
     MANAGER:    { th: 'Manager',      color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20' },
-    SUPERVISOR: { th: 'Supervisor',   color: 'text-cyan-400',    bg: 'bg-cyan-500/10 border-cyan-500/20' },
+    MARKETING:  { th: 'Marketing',    color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/20' },
+    HEAD_CHEF:  { th: 'Head Chef',    color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20' },
+    EMPLOYEE:   { th: 'Employee',     color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
     AGENT:      { th: 'Agent',        color: 'text-green-400',   bg: 'bg-green-500/10 border-green-500/20' },
     GUEST:      { th: 'Demo / Guest', color: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
 };

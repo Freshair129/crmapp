@@ -6,6 +6,7 @@ import {
     X, Search, FilterX, List, Grid2X2, Facebook, MessageCircle,
     ChevronRight, ChevronLeft, ArrowRight, RefreshCw, Filter
 } from 'lucide-react';
+import { normalizeThai, matchName } from '@/lib/thaiNameMatcher';
 
 // ─── Data Normalizer ──────────────────────────────────────
 // Handles both flat camelCase (DB/cache) and nested profile.* (legacy) shapes
@@ -158,13 +159,29 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
     const processedCustomers = useMemo(() => {
         let result = [...normalizedCustomers];
 
-        // Search
+        // Search — uses normalizeThai + fuzzy matchName (ADR-043)
         if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            result = result.filter(c => {
-                const text = `${c.firstName} ${c.lastName} ${c.nickName} ${c.memberId} ${c.id}`.toLowerCase();
-                return text.includes(term);
-            });
+            const normalizedTerm = normalizeThai(searchTerm);
+            result = result
+                .map(c => {
+                    // Try exact contains first (fast path)
+                    const text = normalizeThai(`${c.firstName} ${c.lastName} ${c.nickName} ${c.memberId} ${c.id}`);
+                    if (text.includes(normalizedTerm)) return { c, score: 1 };
+
+                    // Fuzzy match against individual name fields
+                    const names = [c.firstName, c.lastName, c.nickName].filter(Boolean);
+                    const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
+                    if (fullName) names.push(fullName);
+
+                    let best = 0;
+                    for (const n of names) {
+                        best = Math.max(best, matchName(searchTerm, n));
+                    }
+                    return { c, score: best };
+                })
+                .filter(({ score }) => score >= 0.5)
+                .sort((a, b) => b.score - a.score)
+                .map(({ c }) => c);
         }
 
         // Tier Filter

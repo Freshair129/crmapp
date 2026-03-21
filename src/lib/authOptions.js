@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { cache as redis } from "@/lib/redis";
+import { VALID_ROLES, isValidRole } from "@/lib/rbac";
 
 /**
  * generateLogId — LOG-YYYYMMDD-SERIAL
@@ -67,6 +68,12 @@ export const authOptions = {
 
                     if (!employee || employee.status !== "ACTIVE") {
                         logger.warn('NEXTAUTH', 'Auth failed: User not found or inactive', { email: credentials.email });
+                        return null;
+                    }
+
+                    // Validate role is in VALID_ROLES (Phase 29 — ADR-045)
+                    if (!isValidRole(employee.role)) {
+                        logger.warn('NEXTAUTH', 'Auth failed: Invalid role', { email: credentials.email, role: employee.role });
                         return null;
                     }
 
