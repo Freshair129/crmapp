@@ -41,8 +41,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.4.0` | RBAC Redesign — Domain Roles + Ads Optimize Write (ADR-045) | ✅ released |
 | `v1.4.1` | Admin Performance Dashboard Fix (Monthly Message Trend) | ✅ released |
 | `v1.5.0-pre` | V Point Loyalty + UI Overhaul (TopBar slim + Sidebar 3-mode + Neon Chart) | ✅ released |
-| `v1.5.1` | Employee ID v3 Format — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) | ✅ released ← HEAD |
-| `v1.5.2` | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
+| `v1.5.1` | Employee ID v3 Format — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) | ✅ released |
+| `v1.5.2` | POS Receipt & Printer Integration (ADR-046) | ✅ released |
+| `v1.5.3` | Synchronized PRD & API Reference Audit | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`

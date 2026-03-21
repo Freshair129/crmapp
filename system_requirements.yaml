@@ -1,24 +1,27 @@
 # V SCHOOL CRM v2 — SYSTEM REQUIREMENTS
 # โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ
-# Last updated: 2026-03-19 (v0.27.0)
+# Last updated: 2026-03-22 (v1.5.3)
 # ─────────────────────────────────────────────────────────
 
 system_name: "The V School CRM v2"
-version: "0.27.0"
+version: "1.5.3"
 description: |
   Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
   รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,
-  Course Enrollment, Asset Management, Recipe & Package management
+  Course Enrollment, Asset Management, Recipe & Package management,
+  Procurement, Inventory Control, Ads Optimization, V Point Loyalty,
+  Web Push Notifications, and Automated Certification.
 
 tech_stack:
   framework: "Next.js 14 App Router"
   database: "PostgreSQL (Supabase) via Prisma ORM"
   queue: "Upstash QStash (HTTP) — แทน BullMQ local worker (ADR-040)"
   cache: "Upstash Redis REST — แทน ioredis local docker (ADR-040)"
-  ai: "Google Gemini"
+  ai: "Google Gemini 2.0 Flash"
   styling: "TailwindCSS"
   marketing_api: "Meta Graph API v19.0"
   auth: "NextAuth.js (CredentialsOnly — ADR-035)"
+  push: "Web Push (VAPID) — ADR-044"
 
 # ─────────────────────────────────────────────────────────
 # FUNCTIONAL REQUIREMENTS
@@ -31,13 +34,12 @@ functional_requirements:
   - module: "Authentication & RBAC"
     ui_tab: "LoginPage"
     status: "✅ Working"
-    adr: "ADR-026, ADR-035"
-    description: "Email+Password login, 6-tier RBAC, server-side guard"
+    adr: "ADR-026, ADR-035, ADR-045"
+    description: "Email+Password login, 8-tier RBAC, centralized permissionMatrix.js"
     features:
       - name: "FR1.1: Email & Password Login"
         status: "✅ Working"
         description: "NextAuth CredentialsProvider — bcrypt hash verify"
-        note: "Facebook Login ถูกลบออกแล้ว (ADR-035) เพราะ Facebook ซ่อน Admin PSID"
 
       - name: "FR1.2: Employee-to-Identity Mapping"
         status: "✅ Working"
@@ -45,12 +47,12 @@ functional_requirements:
           Employee.identities JSONB เก็บ { facebook: { psid, name }, line: { id } }
           ใช้ระบุว่าพนักงานคนไหนตอบข้อความนั้น (responder attribution)
 
-      - name: "FR1.3: Role-Based Access Control (RBAC)"
+      - name: "FR1.3: Role-Based Access Control (RBAC v2)"
         status: "✅ Working"
         description: |
-          6-tier role hierarchy (server-side guard via middleware.js):
-          Developer > Manager > Supervisor > Admin > Agent > Guest
-          Granular overrides ใน Employee.permissions JSONB
+          8-tier role hierarchy (UPPERCASE in DB):
+          DEVELOPER > MANAGER > ADMIN > MARKETING > HEAD_CHEF > EMPLOYEE > AGENT > GUEST
+          Centralized config: src/lib/permissionMatrix.js (can() helper)
 
   # ── MODULE 2: MESSAGING & WEBHOOK ─────────────────────
 
@@ -455,6 +457,126 @@ functional_requirements:
         description: "Follow-up, Call, Email, Meeting tasks — Assignee + Due Date"
         types: ["FOLLOW_UP", "CALL", "EMAIL", "MEETING", "DEMO"]
         priorities: ["LOW", "MEDIUM", "HIGH", "URGENT"]
+
+  # ── MODULE 18: PROCUREMENT LIFECYCLE ─────────────────
+
+  - module: "Procurement Lifecycle"
+    ui_tab: ["ProcurementDashboard", "POList"]
+    status: "✅ Working"
+    features:
+      - name: "FR18.1: Supplier Master Data"
+        status: "✅ Working"
+        description: "Supplier CRUD with taxId and bankAccount support"
+
+      - name: "FR18.2: Class BOM Calculation"
+        status: "✅ Working"
+        description: "Calculate shortfall based on confirmed students across multiple schedule days (Cohort)"
+        implementation: "procurementRepo.calculateClassBOM(classId)"
+
+      - name: "FR18.3: Purchase Order Lifecycle"
+        status: "✅ Working"
+        description: |
+          DRAFT -> REQUEST_REVIEW -> APPROVED/REJECTED -> ORDERING -> ORDERED -> RECEIVED -> CLOSED
+        id_format: "PO-YYYYMMDD-SERIAL"
+
+      - name: "FR18.4: Multi-stage Approval"
+        status: "✅ Working"
+        description: "Chef approval (APPROVED/REJECTED) + Purchasing acceptance (ORDERING)"
+
+      - name: "FR18.5: Goods Received (GRN)"
+        status: "✅ Working"
+        description: "Partial/Full receiving with auto-stock increment (Ingredient.currentStock)"
+        id_format: "GRN-YYYYMMDD-SERIAL"
+
+      - name: "FR18.6: Financial Operations"
+        status: "✅ Working"
+        description: "Advances (Employee reimbursement), Credit Notes, and Returns management"
+
+  # ── MODULE 19: INVENTORY CONTROL ─────────────────────
+
+  - module: "Advanced Inventory Control"
+    ui_tab: ["InventoryDashboard"]
+    status: "✅ Working"
+    features:
+      - name: "FR19.1: Multi-Warehouse Support"
+        status: "✅ Working"
+        description: "Warehouse CRUD (WH-CODE) and location tracking"
+
+      - name: "FR19.2: Stock Movements"
+        status: "✅ Working"
+        description: "Audit trail for RECEIVE, ISSUE, TRANSFER, ADJUSTMENT with transaction logging"
+
+      - name: "FR19.3: Physical Stock Count"
+        status: "✅ Working"
+        description: "Blind count vs systemQty with auto-adjustment on completion"
+        id_format: "CNT-YYYYMMDD-SERIAL"
+
+      - name: "FR19.4: Barcode Integration"
+        status: "✅ Working"
+        description: "Register EAN13 barcodes and lookup products via scanner"
+
+  # ── MODULE 20: ADS OPTIMIZATION ──────────────────────
+
+  - module: "Ads Optimization (Write)"
+    ui_tab: ["AdsOptimizePanel"]
+    status: "✅ Working"
+    adr: "ADR-045"
+    features:
+      - name: "FR20.1: Campaign/Ad Management"
+        status: "✅ Working"
+        description: "Pause, Resume, and Duplicate campaigns directly from CRM UI"
+
+      - name: "FR20.2: Budget & Bid Control"
+        status: "✅ Working"
+        description: "Real-time daily budget and bid amount updates via Meta Graph API"
+
+      - name: "FR20.3: Budget Approval Workflow"
+        status: "✅ Working"
+        description: "Requested lifetime budget changes (AdsOptimizeRequest) require Manager/Admin approval"
+
+  # ── MODULE 21: V POINT LOYALTY ───────────────────────
+
+  - module: "V Point Loyalty"
+    ui_tab: ["CustomerProfile"]
+    status: "✅ Working"
+    features:
+      - name: "FR21.1: Loyalty Tiers"
+        status: "✅ Working"
+        description: "5 tiers (Member, Silver, Gold, Platinum, Black) based on spend and learning hours"
+
+      - name: "FR21.2: Point Accumulation"
+        status: "✅ Working"
+        description: "300 V Points per 150 THB spent — auto-awarded on order verification"
+
+  # ── MODULE 22: WEB PUSH NOTIFICATIONS ────────────────
+
+  - module: "Web Push Notifications"
+    status: "✅ Working"
+    adr: "ADR-044"
+    description: "Real-time browser notifications using VAPID protocol"
+    features:
+      - name: "FR22.1: Browser Subscription"
+        status: "✅ Working"
+        description: "RBAC-guarded push subscription management via /api/push/subscribe"
+
+  # ── MODULE 23: AUTOMATED CERTIFICATION ───────────────
+
+  - module: "Automated Certification"
+    status: "✅ Working"
+    features:
+      - name: "FR23.1: Threshold Issuance"
+        status: "✅ Working"
+        description: "Auto-issue CERT-YYYYMMDD-XXX at 30h, 111h, and 201h milestones"
+
+  # ── MODULE 24: AI INBOX ASSISTANT ────────────────────
+
+  - module: "AI Inbox Assistant"
+    ui_tab: ["UnifiedInbox"]
+    status: "✅ Working"
+    features:
+      - name: "FR24.1: Context-Aware Reply"
+        status: "✅ Working"
+        description: "Generate replies using Gemini 2.0 Flash based on knowledge files and chat history"
 
 # ─────────────────────────────────────────────────────────
 # NON-FUNCTIONAL REQUIREMENTS
