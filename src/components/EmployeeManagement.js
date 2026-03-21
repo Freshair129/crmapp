@@ -419,16 +419,18 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 background: 'linear-gradient(135deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)',
                                 borderTopLeftRadius: 32,
                             }} />
-                            {/* ③ Linear shimmer sweep — Framer Motion */}
-                            <motion.div
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.13) 50%, transparent 65%)',
-                                    borderRadius: 'inherit',
-                                }}
-                                animate={{ x: ['-110%', '210%'] }}
-                                transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 3.5 }}
-                            />
+                            {/* ③ Linear shimmer sweep — front card only */}
+                            {isActive && (
+                                <motion.div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                        background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.13) 50%, transparent 65%)',
+                                        borderRadius: 'inherit',
+                                    }}
+                                    animate={{ x: ['-110%', '210%'] }}
+                                    transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 3.5 }}
+                                />
+                            )}
 
                             {/* Content sits on top */}
                             <div className="relative flex flex-col h-full p-6" style={{ zIndex: 1 }}>
