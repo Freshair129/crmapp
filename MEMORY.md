@@ -28,6 +28,20 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-21 15:00] Claude — Admin Performance Dashboard Fix + Docs Update
+- **สิ่งที่ทำ**:
+  - แก้ bug: Monthly Message Trend chart ไม่แสดงข้อมูล — employee filter แคบเกินไป (เฉพาะ TVS-MKT-* / developer)
+  - เปลี่ยนเป็น query `DISTINCT responder_id` จาก messages → ดึงทุกพนักงานที่ตอบแชทจริง (Fafah + Aoi ถูก include)
+  - อัปเดต CHANGELOG.md — เพิ่ม CL-20260321-005, sliding window trim
+  - อัปเดต MEMORY.md — handover entry
+  - สร้าง changelog/CL-20260321-005.md
+- **ไฟล์ที่เปลี่ยน**:
+  - `src/app/api/analytics/admin-performance/route.js` (fix — already committed in 9f9ebea)
+  - `CHANGELOG.md`, `MEMORY.md`, `changelog/CL-20260321-005.md`
+- **Breaking Changes**: ไม่มี
+- **ต้อง review**: ไม่มี
+- **ทำต่อ**: Phase 30 (v1.5.0) — POS Receipt & Printer
+
 ### [2026-03-21 13:45] Claude — Phase 29 (v1.4.0 RBAC Redesign + Ads Optimize) COMPLETE ✅
 - **สิ่งที่ทำ**:
   - แก้ไข package IDs ใน DB: `PKG-2026-001` → `TVS-FC-FULL-COURSES-B-201H`, `PKG-2026-002` → `TVS-FC-FULL-COURSES-A-111H`

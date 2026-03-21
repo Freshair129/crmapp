@@ -1,4 +1,4 @@
-**LATEST:** CL-20260321-004 | v1.5.0 planned | 2026-03-21
+**LATEST:** CL-20260321-005 | v1.4.1 | 2026-03-21
 
 ---
 
@@ -6,8 +6,9 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260321-005 | Admin Performance Fix (Monthly Message Trend) | v1.4.1 | 2026-03-21 | PATCH | #bugfix #analytics #dashboard |
 | CL-20260321-004 | POS Receipt & Printer Plan (ADR-046) | v1.5.0 planned | 2026-03-21 | MINOR | #pos #receipt #printing #plan |
-| CL-20260321-003 | RBAC Redesign + Ads Optimize (ADR-045) | v1.4.0 planned | 2026-03-21 | MINOR | #rbac #marketing #ads #roles |
+| CL-20260321-003 | RBAC Redesign + Ads Optimize (ADR-045) | v1.4.0 | 2026-03-21 | MINOR | #rbac #marketing #ads #roles |
 | CL-20260321-002 | Web Push Inbox Real-time (ADR-044) | v1.3.0 | 2026-03-21 | MINOR | #inbox #push #realtime |
 | CL-20260321-001 | Equipment Domain POS + Spec Fields | v1.2.0 | 2026-03-21 | MINOR | #pos #equipment #ui |
 | CL-20260319-006 | POS Modal + Sheet ID Generation | v1.1.0 | 2026-03-19 | MINOR | #pos #sheets #id-generation |
@@ -15,6 +16,7 @@
 | CL-20260318-002 | Repository Layer Full Compliance | v0.23.0 | 2026-03-18 | MINOR | #repository #refactor |
 | CL-20260318-001 | FEFO Stock Deduction Refinement | v0.22.0 | 2026-03-18 | MINOR | #kitchen #repository |
 | CL-20260317-002 | Bug Audit + Repo Refactor | v0.21.0 | 2026-03-17 | PATCH | #bugfix #repository |
+| CL-20260319-005 | Production Ready (Phase 28 — ADR-041) | v1.0.0 | 2026-03-19 | MINOR | #documentation #v1 #production |
 | CL-20260319-004 | Upstash Infrastructure Migration | v0.27.0 | 2026-03-19 | MINOR | #infrastructure #upstash #qstash |
 | CL-20260319-003 | Chat-First Revenue Attribution | v0.26.0 | 2026-03-19 | MINOR | #revenue #attribution #ocr |
 | CL-20260319-002 | Production Hardening Complete | v0.25.0 | 2026-03-19 | MINOR | #security #reliability #production |
@@ -24,6 +26,22 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260321-005] v1.4.1 — Admin Performance Dashboard Fix (Monthly Message Trend)
+**Date:** 2026-03-21 | **Severity:** PATCH | **Tags:** #bugfix #analytics #dashboard
+
+Monthly Message Trend chart ไม่แสดงข้อมูล เพราะ employee filter ใน API แคบเกินไป (เฉพาะ TVS-MKT-* หรือ developer dept) → Fafah + Aoi ไม่ถูก include
+
+#### Root Cause
+`GET /api/analytics/admin-performance` hardcode filter `department: 'developer'` → AGENT employees ที่ตอบแชทจริงไม่ได้แสดง
+
+#### Fix
+เปลี่ยนจาก hardcoded department filter → query `DISTINCT responder_id` จาก `messages` table ก่อน แล้วใช้เป็น filter → ทุกพนักงานที่ตอบแชทจริงแสดงในกราฟ
+
+#### File Changed
+- `src/app/api/analytics/admin-performance/route.js`
+
+---
 
 ### [CL-20260321-004] v1.5.0 — POS Receipt & Printer Integration Plan (ADR-046)
 **Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #receipt #printing #thermal #line #plan
@@ -126,26 +144,6 @@
 
 #### Session Start Protocol
 - `CLAUDE.md` — เพิ่ม step 3: อ่าน `CHANGELOG.md` LATEST pointer ทุก session
-
----
-
-### [CL-20260319-005] v1.0.0 — Production Ready (Phase 28 — Docs Hardening + ADR-041)
-**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #documentation #v1 #production #phase28
-
-Phase 28 เสร็จสมบูรณ์ — ประกาศ v1.0.0 Production Ready อย่างเป็นทางการ
-
-#### Documentation Hardening
-- **`docs/API_REFERENCE.md`** — เพิ่ม Phase 20 (kitchen/lots), Phase 26 (payments/slip OCR), Phase 27 (QStash worker) endpoints; อัปเดต header → v0.27.0
-- **`docs/database_erd.md`** — อัปเดต header v0.27.0; เพิ่ม IngredientLot ใน Domain Summary (46 models); เพิ่ม ADR-038/039/040/Phase 20 ใน Key Architecture Decisions
-- **`id_standards.yaml`** — อัปเดต version header v0.18.0 → v0.27.0
-
-#### Context File Cleanup
-- **`GOAL.md`** — Phase 15 sub-phases ✅, Phase 26 ADR ref แก้ ADR-038 → ADR-039, เพิ่ม Phase 27 section, Phase 28 section
-- **`CLAUDE.md`** — v1.0.0 status: planned → in progress
-- **`ANTIGRAVITY.md`**, **`GEMINI.md`**, **`system_requirements.yaml`**, **`domain-boundaries.md`**, **`domain-flows.md`** — ทั้งหมดอัปเดตไปแล้วก่อน Phase 28
-
-#### ADR-041
-- **`docs/adr/041-v1-production-launch.md`** (new) — Production Launch Declaration: evidence of readiness (17 modules ✅, 6 NFRs ✅), infrastructure table, known limitations, full ADR chain 024–041
 
 ---
 
