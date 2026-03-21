@@ -280,7 +280,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
             scale:   abs === 0 ? 1      : 1 - abs * 0.065,
             y:       abs === 0 ? 0      : abs * 24,
             rotateZ: abs === 0 ? 0      : sign * abs * 3.5,
-            opacity: abs > 2   ? 0      : 1 - abs * 0.22,
+            opacity: abs === 0 ? 1 : abs === 1 ? 0.35 : abs === 2 ? 0.12 : 0,
             zIndex:  abs === 0 ? 30     : 30 - abs * 6,
             x: 0,
         };
