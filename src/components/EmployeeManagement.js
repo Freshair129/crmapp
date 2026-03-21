@@ -539,9 +539,8 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             style={{
                                 top: 14, right: 14, width: 44, height: 44,
                                 borderRadius: '50%',
-                                background: `radial-gradient(circle at 38% 35%, ${avatarColors[0]}55, rgba(14,14,28,0.88))`,
-                                boxShadow: `0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15), 0 0 12px ${avatarColors[0]}33`,
-                                border: `1.5px solid ${avatarColors[0]}50`,
+                                background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})`,
+                                boxShadow: `0 4px 20px ${avatarColors[0]}55, 0 0 0 2px rgba(255,255,255,0.12)`,
                                 cursor: 'pointer',
                                 zIndex: 20,
                             }}
