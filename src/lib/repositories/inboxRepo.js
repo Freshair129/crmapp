@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger';
  * @param {number} [params.limit=10]
  * @param {number} [params.page=1]
  */
-export async function getConversations({ channel, status, search, limit = 10, page = 1 }) {
+export async function getConversations({ channel, status, search, customerId, limit = 10, page = 1 }) {
     try {
         const prisma = await getPrisma();
         const skip = (page - 1) * limit;
@@ -18,6 +18,7 @@ export async function getConversations({ channel, status, search, limit = 10, pa
         const where = {
             ...(channel && channel !== 'ALL' ? { channel: { equals: channel.toLowerCase(), mode: 'insensitive' } } : {}),
             ...(status ? { status: { equals: status.toLowerCase(), mode: 'insensitive' } } : {}),
+            ...(customerId ? { customerId } : {}),
             ...(search ? {
                 OR: [
                     { participantName: { contains: search, mode: 'insensitive' } },
@@ -53,6 +54,9 @@ export async function getConversations({ channel, status, search, limit = 10, pa
                         fromId: true,
                         fromName: true
                     }
+                },
+                assignedEmployee: {
+                    select: { id: true, firstName: true, lastName: true, employeeId: true, nickName: true }
                 }
             },
             orderBy: [
@@ -102,7 +106,9 @@ export async function getConversations({ channel, status, search, limit = 10, pa
                 text: c.messages[0].content || '(Message)',
                 createdAt: c.messages[0].createdAt,
                 senderId: c.messages[0].fromId
-            } : null
+            } : null,
+            assignedEmployee: c.assignedEmployee || null,
+            assignedEmployeeId: c.assignedEmployeeId || null
         }));
 
         return formatted;

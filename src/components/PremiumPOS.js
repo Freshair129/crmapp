@@ -512,6 +512,8 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     // Employee list for dropdowns
     const [employees, setEmployees] = useState([]);
+    // assignedStaff = read-only, auto-resolved from customer's latest conversation
+    const [assignedStaff, setAssignedStaff] = useState(null); // { id, firstName, lastName, employeeId }
 
     useEffect(() => {
         fetch('/api/employees')
@@ -636,12 +638,31 @@ export default function PremiumPOS({ language = 'TH' }) {
         setCustomerError('');
     };
 
-    const openPaymentModal = (customer) => {
+    const openPaymentModal = async (customer) => {
         setPendingCustomer(customer);
         setShowCustomerModal(false);
         setCustomerPhone('');
         setCustomerError('');
-        // Pre-fill cashier with current logged-in user if employee
+        setAssignedStaff(null);
+
+        // Fetch assigned staff from customer's latest conversation
+        try {
+            const res = await fetch(`/api/inbox/conversations?customerId=${customer.id}&limit=1`);
+            if (res.ok) {
+                const data = await res.json();
+                const convs = Array.isArray(data) ? data : (data.conversations || []);
+                const latest = convs[0];
+                if (latest?.assignedEmployee) {
+                    setAssignedStaff(latest.assignedEmployee);
+                } else if (latest?.assignedEmployeeId) {
+                    // fallback: look up in employees list
+                    const emp = employees.find(e => e.id === latest.assignedEmployeeId);
+                    if (emp) setAssignedStaff(emp);
+                }
+            }
+        } catch (_) { /* silent — assigned staff is optional */ }
+
+        // Pre-fill cashier with current logged-in user
         setPaymentForm(f => ({
             ...f,
             cashierId: session?.user?.employeeId || '',
@@ -723,7 +744,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                     isDeposit: pmtForm?.isDeposit || false,
                     depositAmount: pmtForm?.isDeposit ? Number(pmtForm.depositAmount || 0) : finalTotal,
                     closedById: pmtForm?.closedById || null,
-                    salesStaffId: pmtForm?.salesStaffId || null,
+                    salesStaffId: assignedStaff?.id || pmtForm?.salesStaffId || null,
                     cashierId: pmtForm?.cashierId || null,
                     notes: pmtForm?.notes || null,
                     items: cart.map(i => ({
@@ -765,7 +786,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 setEnrollmentCount(createdEnrollments);
 
                 const orderData = await orderRes.json();
-                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart] });
+                setLastOrder({ ...orderData, discountApplied, finalTotal, pmtForm, cartSnapshot: [...cart], assignedStaffSnap: assignedStaff });
                 setLastCustomer(customer);
                 setShowPaymentModal(false);
                 setShowReceiptModal(true);
@@ -846,10 +867,10 @@ export default function PremiumPOS({ language = 'TH' }) {
                             </div>
 
                             {/* Staff */}
-                            {(lastOrder.pmtForm?.salesStaffId || lastOrder.pmtForm?.closedById || lastOrder.pmtForm?.cashierId) && (
+                            {(lastOrder.assignedStaffSnap || lastOrder.pmtForm?.closedById || lastOrder.pmtForm?.cashierId) && (
                                 <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
                                     <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">พนักงาน</div>
-                                    {lastOrder.pmtForm?.salesStaffId && <div className="flex justify-between"><span className="text-white/60">ดูแลลูกค้า</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.salesStaffId)?.firstName || '-'}</span></div>}
+                                    {lastOrder.assignedStaffSnap && <div className="flex justify-between"><span className="text-white/60">ดูแลลูกค้า</span><span className="font-bold">{lastOrder.assignedStaffSnap.firstName} {lastOrder.assignedStaffSnap.lastName || ''}</span></div>}
                                     {lastOrder.pmtForm?.closedById && <div className="flex justify-between"><span className="text-white/60">ปิดการขาย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.closedById)?.firstName || '-'}</span></div>}
                                     {lastOrder.pmtForm?.cashierId && <div className="flex justify-between"><span className="text-white/60">แคชเชีย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.cashierId)?.firstName || '-'}</span></div>}
                                 </div>
@@ -889,7 +910,8 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     setEnrollmentCount(0);
                                     setLastOrder(null);
                                     setLastCustomer(null);
-                                    setPaymentForm({ method: 'CASH', bankName: '', isDeposit: false, depositAmount: '', discountAmount: '', discountPercent: '', promoCode: '', salesStaffId: '', closedById: '', cashierId: '', notes: '' });
+                                    setAssignedStaff(null);
+                                    setPaymentForm({ method: 'CASH', bankName: '', isDeposit: false, depositAmount: '', discountAmount: '', discountPercent: '', promoCode: '', closedById: '', cashierId: '', notes: '' });
                                 }}
                                 className="flex flex-col items-center gap-1.5 py-3 bg-[#C9A34E] hover:bg-[#B8923D] rounded-xl transition-all text-[#0A1A2F] text-xs font-black uppercase tracking-wider"
                             >
@@ -979,13 +1001,26 @@ export default function PremiumPOS({ language = 'TH' }) {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">พนักงาน</label>
                                 <div className="grid grid-cols-1 gap-2">
-                                    {[['salesStaffId','👤 พนักงานดูแลลูกค้า'],['closedById','🏆 พนักงานปิดการขาย'],['cashierId','🧾 แคชเชีย (ออกบิล)']].map(([field, label]) => (
-                                        <select key={field} value={paymentForm[field]} onChange={e => setPaymentForm(f => ({ ...f, [field]: e.target.value }))}
-                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
-                                            <option value="">{label}</option>
-                                            {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
-                                        </select>
-                                    ))}
+                                    {/* พนักงานดูแล — read-only จาก customer profile */}
+                                    <div className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between ${assignedStaff ? 'bg-[#C9A34E]/10 border-[#C9A34E]/40' : 'bg-white/5 border-white/10'}`}>
+                                        <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">👤 พนักงานดูแลลูกค้า</span>
+                                        {assignedStaff
+                                            ? <span className="font-black text-sm text-[#C9A34E]">{assignedStaff.firstName} {assignedStaff.lastName || ''}<span className="text-white/40 font-normal text-[10px] ml-1">({assignedStaff.employeeId || 'assigned'})</span></span>
+                                            : <span className="text-white/30 text-sm italic">ไม่มีข้อมูล</span>
+                                        }
+                                    </div>
+                                    {/* พนักงานปิดการขาย — selectable */}
+                                    <select value={paymentForm.closedById} onChange={e => setPaymentForm(f => ({ ...f, closedById: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        <option value="">🏆 พนักงานปิดการขาย</option>
+                                        {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
+                                    </select>
+                                    {/* แคชเชีย — selectable, default = current user */}
+                                    <select value={paymentForm.cashierId} onChange={e => setPaymentForm(f => ({ ...f, cashierId: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        <option value="">🧾 แคชเชีย (ออกบิล)</option>
+                                        {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
+                                    </select>
                                 </div>
                             </div>
 

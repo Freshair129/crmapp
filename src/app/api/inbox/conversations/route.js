@@ -12,10 +12,11 @@ export async function GET(request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const search = searchParams.get('search');
-        
-        logger.info('[InboxConversations]', `Fetching conversations: channel=${channel}, status=${status}, search=${search}, page=${page}`);
+        const customerId = searchParams.get('customerId') || undefined;
 
-        const formatted = await inboxRepo.getConversations({ channel, status, search, limit, page });
+        logger.info('[InboxConversations]', `Fetching conversations: channel=${channel}, status=${status}, search=${search}, page=${page}, customerId=${customerId}`);
+
+        const formatted = await inboxRepo.getConversations({ channel, status, search, customerId, limit, page });
 
         logger.info('[InboxConversations]', `Found ${formatted.length} conversations`);
 
