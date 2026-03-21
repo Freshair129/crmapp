@@ -101,38 +101,85 @@ function HourHeatmap({ hours }) {
     );
 }
 
-// ─── Monthly SVG Bar Chart ─────────────────────────────────────────────────────
-function MonthlyBarChart({ data, colors, months, height = 140 }) {
+// ─── Monthly SVG Line Chart (Trend) ───────────────────────────────────────────
+function MonthlyLineChart({ data, colors, months, height = 140 }) {
     if (!data || data.length === 0 || !months || months.length === 0) return null;
-    const maxVal = Math.max(...data.flatMap(d => months.map(m => d.stats?.monthly?.[m] || 0)), 1);
-    const barW   = 12;
-    const gap    = 3;
-    const groupW = data.length * (barW + gap) + 10;
-    const totalW = months.length * (groupW + 10) + 50;
+
+    const maxVal   = Math.max(...data.flatMap(d => months.map(m => d.stats?.monthly?.[m] || 0)), 1);
+    const padL     = 38;   // left padding for Y-axis labels
+    const padR     = 12;
+    const padT     = 8;
+    const padB     = 24;   // bottom padding for X-axis labels
+    const chartW   = Math.max(months.length * 60, 200);
+    const totalW   = padL + chartW + padR;
+    const totalH   = padT + height + padB;
+    const stepX    = months.length > 1 ? chartW / (months.length - 1) : chartW / 2;
+
+    // Y-axis grid lines (4 lines)
+    const gridLines = 4;
+    const gridVals  = Array.from({ length: gridLines + 1 }, (_, i) => Math.round((maxVal / gridLines) * i));
 
     return (
-        <svg width="100%" viewBox={`0 0 ${totalW} ${height + 28}`} preserveAspectRatio="xMidYMid meet">
-            {months.map((m, mi) =>
-                data.map((emp, ei) => {
-                    const val  = emp.stats?.monthly?.[m] || 0;
-                    const barH = Math.max((val / maxVal) * height, val > 0 ? 2 : 0);
-                    const x    = mi * (groupW + 10) + 30 + ei * (barW + gap);
-                    const y    = height - barH;
-                    return (
-                        <g key={`${m}-${ei}`}>
-                            <rect x={x} y={y} width={barW} height={barH} rx={3} fill={colors[ei] || '#94a3b8'} opacity={0.85} />
-                            {val > 0 && barH > 14 && (
-                                <text x={x + barW / 2} y={y + 10} textAnchor="middle" fontSize="7" fill="#0f172a" fontWeight="700">{val}</text>
-                            )}
-                        </g>
-                    );
-                })
-            )}
+        <svg width="100%" viewBox={`0 0 ${totalW} ${totalH}`} preserveAspectRatio="xMidYMid meet">
+            {/* Grid lines */}
+            {gridVals.map((val, i) => {
+                const y = padT + height - (val / maxVal) * height;
+                return (
+                    <g key={`grid-${i}`}>
+                        <line x1={padL} y1={y} x2={padL + chartW} y2={y} stroke="#1e293b" strokeWidth={1} />
+                        <text x={padL - 6} y={y + 3} textAnchor="end" fontSize="8" fill="#475569">{val}</text>
+                    </g>
+                );
+            })}
+
+            {/* Lines + dots per employee */}
+            {data.map((emp, ei) => {
+                const points = months.map((m, mi) => {
+                    const val = emp.stats?.monthly?.[m] || 0;
+                    const x   = padL + (months.length > 1 ? mi * stepX : chartW / 2);
+                    const y   = padT + height - (val / maxVal) * height;
+                    return { x, y, val };
+                });
+
+                const lineD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                const color = colors[ei] || '#94a3b8';
+
+                // Gradient area fill
+                const areaD = lineD
+                    + ` L ${points[points.length - 1].x} ${padT + height}`
+                    + ` L ${points[0].x} ${padT + height} Z`;
+
+                return (
+                    <g key={`line-${ei}`}>
+                        {/* Area fill (subtle) */}
+                        <defs>
+                            <linearGradient id={`grad-${ei}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={color} stopOpacity={0.15} />
+                                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                            </linearGradient>
+                        </defs>
+                        <path d={areaD} fill={`url(#grad-${ei})`} />
+                        {/* Line */}
+                        <path d={lineD} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" opacity={0.9} />
+                        {/* Dots with value labels */}
+                        {points.map((p, pi) => (
+                            <g key={`dot-${ei}-${pi}`}>
+                                <circle cx={p.x} cy={p.y} r={3.5} fill={color} stroke="#0f172a" strokeWidth={1.5} />
+                                {p.val > 0 && (
+                                    <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="8" fill={color} fontWeight="700">{p.val}</text>
+                                )}
+                            </g>
+                        ))}
+                    </g>
+                );
+            })}
+
+            {/* X-axis month labels */}
             {months.map((m, mi) => (
                 <text key={m}
-                    x={mi * (groupW + 10) + 30 + (data.length * (barW + gap)) / 2}
-                    y={height + 16}
-                    textAnchor="middle" fontSize="9" fill="#64748b">
+                    x={padL + (months.length > 1 ? mi * stepX : chartW / 2)}
+                    y={padT + height + 16}
+                    textAnchor="middle" fontSize="9" fill="#64748b" fontWeight="600">
                     {thMonth(m)}
                 </text>
             ))}
@@ -212,7 +259,7 @@ function AdminModal({ admin, color, allMonths, onClose }) {
                     <div style={{ marginBottom: '20px' }}>
                         <div style={{ ...S.label, marginBottom: '10px' }}>Monthly Trend</div>
                         <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '14px' }}>
-                            <MonthlyBarChart data={[admin]} colors={[color]} months={allMonths} height={80} />
+                            <MonthlyLineChart data={[admin]} colors={[color]} months={allMonths} height={80} />
                         </div>
                     </div>
                 )}
@@ -360,7 +407,7 @@ export default function AdminPerformance() {
                             </div>
                         </div>
                         <div style={{ height: '180px' }}>
-                            <MonthlyBarChart data={top6} colors={top6Colors} months={summary.allMonths} height={150} />
+                            <MonthlyLineChart data={top6} colors={top6Colors} months={summary.allMonths} height={150} />
                         </div>
                     </div>
                     <div style={S.card}>
