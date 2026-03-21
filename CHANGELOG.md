@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-003 | v1.6.0 | 2026-03-22
+**LATEST:** CL-20260322-004 | v1.6.1 | 2026-03-22
 
 ---
 
@@ -31,6 +31,24 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-004] v1.6.1 — Employee Card UX + Interactive Permissions + jobTitle
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #employee #ui #card #permissions #schema #bugfix
+
+#### Changes
+- **Employee Card**: FAB inside card (positive coords), shimmer effect (front card only), bg card opacity ลด (abs=1→0.35, abs=2→0.12), FAB gradient match avatar
+- **"การ์ดของคุณ"**: gold top border + pill badge เมื่อ card ตรงกับ currentUser
+- **Edit button**: ย้ายออกจาก Profile tab → ขวาของ tab bar (เห็นได้ทุก tab)
+- **PermissionMatrix**: cells กดได้ cycle 5 states + Save บันทึกลง `app_config` table
+- **`jobTitle` field**: เพิ่ม `Employee.jobTitle` แยกจาก `department` — schema, DB, API, UI ครบ
+- **DB fix**: clear `facebook_url` email ออกจาก Guest+Demo records
+
+#### Files Changed
+- `src/components/EmployeeManagement.js`, `src/components/PermissionMatrix.js`
+- `src/app/api/permissions/route.js` (NEW), `src/app/api/employees/route.js`, `src/app/api/employees/[id]/route.js`
+- `prisma/schema.prisma`
+
+---
 
 ### [CL-20260322-002] v1.5.3 — Centralized ID Generators + Agent ID/Code + Customer ID YYMM
 **Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #refactor #id-generation #employee #schema
@@ -106,22 +124,6 @@ Employee ID format เปลี่ยนเป็น `TVS-[TYPE]-[DEPT]-[NNN]` p
 - `src/components/AdminPerformance.js` — NEON_PALETTE, MonthlyLineChart neon redesign, container h-220px
 - `src/components/TopBar.js` — slim h-10, breadcrumb left, search center
 - `src/components/Sidebar.js` — 3-mode (expanded/collapsed/hover), localStorage persist, animated labels
-
----
-
-### [CL-20260321-005] v1.4.1 — Admin Performance Dashboard Fix (Monthly Message Trend)
-**Date:** 2026-03-21 | **Severity:** PATCH | **Tags:** #bugfix #analytics #dashboard
-
-Monthly Message Trend chart ไม่แสดงข้อมูล เพราะ employee filter ใน API แคบเกินไป (เฉพาะ TVS-MKT-* หรือ developer dept) → Fafah + Aoi ไม่ถูก include
-
-#### Root Cause
-`GET /api/analytics/admin-performance` hardcode filter `department: 'developer'` → AGENT employees ที่ตอบแชทจริงไม่ได้แสดง
-
-#### Fix
-เปลี่ยนจาก hardcoded department filter → query `DISTINCT responder_id` จาก `messages` table ก่อน แล้วใช้เป็น filter → ทุกพนักงานที่ตอบแชทจริงแสดงในกราฟ
-
-#### File Changed
-- `src/app/api/analytics/admin-performance/route.js`
 
 ---
 
