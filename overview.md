@@ -1,6 +1,6 @@
 # V School CRM v2 — Project Overview
 
-> **Version:** v1.3.0 (HEAD) | **Started:** 2026-03-08 | **Status:** Production Ready (v1.0.0+)
+> **Version:** v1.4.0 (HEAD) | **Started:** 2026-03-08 | **Status:** Production Ready (v1.0.0+)
 > **Repository:** https://github.com/Freshair129/crmapp | **Branch:** `master`
 
 ---

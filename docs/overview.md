@@ -148,10 +148,11 @@ NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
 ### 3. Current Version Status
 | Version | Milestone | Status |
 |---|---|---|
-| v0.26.0 | Chat-First Revenue — Slip OCR + REQ-07 firstTouchAdId | ✅ released |
-| v0.27.0 | Upstash Migration — QStash + Upstash Redis (zero local infra) | ✅ released |
-| v1.0.0 | Production Ready — Docs Hardening + ADR-041 | ✅ released |
-| v1.1.0 | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ HEAD |
+| v1.1.0 | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
+| v1.2.0 | Equipment Domain POS — hand/material/specs + shipping (ADR-043) | ✅ released |
+| v1.3.0 | Web Push Inbox Real-time — VAPID, ลบ SSE+polling (ADR-044) | ✅ released |
+| v1.4.0 | RBAC Redesign — 8 roles + permissionMatrix + Ads Optimize (ADR-045) | ✅ HEAD |
+| v1.5.0 | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
 
 ### 4. Key Non-Functional Requirements
 | NFR | Requirement |
@@ -188,6 +189,10 @@ Major technical choices and their rationale.
 | **040** | Upstash Infrastructure | BullMQ→QStash, ioredis→Upstash Redis, zero local infra (Phase 27) |
 | **041** | v1.0.0 Production Launch | Declaration of readiness, evidence of 17 modules + 6 NFRs |
 | **042** | Product ID Generation | Sheet → auto-gen TVS-[CAT]-[PACK]-[SUB]-[SERIAL], column spec |
+| **043** | Equipment Domain POS | hand/material/specs/shipping fields, ORIGIN_COUNTRIES dropdown (v1.2.0) |
+| **044** | Web Push Inbox | VAPID Service Worker, ลบ SSE+polling ออกทั้งหมด (v1.3.0) |
+| **045** | RBAC Redesign | 8 roles, permissionMatrix.js, Ads Optimize write via Meta API (v1.4.0) |
+| **046** | POS Receipt & Printer | Receipt model, thermal 80mm ESC/POS, LINE send, history (v1.5.0 planned) |
 
 ### v1 Reference ADRs
 | ADR | Title | Summary |
