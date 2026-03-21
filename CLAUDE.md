@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-19)
+## Version Status (อัพเดท: 2026-03-21)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -35,10 +35,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 + 186 tests (Phase 26) | ✅ released |
 | `v0.27.0` | Upstash Migration — BullMQ→QStash, ioredis→Upstash, zero local infra (Phase 27) | ✅ released |
 | `v1.0.0` | Production Ready — Docs Hardening + ADR-041 (Phase 28) | ✅ released |
-| `v1.1.0` | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released ← HEAD |
+| `v1.1.0` | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
+| `v1.2.0` | Equipment Domain POS — hand/material/specs + shipping fields (ADR-043) | ✅ released |
+| `v1.3.0` | Web Push Inbox Real-time — ลบ SSE+polling, VAPID (ADR-044) | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
+
+### v1.3.0 — สิ่งที่ทำแล้ว (2026-03-21) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `public/sw.js` | ✅ new | Service Worker — push event, notification click, PUSH_NAVIGATE |
+| `src/lib/pushNotifier.js` | ✅ new | server helper ยิง push ทุก subscription + cleanup 410/404 |
+| `src/app/api/push/subscribe/route.js` | ✅ new | POST subscribe / DELETE unsubscribe |
+| `prisma/schema.prisma` → `PushSubscription` | ✅ new | endpoint, p256dh, auth, employeeId FK |
+| `webhooks/facebook/route.js` | ✅ updated | fire-and-forget notifyInbox() |
+| `webhooks/line/route.js` | ✅ updated | fire-and-forget notifyInbox() |
+| `UnifiedInbox.js` | ✅ refactored | ลบ SSE+eventBus+polling ออกทั้งหมด → registerPush() |
+| `docs/adr/044-web-push-inbox-realtime.md` | ✅ new | ADR-044 |
+
+> ⚠️ **Known Gotcha — VAPID env vars**: ต้อง set ใน Vercel Dashboard ด้วย (ไม่ใช่แค่ `.env.local`) — `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+> ⚠️ **Known Gotcha — Dev push**: local webhook ไม่ถึง browser → push ไม่ทำงานใน dev mode; ใช้ ngrok expose local server หรือ test บน Vercel preview
+> ⚠️ **Known Gotcha — Prisma migration**: ต้อง run `prisma db push` (หรือ `migrate dev`) เพื่อสร้าง `push_subscriptions` table
+
+### v1.2.0 — สิ่งที่ทำแล้ว (2026-03-21) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Product spec fields | ✅ done | hand, material, boxDimW/L/H, boxWeightG, shippingWeightG |
+| `src/app/api/products/[id]/route.js` | ✅ updated | PUT pass-through ทุก spec field ใหม่ |
+| `src/components/PremiumPOS.js` | ✅ updated | 3rd mainMode equipment, sub-cats, ORIGIN_COUNTRIES, badges, ProductDetailModal panel |
+
+> ⚠️ **Known Gotcha — Equipment sub-cat**: ใช้ `fallbackSubCategory` ไม่ใช่ `category` สำหรับ sub-filter ใน equipment mode
 
 ### v0.13.0 — สิ่งที่ทำแล้ว (Phase 12) ✅
 | ไฟล์ | สถานะ | หมายเหตุ |
@@ -285,6 +312,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-035 | Remove Facebook Login: CredentialsOnly auth (FB hides admin PSID) |
 | ADR-036 | Google Sheets as SSOT: master data sync via CSV URL, 4 env vars |
 | ADR-037 | Product-as-Course-Catalog: reuse Product model, certLevel 30/111/201h |
+| ADR-043 | Equipment Domain POS: hand/material/specs/shipping fields, ORIGIN_COUNTRIES dropdown |
+| ADR-044 | Web Push Inbox: VAPID, Service Worker, ลบ SSE+polling ออก |
 
 ---
 

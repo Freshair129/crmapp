@@ -241,6 +241,7 @@ model Employee {
   approvedRequests         PurchaseRequest[]  @relation("PRApprover")
   assignedAssets           Asset[]            @relation("AssetAssignee")
   packageEnrollmentsSold   PackageEnrollment[] @relation("PackageEnrollmentSeller")
+  pushSubscriptions        PushSubscription[]
 
   @@index([status])
   @@index([department])
@@ -1142,4 +1143,24 @@ model Certificate {
   @@index([deliveryStatus])
   @@index([certLevel])
   @@map("certificates")
+}
+
+// ─────────────────────────────────────────────
+// DOMAIN: Web Push (ADR-044)
+// ─────────────────────────────────────────────
+
+model PushSubscription {
+  id          String   @id @default(uuid())
+  employeeId  String   @map("employee_id")
+  endpoint    String   @unique
+  p256dh      String
+  auth        String
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("push_subscriptions")
 }

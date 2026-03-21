@@ -113,7 +113,17 @@ async function processEvents(events) {
         }
     });
 
-    // 3. Trigger Notification Engine
+    // 3. Web Push → notify all staff browsers (ADR-044) — fire-and-forget
+    import('@/lib/pushNotifier').then(({ notifyInbox }) => {
+        notifyInbox({
+            title: 'LINE — ข้อความใหม่',
+            body:  msg.content ? msg.content.slice(0, 80) : '📎 ไฟล์แนบ',
+            tag:   `line-${lineUserId}`,
+            conversationId: lineUserId,
+        });
+    }).catch(err => logger.error('line-webhook', 'pushNotifier failed', err));
+
+    // 4. Trigger Notification Engine
     notificationEngine.evaluateRules('MESSAGE_RECEIVED', {
         message: { id: msg.messageId, content: msg.content },
         conversationId: lineUserId,

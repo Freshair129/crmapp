@@ -47,68 +47,75 @@ export default function UnifiedInbox({ language = 'TH' }) {
     useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
     useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
-    // Real-time SSE Connection + Polling Fallback
+    // ── Web Push Registration (ADR-044) ────────────────────────────
     useEffect(() => {
-        let eventSource;
-        let retryCount = 0;
-        let reconnectTimeout;
-        let sseActive = false;
-        // Polling fallback: refresh every 30s when SSE not receiving real events
-        // (e.g. local dev where FB cannot reach localhost webhook)
-        const pollingInterval = setInterval(() => {
-            if (!sseActive) {
-                fetchConversations(1, true);
-            }
-        }, 30000);
+        if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
-        const connect = () => {
-            console.log('[UnifiedInbox] Establishing Real-time connection...');
-            eventSource = new EventSource('/api/events/stream');
+        const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!VAPID_PUBLIC_KEY) return;
 
-            eventSource.onmessage = (event) => {
-                try {
-                    const payload = JSON.parse(event.data);
-                    if (payload.type === 'connected') {
-                        console.log('[UnifiedInbox] SSE Connected:', payload.timestamp);
-                        retryCount = 0;
-                        return;
-                    }
+        const urlBase64ToUint8Array = (base64String) => {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw     = atob(base64);
+            return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+        };
 
-                    if (payload.channel === 'chat-updates') {
-                        console.log('[UnifiedInbox] Real-time event received:', payload.data);
-                        sseActive = true; // SSE is delivering real events — polling not needed
+        const registerPush = async () => {
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                await navigator.serviceWorker.ready;
+
+                // รับ postMessage จาก SW เมื่อ user click notification
+                navigator.serviceWorker.addEventListener('message', (e) => {
+                    if (e.data?.type === 'PUSH_NAVIGATE') {
                         fetchConversations(1, true);
-
-                        const currentId = selectedIdRef.current;
-                        if (currentId) {
-                            const currentConv = conversationsRef.current.find(c => c.id === currentId);
-                            if (currentConv && currentConv.conversationId === payload.data.conversationId) {
-                                console.log('[UnifiedInbox] Refreshing active messages for:', currentId);
-                                fetchMessages(currentId, 1, true);
-                            }
+                        if (e.data.conversationId) {
+                            // หา conversation ที่ตรงแล้ว select
+                            const match = conversationsRef.current.find(
+                                c => c.conversationId === e.data.conversationId
+                            );
+                            if (match) setSelectedId(match.id);
                         }
                     }
-                } catch (e) { /* Heartbeats or malformed data */ }
-            };
+                });
 
-            eventSource.onerror = (err) => {
-                console.warn('[UnifiedInbox] SSE Connection lost. Retrying...');
-                sseActive = false;
-                eventSource.close();
-                const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
-                retryCount++;
-                reconnectTimeout = setTimeout(connect, delay);
-            };
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.info('[Push] Notification permission denied — using manual refresh only');
+                    return;
+                }
+
+                // Subscribe (หรือดึง existing subscription)
+                let sub = await reg.pushManager.getSubscription();
+                if (!sub) {
+                    sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                    });
+                }
+
+                // บันทึก subscription ไว้ใน DB
+                await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: sub.endpoint,
+                        keys: {
+                            p256dh: btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh')))),
+                            auth:   btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth')))),
+                        },
+                        userAgent: navigator.userAgent,
+                    }),
+                });
+                console.info('[Push] Subscription registered ✓');
+
+            } catch (err) {
+                console.warn('[Push] Registration failed:', err.message);
+            }
         };
 
-        connect();
-
-        return () => {
-            console.log('[UnifiedInbox] Terminating Real-time connection');
-            if (eventSource) eventSource.close();
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
-            clearInterval(pollingInterval);
-        };
+        registerPush();
     }, []);
 
     useEffect(() => {

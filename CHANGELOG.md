@@ -1,4 +1,4 @@
-**LATEST:** CL-20260319-006 | v1.1.0 | 2026-03-19
+**LATEST:** CL-20260321-002 | v1.3.0 | 2026-03-21
 
 ---
 
@@ -6,6 +6,9 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260321-002 | Web Push Inbox Real-time (ADR-044) | v1.3.0 | 2026-03-21 | MINOR | #inbox #push #realtime |
+| CL-20260321-001 | Equipment Domain POS + Spec Fields | v1.2.0 | 2026-03-21 | MINOR | #pos #equipment #ui |
+| CL-20260319-006 | POS Modal + Sheet ID Generation | v1.1.0 | 2026-03-19 | MINOR | #pos #sheets #id-generation |
 | CL-20260319-001 | Comprehensive Unit Test Expansion | v0.24.0 | 2026-03-19 | MINOR | #testing #quality |
 | CL-20260318-002 | Repository Layer Full Compliance | v0.23.0 | 2026-03-18 | MINOR | #repository #refactor |
 | CL-20260318-001 | FEFO Stock Deduction Refinement | v0.22.0 | 2026-03-18 | MINOR | #kitchen #repository |
@@ -16,6 +19,57 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260321-002] v1.3.0 — Web Push Inbox Real-time (ADR-044)
+**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #inbox #push #realtime #adr044
+
+ลบ SSE + polling ออกจาก UnifiedInbox ทั้งหมด แทนด้วย Web Push API (VAPID) ที่ทำงานจริงบน Vercel serverless
+
+#### ทำไมไม่ใช้ SSE
+- `eventBus` เป็น in-memory EventEmitter — ไม่ share state ข้าม Vercel Lambda instances
+- SSE connection มี Vercel timeout 300s (Pro) ต้องการ reconnect logic ซับซ้อน
+- Polling 30s → ยังต้องใช้ Vercel invocations อยู่ดี
+
+#### Web Push Architecture
+- Webhook FB/LINE → `notifyInbox()` → ยิง HTTP → Google/Mozilla push server → Service Worker → OS notification
+- User click notification → `PUSH_NAVIGATE` postMessage → inbox refetch + auto-select conversation
+- VAPID keys เก็บใน `.env.local` + Vercel env vars
+
+#### Files Changed
+- `public/sw.js` — Service Worker ใหม่ (push event, notification click, PUSH_NAVIGATE)
+- `src/lib/pushNotifier.js` — server helper ยิง push ไปทุก subscription + cleanup expired
+- `src/app/api/push/subscribe/route.js` — POST/DELETE subscription endpoint
+- `prisma/schema.prisma` → `PushSubscription` model
+- `webhooks/facebook/route.js` — เพิ่ม `notifyInbox()` fire-and-forget
+- `webhooks/line/route.js` — เพิ่ม `notifyInbox()` fire-and-forget
+- `UnifiedInbox.js` — ลบ SSE+polling, เพิ่ม SW registration + VAPID subscribe
+
+---
+
+### [CL-20260321-001] v1.2.0 — Equipment Domain POS + Spec Fields
+**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #equipment #ui #schema
+
+เพิ่มโดเมนอุปกรณ์ใน POS และฟิลด์สเปคครบชุด
+
+#### POS Equipment Domain
+- 3rd mainMode: 🔪 อุปกรณ์ (course / food / equipment)
+- Sub-category filters: knife, kitchen, fish_tool, sushi, sharpening
+- ORIGIN_COUNTRIES dropdown 12 ประเทศ (JP/CN/KR/TW/TH/DE/SE/FR/IT/US/VN/ES)
+
+#### Product Card Badges
+- Hand dominance badge: `✋L` (blue) / `R✋` (violet) ที่มุมขวาบน
+- Shipping weight tag: `📦 XXXg` ที่มุมซ้ายล่าง
+- Micro-tags ใต้ชื่อ: material, size, country flag
+
+#### ProductDetailModal Equipment Panel
+- Spec grid: hand, material, dimension, weight, box size, country flag
+- Shipping section: total weight, box weight, W×L×H cm
+- Inline edit: brand + country dropdown with auto-save
+
+#### Schema Changes
+- `Product` model: + `hand`, `material`, `boxDimW/L/H`, `boxWeightG`, `shippingWeightG`
+
+---
 
 ### [CL-20260319-006] v1.1.0 — POS Modal + Sheet ID Generation (TVS format)
 **Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #pos #sheets #id-generation #ui

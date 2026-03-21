@@ -195,9 +195,17 @@ async function processEvent(event) {
         );
     }
 
-    // 4. Broadcast real-time update to all connected SSE clients
-    eventBus.emit('chat-update', { conversationId: threadId, customerPsid, isFromPage });
-    logger.info('FacebookWebhook', `chat-update emitted for ${threadId}`);
+    // 4. Web Push → notify all staff browsers (ADR-044) — fire-and-forget
+    if (!isFromPage) {
+        import('@/lib/pushNotifier').then(({ notifyInbox }) => {
+            notifyInbox({
+                title: 'Facebook — ข้อความใหม่',
+                body:  message.text ? message.text.slice(0, 80) : '📎 ไฟล์แนบ',
+                tag:   `fb-${threadId}`,
+                conversationId: threadId,
+            });
+        }).catch(err => logger.error('FacebookWebhook', 'pushNotifier failed', err));
+    }
 
     // 4. Fire-and-forget: Trigger Notification Engine (Rule evaluation)
     if (!isFromPage && message.mid) {
