@@ -26,6 +26,8 @@ import {
     Facebook, 
     BadgeCheck 
 } from 'lucide-react';
+import PermissionMatrix from './PermissionMatrix';
+import { can } from '@/lib/permissionMatrix';
 
 const permissionKeys = [
     { key: 'is_admin', label: 'Administrator', icon: Crown },
@@ -258,9 +260,10 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const emp = filtered[safeIndex] || null;
     const { assignedCustomers, sales, totalRevenue } = getLinkedData(emp, customers);
 
-    const canManage = currentUser?.role === 'Developer'
-        || currentUser?.permissions?.can_manage_employees
-        || currentUser?.permissions?.can_access_all;
+    // TODO: Phase 29c — Replace with can() helper from permissionMatrix
+    const canManage = currentUser?.role === 'DEVELOPER'
+        || currentUser?.role === 'ADMIN'
+        || currentUser?.role === 'MANAGER';
 
     const goNext = () => setActiveIndex(i => (i + 1) % filtered.length);
     const goPrev = () => setActiveIndex(i => (i - 1 + filtered.length) % filtered.length);
@@ -364,7 +367,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                         <div className="flex gap-1 bg-white/5 border border-white/8 rounded-2xl p-1">
                             {[
                                 { id: 'overview', icon: IdCard, label: 'Overview' },
-                                { id: 'permissions', icon: Shield, label: 'Permissions' },
+                                ...(can(currentUser?.role, 'system', 'view') ? [{ id: 'permissions', icon: Shield, label: 'Permissions' }] : []),
                                 { id: 'customers', icon: Users, label: `Customers (${assignedCustomers.length})` },
                                 { id: 'sales', icon: Receipt, label: `Sales (${sales.length})` },
                             ].map(tab => (
@@ -421,28 +424,10 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             </div>
                         )}
 
-                        {/* TAB: Permissions */}
+                        {/* TAB: Permissions (Role-based Permission Matrix) */}
                         {activeTab === 'permissions' && (
                             <div className="bg-white/5 border border-white/8 rounded-2xl p-6">
-                                <h3 className="text-white font-black text-sm uppercase tracking-widest mb-5">Access Control</h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {permissionKeys.map(({ key, label, icon: Icon }) => {
-                                        const on = emp.permissions?.[key];
-                                        return (
-                                            <div key={key} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${on
-                                                ? 'bg-emerald-500/10 border-emerald-500/20'
-                                                : 'bg-white/3 border-white/5 opacity-50'}`}>
-                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs flex-shrink-0 ${on ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-white/20'}`}>
-                                                    <Icon size={14} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-white/70">{label}</p>
-                                                    <p className={`text-[9px] font-bold ${on ? 'text-emerald-400' : 'text-white/30'}`}>{on ? 'Enabled' : 'Disabled'}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                <PermissionMatrix currentUserRole={currentUser?.role} />
                             </div>
                         )}
 

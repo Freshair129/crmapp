@@ -5,15 +5,23 @@ import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, 
     CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { TrendingUp, Facebook, Store, Receipt, Tag, MessageCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, Facebook, Store, Receipt, Tag, MessageCircle, ArrowUp, ArrowDown, Zap } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import AdsOptimizePanel from './AdsOptimizePanel';
+import { can } from '@/lib/permissionMatrix';
 
 export default function ExecutiveAnalytics({ language = 'TH' }) {
+    const { data: session } = useSession();
     const [data, setData] = useState(null);
     const [historyData, setHistoryData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('this_week');
     const [historyDays, setHistoryDays] = useState(30);
+    const [campaigns, setCampaigns] = useState([]);
+    const [campaignsLoading, setCampaignsLoading] = useState(false);
+    const [selectedCampaign, setSelectedCampaign] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const labels = {
         EN: { title: 'Executive Analytics', daily: 'Total Revenue', weekly: 'Orders Count', target: 'Conversion Rate', loading: 'Loading...' },
@@ -41,6 +49,18 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
             .catch(err => console.error('[ExecutiveAnalytics] History fetch failed:', err))
             .finally(() => setHistoryLoading(false));
     }, [historyDays]);
+
+    // Fetch campaigns for optimize panel
+    useEffect(() => {
+        if (!session?.user?.role || !can(session.user.role, 'marketing', 'view')) return;
+        
+        setCampaignsLoading(true);
+        fetch('/api/ads/campaigns')
+            .then(r => r.json())
+            .then(d => setCampaigns(Array.isArray(d) ? d : d.campaigns || []))
+            .catch(err => console.error('[ExecutiveAnalytics] Campaigns fetch failed:', err))
+            .finally(() => setCampaignsLoading(false));
+    }, [session?.user?.role, refreshKey]);
 
     const fmtChange = (val) => {
         if (val === null || val === undefined) return { text: 'N/A', isUp: true, hasData: false };
@@ -199,6 +219,95 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                     </div>
                 </div>
             </div>
+
+            {/* Campaigns Section (MARKETING only) */}
+            {session?.user?.role && can(session.user.role, 'marketing', 'view') && (
+                <div className="mt-12 space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-[#F8F8F6] tracking-tight italic uppercase">Active Campaigns</h2>
+                        <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Manage & Optimize</p>
+                    </div>
+
+                    {campaignsLoading ? (
+                        <div className="p-8 flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-10 h-10 border-4 border-[#C9A34E]/20 border-t-[#C9A34E] rounded-full animate-spin"></div>
+                                <p className="text-[#C9A34E] font-black text-xs uppercase tracking-widest animate-pulse">Loading campaigns...</p>
+                            </div>
+                        </div>
+                    ) : campaigns.length === 0 ? (
+                        <div className="p-8 bg-white/5 border border-white/10 rounded-2xl text-center">
+                            <p className="text-white/40 font-bold text-sm">No campaigns found</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto bg-white/5 border border-white/10 rounded-2xl">
+                            <table className="w-full text-sm">
+                                <thead className="border-b border-white/10 bg-white/5">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white/60 uppercase tracking-widest">Campaign</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white/60 uppercase tracking-widest">Status</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white/60 uppercase tracking-widest">Budget</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white/60 uppercase tracking-widest">Spend</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-white/60 uppercase tracking-widest">ROAS</th>
+                                        <th className="px-6 py-4 text-center text-[10px] font-black text-white/60 uppercase tracking-widest">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/10">
+                                    {campaigns.map((campaign) => (
+                                        <tr key={campaign.id} className="hover:bg-white/5 transition-all">
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-white">{campaign.name}</p>
+                                                <p className="text-[10px] text-white/40 mt-1">ID: {campaign.id}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${campaign.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-yellow-500'}`}></div>
+                                                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                                                        {campaign.status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-[#C9A34E]">฿{campaign.dailyBudget?.toLocaleString() || '—'}</p>
+                                                <p className="text-[10px] text-white/40">/day</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-white">฿{campaign.spend?.toLocaleString() || '—'}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-emerald-400">{campaign.roas?.toFixed(2) || '—'}</p>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {can(session.user.role, 'marketing', 'edit') && (
+                                                    <button
+                                                        onClick={() => setSelectedCampaign(campaign)}
+                                                        className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all"
+                                                    >
+                                                        <Zap size={10} /> Optimize
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Optimize Panel Modal */}
+            {selectedCampaign && (
+                <AdsOptimizePanel
+                    campaign={selectedCampaign}
+                    onClose={() => setSelectedCampaign(null)}
+                    onSuccess={() => {
+                        setSelectedCampaign(null);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                    currentUserRole={session?.user?.role}
+                />
+            )}
         </div>
     );
 }
