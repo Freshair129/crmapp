@@ -55,13 +55,56 @@ function ProductPlaceholder({ category, name }) {
 }
 // ──────────────────────────────────────────────────────────────────────────
 
+// ─── Equipment country of origin (curated list) ───────────────────────────
+const ORIGIN_COUNTRIES = [
+    { code: 'JP', label: 'ญี่ปุ่น',     flag: '🇯🇵' },
+    { code: 'CN', label: 'จีน',          flag: '🇨🇳' },
+    { code: 'KR', label: 'เกาหลีใต้',   flag: '🇰🇷' },
+    { code: 'TW', label: 'ไต้หวัน',     flag: '🇹🇼' },
+    { code: 'TH', label: 'ไทย',          flag: '🇹🇭' },
+    { code: 'DE', label: 'เยอรมัน',     flag: '🇩🇪' },
+    { code: 'SE', label: 'สวีเดน',      flag: '🇸🇪' },
+    { code: 'FR', label: 'ฝรั่งเศส',    flag: '🇫🇷' },
+    { code: 'IT', label: 'อิตาลี',      flag: '🇮🇹' },
+    { code: 'US', label: 'อเมริกา',     flag: '🇺🇸' },
+    { code: 'VN', label: 'เวียดนาม',    flag: '🇻🇳' },
+    { code: 'ES', label: 'สเปน',        flag: '🇪🇸' },
+];
+const COUNTRY_MAP = Object.fromEntries(ORIGIN_COUNTRIES.map(c => [c.code, c]));
+
 // ─── Product Detail Modal ─────────────────────────────────────────────────
 const SESSION_LABEL = { MORNING: 'เช้า', AFTERNOON: 'บ่าย', EVENING: 'เย็น' };
 
-function ProductDetailModal({ product, onClose, onAddToCart, inCart }) {
+function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUpdate }) {
     const [data, setData] = useState(null);
     const [loadingStats, setLoadingStats] = useState(true);
     const [activeImg, setActiveImg] = useState(0);
+    // equipment spec edit state
+    const isEquipment = product.category === 'equipment';
+    const [specEdit, setSpecEdit] = useState({
+        brand:         product.brand         || '',
+        originCountry: product.originCountry || '',
+    });
+    const [specSaving, setSpecSaving] = useState(false);
+    const [specSaved,  setSpecSaved]  = useState(false);
+
+    const saveSpec = async (patch) => {
+        setSpecSaving(true);
+        try {
+            const res = await fetch(`/api/products/${product.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patch),
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setSpecSaved(true);
+                setTimeout(() => setSpecSaved(false), 2000);
+                if (onProductUpdate) onProductUpdate(updated);
+            }
+        } catch (_) { /* silent */ }
+        finally { setSpecSaving(false); }
+    };
 
     const emoji = getEmoji(product.category, product.name);
 
@@ -209,7 +252,84 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart }) {
                         </div>
                     )}
 
-                    {/* Enrollment / Student Stats */}
+                    {/* ── Equipment Specs Panel ── */}
+                    {isEquipment && (
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4 space-y-3">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-white/25 flex items-center gap-1.5">
+                                🔪 ข้อมูลอุปกรณ์
+                            </p>
+
+                            {/* read-only chips row */}
+                            <div className="flex flex-wrap gap-2">
+                                {product.size && (
+                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
+                                        📦 {product.size}
+                                    </span>
+                                )}
+                                {product.dimension && (
+                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
+                                        📐 {product.dimension}
+                                    </span>
+                                )}
+                                {product.unitAmount && product.unitType && (
+                                    <span className="px-2.5 py-1 rounded-lg bg-[#1a2535] border border-white/10 text-[10px] font-black text-white/55">
+                                        ⚖️ {product.unitAmount} {product.unitType}
+                                    </span>
+                                )}
+                                {(product.originCountry || specEdit.originCountry) && (
+                                    <span className="px-2.5 py-1 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/20 text-[10px] font-black text-[#C9A34E]">
+                                        {COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.flag} {COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.label}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* editable: brand + country */}
+                            <div className="grid grid-cols-2 gap-2">
+                                {/* Brand */}
+                                <div>
+                                    <label className="text-[8px] font-black uppercase tracking-widest text-white/20 block mb-1">ยี่ห้อ</label>
+                                    <input
+                                        type="text"
+                                        value={specEdit.brand}
+                                        onChange={e => setSpecEdit(s => ({ ...s, brand: e.target.value }))}
+                                        onBlur={() => saveSpec({ brand: specEdit.brand })}
+                                        placeholder="เช่น Masahiro, Suehiro"
+                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#C9A34E]/40 transition-all"
+                                    />
+                                </div>
+
+                                {/* Origin country dropdown */}
+                                <div>
+                                    <label className="text-[8px] font-black uppercase tracking-widest text-white/20 block mb-1">ประเทศผู้ผลิต</label>
+                                    <select
+                                        value={specEdit.originCountry}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setSpecEdit(s => ({ ...s, originCountry: val }));
+                                            saveSpec({ originCountry: val });
+                                        }}
+                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold outline-none focus:border-[#C9A34E]/40 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">— เลือกประเทศ —</option>
+                                        {ORIGIN_COUNTRIES.map(c => (
+                                            <option key={c.code} value={c.code}>
+                                                {c.flag} {c.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* save indicator */}
+                            {(specSaving || specSaved) && (
+                                <p className={`text-[9px] font-black text-right transition-all ${specSaved ? 'text-green-400' : 'text-white/30'}`}>
+                                    {specSaving ? '⏳ กำลังบันทึก...' : '✓ บันทึกแล้ว'}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Enrollment / Student Stats ── */}
                     <div>
                         <p className="text-[9px] font-black uppercase tracking-widest text-white/25 mb-3 flex items-center gap-1">
                             <GraduationCap size={9} /> สถานะนักเรียน
@@ -830,6 +950,10 @@ export default function PremiumPOS({ language = 'TH' }) {
                     onClose={() => setSelectedProduct(null)}
                     onAddToCart={(p) => { addItem(p); setSelectedProduct(null); }}
                     inCart={cart.find(i => i.id === selectedProduct.id)}
+                    onProductUpdate={(updated) => {
+                        setProducts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
+                        setSelectedProduct(prev => prev?.id === updated.id ? { ...prev, ...updated } : prev);
+                    }}
                 />
             )}
 

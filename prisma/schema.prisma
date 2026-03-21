@@ -275,6 +275,7 @@ model Product {
   dimension           String?                                         // ขนาดตัวสินค้า เช่น "5.5×18 cm"
   unitAmount          Float?     @map("unit_amount")                  // ปริมาณต่อหน่วย เช่น 262
   unitType            String?    @map("unit_type")                    // หน่วย: g | ml | piece | set
+  originCountry       String?    @map("origin_country")               // ประเทศผู้ผลิต: JP | CN | KR | DE | TW | TH | ...
   metadata            Json?      @default("{}")
   isActive            Boolean    @default(true) @map("is_active")
   createdAt           DateTime   @default(now()) @map("created_at")
