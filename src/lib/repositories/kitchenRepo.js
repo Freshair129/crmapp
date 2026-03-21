@@ -1,20 +1,8 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generatePurchaseRequestId, generateLotId } from '@/lib/idGenerators';
 
-async function generatePurchaseRequestId() {
-    const prisma = await getPrisma();
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
-    const prefix = `PR-${dateStr}-`;
-    const last = await prisma.purchaseRequest.findFirst({
-        where: { requestId: { startsWith: prefix } },
-        orderBy: { requestId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.requestId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generatePurchaseRequestId — moved to @/lib/idGenerators
 
 export async function getAllIngredients(opts = {}) {
     try {
@@ -206,20 +194,7 @@ export async function getPurchaseRequests(opts = {}) {
 // LOT MANAGEMENT (Phase 20)
 // ─────────────────────────────────────────────
 
-async function generateLotId() {
-    const prisma = await getPrisma();
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
-    const prefix = `LOT-${dateStr}-`;
-    const last = await prisma.ingredientLot.findFirst({
-        where: { lotId: { startsWith: prefix } },
-        orderBy: { lotId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.lotId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generateLotId — moved to @/lib/idGenerators
 
 export async function createLot({ ingredientId, receivedQty, unit, expiresAt, costPerUnit, supplier, purchaseRequestId, notes }) {
     try {

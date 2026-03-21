@@ -7,7 +7,7 @@ import {
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot,
-    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList,
+    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck,
 } from 'lucide-react';
 import { can } from '@/lib/permissionMatrix';
 
@@ -52,6 +52,8 @@ const menuGroups = [
             { id: 'recipes',             icon: BookOpen,          label: 'เมนูสูตร' },
             { id: 'packages',            icon: Gift,              label: 'แพ็กเกจ' },
             { id: 'kitchen-stock',       icon: ChefHat,           label: 'สต็อกครัว' },
+            { id: 'inventory-control',   icon: Warehouse,         label: 'คลังสินค้า' },
+            { id: 'procurement',         icon: FileCheck,         label: 'จัดซื้อ' },
             { id: 'assets',              icon: Monitor,           label: 'อุปกรณ์' },
         ],
     },

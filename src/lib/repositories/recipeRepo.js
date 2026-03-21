@@ -1,17 +1,8 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generateRecipeId } from '@/lib/idGenerators';
 
-async function generateRecipeId() {
-    const prisma = await getPrisma();
-    const year = new Date().getFullYear();
-    const prefix = `RCP-${year}-`;
-    const last = await prisma.recipe.findFirst({
-        where: { recipeId: { startsWith: prefix } },
-        orderBy: { recipeId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.recipeId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generateRecipeId — moved to @/lib/idGenerators
 
 export async function getAllRecipes(opts = {}) {
     try {

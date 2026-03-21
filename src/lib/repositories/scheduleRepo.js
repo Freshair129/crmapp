@@ -1,33 +1,8 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generateScheduleId, generateClassId } from '@/lib/idGenerators';
 
-async function generateScheduleId() {
-    const prisma = await getPrisma();
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
-    const prefix = `SCH-${dateStr}-`;
-    const last = await prisma.courseSchedule.findFirst({
-        where: { scheduleId: { startsWith: prefix } },
-        orderBy: { scheduleId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.scheduleId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
-
-async function generateClassId() {
-    const prisma = await getPrisma();
-    const now = new Date();
-    const yearMonth = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0');
-    const prefix = `CLS-${yearMonth}-`;
-    const last = await prisma.courseSchedule.findFirst({
-        where: { classId: { startsWith: prefix } },
-        orderBy: { classId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.classId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generateScheduleId, generateClassId — moved to @/lib/idGenerators
 
 export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId }) {
     try {

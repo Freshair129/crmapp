@@ -1,21 +1,9 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { autoIssueCertificate } from '@/lib/repositories/certificateRepo';
+import { generateEnrollmentId } from '@/lib/idGenerators';
 
-async function generateEnrollmentId() {
-    const prisma = await getPrisma();
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
-    const prefix = `ENR-${dateStr}-`;
-    const last = await prisma.enrollment.findFirst({
-        where: { enrollmentId: { startsWith: prefix } },
-        orderBy: { enrollmentId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.enrollmentId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generateEnrollmentId — moved to @/lib/idGenerators
 
 export async function createEnrollment({ customerId, productId, soldById, totalPrice, notes }) {
     try {

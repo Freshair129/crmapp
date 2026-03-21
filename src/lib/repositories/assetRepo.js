@@ -1,20 +1,8 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generateAssetId } from '@/lib/idGenerators';
 
-const CAT_MAP = { MARKETING: 'MKT', KITCHEN: 'KTC', OFFICE: 'OFF', GENERAL: 'GEN' };
-
-async function generateAssetId(category) {
-    const prisma = await getPrisma();
-    const year = new Date().getFullYear();
-    const cat3 = CAT_MAP[category?.toUpperCase()] || category?.substring(0, 3).toUpperCase() || 'GEN';
-    const prefix = `AST-${cat3}-${year}-`;
-    const last = await prisma.asset.findFirst({
-        where: { assetId: { startsWith: prefix } },
-        orderBy: { assetId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.assetId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
+// generateAssetId — moved to @/lib/idGenerators
 
 export async function getAllAssets(opts = {}) {
     try {

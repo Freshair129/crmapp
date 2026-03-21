@@ -6,7 +6,7 @@
 
 import { getPrisma } from '@/lib/prisma'
 import { logger } from '@/lib/logger'
-import { generateLogId, generateRequestId } from '@/lib/id-generators'
+import { generateLogId, generateRequestId } from '@/lib/idGenerators'
 
 const ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID

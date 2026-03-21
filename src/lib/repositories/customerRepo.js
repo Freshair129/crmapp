@@ -1,5 +1,5 @@
 import { getPrisma } from '@/lib/db';
-import { generateCustomerId } from '@/utils/idGenerator';
+import { generateCustomerId } from '@/lib/idGenerators';
 import { normalizeThai, bestMatchScore, rankByNameMatch } from '@/lib/thaiNameMatcher';
 
 /**

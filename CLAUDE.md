@@ -40,8 +40,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.3.0` | Web Push Inbox Real-time — ลบ SSE+polling, VAPID (ADR-044) | ✅ released |
 | `v1.4.0` | RBAC Redesign — Domain Roles + Ads Optimize Write (ADR-045) | ✅ released |
 | `v1.4.1` | Admin Performance Dashboard Fix (Monthly Message Trend) | ✅ released |
-| `v1.5.0-pre` | V Point Loyalty + UI Overhaul (TopBar slim + Sidebar 3-mode + Neon Chart) | ✅ released ← HEAD |
-| `v1.5.0` | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
+| `v1.5.0-pre` | V Point Loyalty + UI Overhaul (TopBar slim + Sidebar 3-mode + Neon Chart) | ✅ released |
+| `v1.5.1` | Employee ID v3 Format — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) | ✅ released ← HEAD |
+| `v1.5.2` | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
@@ -353,6 +354,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | ADR-044 | Web Push Inbox: VAPID, Service Worker, ลบ SSE+polling ออก |
 | ADR-045 | RBAC Redesign: 8 roles, permissionMatrix.js, Ads Optimize write (Meta API) |
 | ADR-046 | POS Receipt & Printer: Receipt model, thermal 80mm ESC/POS, LINE send, history |
+| ADR-047 | Employee ID v3: TVS-[TYPE]-[DEPT]-[NNN] — employment type + department in ID |
 
 ---
 
@@ -386,9 +388,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Key ID Formats (จาก `id_standards.yaml`)
 
 ```
-Customer    : TVS-CUS-[CH]-[YY]-[XXXX]     e.g. TVS-CUS-FB-26-0123
+Employee    : TVS-[TYPE]-[DEPT]-[NNN]      e.g. TVS-EMP-MKT-001, TVS-FL-GD-003
+Customer    : TVS-CUS-[CH]-[YYMM]-[XXXX]   e.g. TVS-CUS-FB-2603-0001
 Member      : MEM-[YY][AGENT][INTENT]-[NO] e.g. MEM-26BKKP-0001
-Agent Code  : AGT-[TYPE]-[YEAR]-[SERIAL]   e.g. AGT-H-26-003
+Agent Code  : AGT-[TYPE]-[YYMM]-[SERIAL]   e.g. AGT-H-2603-003
 Task        : TSK-[YYYYMMDD]-[SERIAL]      e.g. TSK-20260308-001
 Conversation: t_{15_digit_uid}             e.g. t_10163799966326505
 Message     : mid.$c... หรือ m_...

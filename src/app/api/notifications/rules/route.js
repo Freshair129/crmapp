@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
+import { generateNotificationRuleId } from '@/lib/idGenerators';
 
 export async function GET() {
     try {
@@ -43,11 +44,7 @@ export async function POST(request) {
             });
             logger.info('[NotificationRules]', `Upserted rule: ${ruleId}`);
         } else {
-            // Generate standard ruleId: NOT-[YYYYMMDD]-[SERIAL]
-            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            const count = await prisma.notificationRule.count();
-            const serial = String(count + 1).padStart(3, '0');
-            const generatedId = `NOT-${dateStr}-${serial}`;
+            const generatedId = await generateNotificationRuleId();
 
             result = await prisma.notificationRule.create({
                 data: { ...data, ruleId: generatedId },

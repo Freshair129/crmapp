@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { generateCustomerId } from '@/utils/idGenerator';
+import { generateCustomerId } from '@/lib/idGenerators';
 import { rankByNameMatch } from '@/lib/thaiNameMatcher';
 
 /**

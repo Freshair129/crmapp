@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
-import { generateCustomerId, generateMemberId } from '@/utils/idGenerator';
+import { generateCustomerId, generateMemberId } from '@/lib/idGenerators';
 import { logger } from '@/lib/logger';
 
 // Intent code map: course interest → MEM intent char

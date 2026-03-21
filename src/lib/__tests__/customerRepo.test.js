@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as customerRepo from '@/lib/repositories/customerRepo';
 import { getPrisma } from '@/lib/db';
-import { generateCustomerId } from '@/utils/idGenerator';
+import { generateCustomerId } from '@/lib/idGenerators';
 
 vi.mock('@/lib/db', () => ({
     getPrisma: vi.fn(),

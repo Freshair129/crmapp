@@ -1,29 +1,8 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generatePackageId, generatePackageEnrollmentId } from '@/lib/idGenerators';
 
-async function generatePackageId() {
-    const prisma = await getPrisma();
-    const year = new Date().getFullYear();
-    const prefix = `PKG-${year}-`;
-    const last = await prisma.package.findFirst({
-        where: { packageId: { startsWith: prefix } },
-        orderBy: { packageId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.packageId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(3, '0')}`;
-}
-
-async function generatePackageEnrollmentId() {
-    const prisma = await getPrisma();
-    const year = new Date().getFullYear();
-    const prefix = `PENR-${year}-`;
-    const last = await prisma.packageEnrollment.findFirst({
-        where: { enrollmentId: { startsWith: prefix } },
-        orderBy: { enrollmentId: 'desc' }
-    });
-    const nextSerial = last ? parseInt(last.enrollmentId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${nextSerial.toString().padStart(4, '0')}`;
-}
+// generatePackageId, generatePackageEnrollmentId — moved to @/lib/idGenerators
 
 const PACKAGE_INCLUDE = {
     courses: {

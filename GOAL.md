@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-19 (Phase 1–28 ✅ ALL DONE | v1.0.0 🎉)
+> Last updated: 2026-03-22 (Phase 1–30 ✅ ALL DONE | v1.5.2 HEAD)
 
 ---
 
@@ -47,6 +47,9 @@
 | Phase 26 | Chat-First Revenue Attribution — Slip OCR + REQ-07 (Phase 26) | ✅ Done | 5/5 |
 | Phase 27 | Upstash Migration — BullMQ→QStash, ioredis→Upstash, zero local infra | ✅ Done | 4/4 |
 | Phase 28 | v1.0.0 Production Ready — Docs Hardening + ADR-041 | ✅ Done | 7/7 |
+| Phase 29 | RBAC Redesign + Ads Optimize Write (ADR-045) | ✅ Done | 10/10 |
+| Phase 30 (pre) | V Point Loyalty + UI Overhaul (ADR-046 plan) | ✅ Done | 7/7 |
+| Phase 30 (UI) | Employee Card Full Redesign + Task Board (v1.5.2) | ✅ Done | — |
 
 ---
 
@@ -241,23 +244,23 @@
 ---
 
 
-## 🔄 Phase 29: RBAC Redesign + Ads Optimize (v1.4.0)
-> **ADR:** ADR-045  
-> **Goal:** Domain-based roles (8 roles), centralized permissionMatrix.js, Ads Optimize write access to Meta API  
-> **Implement Plan:** `docs/implement_plan_phase29.md`  
-> **Status:** Planned
+## ✅ Phase 29: RBAC Redesign + Ads Optimize (v1.4.0)
+> **ADR:** ADR-045
+> **Goal:** Domain-based roles (8 roles), centralized permissionMatrix.js, Ads Optimize write access to Meta API
+> **Implement Plan:** `docs/implement_plan_phase29.md`
+> **Status:** ✅ Done (2026-03-21)
 
 | Sub-phase | งาน | สถานะ |
 |---|---|---|
-| 29a | DB Migration — normalize role → UPPERCASE + เพิ่ม MARKETING/HEAD_CHEF | ⏳ |
-| 29b | `permissionMatrix.js` + `can()` helper + unit tests | ⏳ |
-| 29c | Refactor RBAC guards ทั่ว codebase → ใช้ `can()` | ⏳ |
-| 29d | Ads Optimize API routes (6 routes) + adsOptimizeRepo.js | ⏳ |
-| 29e | Ads Optimize UI — campaign card actions + budget modal | ⏳ |
-| 29f | Permission Management UI (read-only) ใน Employee section | ⏳ |
-| 29g | Tests + Audit log + Docs update | ⏳ |
+| 29a | DB Migration — normalize role → UPPERCASE + เพิ่ม MARKETING/HEAD_CHEF | ✅ |
+| 29b | `permissionMatrix.js` + `can()` helper + unit tests (67 cases) | ✅ |
+| 29c | Refactor RBAC guards ทั่ว codebase → ใช้ `can()` | ✅ |
+| 29d | Ads Optimize API routes (6 routes) + adsOptimizeRepo.js | ✅ |
+| 29e | Ads Optimize UI — campaign card actions + budget modal | ✅ |
+| 29f | Permission Management UI (read-only) ใน Employee section | ✅ |
+| 29g | Tests + Audit log + Docs update | ✅ |
 
-**New Roles:** `MARKETING` (L2.5, domain: marketing) · `HEAD_CHEF` (L2.5, domain: kitchen)  
+**New Roles:** `MARKETING` (L2.5, domain: marketing) · `HEAD_CHEF` (L2.5, domain: kitchen)
 **Breaking Change:** Role values ใน DB → UPPERCASE · Force re-login ทุก session
 
 ---
@@ -457,3 +460,68 @@
 | 28c.1 | Update `CLAUDE.md` version table (v1.0.0 planned → in progress) | 🧠 Claude | ✅ |
 | 28c.2 | Write `CHANGELOG.md` + `changelog/CL-20260319-005.md` | 🧠 Claude | ✅ |
 | 28c.3 | Update `MEMORY.md` handover note | 🧠 Claude | ✅ |
+
+---
+
+## ✅ Phase 29: RBAC Redesign + Ads Optimize Write (ADR-045)
+> **Goal:** ขยาย role จาก 6 → 8, เพิ่ม permissionMatrix.js central config, เพิ่ม Ads Optimize write routes
+> **Version:** v1.4.0 | **Implemented by:** Claude (Lead Architect)
+> **ADR:** ADR-045 (docs/adr/045-rbac-redesign-ads-optimize.md ✅)
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 29.1 | `src/lib/permissionMatrix.js` — central permission config + can() helper | 🧠 Claude | ✅ |
+| 29.2 | `src/lib/rbac.js` — VALID_ROLES → 8 roles uppercase | 🧠 Claude | ✅ |
+| 29.3 | `src/lib/authOptions.js` — role validation uppercase | 🧠 Claude | ✅ |
+| 29.4 | `src/components/TopBar.js` — ROLE_LABEL เพิ่ม MARKETING, HEAD_CHEF | 🧠 Claude | ✅ |
+| 29.5 | `src/app/page.js` + components — แทน hardcoded role checks → can() | 🧠 Claude | ✅ |
+| 29.6 | `src/app/api/ads/*/route.js` — 6 Ads Optimize write routes | 🧠 Claude | ✅ |
+| 29.7 | `src/lib/repositories/adsOptimizeRepo.js` — Meta API write wrapper | 🧠 Claude | ✅ |
+| 29.8 | `prisma/schema.prisma` → AdsOptimizeRequest — lifetime budget approval model | 🧠 Claude | ✅ |
+| 29.9 | `docs/adr/045-rbac-redesign-ads-optimize.md` | 🧠 Claude | ✅ |
+| 29.10 | `docs/implement_plan_phase29.md` | 🧠 Claude | ✅ |
+
+> ⚠️ **Known Breaking Change**: ต้อง DB migration role values → UPPERCASE + เปลี่ยน NEXTAUTH_SECRET (force re-login)
+> ⚠️ **Known Gotcha — 8 Roles**: MARKETING (L2.5) + HEAD_CHEF (L2.5) — domain specialist, ไม่สูงกว่า ADMIN
+
+---
+
+## ✅ Phase 30 (pre): V Point Loyalty + UI Overhaul
+> **Goal:** ระบบสะสมคะแนน V Point + TopBar slim + Sidebar 3-mode + Neon chart
+> **Version:** v1.5.0-pre | **Implemented by:** Claude
+> **ADR:** ADR-046 (plan only — POS Receipt planned for v1.5.0)
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 30.1 | `prisma/schema.prisma` → Customer vpPoints/totalVpEarned/totalSpend | 🧠 Claude | ✅ |
+| 30.2 | `src/lib/repositories/customerRepo.js` — TIER_CONFIG, VP_RATE, calcVPoints, calculateTier, awardVPoints | 🧠 Claude | ✅ |
+| 30.3 | `src/app/api/customers/[id]/vpoints/route.js` — NEW POST endpoint | 🧠 Claude | ✅ |
+| 30.4 | `src/components/PremiumPOS.js` — CartCustomerSearch, CustomerCard, VP receipt card, reset on done | 🧠 Claude | ✅ |
+| 30.5 | `src/components/TopBar.js` — slim h-10, breadcrumb left, search center | 🧠 Claude | ✅ |
+| 30.6 | `src/components/Sidebar.js` — 3-mode (expanded/collapsed/hover), localStorage persist | 🧠 Claude | ✅ |
+| 30.7 | `src/components/AdminPerformance.js` — NEON_PALETTE, MonthlyLineChart futuristic neon | 🧠 Claude | ✅ |
+
+> ⚠️ **Known Gotcha**: default sidebar mode = `hover`, persisted in `localStorage` key `sidebarMode`
+> ⚠️ **Known Gotcha**: VP award ไม่ block receipt display — fire-and-forget, errors logged in console only
+
+---
+
+## ✅ Phase 30 (UI): Employee Card Full Redesign + Task Board (v1.5.2)
+> **Goal:** Redesign Employee card ให้ตรงกับ reference image (dark glass folder card) + Task Board
+> **Version:** v1.5.2 | **Implemented by:** Claude
+> **CL:** CL-20260322-001
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| UI.1 | Task Board (TaskPanel) + L0–L5 priority + sidebar badge | 🧠 Claude | ✅ |
+| UI.2 | RBAC guard + canManage + Status toggle + Role selector in modals | 🧠 Claude | ✅ |
+| UI.3 | JWT auto-refresh from DB every 5 min (stale session fix) | 🧠 Claude | ✅ |
+| UI.4 | ThumbnailStrip — centered wheel carousel (ResizeObserver + Framer Motion spring) | 🧠 Claude | ✅ |
+| UI.5 | Dark glass SVG card — base + tint + glow + border layers, opacity 0.92 | 🧠 Claude | ✅ |
+| UI.6 | KpiBlock (Revenue, Customers, CloseRate) + Sparkline SVG (role-color area + glow) | 🧠 Claude | ✅ |
+| UI.7 | StatusToggle bare + Priority bar L0–L5 + smoke/haze effects + FAB | 🧠 Claude | ✅ |
+| UI.8 | Fix Employee IDs: TVS-EMP-2026-XXXX → TVS-EMP-XXXX (DB + code) | 🧠 Claude | ✅ |
+| UI.9 | SVG folder shape — final: 1 tab + 3 Q bezier rounded corners (match reference) | 🧠 Claude | ✅ |
+
+> ⚠️ **Known Gotcha — SVG path**: 4 identical path strings in EmployeeManagement.js (base/tint/glow/border) — update all 4 when changing shape
+> ⚠️ **SVG Final Path**: `M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z` (viewBox 0 0 372 372)

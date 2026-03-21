@@ -111,8 +111,7 @@ export async function GET(request) {
             FROM messages m
             JOIN employees e ON e.id = m.responder_id
                 AND e.status = 'ACTIVE'
-                AND (e.employee_id LIKE 'TVS-MKT-%'
-                     OR (e.employee_id LIKE 'TVS-EMP-%' AND e.department = 'developer'))
+                AND (e.employee_id LIKE 'TVS-EMP-%' OR e.employee_id LIKE 'TVS-FL-%' OR e.employee_id LIKE 'TVS-CT-%')
             WHERE m.responder_id IS NOT NULL ${mkMGte()} ${mkMLte()}
             GROUP BY hour_bkk
             ORDER BY hour_bkk

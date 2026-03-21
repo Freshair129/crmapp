@@ -2,24 +2,9 @@ import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { VALID_PRIORITIES, VALID_STATUSES, VALID_TYPES } from '@/lib/taskConstants';
+import { generateTaskId } from '@/lib/idGenerators';
 
-/**
- * Generate task ID: TSK-YYYYMMDD-NNN
- */
-async function generateTaskId(prisma) {
-    const today = new Date();
-    const datePart = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const prefix = `TSK-${datePart}-`;
-    const latest = await prisma.task.findFirst({
-        where: { taskId: { startsWith: prefix } },
-        orderBy: { taskId: 'desc' },
-        select: { taskId: true },
-    });
-    const serial = latest
-        ? String(parseInt(latest.taskId.split('-')[2] || '0', 10) + 1).padStart(3, '0')
-        : '001';
-    return `${prefix}${serial}`;
-}
+// generateTaskId — moved to @/lib/idGenerators
 
 /**
  * GET /api/tasks
@@ -95,7 +80,7 @@ export async function POST(req) {
         const resolvedPriority = VALID_PRIORITIES.includes(priority) ? priority : 'L3';
         const resolvedType     = VALID_TYPES.includes(type)          ? type     : 'FOLLOW_UP';
 
-        const taskId = await generateTaskId(prisma);
+        const taskId = await generateTaskId();
 
         const task = await prisma.task.create({
             data: {

@@ -1,6 +1,6 @@
 # V SCHOOL CRM v2 — ID FORMATTING & NAMING CONVENTIONS
 # Source of Truth for all identifier formats and casing rules
-# Last updated: 2026-03-21 (v1.3.0 — PushSubscription + Equipment specs)
+# Last updated: 2026-03-21 (v1.5.1 — Employee ID v3 format: TVS-[TYPE]-[DEPT]-[NNN])
 # CANONICAL LOCATION: /id_standards.yaml (root) — ห้ามแก้ copy ใน docs/
 # ─────────────────────────────────────────────────────────
 
@@ -14,10 +14,10 @@ id_naming_conventions:
     description: "Standardized cross-channel customer identifiers."
     formats:
       - name: "Customer ID"
-        format: "TVS-CUS-[CHANNEL]-[YY]-[XXXX]"
-        example: "TVS-CUS-FB-26-0001"
-        description: "Permanent internal identifier. CHANNEL: FB=Facebook, LN=LINE, WB=Walk-in"
-        generated_by: "customerRepo.js — auto-increment per channel per year"
+        format: "TVS-CUS-[CHANNEL]-[YYMM]-[XXXX]"
+        example: "TVS-CUS-FB-2603-0001"
+        description: "Permanent internal identifier. CHANNEL: FB=Facebook, LN=LINE, WB=Walk-in. YYMM=ปี+เดือนที่สร้าง"
+        generated_by: "idGenerator.js — auto-increment per channel per year-month"
 
       - name: "Member ID (Student ID)"
         format: "MEM-[YY][AGENT][INTENT]-[SERIAL]"
@@ -44,19 +44,38 @@ id_naming_conventions:
     description: "ID สำหรับพนักงานประจำและตัวแทน"
     formats:
       - name: "Employee ID"
-        format: "TVS-EMP-[YYYY]-[XXXX]"
-        example: "TVS-EMP-2026-0001"
-        description: "รหัสพนักงานประจำ (มีสัญญาจ้าง) — auto-generated ตอน seed/create"
-        note: "ไม่ใช่ TVS-MKT-001 รูปแบบเก่า — v2 ใช้ TVS-EMP เท่านั้น"
+        format: "TVS-[TYPE]-[DEPT]-[NNN]"
+        example: "TVS-EMP-MKT-001, TVS-FL-GD-003, TVS-CT-SLS-002"
+        description: |
+          รหัสพนักงาน/ผู้ร่วมงาน — auto-generated ตอน create
+          [TYPE]: EMP=พนักงานประจำ · FL=ฟรีแลนซ์ · CT=สัญญาจ้าง
+          [DEPT]: MKT=Marketing · MGT=Management · PD=Purchasing · SLS=Sales
+                  AM=Assistant Manager · ADM=Admin · GD=Graphic Design
+                  CG=Computer Graphic · MM=Multimedia · MGFX=Motion Graphic
+                  ED=Editor · CC=Content Creator
+          [NNN]: 3-digit serial (001-999) per TYPE+DEPT combination
+        generated_by: "employees/route.js → generateEmployeeId(prisma, department, employmentType)"
+        note: "v3 format — เปลี่ยนจาก TVS-EMP-[YYYY]-[XXXX] (v2) เพื่อแยกประเภทการจ้างและแผนก"
+
+      - name: "Agent ID"
+        format: "AGT-[TYPE]-[YYMM]-[SERIAL]"
+        example: "AGT-HM-2603-003, AGT-AI-2603-001"
+        description: |
+          รหัส Agent (auto-generated ให้ทุก Employee):
+          [TYPE]: HM=Human · AI=Artificial Intelligence
+          [YYMM]: ปี+เดือนที่สร้าง (เช่น 2603 = มี.ค. 2026)
+          [SERIAL]: 001-999
+        generated_by: "employees/route.js → generateAgentId(prisma, agentType)"
+        stored_in: "Employee.agentId"
 
       - name: "Agent Code"
-        format: "AGT-[TYPE]-[YEAR]-[SERIAL]"
-        example: "AGT-H-26-003, AGT-AI-G4-001"
+        format: "3-4 uppercase letters (IATA-style)"
+        example: "AOI, FAH, PNP, BOSS"
         description: |
-          รหัสตัวแทน:
-          [TYPE]: H=Human · AI=Artificial Intelligence
-          [YEAR]: ปีที่ลงทะเบียน (เช่น 26) หรือรหัสรุ่น AI (G4=Gemini 4)
-          [SERIAL]: 001-999
+          ชื่อย่อ Agent แบบรหัสสนามบิน — กรอกเอง, unique ทั้งระบบ
+          ใช้ระบุตัวตนแบบสั้นใน chat attribution, KPI, report
+        stored_in: "Employee.agentCode"
+        note: "ต้องกรอกตอนสร้าง Employee (required, 3-4 ตัวอักษร)"
 
   # ─────────────────────────────────────────────
   # DOMAIN: Conversation / Messaging
@@ -240,6 +259,140 @@ id_naming_conventions:
         format: "AST-IMG-[SERIAL]"
         example: "AST-IMG-001"
         description: "รหัสไฟล์มัลติมีเดีย (รูปสลิป, หน้าจอลูกค้า) — ใช้ใน Asset.photos[]"
+
+  # ─────────────────────────────────────────────
+  # DOMAIN: Inventory Control & Distribution
+  # ─────────────────────────────────────────────
+
+  - category: "Inventory Identifiers"
+    formats:
+      - name: "Warehouse ID"
+        format: "WH-[CODE]"
+        example: "WH-HQ, WH-BKK2"
+        description: "รหัสคลังสินค้า — CODE = 2-6 ตัวอักษร uppercase, manually assigned"
+        stored_in: "Warehouse.warehouseId"
+
+      - name: "Stock Movement ID"
+        format: "MOV-[YYYYMMDD]-[SERIAL]"
+        example: "MOV-20260322-001"
+        serial_padding: 3
+        scope: "daily (resets per day)"
+        generation: "idGenerators.generateMovementId()"
+        description: "บันทึกการเคลื่อนไหวสต็อก — RECEIVE/ISSUE/TRANSFER/ADJUSTMENT/RETURN"
+        stored_in: "StockMovement.movementId"
+
+      - name: "Stock Count ID"
+        format: "CNT-[YYYYMMDD]-[SERIAL]"
+        example: "CNT-20260322-001"
+        serial_padding: 3
+        scope: "daily (resets per day)"
+        generation: "idGenerators.generateStockCountId()"
+        description: "Session ตรวจนับสต็อก (audit) — reconcile systemQty vs physicalQty"
+        stored_in: "StockCount.countId"
+
+  # ─────────────────────────────────────────────
+  # DOMAIN: Procurement (PO Lifecycle)
+  # ─────────────────────────────────────────────
+
+  - category: "Procurement Identifiers"
+    formats:
+      - name: "Purchase Order ID"
+        format: "PO-[YYYYMMDD]-[SERIAL]"
+        example: "PO-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generatePurchaseOrderId()"
+        description: |
+          ใบสั่งซื้อวัตถุดิบ — สร้างจาก Class BOM calculation
+          Status: DRAFT → REQUEST_REVIEW → APPROVED/REJECTED → ORDERING → ORDERED → RECEIVING → RECEIVED/PARTIAL → CLOSED/ISSUE
+        stored_in: "PurchaseOrder.poId"
+
+      - name: "Approval ID"
+        format: "APV-[YYYYMMDD]-[SERIAL]"
+        example: "APV-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateApprovalId()"
+        description: "บันทึกการอนุมัติ/ตีกลับ PO โดยเชฟ — action: APPROVED | REJECTED"
+        stored_in: "POApproval.approvalId"
+
+      - name: "Acceptance ID"
+        format: "ACC-[YYYYMMDD]-[SERIAL]"
+        example: "ACC-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateAcceptanceId()"
+        description: "ฝ่ายจัดซื้อรับ PO — ระบุ orderDate + expectedDeliveryDate"
+        stored_in: "POAcceptance.acceptanceId"
+
+      - name: "Tracking ID"
+        format: "TRK-[YYYYMMDD]-[SERIAL]"
+        example: "TRK-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateTrackingId()"
+        description: |
+          ติดตามการขนส่ง — carrier, trackingNumber, status
+          Status: PREPARING → SHIPPED → IN_TRANSIT → DELIVERED
+        stored_in: "POTracking.trackingId"
+
+      - name: "Goods Received Note ID"
+        format: "GRN-[YYYYMMDD]-[SERIAL]"
+        example: "GRN-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateGrnId()"
+        description: "ใบรับของ — รับวัตถุดิบจาก supplier → สร้าง Lot + อัปเดตสต็อก"
+        stored_in: "GoodsReceivedNote.grnId"
+
+      - name: "Return ID"
+        format: "RTN-[YYYYMMDD]-[SERIAL]"
+        example: "RTN-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateReturnId()"
+        description: "ใบตีกลับสินค้า — ของผิด/ไม่ตรง/เสียหาย → ส่งคืน supplier"
+        stored_in: "POReturn.returnId"
+
+      - name: "Credit Note ID"
+        format: "CN-[YYYYMMDD]-[SERIAL]"
+        example: "CN-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateCreditNoteId()"
+        description: "ใบลดหนี้/วอยเงินคืน — ขอเงินคืนจาก supplier"
+        stored_in: "CreditNote.creditNoteId"
+
+      - name: "Issue ID"
+        format: "ISS-[YYYYMMDD]-[SERIAL]"
+        example: "ISS-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateIssueId()"
+        description: |
+          บันทึกปัญหาในกระบวนการจัดซื้อ
+          issueType: OUT_OF_STOCK | WRONG_ITEM | PRICE_CHANGE | LATE_DELIVERY | QUALITY_ISSUE
+        stored_in: "POIssue.issueId"
+
+      - name: "Advance ID"
+        format: "ADV-[YYYYMMDD]-[SERIAL]"
+        example: "ADV-20260322-001"
+        serial_padding: 3
+        scope: "daily"
+        generation: "idGenerators.generateAdvanceId()"
+        description: |
+          เงินทดรองจ่าย — เบิกเงินล่วงหน้าหรือออกเงินส่วนตัวซื้อก่อน
+          Status: PENDING → APPROVED → REIMBURSED
+        stored_in: "Advance.advanceId"
+
+      - name: "Supplier ID"
+        format: "SUP-[NNN]"
+        example: "SUP-001"
+        serial_padding: 3
+        scope: "global"
+        generation: "idGenerators.generateSupplierId()"
+        description: "ซัพพลายเออร์/ผู้ขาย — master data"
+        stored_in: "Supplier.supplierId"
 
   # ─────────────────────────────────────────────
   # DOMAIN: Orders / Payment

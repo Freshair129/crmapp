@@ -1,4 +1,4 @@
-**LATEST:** CL-20260321-006 | v1.5.0-pre | 2026-03-21
+**LATEST:** CL-20260322-003 | v1.6.0 | 2026-03-22
 
 ---
 
@@ -6,6 +6,10 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260322-003 | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | v1.6.0 | 2026-03-22 | MAJOR | #inventory #procurement #po #bom #warehouse #supplier |
+| CL-20260322-002 | Centralized ID Generators + Agent ID/Code + Customer ID YYMM | v1.5.3 | 2026-03-22 | MINOR | #refactor #id-generation #employee #schema |
+| CL-20260322-001 | Employee Card Full Redesign + Task Board + SVG Folder Shape Fix | v1.5.2 | 2026-03-22 | MINOR | #employee #ui #card #tasks #svgshape |
+| CL-20260321-007 | Employee ID v3 Format — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) | v1.5.1 | 2026-03-21 | MINOR | #employee #id-format #breaking-change |
 | CL-20260321-006 | V Point Loyalty + UI Overhaul (TopBar slim, Sidebar 3-mode) | v1.5.0-pre | 2026-03-21 | MINOR | #pos #loyalty #ui #sidebar #topbar |
 | CL-20260321-005 | Admin Performance Fix (Monthly Message Trend) | v1.4.1 | 2026-03-21 | PATCH | #bugfix #analytics #dashboard |
 | CL-20260321-004 | POS Receipt & Printer Plan (ADR-046) | v1.5.0 planned | 2026-03-21 | MINOR | #pos #receipt #printing #plan |
@@ -27,6 +31,62 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-002] v1.5.3 — Centralized ID Generators + Agent ID/Code + Customer ID YYMM
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #refactor #id-generation #employee #schema
+
+#### Changes
+- **Centralized ID Generators**: รวม 20 generators จาก 14 ไฟล์ → `src/lib/idGenerators.js` ไฟล์เดียว ลบ `src/utils/idGenerator.js` + `src/lib/id-generators.js`
+- **Agent ID** (`Employee.agentId`): `AGT-[TYPE]-[YYMM]-[NNN]` auto-generated (HM=Human, AI=AI)
+- **Agent Code** (`Employee.agentCode`): 3-4 letter IATA-style code (unique, manual, required)
+- **Customer ID**: `TVS-CUS-[CH]-[YYMM]-[XXXX]` — เพิ่มเดือนใน ID
+- **Employee Form**: dropdown ประเภทการจ้าง (EMP/FL/CT) + dropdown แผนก (12 ตัวเลือก) + Agent Code input ทั้ง Add/Edit modal
+
+#### Files Changed
+- `src/lib/idGenerators.js` (NEW), `prisma/schema.prisma`, `src/app/api/employees/route.js`, `src/components/EmployeeManagement.js`, `id_standards.yaml`, + 12 consumer files updated imports
+
+---
+
+### [CL-20260322-001] v1.5.2 — Employee Card Full Redesign + Task Board + SVG Folder Shape Fix
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #employee #ui #card #tasks #svgshape
+
+#### Changes
+- **Task Board (TaskPanel)**: L0–L5 priority system, urgentCount sidebar badge, create/edit modal. API: `GET+POST /api/tasks`, `PATCH+DELETE /api/tasks/[id]`. `taskConstants.js` extracted to fix Vercel build error (route files cannot export non-HTTP named exports).
+- **RBAC Guard + Auth**: canManage = `can(role, 'system', 'view')`. JWT auto-refresh from DB every 5 min (stale session fix). /api/employees lowered MANAGER → ADMIN. Scroll reset on view change.
+- **ThumbnailStrip**: Replace DotPager + flat thumbnail row → centered wheel carousel. ResizeObserver measures width → Framer Motion spring centers active item. Active: scale 1.12, role-color glow, name label. Gold highlight ring at center.
+- **Dark Glass Card**: SVG base (opacity 0.92) + role-color tint + glow border (active state). Circular avatar top-left, name/role/ID inline right. ArrowUpRight FAB in top-right corner.
+- **KpiBlock**: 3-stat grid (Revenue, Customers, CloseRate) + Sparkline SVG (6-month, area fill + drop-shadow in role color).
+- **StatusToggle bare**: Emerald green active / grey inactive. One-click PATCH to DB.
+- **Priority bar**: Horizontal progress bar (role-color) + glowing level circle L0–L5. Renamed from "Permission".
+- **Effects**: 4 animated smoke/haze divs (bottom bloom, left/right wisps, top ambient) + role-color outer glow on active card.
+- **Employee ID fix**: TVS-EMP-2026-XXXX → TVS-EMP-XXXX (DB migration 4 rows + serial parser fix).
+- **SVG Folder Shape**: Iterated from 50px notch → 150px → 3-cut corners (octagon) → **FINAL: 1 tab + 3 Q bezier rounded corners R=28**. Path: `M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z`
+
+#### Files Changed
+- `src/components/EmployeeManagement.js` — ThumbnailStrip, EmployeeCardDeck, KpiBlock, StatusToggle bare, SVG card layers
+- `src/lib/taskConstants.js` — NEW
+- `src/app/api/tasks/route.js`, `tasks/[id]/route.js` — NEW
+- `src/lib/authOptions.js` — JWT 5-min refresh
+- `src/app/api/employees/route.js` — serial parser (last segment)
+- `src/components/AdminPerformance.js` — EMP ID placeholder fix
+
+---
+
+### [CL-20260321-007] v1.5.1 — Employee ID v3 Format (ADR-047)
+**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #employee #id-format #breaking-change
+
+Employee ID format เปลี่ยนเป็น `TVS-[TYPE]-[DEPT]-[NNN]` per ADR-047 — เพิ่ม DEPT segment เพื่อ grouping และ readability ที่ดีขึ้น
+
+#### Format
+- ก่อน: `TVS-EMP-[NNN]` (after removing year in same session)
+- หลัง: `TVS-[TYPE]-[DEPT]-[NNN]` e.g. `TVS-EMP-MKT-001`, `TVS-EMP-OPS-002`
+
+#### Files Changed
+- `src/app/api/employees/route.js` — generateEmployeeId() ใหม่
+- `id_standards.yaml` — employee ID format updated
+- `docs/adr/047-employee-id-v3.md` — NEW
+
+---
 
 ### [CL-20260321-006] v1.5.0-pre — V Point Loyalty + UI Overhaul
 **Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #loyalty #ui #sidebar #topbar
@@ -89,83 +149,6 @@ Monthly Message Trend chart ไม่แสดงข้อมูล เพรา
 - `docs/adr/046-pos-receipt-printing.md` (new)
 - `docs/implement_plan_phase30.md` (new)
 - `system_requirements.yaml`, `id_standards.yaml`, `CLAUDE.md`, `GOAL.md` (updated)
-
----
-
-### [CL-20260321-002] v1.3.0 — Web Push Inbox Real-time (ADR-044)
-**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #inbox #push #realtime #adr044
-
-ลบ SSE + polling ออกจาก UnifiedInbox ทั้งหมด แทนด้วย Web Push API (VAPID) ที่ทำงานจริงบน Vercel serverless
-
-#### ทำไมไม่ใช้ SSE
-- `eventBus` เป็น in-memory EventEmitter — ไม่ share state ข้าม Vercel Lambda instances
-- SSE connection มี Vercel timeout 300s (Pro) ต้องการ reconnect logic ซับซ้อน
-- Polling 30s → ยังต้องใช้ Vercel invocations อยู่ดี
-
-#### Web Push Architecture
-- Webhook FB/LINE → `notifyInbox()` → ยิง HTTP → Google/Mozilla push server → Service Worker → OS notification
-- User click notification → `PUSH_NAVIGATE` postMessage → inbox refetch + auto-select conversation
-- VAPID keys เก็บใน `.env.local` + Vercel env vars
-
-#### Files Changed
-- `public/sw.js` — Service Worker ใหม่ (push event, notification click, PUSH_NAVIGATE)
-- `src/lib/pushNotifier.js` — server helper ยิง push ไปทุก subscription + cleanup expired
-- `src/app/api/push/subscribe/route.js` — POST/DELETE subscription endpoint
-- `prisma/schema.prisma` → `PushSubscription` model
-- `webhooks/facebook/route.js` — เพิ่ม `notifyInbox()` fire-and-forget
-- `webhooks/line/route.js` — เพิ่ม `notifyInbox()` fire-and-forget
-- `UnifiedInbox.js` — ลบ SSE+polling, เพิ่ม SW registration + VAPID subscribe
-
----
-
-### [CL-20260321-001] v1.2.0 — Equipment Domain POS + Spec Fields
-**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #pos #equipment #ui #schema
-
-เพิ่มโดเมนอุปกรณ์ใน POS และฟิลด์สเปคครบชุด
-
-#### POS Equipment Domain
-- 3rd mainMode: 🔪 อุปกรณ์ (course / food / equipment)
-- Sub-category filters: knife, kitchen, fish_tool, sushi, sharpening
-- ORIGIN_COUNTRIES dropdown 12 ประเทศ (JP/CN/KR/TW/TH/DE/SE/FR/IT/US/VN/ES)
-
-#### Product Card Badges
-- Hand dominance badge: `✋L` (blue) / `R✋` (violet) ที่มุมขวาบน
-- Shipping weight tag: `📦 XXXg` ที่มุมซ้ายล่าง
-- Micro-tags ใต้ชื่อ: material, size, country flag
-
-#### ProductDetailModal Equipment Panel
-- Spec grid: hand, material, dimension, weight, box size, country flag
-- Shipping section: total weight, box weight, W×L×H cm
-- Inline edit: brand + country dropdown with auto-save
-
-#### Schema Changes
-- `Product` model: + `hand`, `material`, `boxDimW/L/H`, `boxWeightG`, `shippingWeightG`
-
----
-
-### [CL-20260319-006] v1.1.0 — POS Modal + Sheet ID Generation (TVS format)
-**Date:** 2026-03-19 | **Severity:** MINOR | **Tags:** #pos #sheets #id-generation #ui
-
-เพิ่ม ProductDetailModal ใน POS + ระบบ auto-generate readable ID จาก Google Sheet ตาม format มาตรฐาน `TVS-[CATEGORY]-[PACK]-[SUBCAT]-[SERIAL]`
-
-#### ProductDetailModal
-- กดการ์ดสินค้า → popup รายละเอียด (image gallery ≤6, tags, meta chips, enrollment stats)
-- Warning banner เมื่อ `pendingStudents ≥ 5` — "พิจารณาเปิดรอบใหม่"
-- แสดง `productId` human-readable ใต้ชื่อสินค้า
-- ปุ่ม "+" บนการ์ด → `e.stopPropagation()` → add to cart โดยไม่เปิด modal
-
-#### generateProductId (แก้ format)
-- แก้จาก `PRD-CRS-YYYY-XXX` (ผิด spec) → `TVS-{cuisineCode}-{packCode}-{subcatCode}-{SERIAL:02d}`
-- PACKAGE → `TVS-PKG{pkgNo:02d}-{pkgShortName}-{hours}H`
-- FULL_COURSE → `TVS-FC-FULL-COURSES-{A|B}-{hours}H`
-- Serial ต่อ prefix (แต่ละ cuisineCode+packCode+subcatCode มี serial ของตัวเอง)
-
-#### sync-master-data Sheet columns
-- เพิ่ม: `productType`, `cuisineCode`, `packCode`, `subcatCode`, `pkgNo`, `pkgShortName`
-- Auto-infer DB `category` จาก `cuisineCode` (JP→japanese_culinary, SP→specialty, ฯลฯ)
-
-#### Session Start Protocol
-- `CLAUDE.md` — เพิ่ม step 3: อ่าน `CHANGELOG.md` LATEST pointer ทุก session
 
 ---
 

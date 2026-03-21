@@ -96,7 +96,7 @@ function SignInForm() {
                                     type="text"
                                     required
                                     autoComplete="username"
-                                    placeholder="email หรือ TVS-MKT-001"
+                                    placeholder="email หรือ TVS-EMP-MKT-001"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50 focus:ring-2 focus:ring-[#C9A34E]/20 transition-all"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}

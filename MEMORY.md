@@ -28,6 +28,33 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-22 00:28] Claude — Employee Card Full Redesign + Task Board + SVG Shape Fix (v1.5.2) ✅
+- **สิ่งที่ทำ**:
+  - Task Board (TaskPanel) — L0–L5 priority, urgentCount sidebar badge, create/edit modal
+  - RBAC guard, JWT 5-min auto-refresh, /api/employees ADMIN-level, scroll reset on nav
+  - **ThumbnailStrip** — centered wheel carousel (ResizeObserver + Framer Motion spring)
+  - **Card structure**: dark glass SVG (opacity 0.92) + role-color tint + glow border + FAB
+  - **KpiBlock**: Revenue / Customers / CloseRate + Sparkline SVG (role-color glow area)
+  - **StatusToggle bare** (emerald green active), **Priority bar** L0–L5, smoke/haze effects
+  - **Fix employee IDs**: TVS-EMP-2026-XXXX → TVS-EMP-XXXX (DB migration + serial parser fix)
+  - **SVG folder shape iterations**:
+    - v1: 50px tab notch → v2: 150px → v3: 3-cut corners (octagon — Boss spec A:372 C:322 D:100 E:50) → Boss: "ไม่เหมือน reference"
+    - **v4 FINAL (HEAD)**: 1 tab + 3 Q bezier rounded corners R=28
+      `M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z`
+      Only tab-edge shimmer: `x1="323" y1="1" x2="371" y2="99"`
+  - อัปเดต CLAUDE.md, MEMORY.md, CHANGELOG.md, GOAL.md, changelog/CL-20260322-001.md
+- **ไฟล์ที่เปลี่ยน**:
+  - `src/components/EmployeeManagement.js` — ทั้งหมด (ThumbnailStrip, EmployeeCardDeck, KpiBlock, SVG card)
+  - `src/lib/taskConstants.js` — NEW (fix Vercel build error)
+  - `src/app/api/tasks/route.js`, `tasks/[id]/route.js` — NEW
+  - `src/lib/authOptions.js` — JWT 5-min refresh
+  - `src/app/api/employees/route.js` — serial parser fix
+  - `src/components/AdminPerformance.js` — EMP ID placeholder fix
+- **Breaking Changes**: ไม่มี — UI only + minor ID fix
+- **ต้อง review**: ไม่มี
+- **ทำต่อ**: Phase 30 (v1.5.0) — POS Receipt & Printer (ADR-046), หรืองานที่ Boss สั่ง
+- **Vercel HEAD**: `dpl_23BvwjSLPJphgVsCFA6owdipsabe` → **READY** ✅ (commit `a098e89`)
+
 ### [2026-03-21 15:00] Claude — Admin Performance Dashboard Fix + Docs Update
 - **สิ่งที่ทำ**:
   - แก้ bug: Monthly Message Trend chart ไม่แสดงข้อมูล — employee filter แคบเกินไป (เฉพาะ TVS-MKT-* / developer)

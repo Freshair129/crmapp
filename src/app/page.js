@@ -42,6 +42,8 @@ import RecipePage from "@/components/RecipePage";
 import PackagePage from "@/components/PackagePage";
 import CoursePage from "@/components/CoursePage";
 import TaskPanel from "@/components/TaskPanel";
+import InventoryControlPanel from "@/components/InventoryControlPanel";
+import ProcurementPanel from "@/components/ProcurementPanel";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -366,6 +368,14 @@ export default function Home() {
 
                         {activeView === "kitchen-stock" && wrap("kitchen-stock",
                             <KitchenStockPanel language={language} />
+                        )}
+
+                        {activeView === "inventory-control" && wrap("inventory-control",
+                            <InventoryControlPanel />
+                        )}
+
+                        {activeView === "procurement" && wrap("procurement",
+                            <ProcurementPanel />
                         )}
 
                         {activeView === "assets" && wrap("assets",

@@ -11,25 +11,7 @@ import { getPrisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { cache as redis } from "@/lib/redis";
 import { VALID_ROLES, isValidRole } from "@/lib/rbac";
-
-/**
- * generateLogId — LOG-YYYYMMDD-SERIAL
- * Serial = last 4 digits of ms timestamp (unique enough per day within a single process)
- */
-async function generateLogId(prisma) {
-    const today = new Date();
-    const datePart = today.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
-    const prefix = `LOG-${datePart}-`;
-    const last = await prisma.auditLog.findFirst({
-        where: { logId: { startsWith: prefix } },
-        orderBy: { logId: 'desc' },
-        select: { logId: true },
-    });
-    const serial = last
-        ? String(parseInt(last.logId.split('-')[2], 10) + 1).padStart(4, '0')
-        : '0001';
-    return `${prefix}${serial}`;
-}
+import { generateLogId } from '@/lib/idGenerators';
 
 export const authOptions = {
     providers: [
@@ -56,7 +38,7 @@ export const authOptions = {
 
                 try {
                     const prisma = await getPrisma();
-                    // Support login by email OR by employeeId (e.g. TVS-MKT-001)
+                    // Support login by email OR by employeeId (e.g. TVS-EMP-MKT-001)
                     let employee = await prisma.employee.findUnique({
                         where: { email: credentials.email }
                     });
@@ -89,7 +71,7 @@ export const authOptions = {
 
                     // ─── Login Audit Log + lastLoginAt ───────────────────────
                     const now = new Date();
-                    const logId = await generateLogId(prisma).catch(() => `LOG-${Date.now()}`);
+                    const logId = await generateLogId().catch(() => `LOG-${Date.now()}`);
                     await Promise.all([
                         prisma.auditLog.create({
                             data: {

@@ -1,5 +1,6 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { generateCertId } from '@/lib/idGenerators';
 
 // ── Cert level map ─────────────────────────────────────────────────────────
 export const CERT_THRESHOLDS = [
@@ -15,21 +16,8 @@ export function getCertLevelForHours(hours) {
 }
 
 // ── ID generation ──────────────────────────────────────────────────────────
-export async function generateCertId() {
-    const prisma = await getPrisma();
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
-    const prefix = `CERT-${dateStr}-`;
-    const last = await prisma.certificate.findFirst({
-        where: { certId: { startsWith: prefix } },
-        orderBy: { certId: 'desc' },
-        select: { certId: true }
-    });
-    const next = last ? parseInt(last.certId.split('-').pop(), 10) + 1 : 1;
-    return `${prefix}${next.toString().padStart(3, '0')}`;
-}
+// generateCertId — re-exported from @/lib/idGenerators (kept export for backward compat)
+// import { generateCertId } from '@/lib/idGenerators' is already at top
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
