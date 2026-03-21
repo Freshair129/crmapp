@@ -412,7 +412,13 @@ export default function AdminPerformance() {
 
     const openModal = useCallback((admin, color) => { setModalAdmin(admin); setModalColor(color); }, []);
 
-    const sortedData = [...performanceData].sort((a, b) => {
+    // ── Separate "Admin" scraper placeholder (unattributed messages) ──────────
+    // TVS-EMP-2026-0001 / firstName="Admin" = ข้อความที่ scraper ยังไม่ดึงชื่อผู้ส่ง
+    const isAdminPlaceholder = (emp) =>
+        emp.employeeId === 'TVS-EMP-2026-0001' ||
+        (emp.firstName === 'Admin' && (emp.lastName === 'User' || !emp.lastName));
+
+    const allSorted = [...performanceData].sort((a, b) => {
         if (sortBy === 'speed') {
             const aRt = a.stats.avgResponseTimeMinutes > 0 ? a.stats.avgResponseTimeMinutes : Infinity;
             const bRt = b.stats.avgResponseTimeMinutes > 0 ? b.stats.avgResponseTimeMinutes : Infinity;
@@ -423,9 +429,12 @@ export default function AdminPerformance() {
         return b.stats.messages - a.stats.messages;
     });
 
+    const unidentifiedAdmin = allSorted.find(isAdminPlaceholder) || null;
+    const sortedData        = allSorted.filter(emp => !isAdminPlaceholder(emp));
+
     const top6        = sortedData.slice(0, 6);
     const top6Colors  = top6.map((_, i) => ADMIN_COLORS[i] || '#94a3b8');
-    const topAdmin    = sortedData[0];
+    const topAdmin    = sortedData[0];   // real #1 (Admin placeholder excluded)
     const maxMessages = Math.max(...sortedData.map(a => a.stats.messages), 1);
     const currentTF   = TIMEFRAMES.find(t => t.key === timeframe)?.label || '';
 
@@ -583,6 +592,29 @@ export default function AdminPerformance() {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* ── Unidentified messages footnote ── */}
+                {unidentifiedAdmin && (
+                    <div style={{ marginTop: '10px', padding: '10px 16px', background: '#0f172a', border: '1px dashed #334155', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px' }}>⚠️</span>
+                            <div>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>ข้อความที่ยังไม่ถูกระบุผู้ส่ง</span>
+                                <span style={{ fontSize: '10px', color: '#475569', marginLeft: '8px' }}>scraper ยังไม่ดึงชื่อผู้ตอบ — ไม่นับในลำดับ</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '20px', flexShrink: 0 }}>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{unidentifiedAdmin.stats.messages.toLocaleString()}</div>
+                                <div style={{ fontSize: '9px', color: '#334155', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ข้อความ</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{unidentifiedAdmin.stats.conversationsHandled}</div>
+                                <div style={{ fontSize: '9px', color: '#334155', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>conversations</div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
