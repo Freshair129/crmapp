@@ -85,6 +85,15 @@ async function executeTool(name, args) {
 // ─── Stateless HTTP handler (Vercel-compatible) ──────────────────────────────
 
 export async function POST(req) {
+    // Bearer token auth — set MCP_SECRET in Vercel env vars
+    const secret = process.env.MCP_SECRET;
+    if (secret) {
+        const auth = req.headers.get('Authorization') ?? '';
+        if (auth !== `Bearer ${secret}`) {
+            return Response.json({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized' } }, { status: 401 });
+        }
+    }
+
     try {
         const body = await req.json();
         const { method, id, params } = body;

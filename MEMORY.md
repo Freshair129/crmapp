@@ -28,6 +28,28 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-22 ~session] Claude — Employee Card UX Polish + Interactive Permissions + jobTitle (v1.6.1) ✅
+- **สิ่งที่ทำ**:
+  - **Card UX**: shimmer (front only), bg card opacity ลด (abs=1→0.35, abs=2→0.12), FAB ย้ายเข้าใน card (top:14 right:14), FAB gradient match avatar, ลบ pseudo-concave bg-circle
+  - **"การ์ดของคุณ"**: `isMyCard = emp.email === currentUser.email` → gold top border + pill badge
+  - **Edit button**: ย้ายจาก Profile card header → ขวาของ tab bar (เห็นทุก tab)
+  - **PermissionMatrix interactive**: cells กดได้ cycle 5 states (true→false→own→log→request), Save ลง `app_config` table, load from `GET /api/permissions`
+  - **`jobTitle` field**: Prisma schema + Supabase ALTER TABLE + API POST/PATCH + Add/Edit form + Profile display (แยกจาก department)
+  - **DB fix**: clear `facebook_url = email` → NULL สำหรับ Guest + Demo records
+  - **PermissionMatrix**: ลบ info box "Inherited Permissions" ออก
+  - Changelog: `CL-20260322-004.md` + CHANGELOG.md LATEST updated
+- **ไฟล์ที่เปลี่ยน**:
+  - `src/components/EmployeeManagement.js` — card deck, shimmer, my-card indicator, edit button, jobTitle
+  - `src/components/PermissionMatrix.js` — interactive cells, cycle, save
+  - `src/app/api/permissions/route.js` (NEW)
+  - `src/app/api/employees/route.js`, `[id]/route.js` — jobTitle
+  - `prisma/schema.prisma` — Employee.jobTitle
+  - `CHANGELOG.md`, `changelog/CL-20260322-004.md`
+- **Breaking Changes**: ไม่มี
+- **ต้อง review**: ไม่มี
+- **Known Gap**: MEMORY.md ไม่มี entry ของ Antigravity สำหรับ CL-20260322-003 (Inventory/PO) — Antigravity ไม่เขียน handover, ต้อง audit ถ้าจะทำงานต่อในโดเมนนั้น
+- **ทำต่อ**: Boss กำหนด — งานค้างจากก่อน: Phase 30 (POS Receipt & Printer ADR-046)
+
 ### [2026-03-22 00:28] Claude — Employee Card Full Redesign + Task Board + SVG Shape Fix (v1.5.2) ✅
 - **สิ่งที่ทำ**:
   - Task Board (TaskPanel) — L0–L5 priority, urgentCount sidebar badge, create/edit modal
