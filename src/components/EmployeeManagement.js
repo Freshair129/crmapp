@@ -106,7 +106,7 @@ function StatusToggle({ status, onChange, disabled, onCard = false, bare = false
     const buttonClass = bare
         ? `relative flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-colors duration-150 ${
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-          } ${isActive ? 'text-white/70' : 'text-white/30'}`
+          } ${isActive ? 'text-emerald-400' : 'text-white/30'}`
         : onCard
         ? `relative flex items-center gap-2 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest transition-colors duration-150 ${
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
@@ -125,13 +125,13 @@ function StatusToggle({ status, onChange, disabled, onCard = false, bare = false
 
     const trackSize = bare ? 'w-8 h-4' : onCard ? 'w-8 h-4' : 'w-9 h-[18px]';
     const trackBg   = bare
-        ? (isActive ? 'bg-white/25' : 'bg-white/08')
+        ? (isActive ? 'bg-emerald-500/40' : 'bg-white/08')
         : onCard
         ? (isActive ? 'bg-white/30' : 'bg-black/30')
         : (isActive ? 'bg-emerald-500/30' : 'bg-white/10');
     const knobSize  = (bare || onCard) ? 'w-3 h-3' : 'w-3.5 h-3.5';
     const knobBg    = bare
-        ? (isActive ? 'bg-white shadow-white/50' : 'bg-white/35')
+        ? (isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]' : 'bg-white/35')
         : onCard
         ? (isActive ? 'bg-white shadow-white/40' : 'bg-white/40')
         : (isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]' : 'bg-white/30');
@@ -173,8 +173,94 @@ function StatusToggle({ status, onChange, disabled, onCard = false, bare = false
     );
 }
 
+// ─── Sparkline SVG ────────────────────────────────────────────────────────────
+function Sparkline({ sales = [], color = '#00f5ff' }) {
+    // Group totals into last 6 months
+    const now = new Date();
+    const buckets = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+        return { key: `${d.getFullYear()}-${d.getMonth()}`, v: 0 };
+    });
+    sales.forEach(s => {
+        if (!s.date) return;
+        const d   = new Date(s.date);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        const b   = buckets.find(b => b.key === key);
+        if (b) b.v += (s.totalAmount || 0);
+    });
+    const data = buckets.map(b => b.v);
+    const max  = Math.max(...data, 1);
+    const W = 100, H = 30;
+    const cx = color.replace('#', '');
+    const pts = data
+        .map((v, i) => `${(i / (data.length - 1)) * W},${H - (v / max) * (H - 4) - 2}`)
+        .join(' ');
+    return (
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: H }}>
+            <defs>
+                <linearGradient id={`spk-${cx}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+                    <stop offset="100%" stopColor={color} stopOpacity="0.01" />
+                </linearGradient>
+            </defs>
+            <polygon points={`0,${H} ${pts} ${W},${H}`} fill={`url(#spk-${cx})`} />
+            <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5"
+                strokeLinecap="round" strokeLinejoin="round"
+                style={{ filter: `drop-shadow(0 0 3px ${color}88)` }} />
+        </svg>
+    );
+}
+
+// ─── KPI block (role-aware) ───────────────────────────────────────────────────
+const SALES_ROLES = new Set(['AGENT', 'EMPLOYEE', 'ADMIN', 'MANAGER', 'HEAD_CHEF']);
+function KpiBlock({ emp, linked, barColor }) {
+    const isSalesRole  = SALES_ROLES.has(emp.role);
+    const revenue      = linked.totalRevenue;
+    const custCount    = linked.assignedCustomers.length;
+    const validOrders  = linked.sales.filter(s => s.status !== 'CANCELLED').length;
+    const closeRate    = custCount > 0 ? Math.round((validOrders / custCount) * 100) : 0;
+    const fmtRevenue   = revenue >= 1_000_000
+        ? `฿${(revenue / 1_000_000).toFixed(1)}M`
+        : revenue >= 1_000
+        ? `฿${Math.round(revenue / 1_000)}k`
+        : `฿${revenue}`;
+
+    if (!isSalesRole || custCount === 0) {
+        return (
+            <div className="flex items-center justify-center py-4">
+                <p className="text-white/15 text-[10px] tracking-widest uppercase">No linked data</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            {/* 3 stat pills */}
+            <div className="grid grid-cols-3 gap-2">
+                {[
+                    { label: 'Revenue',   value: fmtRevenue },
+                    { label: 'Customers', value: `${custCount}` },
+                    { label: 'Close',     value: `${closeRate}%` },
+                ].map(({ label, value }) => (
+                    <div key={label} className="flex flex-col items-center justify-center py-2 rounded-xl"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <span className="text-white font-black text-[15px] leading-none">{value}</span>
+                        <span className="text-white/30 text-[8px] uppercase tracking-widest mt-1">{label}</span>
+                    </div>
+                ))}
+            </div>
+            {/* Sparkline */}
+            <div className="rounded-xl overflow-hidden px-2 pt-1.5 pb-0.5"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-white/20 text-[7px] uppercase tracking-widest mb-1">6-month trend</p>
+                <Sparkline sales={linked.sales} color={barColor} />
+            </div>
+        </div>
+    );
+}
+
 // ─── File-folder Stacked Card Deck (Framer Motion) ───────────────────────────
-function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus }) {
+function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusToggle, canManage, togglingStatus, customers = [] }) {
     const n = employees.length;
     if (n === 0) return null;
 
@@ -201,7 +287,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
     };
 
     return (
-        <div className="relative select-none" style={{ height: 358, width: '100%' }}>
+        <div className="relative select-none" style={{ height: 430, width: '100%' }}>
 
             {/* Cards — rendered back→front via zIndex, all employees keyed by id */}
             {employees.map((emp, i) => {
@@ -227,6 +313,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                 const fillPct   = Math.round((levelNum / 5) * 100);
                 const barColor  = avatarColors[0];
 
+                // KPI data
+                const linked = getLinkedData(emp, customers);
+
                 return (
                     <motion.div
                         key={emp.id}
@@ -244,7 +333,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         style={{
                             position: 'absolute',
                             width: '100%',
-                            height: 300,
+                            height: 370,
                             cursor: isActive ? 'grab' : 'default',
                             transformOrigin: '50% 110%',
                             pointerEvents: isActive ? 'auto' : 'none',
@@ -319,61 +408,62 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 filter: isInactive ? 'grayscale(0.5) brightness(0.75)' : 'none',
                             }}
                         >
-                            {/* ── TOP ROW: avatar left · arrow btn right ── */}
-                            <div className="flex items-start justify-between">
+                            {/* ── TOP ROW: avatar left · name/role/id right · arrow absolute ── */}
+                            <div className="relative flex items-start gap-3">
                                 {/* Circular avatar */}
                                 <div
-                                    className="w-[60px] h-[60px] rounded-full overflow-hidden flex items-center justify-center ring-[2px] ring-white/10 shrink-0 shadow-lg"
+                                    className="w-[56px] h-[56px] rounded-full overflow-hidden flex items-center justify-center ring-[2px] ring-white/10 shrink-0 shadow-lg"
                                     style={{ background: `linear-gradient(135deg, ${avatarColors[0]}, ${avatarColors[1]})` }}
                                 >
                                     {emp.profilePicture
                                         ? <img src={emp.profilePicture} alt="" className="w-full h-full object-cover" />
-                                        : <span className="text-white font-black text-2xl select-none leading-none">{(emp.firstName || 'E').charAt(0)}</span>
+                                        : <span className="text-white font-black text-xl select-none leading-none">{(emp.firstName || 'E').charAt(0)}</span>
                                     }
                                 </div>
-                                {/* Arrow button — top right */}
-                                <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                                {/* Name / role / ID — right of avatar */}
+                                <div className="flex-1 min-w-0 pt-0.5 pr-10">
+                                    <h2 className="text-white font-bold text-[1.35rem] leading-tight tracking-tight truncate">
+                                        {emp.firstName} {emp.lastName}
+                                    </h2>
+                                    <p className="text-white/40 text-[11px] mt-0.5 truncate">
+                                        {meta.label}{emp.department ? ` · ${emp.department}` : ''}
+                                        {emp.nickName ? ` · "${emp.nickName}"` : ''}
+                                    </p>
+                                    {emp.employeeId && (
+                                        <p className="text-white/22 text-[9px] mt-0.5 font-mono tracking-wider truncate">
+                                            {emp.employeeId}
+                                        </p>
+                                    )}
+                                </div>
+                                {/* Arrow button — absolute top-right */}
+                                <div className="absolute top-0 right-0 w-9 h-9 rounded-full flex items-center justify-center shrink-0"
                                     style={{ background: '#1a1a28', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                    <ArrowUpRight size={16} className="text-white/50" />
+                                    <ArrowUpRight size={14} className="text-white/50" />
                                 </div>
                             </div>
 
-                            {/* ── NAME BLOCK ── */}
-                            <div className="mt-4 flex-1 min-w-0">
-                                <h2 className="text-white font-bold text-[1.6rem] leading-tight tracking-tight truncate">
-                                    {emp.firstName} {emp.lastName}
-                                </h2>
-                                <p className="text-white/40 text-[13px] mt-0.5 truncate">
-                                    {meta.label}{emp.department ? ` · ${emp.department}` : ''}
-                                    {emp.nickName ? ` · "${emp.nickName}"` : ''}
-                                </p>
-                                {emp.employeeId && (
-                                    <p className="text-white/22 text-[10px] mt-0.5 font-mono tracking-wider truncate">
-                                        {emp.employeeId}
-                                    </p>
-                                )}
+                            {/* ── KPI MIDDLE ── */}
+                            <div className="mt-3 flex-1 min-h-0">
+                                <KpiBlock emp={emp} linked={linked} barColor={barColor} />
                             </div>
 
-                            {/* ── BOTTOM ROW: contacts+toggle left · permission bar right ── */}
-                            <div className="flex items-end justify-between gap-3 mt-auto pt-3">
+                            {/* ── BOTTOM ROW: contacts+toggle left · priority bar right ── */}
+                            <div className="flex items-end justify-between gap-3 mt-3 pt-2"
+                                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
 
-                                {/* LEFT: contacts (top) + active toggle (bottom) */}
-                                <div className="min-w-0 flex-1 flex flex-col gap-2">
-                                    {/* Contact pills */}
-                                    <div>
-                                        <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold mb-1.5">Contact</p>
-                                        <div className="flex gap-1.5 flex-wrap">
-                                            {contactItems.length > 0 ? contactItems.map(({ icon: Ic, label: cLabel }, idx) => (
-                                                <span key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white/65 text-[10px] font-semibold shrink-0"
-                                                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)' }}>
-                                                    <Ic size={9} className="shrink-0" />{cLabel}
-                                                </span>
-                                            )) : (
-                                                <span className="text-white/20 text-[10px]">—</span>
-                                            )}
-                                        </div>
+                                {/* LEFT: contact pills + active toggle */}
+                                <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        {contactItems.length > 0 ? contactItems.map(({ icon: Ic, label: cLabel }, idx) => (
+                                            <span key={idx} className="flex items-center gap-1 px-2 py-1 rounded-full text-white/55 text-[9px] font-semibold shrink-0"
+                                                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                                <Ic size={8} className="shrink-0" />{cLabel}
+                                            </span>
+                                        )) : (
+                                            <span className="text-white/15 text-[9px]">—</span>
+                                        )}
                                     </div>
-                                    {/* Active toggle — bare (no frame) */}
+                                    {/* Active toggle — bare (no frame), green when active */}
                                     <StatusToggle
                                         status={emp.status}
                                         bare
@@ -385,28 +475,25 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     />
                                 </div>
 
-                                {/* RIGHT: priority level bar */}
-                                <div className="flex flex-col items-end gap-1.5 shrink-0 w-[96px]">
-                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">Priority</p>
-                                    {/* Bar + circle */}
+                                {/* RIGHT: priority bar + level circle */}
+                                <div className="flex flex-col items-end gap-1 shrink-0 w-[88px]">
+                                    <p className="text-white/25 text-[7px] uppercase tracking-widest font-bold">Priority</p>
                                     <div className="flex items-center gap-2 w-full">
-                                        {/* Track */}
-                                        <div className="relative flex-1 h-[5px] rounded-full overflow-hidden"
+                                        <div className="relative flex-1 h-[4px] rounded-full overflow-hidden"
                                             style={{ background: 'rgba(255,255,255,0.08)' }}>
                                             <motion.div
                                                 className="absolute inset-y-0 left-0 rounded-full"
-                                                style={{ background: barColor, boxShadow: `0 0 6px ${barColor}88` }}
+                                                style={{ background: barColor, boxShadow: `0 0 5px ${barColor}88` }}
                                                 animate={{ width: `${fillPct}%` }}
                                                 transition={{ type: 'spring', stiffness: 260, damping: 28 }}
                                             />
                                         </div>
-                                        {/* Level circle */}
-                                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[9px] font-black"
+                                        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[8px] font-black"
                                             style={{
                                                 background: `${barColor}22`,
-                                                border: `1.5px solid ${barColor}66`,
+                                                border: `1.5px solid ${barColor}55`,
                                                 color: barColor,
-                                                boxShadow: `0 0 8px ${barColor}44`,
+                                                boxShadow: `0 0 6px ${barColor}44`,
                                             }}>
                                             {levelStr}
                                         </div>
@@ -420,11 +507,11 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
             {/* ── Nav arrows ─────────────────────────────────────────── */}
             <button onClick={onPrev}
-                className="absolute left-0 top-[140px] -translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                className="absolute left-0 top-[180px] -translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
                 <ChevronLeft size={15} />
             </button>
             <button onClick={onNext}
-                className="absolute right-0 top-[140px] translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
+                className="absolute right-0 top-[180px] translate-x-5 z-40 w-9 h-9 rounded-full bg-white/8 border border-white/10 text-white/50 hover:bg-white/16 hover:text-white transition-all flex items-center justify-center backdrop-blur-sm">
                 <ChevronRight size={15} />
             </button>
         </div>
@@ -769,6 +856,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             onStatusToggle={handleStatusToggle}
                             canManage={canManage}
                             togglingStatus={togglingStatus}
+                            customers={customers}
                         />
                     </div>
 
