@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -95,6 +95,8 @@ export default function Home() {
         setCurrentUser(null);
     };
 
+    const mainScrollRef = useRef(null);
+
     const [activeView, setActiveView] = useState("dashboard");
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customers, setCustomers] = useState([]);
@@ -176,6 +178,8 @@ export default function Home() {
     const handleViewChange = (view) => {
         setActiveView(view);
         if (view !== "customers") setSelectedCustomer(null);
+        // Reset scroll position so new view always starts at the top
+        if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
     };
 
     // Demo / read-only guard for GUEST role
@@ -213,7 +217,7 @@ export default function Home() {
                 onLogout={handleLogout}
             />
 
-            <main className={`flex-1 relative flex flex-col ${activeView === 'facebook-chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <main ref={mainScrollRef} className={`flex-1 relative flex flex-col ${activeView === 'facebook-chat' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
                 <TopBar
                     language={language}
                     setLanguage={setLanguage}

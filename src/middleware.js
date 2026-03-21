@@ -25,7 +25,7 @@ const ROUTE_ROLES = [
   { prefix: '/api/members/register', role: null },   // public — customer self-registration
   { prefix: '/api/health',           role: null },   // public — health check
   { prefix: '/api/products',         role: 'AGENT' },
-  { prefix: '/api/employees',        role: 'MANAGER' },
+  { prefix: '/api/employees',        role: 'ADMIN' },
   { prefix: '/api/marketing',        role: 'MARKETING' },
   { prefix: '/api/analytics',        role: 'MARKETING' },
   { prefix: '/api/customers',        role: 'AGENT' },
