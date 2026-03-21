@@ -650,10 +650,23 @@ export default function PremiumPOS({ language = 'TH' }) {
     const total = subtotal + tax;
 
     const handleCheckout = () => {
-        setIsGuestMode(false);
+        // ไม่ reset isGuestMode ที่นี่ — ให้ user set ได้จากตะกร้า
         setSlipFile(null);
         setSlipOcr(null);
         setShowOrderTypeModal(true);
+    };
+
+    // Guest shortcut — ข้าม OrderType modal + ข้าม Customer modal เลย
+    const handleGuestCheckout = () => {
+        setIsGuestMode(true);
+        setSlipFile(null);
+        setSlipOcr(null);
+        setOrderTypeForm(f => ({ ...f, type: 'TAKE_AWAY' })); // ลูกค้าทั่วไป default = take away
+        openPaymentModal({
+            id: 'guest-customer-00000000-0000-0000-0000-000000000000',
+            firstName: 'ลูกค้า', lastName: 'ทั่วไป',
+            customerId: 'WALK-IN-GUEST',
+        });
     };
 
     const handleOrderTypeConfirm = () => {
@@ -1321,6 +1334,26 @@ export default function PremiumPOS({ language = 'TH' }) {
                             )}
                         </div>
 
+                        {/* Guest fallback — ลูกค้าไม่มีสมาชิก กดข้ามได้เลยตรงนี้ */}
+                        {!showRegisterForm && (
+                            <button
+                                onClick={() => {
+                                    setIsGuestMode(true);
+                                    setShowCustomerModal(false);
+                                    setOrderTypeForm(f => ({ ...f, type: f.type || 'TAKE_AWAY' }));
+                                    openPaymentModal({
+                                        id: 'guest-customer-00000000-0000-0000-0000-000000000000',
+                                        firstName: 'ลูกค้า', lastName: 'ทั่วไป',
+                                        customerId: 'WALK-IN-GUEST',
+                                    });
+                                }}
+                                className="w-full py-3 rounded-xl border border-dashed border-white/15 text-white/40 hover:border-white/30 hover:text-white/60 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                            >
+                                <Users size={13} />
+                                ลูกค้าทั่วไป / ไม่มีสมาชิก — ข้ามขั้นตอนนี้
+                            </button>
+                        )}
+
                         <div className="flex gap-4">
                             <button
                                 onClick={() => { setShowCustomerModal(false); setShowRegisterForm(false); setCustomerError(''); }}
@@ -1668,6 +1701,16 @@ export default function PremiumPOS({ language = 'TH' }) {
                     >
                         <ShoppingBasket size={16} />
                         ชำระเงิน
+                    </button>
+
+                    {/* Guest shortcut — ข้ามขั้นตอนค้นหาสมาชิก */}
+                    <button
+                        disabled={cart.length === 0}
+                        onClick={handleGuestCheckout}
+                        className="w-full py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-wider disabled:opacity-30 transition-all flex items-center justify-center gap-1.5 text-white/40 hover:text-white/70 hover:bg-white/5 active:scale-95"
+                    >
+                        <Users size={13} />
+                        ลูกค้าทั่วไป / ไม่มีสมาชิก
                     </button>
                 </div>
             </div>
