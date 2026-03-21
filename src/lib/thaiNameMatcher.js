@@ -34,8 +34,8 @@ const PHONETIC_MAP = {
   '\u0E02': '\u0E04', '\u0E03': '\u0E04', '\u0E05': '\u0E04', '\u0E06': '\u0E04',
   // ช-equivalent: ฉ ช ฌ → ช
   '\u0E09': '\u0E0A', '\u0E0C': '\u0E0A',
-  // ท-equivalent: ฐ ฑ ฒ ถ ท ธ → ท
-  '\u0E10': '\u0E17', '\u0E11': '\u0E17', '\u0E12': '\u0E17',
+  // ท-equivalent: ต ฐ ฑ ฒ ถ ท ธ → ท
+  '\u0E15': '\u0E17', '\u0E10': '\u0E17', '\u0E11': '\u0E17', '\u0E12': '\u0E17',
   '\u0E16': '\u0E17', '\u0E18': '\u0E17',
   // ส-equivalent: ศ ษ ส → ส
   '\u0E28': '\u0E2A', '\u0E29': '\u0E2A',
@@ -179,17 +179,17 @@ export function matchName(query, target) {
   // 1. Exact match after normalization
   if (nQ === nT) return 1.0;
 
-  // 2. Contains match (either direction)
+  // 2. Phonetic match — check before contains so การันต์ variants score high
+  const pQ = phoneticNormalize(nQ);
+  const pT = phoneticNormalize(nT);
+  if (pQ === pT) return 0.9;
+
+  // 3. Contains match (either direction)
   if (nT.includes(nQ) || nQ.includes(nT)) {
     // Score based on length ratio — "สม" in "สมชาย" = less than "สมชาย" in "สมชาย นวล"
     const ratio = Math.min(nQ.length, nT.length) / Math.max(nQ.length, nT.length);
     return 0.7 + (ratio * 0.15); // range: 0.70 – 0.85
   }
-
-  // 3. Phonetic match
-  const pQ = phoneticNormalize(nQ);
-  const pT = phoneticNormalize(nT);
-  if (pQ === pT) return 0.9;
 
   // 4. Multi-strategy scoring
   const scores = [

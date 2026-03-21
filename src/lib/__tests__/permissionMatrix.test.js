@@ -39,13 +39,14 @@ describe('permissionMatrix', () => {
       expect(DOMAINS).toContain('system')
     })
 
-    it('has 5 actions defined', () => {
-      expect(ACTIONS).toHaveLength(5)
+    it('has 6 actions defined', () => {
+      expect(ACTIONS).toHaveLength(6)
       expect(ACTIONS).toContain('view')
       expect(ACTIONS).toContain('create')
       expect(ACTIONS).toContain('edit')
       expect(ACTIONS).toContain('delete')
       expect(ACTIONS).toContain('approve')
+      expect(ACTIONS).toContain('request')
     })
   })
 

@@ -66,7 +66,7 @@ describe('Middleware RBAC Guard', () => {
     });
 
     it('should allow if user role is sufficient', async () => {
-        const req = mockRequest('/api/marketing/insights', 'SUPERVISOR');
+        const req = mockRequest('/api/marketing/insights', 'MARKETING');
         const res = await middleware(req);
         expect(NextResponse.next).toHaveBeenCalled();
     });

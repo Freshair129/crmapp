@@ -28,6 +28,68 @@
 
 ## Handover Log (ใหม่สุดอยู่บน)
 
+### [2026-03-21 13:45] Claude — Phase 29 (v1.4.0 RBAC Redesign + Ads Optimize) COMPLETE ✅
+- **สิ่งที่ทำ**:
+  - แก้ไข package IDs ใน DB: `PKG-2026-001` → `TVS-FC-FULL-COURSES-B-201H`, `PKG-2026-002` → `TVS-FC-FULL-COURSES-A-111H`
+  - ออกแบบ + implement RBAC 8 roles: DEVELOPER/MANAGER/ADMIN/MARKETING/HEAD_CHEF/EMPLOYEE/AGENT/GUEST
+  - สร้าง `src/lib/permissionMatrix.js` — central permission config + `can()`, `canWithMeta()` helpers
+  - อัปเดต `src/lib/rbac.js` — VALID_ROLES uppercase, ROLE_HIERARCHY
+  - อัปเดต `src/lib/authOptions.js` — isValidRole() guard
+  - อัปเดต `src/components/TopBar.js` — ROLE_LABEL for all 8 roles
+  - อัปเดต `src/app/page.js`, `Sidebar.js`, `settings/employees/page.js` — แทน hardcoded role checks
+  - สร้าง `src/lib/repositories/adsOptimizeRepo.js` — Meta API write wrapper (pause/resume/budget/bid/duplicate/lifetime-budget)
+  - สร้าง `src/lib/id-generators.js` — generateLogId(), generateRequestId()
+  - สร้าง 6 API routes ใน `src/app/api/ads/`
+  - อัปเดต `prisma/schema.prisma` — AdsOptimizeRequest model
+  - สร้าง `ads_optimize_requests` table ใน Supabase โดยตรงผ่าน psycopg2
+  - สร้าง UI components: AdsOptimizePanel, AdsOptimizeRequestModal, AdsApprovalQueue, PermissionMatrix
+  - อัปเดต ExecutiveAnalytics.js — "Optimize" button, EmployeeManagement.js — Permissions tab
+  - เขียน ADR-045, implement_plan_phase29.md
+  - เขียน unit tests 67 cases (permissionMatrix) + middleware + thaiNameMatcher = 104 tests pass
+  - อัปเดต `src/middleware.js` — `/api/marketing` + `/api/analytics` ใช้ `MARKETING` role แทน `MANAGER`
+  - Fix bugs: `ACTIONS` array เพิ่ม `'request'`, `canWithMeta()` logic, thaiNameMatcher (ต→ท, phonetic-before-contains)
+- **ไฟล์ที่เปลี่ยน** (key):
+  - `src/lib/permissionMatrix.js` (new), `src/lib/rbac.js`, `src/lib/authOptions.js`
+  - `src/lib/repositories/adsOptimizeRepo.js` (new), `src/lib/id-generators.js` (new)
+  - `src/app/api/ads/` (6 routes, new), `prisma/schema.prisma`
+  - `src/components/AdsOptimizePanel.js`, `AdsOptimizeRequestModal.js`, `AdsApprovalQueue.js`, `PermissionMatrix.js` (all new)
+  - `src/components/ExecutiveAnalytics.js`, `EmployeeManagement.js`, `TopBar.js`, `Sidebar.js`
+  - `src/app/page.js`, `src/app/settings/employees/page.js`, `src/middleware.js`
+  - `src/lib/__tests__/permissionMatrix.test.js` (new, 67 tests), `src/__tests__/middleware.test.js`
+  - `src/lib/thaiNameMatcher.js` — bug fixes
+  - `docs/adr/045-rbac-redesign-ads-optimize.md` (new), `docs/implement_plan_phase29.md` (new)
+  - `CLAUDE.md`, `GOAL.md`, `CHANGELOG.md`, `changelog/CL-20260321-003.md` (new)
+- **Breaking Changes**:
+  - ⚠️ **Role Migration Required**: DB ต้อง migrate role values → UPPERCASE (`UPDATE employees SET role = UPPER(role)`) — ทำแล้วใน DB
+  - ⚠️ **NEXTAUTH_SECRET rotation**: ต้อง rotate ใน Vercel dashboard เพื่อ force re-login ทุก session (ยังไม่ได้ทำ)
+  - ⚠️ **middleware.js**: `/api/marketing` + `/api/analytics` ลด required role จาก MANAGER → MARKETING (MANAGER ยังเข้าได้เพราะ level สูงกว่า)
+- **ต้อง review**: ไม่มี architectural concern เพิ่ม — Phase 29 ครบแล้ว
+- **ทำต่อ**: Phase 30 (v1.5.0) — POS Receipt & Printer (ADR-046, implement_plan_phase30.md)
+
+### [2026-03-21 xx:xx] Claude — Phase 30 Plan (POS Receipt & Printer) DOCUMENTED
+- **สิ่งที่ทำ**:
+  - Session Start Protocol: อ่าน CLAUDE.md, MEMORY.md, GOAL.md, CHANGELOG.md, ADR-045, implement_plan_phase29.md, permissionMatrix.js
+  - ตรวจสอบ POS codebase — ยืนยันว่าไม่มี receipt/billing/printing infrastructure เลย
+  - เขียน ADR-046: POS Receipt & Printer Integration — ครอบคลุม Receipt model, 3 print channels (Thermal/Browser/LINE), receipt layout, UX flow
+  - เขียน `docs/implement_plan_phase30.md` — Phase 30a–30g (7 sub-phases)
+  - อัปเดต `system_requirements.yaml` — เพิ่ม FR6.4: Receipt / Billing
+  - อัปเดต `id_standards.yaml` — เพิ่ม Receipt ID `RCP-YYYYMMDD-XXX`
+  - อัปเดต `CLAUDE.md` — v1.5.0 ใน version table + ADR-046 ใน ADR table
+  - อัปเดต `GOAL.md` — เพิ่ม Phase 30 section
+  - อัปเดต `CHANGELOG.md` — CL-20260321-004 + sliding window trim (Recent → 5 entries)
+  - สร้าง `changelog/CL-20260321-004.md`
+- **ไฟล์ที่เปลี่ยน**:
+  - `docs/adr/046-pos-receipt-printing.md` (new)
+  - `docs/implement_plan_phase30.md` (new)
+  - `changelog/CL-20260321-004.md` (new)
+  - `system_requirements.yaml`, `id_standards.yaml`, `CLAUDE.md`, `GOAL.md`, `CHANGELOG.md`, `MEMORY.md` (updated)
+- **Breaking Changes**: ไม่มี — docs/plan only, ไม่มี code change
+- **ต้อง review**: ADR-046 — Boss ควรตรวจ:
+  - Receipt ผูก Order 1:1 ใช่ไหม หรือต้อง 1:N (reissue / void+reissue)?
+  - Thermal printer รุ่นอะไร? (ต้อง test charset TIS-620)
+  - ต้องการข้อมูลอะไรเพิ่มบนบิล? (เลขประจำตัวผู้เสียภาษี, สาขา, etc.)
+- **ทำต่อ**: Phase 29 ยังค้าง (29c–29g) → ทำให้เสร็จก่อน หรือ Boss สั่งเริ่ม Phase 30a ก่อนก็ได้
+
 ### [2026-03-19 12:00] Claude — Phase 28 (v1.0.0 Docs Hardening) COMPLETE
 - **สิ่งที่ทำ**:
   - Session Start: อ่าน context files ทั้งหมด (CLAUDE.md, CHANGELOG.md, ADR-038/039/040, MEMORY.md, GOAL.md, ANTIGRAVITY.md, GEMINI.md, system_requirements.yaml, domain-boundaries.md, domain-flows.md, id_standards.yaml, API_REFERENCE.md, database_erd.md)

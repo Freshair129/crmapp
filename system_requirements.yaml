@@ -212,6 +212,25 @@ functional_requirements:
         status: "✅ Working"
         description: "Order → Transaction[] (slip + payment records)"
 
+      - name: "FR6.4: Receipt / Billing"
+        status: "🔄 Planned"
+        adr: "ADR-046"
+        description: |
+          ออกบิล/ใบเสร็จจาก POS checkout:
+          - Receipt ID: RCP-YYYYMMDD-XXX (auto-generate)
+          - Receipt model ผูก Order 1:1
+          - รองรับ thermal printer 80mm (ESC/POS) + browser print (A4)
+          - Print preview modal ก่อนพิมพ์
+          - ข้อมูลบิล: ชื่อร้าน, สาขา, วันที่, รายการสินค้า, ราคา, VAT 7%, รวม, วิธีชำระ
+          - ส่งบิลทาง LINE (ภาพ PNG) ถ้าลูกค้ามี LINE ID
+          - ประวัติบิลย้อนหลัง + reprint
+        implementation: "src/lib/repositories/receiptRepo.js"
+        api_endpoints:
+          - "POST /api/receipts — สร้างบิลจาก orderId"
+          - "GET /api/receipts/[id] — ดึงข้อมูลบิล"
+          - "GET /api/receipts?orderId= — ดึงบิลตาม order"
+          - "POST /api/receipts/[id]/print — trigger print job"
+
   # ── MODULE 7: COURSE ENROLLMENT ───────────────────────
 
   - module: "Course Enrollment"

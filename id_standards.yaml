@@ -256,6 +256,12 @@ id_naming_conventions:
         example: "PAY-20260316-001"
         description: "รหัสการชำระเงิน — ผูก Order กับ Transaction หลายรายการ"
 
+      - name: "Receipt ID"
+        format: "RCP-[YYYYMMDD]-[SERIAL]"
+        example: "RCP-20260321-001"
+        description: "เลขที่ใบเสร็จ — ผูก Order 1:1, auto-generate เมื่อ checkout สำเร็จ"
+        generated_by: "receiptRepo.js — auto-increment per day"
+
   # ─────────────────────────────────────────────
   # DOMAIN: Tasks / Cases / Support
   # ─────────────────────────────────────────────

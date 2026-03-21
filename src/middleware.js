@@ -26,8 +26,8 @@ const ROUTE_ROLES = [
   { prefix: '/api/health',           role: null },   // public — health check
   { prefix: '/api/products',         role: 'AGENT' },
   { prefix: '/api/employees',        role: 'MANAGER' },
-  { prefix: '/api/marketing',        role: 'MANAGER' },
-  { prefix: '/api/analytics',        role: 'MANAGER' },
+  { prefix: '/api/marketing',        role: 'MARKETING' },
+  { prefix: '/api/analytics',        role: 'MARKETING' },
   { prefix: '/api/customers',        role: 'AGENT' },
   { prefix: '/api',                  role: 'AGENT' }, // catch-all: any authenticated user
 ];

@@ -37,6 +37,7 @@ export const ACTIONS = [
   'edit',
   'delete',
   'approve',
+  'request',
 ]
 
 /**
@@ -389,11 +390,13 @@ export function canWithMeta(role, domain, action) {
 
   const permission = domainPerms[action]
 
+  const allowed = permission === true || permission === 'log' || permission === 'own' || permission === 'request'
   return {
-    allowed: permission === true || permission === 'log' || permission === 'own' || permission === 'request',
+    allowed,
     requiresLog: permission === 'log',
     ownOnly: permission === 'own',
-    requiresApproval: permission === 'request',
+    // requiresApproval when: permission value is 'request', OR action name is 'request' and it's allowed
+    requiresApproval: permission === 'request' || (action === 'request' && allowed),
   }
 }
 
