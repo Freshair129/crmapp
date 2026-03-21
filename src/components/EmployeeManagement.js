@@ -400,7 +400,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             whileTap={{ scale: 0.92 }}
                             className="absolute flex items-center justify-center z-20"
                             style={{
-                                top: 6, right: 6, width: 38, height: 38,
+                                top: 44, right: 20, width: 42, height: 42,
                                 borderRadius: '50%',
                                 background: `radial-gradient(circle at 35% 35%, ${avatarColors[0]}cc, ${avatarColors[1]}ee)`,
                                 boxShadow: `0 4px 16px ${avatarColors[0]}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
@@ -409,7 +409,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             }}
                             title="เปิด Full Dashboard"
                         >
-                            <ArrowUpRight size={15} className="text-white" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+                            <ArrowUpRight size={16} className="text-white" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
                         </motion.button>
 
                         {/* ── Glass card (SVG folder shape — responsive) ───── */}
@@ -418,48 +418,48 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
                             {/* SVG layer: folder notch shape + glass fills + border + sheen */}
                             {/* viewBox 372×370, preserveAspectRatio=none → scales to any card width */}
-                            {/* Path: Q bezier rounded corners (R=28) + top-right notch (50px diagonal) */}
+                            {/* Path: Q bezier rounded corners (R=28) + top-right notch (150px diagonal) */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none"
                                 viewBox="0 0 372 370" preserveAspectRatio="none"
                                 xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
                                 <defs>
                                     <linearGradient id={`gf-${i}`} x1="0" y1="0" x2="0.6" y2="1">
-                                        <stop offset="0%" stopColor={avatarColors[0]} stopOpacity={isActive ? '0.14' : '0.05'} />
-                                        <stop offset="100%" stopColor={avatarColors[1]} stopOpacity="0.04" />
+                                        <stop offset="0%" stopColor={avatarColors[0]} stopOpacity={isActive ? '0.18' : '0.07'} />
+                                        <stop offset="100%" stopColor={avatarColors[1]} stopOpacity="0.06" />
                                     </linearGradient>
                                     <linearGradient id={`gs-${i}`} x1="0" y1="0" x2="0.55" y2="0.65">
-                                        <stop offset="0%" stopColor="white" stopOpacity="0.16" />
-                                        <stop offset="50%" stopColor="white" stopOpacity="0.04" />
+                                        <stop offset="0%" stopColor="white" stopOpacity="0.18" />
+                                        <stop offset="50%" stopColor="white" stopOpacity="0.05" />
                                         <stop offset="100%" stopColor="white" stopOpacity="0" />
                                     </linearGradient>
                                 </defs>
 
-                                {/* ① Dark glass base fill */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
-                                    fill="rgba(10,10,22,0.74)" />
+                                {/* ① Dark glass base fill — opacity 0.92 */}
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
+                                    fill="rgba(10,10,22,0.92)" />
                                 {/* ② Role-color tint */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
                                     fill={`url(#gf-${i})`} />
                                 {/* ③ Soft outer glow (active only) */}
                                 {isActive && (
-                                    <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                    <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
                                         fill="none"
-                                        stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.15"
+                                        stroke={avatarColors[0]} strokeWidth="6" strokeOpacity="0.18"
                                         strokeLinejoin="round" />
                                 )}
                                 {/* ④ Border line */}
-                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 50 L 322 0 Z"
+                                <path d="M 28 0 Q 0 0 0 28 L 0 342 Q 0 370 28 370 L 344 370 Q 372 370 372 342 L 372 150 L 222 0 Z"
                                     fill="none"
-                                    stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.08)'}
+                                    stroke={isActive ? avatarColors[0] : 'rgba(255,255,255,0.10)'}
                                     strokeWidth={isActive ? '1.2' : '0.8'}
-                                    strokeOpacity={isActive ? '0.5' : '1'}
+                                    strokeOpacity={isActive ? '0.55' : '1'}
                                     strokeLinejoin="round" />
                                 {/* ⑤ Glass sheen (top-left triangle) */}
                                 <path d="M 28 0 Q 0 0 0 28 L 0 148 L 240 0 Z"
                                     fill={`url(#gs-${i})`} />
                                 {/* ⑥ Notch edge shimmer */}
-                                <line x1="322" y1="1" x2="371" y2="50"
-                                    stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+                                <line x1="222" y1="1" x2="371" y2="149"
+                                    stroke="rgba(255,255,255,0.20)" strokeWidth="1" />
                             </svg>
 
                             {/* Content sits on top of SVG */}
