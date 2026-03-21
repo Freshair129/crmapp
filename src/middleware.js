@@ -22,6 +22,7 @@ import { getToken } from 'next-auth/jwt';
 const ROUTE_ROLES = [
   { prefix: '/api/auth',             role: null },   // NextAuth — session/signin/callback must be free
   { prefix: '/api/webhooks',         role: null },   // skip — handler does own auth
+  { prefix: '/api/mcp',              role: null },   // MCP server — Bearer token auth handled in route
   { prefix: '/api/members/register', role: null },   // public — customer self-registration
   { prefix: '/api/health',           role: null },   // public — health check
   { prefix: '/api/products',         role: 'AGENT' },
