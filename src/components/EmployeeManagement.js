@@ -99,10 +99,15 @@ function getLinkedData(emp, customers = []) {
 }
 
 // ─── Status Toggle Slider (Framer Motion) ────────────────────────────────────
-function StatusToggle({ status, onChange, disabled, onCard = false }) {
+function StatusToggle({ status, onChange, disabled, onCard = false, bare = false }) {
     const isActive = status === 'ACTIVE';
-    // onCard variant: glass style works on colored gradient card background
-    const buttonClass = onCard
+
+    // bare = no border / no bg — just track + label floating (for dark card bottom)
+    const buttonClass = bare
+        ? `relative flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-colors duration-150 ${
+              disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          } ${isActive ? 'text-white/70' : 'text-white/30'}`
+        : onCard
         ? `relative flex items-center gap-2 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest transition-colors duration-150 ${
               disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
           } ${
@@ -118,6 +123,19 @@ function StatusToggle({ status, onChange, disabled, onCard = false }) {
                   : 'bg-white/5 border-white/15 text-white/40 hover:bg-white/10'
           }`;
 
+    const trackSize = bare ? 'w-8 h-4' : onCard ? 'w-8 h-4' : 'w-9 h-[18px]';
+    const trackBg   = bare
+        ? (isActive ? 'bg-white/25' : 'bg-white/08')
+        : onCard
+        ? (isActive ? 'bg-white/30' : 'bg-black/30')
+        : (isActive ? 'bg-emerald-500/30' : 'bg-white/10');
+    const knobSize  = (bare || onCard) ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    const knobBg    = bare
+        ? (isActive ? 'bg-white shadow-white/50' : 'bg-white/35')
+        : onCard
+        ? (isActive ? 'bg-white shadow-white/40' : 'bg-white/40')
+        : (isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]' : 'bg-white/30');
+
     return (
         <motion.button
             whileTap={disabled ? {} : { scale: 0.93 }}
@@ -127,19 +145,11 @@ function StatusToggle({ status, onChange, disabled, onCard = false }) {
             className={buttonClass}
         >
             {/* Toggle track + sliding knob */}
-            <span className={`relative flex items-center rounded-full px-0.5 shrink-0 transition-colors duration-200 ${
-                onCard
-                    ? `w-8 h-4 ${isActive ? 'bg-white/30' : 'bg-black/30'}`
-                    : `w-9 h-[18px] ${isActive ? 'bg-emerald-500/30' : 'bg-white/10'}`
-            }`}>
+            <span className={`relative flex items-center rounded-full px-0.5 shrink-0 transition-colors duration-200 ${trackSize} ${trackBg}`}>
                 <motion.span
-                    className={`rounded-full shadow-md shrink-0 ${
-                        onCard
-                            ? `w-3 h-3 ${isActive ? 'bg-white shadow-white/40' : 'bg-white/40'}`
-                            : `w-3.5 h-3.5 ${isActive ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]' : 'bg-white/30'}`
-                    }`}
+                    className={`rounded-full shadow-md shrink-0 ${knobSize} ${knobBg}`}
                     initial={false}
-                    animate={{ x: isActive ? (onCard ? 16 : 18) : 0 }}
+                    animate={{ x: isActive ? 16 : 0 }}
                     transition={{ type: 'spring', stiffness: 600, damping: 30 }}
                     style={{ willChange: 'transform' }}
                 />
@@ -158,7 +168,7 @@ function StatusToggle({ status, onChange, disabled, onCard = false }) {
                 </motion.span>
             </AnimatePresence>
 
-            {disabled && <Lock size={onCard ? 8 : 9} className="opacity-50" />}
+            {disabled && <Lock size={bare ? 8 : onCard ? 8 : 9} className="opacity-50" />}
         </motion.button>
     );
 }
@@ -240,16 +250,71 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             pointerEvents: isActive ? 'auto' : 'none',
                         }}
                     >
+                        {/* ── Smoke / haze effects (active card only) ── */}
+                        {isActive && !isInactive && (
+                            <>
+                                {/* Bottom smoke bloom */}
+                                <motion.div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        bottom: -28, left: '5%', width: '90%', height: 70,
+                                        borderRadius: '50%',
+                                        background: `radial-gradient(ellipse, ${avatarColors[0]}22 0%, transparent 68%)`,
+                                        filter: 'blur(22px)',
+                                    }}
+                                    animate={{ opacity: [0.55, 1, 0.55], scaleX: [1, 1.15, 1] }}
+                                    transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                                />
+                                {/* Left wisp */}
+                                <motion.div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        top: '30%', left: -18, width: 60, height: 120,
+                                        borderRadius: '50%',
+                                        background: `radial-gradient(ellipse, ${avatarColors[0]}14 0%, transparent 70%)`,
+                                        filter: 'blur(16px)',
+                                    }}
+                                    animate={{ opacity: [0.4, 0.8, 0.4], y: [0, -8, 0] }}
+                                    transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+                                />
+                                {/* Right wisp */}
+                                <motion.div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        top: '25%', right: -18, width: 60, height: 110,
+                                        borderRadius: '50%',
+                                        background: `radial-gradient(ellipse, ${avatarColors[1]}18 0%, transparent 70%)`,
+                                        filter: 'blur(18px)',
+                                    }}
+                                    animate={{ opacity: [0.35, 0.75, 0.35], y: [0, -10, 0] }}
+                                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1.6 }}
+                                />
+                                {/* Top ambient glow */}
+                                <motion.div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        top: -10, left: '20%', width: '60%', height: 40,
+                                        borderRadius: '50%',
+                                        background: `radial-gradient(ellipse, ${avatarColors[0]}10 0%, transparent 70%)`,
+                                        filter: 'blur(14px)',
+                                    }}
+                                    animate={{ opacity: [0.3, 0.7, 0.3] }}
+                                    transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+                                />
+                            </>
+                        )}
+
                         {/* ── Dark card matching reference design ───── */}
                         <div
                             className="h-full rounded-[2rem] flex flex-col p-6"
                             style={{
+                                position: 'relative', zIndex: 1,
                                 background: '#0e0e18',
                                 boxShadow: isActive
-                                    ? '0 32px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4)'
+                                    ? `0 32px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px ${avatarColors[0]}22, 0 0 40px ${avatarColors[0]}28, 0 0 80px ${avatarColors[0]}12`
                                     : '0 8px 20px rgba(0,0,0,0.35)',
                                 border: isActive
-                                    ? '1px solid rgba(255,255,255,0.09)'
+                                    ? `1px solid ${avatarColors[0]}30`
                                     : '1px solid rgba(255,255,255,0.04)',
                                 filter: isInactive ? 'grayscale(0.5) brightness(0.75)' : 'none',
                             }}
@@ -308,10 +373,10 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                             )}
                                         </div>
                                     </div>
-                                    {/* Active toggle */}
+                                    {/* Active toggle — bare (no frame) */}
                                     <StatusToggle
                                         status={emp.status}
-                                        onCard
+                                        bare
                                         disabled={!canManage || togglingStatus}
                                         onChange={(next) => {
                                             if (!canManage || togglingStatus) return;
@@ -320,9 +385,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     />
                                 </div>
 
-                                {/* RIGHT: permission level bar */}
+                                {/* RIGHT: priority level bar */}
                                 <div className="flex flex-col items-end gap-1.5 shrink-0 w-[96px]">
-                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">Permission</p>
+                                    <p className="text-white/25 text-[8px] uppercase tracking-widest font-bold">Priority</p>
                                     {/* Bar + circle */}
                                     <div className="flex items-center gap-2 w-full">
                                         {/* Track */}
