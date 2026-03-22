@@ -51,6 +51,7 @@ const ALL_ROLES = ['DEVELOPER','OWNER','MANAGER','ADMIN','MARKETING','HEAD_CHEF'
 // Avatar gradient colors (for card dark-bg design)
 const ROLE_AVATAR = {
     DEVELOPER: ['#7c3aed','#4c1d95'],
+    OWNER:     ['#cc9d37','#78350f'],
     MANAGER:   ['#2563eb','#1e3a8a'],
     ADMIN:     ['#cc9d37','#92400e'],
     MARKETING: ['#db2777','#831843'],
@@ -59,6 +60,85 @@ const ROLE_AVATAR = {
     AGENT:     ['#ef4444','#7f1d1d'],
     GUEST:     ['#64748b','#19273a'],
 };
+
+// ─── Rank / Score system ──────────────────────────────────────────────────────
+const RANK_CONFIG = {
+    S: { label: 'Specialist', color: '#FFD700', bg: 'rgba(255,215,0,0.13)',   border: 'rgba(255,215,0,0.40)',   glow: '0 0 18px rgba(255,215,0,0.50)' },
+    A: { label: 'Expert',     color: '#c084fc', bg: 'rgba(192,132,252,0.13)', border: 'rgba(192,132,252,0.40)', glow: '0 0 18px rgba(192,132,252,0.45)' },
+    B: { label: 'Proficient', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',  border: 'rgba(96,165,250,0.35)',  glow: '0 0 16px rgba(96,165,250,0.40)' },
+    C: { label: 'Developing', color: '#34d399', bg: 'rgba(52,211,153,0.12)',  border: 'rgba(52,211,153,0.35)',  glow: '0 0 14px rgba(52,211,153,0.35)' },
+    D: { label: 'Beginner',   color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.25)', glow: 'none' },
+};
+
+function getRankLetter(score) {
+    if (score >= 90) return 'S';
+    if (score >= 75) return 'A';
+    if (score >= 55) return 'B';
+    if (score >= 35) return 'C';
+    return 'D';
+}
+
+/**
+ * calcEmployeeScore — composite 100-pt score
+ * Real data: customers, revenue, close rate (from linked DB orders)
+ * Placeholder (needs HR integration): attendance, jobDone, teamwork
+ */
+function calcEmployeeScore(linked) {
+    const custCount  = linked.assignedCustomers.length;
+    const revenue    = linked.totalRevenue;
+    const validSales = linked.sales.filter(s => s.status !== 'CANCELLED').length;
+    const closeRate  = custCount > 0 ? Math.round((validSales / custCount) * 100) : 0;
+
+    const custNorm  = Math.min(Math.round((custCount / 15) * 100), 100);
+    const revNorm   = Math.min(Math.round((revenue  / 80000) * 100), 100);
+    const closeNorm = closeRate;
+
+    // HR placeholders — replace with real values when HR table is integrated
+    const attendance = 80;
+    const jobDone    = 72;
+    const teamwork   = 78;
+
+    const score = Math.round(
+        custNorm   * 0.15 +
+        revNorm    * 0.20 +
+        closeNorm  * 0.15 +
+        jobDone    * 0.20 +
+        teamwork   * 0.15 +
+        attendance * 0.15
+    );
+
+    return {
+        score: Math.min(score, 100),
+        metrics: [
+            { label: 'ลูกค้า',    value: `${custCount}`,              norm: custNorm,  note: 'customers' },
+            { label: 'ยอดขาย',   value: revenue >= 1000 ? `฿${Math.round(revenue/1000)}k` : `฿${revenue}`, norm: revNorm,  note: 'revenue' },
+            { label: 'Close%',    value: `${closeRate}%`,             norm: closeNorm, note: 'close rate' },
+            { label: 'Job Done',  value: `${jobDone}%`,               norm: jobDone,   note: 'placeholder' },
+            { label: 'Teamwork',  value: `${teamwork}%`,              norm: teamwork,  note: 'placeholder' },
+            { label: 'Attend',    value: `${attendance}%`,            norm: attendance,note: 'placeholder' },
+        ],
+    };
+}
+
+// Circular SVG score ring
+function ScoreRing({ score, color, size = 56 }) {
+    const r    = (size - 7) / 2;
+    const circ = 2 * Math.PI * r;
+    const dash = (score / 100) * circ;
+    return (
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+            style={{ transform: 'rotate(-90deg)', display: 'block' }}>
+            <circle cx={size/2} cy={size/2} r={r}
+                fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4.5" />
+            <circle cx={size/2} cy={size/2} r={r}
+                fill="none" stroke={color} strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeDasharray={`${dash} ${circ}`}
+                style={{ filter: `drop-shadow(0 0 4px ${color}99)` }}
+            />
+        </svg>
+    );
+}
 
 function getRoleMeta(role) {
     return ROLE_META[role] || ROLE_META.GUEST;
@@ -213,48 +293,71 @@ function Sparkline({ sales = [], color = '#00f5ff' }) {
     );
 }
 
-// ─── KPI block (role-aware) ───────────────────────────────────────────────────
-const SALES_ROLES = new Set(['AGENT', 'EMPLOYEE', 'ADMIN', 'MANAGER', 'HEAD_CHEF']);
-function KpiBlock({ emp, linked, barColor }) {
-    const isSalesRole  = SALES_ROLES.has(emp.role);
-    const revenue      = linked.totalRevenue;
-    const custCount    = linked.assignedCustomers.length;
-    const validOrders  = linked.sales.filter(s => s.status !== 'CANCELLED').length;
-    const closeRate    = custCount > 0 ? Math.round((validOrders / custCount) * 100) : 0;
-    const fmtRevenue   = revenue >= 1_000_000
-        ? `฿${(revenue / 1_000_000).toFixed(1)}M`
-        : revenue >= 1_000
-        ? `฿${Math.round(revenue / 1_000)}k`
-        : `฿${revenue}`;
-
-    if (!isSalesRole || custCount === 0) {
-        return (
-            <div className="flex items-center justify-center py-4">
-                <p className="text-white/15 text-[10px] tracking-widest uppercase">No linked data</p>
-            </div>
-        );
-    }
+// ─── Mini Dashboard (rank + 6 metrics) ───────────────────────────────────────
+function MiniDashboard({ emp, linked, barColor }) {
+    const { score, metrics } = calcEmployeeScore(linked);
+    const rankLetter = getRankLetter(score);
+    const rank       = RANK_CONFIG[rankLetter];
 
     return (
-        <div className="flex flex-col gap-2">
-            {/* 3 stat pills */}
-            <div className="grid grid-cols-3 gap-2">
-                {[
-                    { label: 'Revenue',   value: fmtRevenue },
-                    { label: 'Customers', value: `${custCount}` },
-                    { label: 'Close',     value: `${closeRate}%` },
-                ].map(({ label, value }) => (
-                    <div key={label} className="flex flex-col items-center justify-center py-2 rounded-xl"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <span className="text-white font-black text-[15px] leading-none">{value}</span>
-                        <span className="text-white/30 text-[8px] uppercase tracking-widest mt-1">{label}</span>
+        <div className="flex flex-col gap-2 h-full">
+            {/* ── Rank zone ── */}
+            <div className="flex items-center gap-3"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '10px 12px' }}>
+
+                {/* Rank badge */}
+                <div className="flex flex-col items-center justify-center shrink-0 w-[52px] h-[52px] rounded-2xl"
+                    style={{ background: rank.bg, border: `1.5px solid ${rank.border}`, boxShadow: rank.glow }}>
+                    <span className="font-black leading-none" style={{ fontSize: 22, color: rank.color }}>{rankLetter}</span>
+                    <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: rank.color, opacity: 0.7 }}>{rank.label.substring(0,4)}</span>
+                </div>
+
+                {/* Score ring */}
+                <div className="relative shrink-0">
+                    <ScoreRing score={score} color={rank.color} size={52} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-black text-[13px] leading-none" style={{ color: rank.color }}>{score}</span>
+                    </div>
+                </div>
+
+                {/* Score breakdown bars */}
+                <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    {metrics.slice(0, 3).map(m => (
+                        <div key={m.label} className="flex items-center gap-1.5">
+                            <span className="text-white/35 text-[8px] w-[38px] shrink-0 truncate">{m.label}</span>
+                            <div className="flex-1 h-[3px] rounded-full overflow-hidden"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}>
+                                <div className="h-full rounded-full" style={{
+                                    width: `${m.norm}%`,
+                                    background: rank.color,
+                                    boxShadow: `0 0 4px ${rank.color}66`,
+                                    transition: 'width 0.6s ease',
+                                }} />
+                            </div>
+                            <span className="text-white/55 text-[8px] font-bold w-[24px] text-right shrink-0">{m.value}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ── 3 bottom metrics row ── */}
+            <div className="grid grid-cols-3 gap-1.5">
+                {metrics.slice(3).map(m => (
+                    <div key={m.label} className="flex flex-col items-center justify-center py-1.5 rounded-xl"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${m.note === 'placeholder' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}` }}>
+                        <span className="font-black text-[13px] leading-none" style={{ color: m.note === 'placeholder' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)' }}>{m.value}</span>
+                        <span className="text-white/25 text-[7px] uppercase tracking-widest mt-0.5">{m.label}</span>
+                        {m.note === 'placeholder' && (
+                            <span className="text-[6px] text-white/15 mt-0.5">HR pending</span>
+                        )}
                     </div>
                 ))}
             </div>
-            {/* Sparkline */}
-            <div className="rounded-xl overflow-hidden px-2 pt-1.5 pb-0.5"
+
+            {/* ── Sparkline ── */}
+            <div className="rounded-xl overflow-hidden px-2 pt-1 pb-0.5"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-white/20 text-[7px] uppercase tracking-widest mb-1">6-month trend</p>
+                <p className="text-white/18 text-[7px] uppercase tracking-widest mb-0.5">6-month revenue</p>
                 <Sparkline sales={linked.sales} color={barColor} />
             </div>
         </div>
@@ -289,7 +392,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
     };
 
     return (
-        <div className="relative select-none" style={{ height: 430, width: '100%' }}>
+        <div className="relative select-none mx-auto" style={{ height: 534, width: 340 }}>
 
             {/* Cards — rendered back→front via zIndex, all employees keyed by id */}
             {employees.map((emp, i) => {
@@ -335,8 +438,8 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                         whileDrag={{ scale: 1.03, boxShadow: '0 40px 80px rgba(0,0,0,0.7)' }}
                         style={{
                             position: 'absolute',
-                            width: '100%',
-                            height: 372,
+                            width: 340,
+                            height: 492,
                             cursor: isActive ? 'grab' : 'default',
                             transformOrigin: '50% 110%',
                             pointerEvents: isActive ? 'auto' : 'none',
@@ -436,7 +539,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                             )}
 
                             {/* Content sits on top */}
-                            <div className="relative flex flex-col h-full p-6" style={{ zIndex: 1 }}>
+                            <div className="relative flex flex-col h-full p-5" style={{ zIndex: 1 }}>
 
                             {/* ── TOP ROW: avatar left · name/role/id right ── */}
                             <div className="relative flex items-start gap-3">
@@ -471,9 +574,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                 </div>
                             </div>
 
-                            {/* ── KPI MIDDLE ── */}
+                            {/* ── MINI DASHBOARD ── */}
                             <div className="mt-3 flex-1 min-h-0">
-                                <KpiBlock emp={emp} linked={linked} barColor={barColor} />
+                                <MiniDashboard emp={emp} linked={linked} barColor={barColor} />
                             </div>
 
                             {/* ── BOTTOM ROW: contacts+toggle left · priority bar right ── */}
