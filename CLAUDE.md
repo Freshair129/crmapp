@@ -67,6 +67,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > ⚠️ **Known Gotcha — Local stdio**: ต้องใช้ `npx tsx --tsconfig tsconfig.json` เสมอ — ไม่งั้น `@/` aliases resolve ไม่ได้
 > ⚠️ **Known Gotcha — module boundary**: อย่าสร้าง `src/mcp/package.json` ที่มี `"type":"module"` — CJS/ESM boundary แตก
 > 📍 **Production health check**: `curl https://crmapp-pi.vercel.app/api/mcp`
+> 📖 **User Guide**: `docs/guide/mcp-guide.md` — Claude Desktop config, 22 tools reference, ตัวอย่างคำถาม
+> 📐 **ADR**: `docs/adr/050-mcp-server-dual-transport.md`
 
 ### v1.8.0 — สิ่งที่ทำแล้ว (Phase 32 — Meta Ads MCP) ✅ — by Claude
 | ไฟล์ | สถานะ | หมายเหตุ |
@@ -523,6 +525,7 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 | Phase/Version เสร็จ | `CLAUDE.md` (version table + changelog section), `GOAL.md`, `CHANGELOG.md` |
 | Known Gotcha พบใหม่ | `CLAUDE.md` ทันที (ภายใต้ phase ที่เกี่ยวข้อง) |
 | NFR / Performance rule เปลี่ยน | `CLAUDE.md` (Non-Functional Requirements section) |
+| MCP tools เพิ่ม/เปลี่ยน/ลบ | `docs/guide/mcp-guide.md` (Tools Reference section) + `docs/adr/050-mcp-server-dual-transport.md` (tools table + changelog) |
 
 ### Docs Location Map (SSOT)
 
@@ -538,6 +541,8 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 | ADR (v1, archived) | `docs/archive/adr-v1/` | Read-only | ADR 001-023 — ไม่แก้ไข |
 | Version history | `CHANGELOG.md` + `changelog/CL-*.md` | Claude | sliding window 5 entries |
 | Agent context | `CLAUDE.md`, `GEMINI.md`, `ANTIGRAVITY.md` | Claude | sync หลัง commit ทุกครั้ง |
+| MCP user guide | `docs/guide/mcp-guide.md` | Claude | Claude Desktop config, 22 tools ref, example prompts |
+| MCP architecture decision | `docs/adr/050-mcp-server-dual-transport.md` | Claude | อัปเดตเมื่อ tools เพิ่ม/เปลี่ยน |
 
 ---
 

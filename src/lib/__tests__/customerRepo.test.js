@@ -7,7 +7,7 @@ vi.mock('@/lib/db', () => ({
     getPrisma: vi.fn(),
 }));
 
-vi.mock('@/utils/idGenerator', () => ({
+vi.mock('@/lib/idGenerators', () => ({
     generateCustomerId: vi.fn(),
 }));
 

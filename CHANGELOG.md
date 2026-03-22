@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-006 | v1.8.0 | 2026-03-22
+**LATEST:** CL-20260322-007 | v1.8.1 | 2026-03-22
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260322-007 | Audit & MCP Core Implementation | v1.8.1 | 2026-03-22 | MINOR | #docs #audit #mcp #procurement |
 | CL-20260322-006 | Meta Ads Domain in MCP (v1.8.0) + adsOptimizeRepo Bug Fix | v1.8.0 | 2026-03-22 | MINOR | #mcp #ads #marketing #bugfix |
 | CL-20260322-005 | MCP Server v1.7.0 — Dual Transport stdio + Streamable HTTP (ADR-050) | v1.7.0 | 2026-03-22 | MINOR | #mcp #api #infrastructure #auth #middleware |
 | CL-20260321-006 | V Point Loyalty + UI Overhaul (TopBar slim, Sidebar 3-mode) | v1.5.0-pre | 2026-03-21 | MINOR | #pos #loyalty #ui #sidebar #topbar |
@@ -34,6 +35,17 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-007] v1.8.1 — Audit & MCP Core Implementation
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #docs #audit #mcp #procurement
+
+#### Changes
+- **PRD Audit**: Updated `system_requirements.yaml` to v1.5.3 including all new functional modules (18-24).
+- **API Ref Sync**: Comprehensive rewrite of `docs/API_REFERENCE.md` to reflect current repository-backed endpoints.
+- **MCP Server**: New `src/mcp/vschool-mcp-server.js` providing AI-native tools for Procurement domain.
+- **ADR-050**: Formalized AI-Native Operations via Model Context Protocol.
+
+---
 
 ### [CL-20260322-006] v1.8.0 — Meta Ads Domain in MCP + adsOptimizeRepo Bug Fix
 **Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #mcp #ads #marketing #bugfix #adsOptimize
