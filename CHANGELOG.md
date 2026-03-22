@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-007 | v1.8.1 | 2026-03-22
+**LATEST:** CL-20260322-008 | v1.9.0 | 2026-03-22
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260322-008 | NotebookLM Chat Intelligence + Knowledge Tree | v1.9.0 | 2026-03-22 | MINOR | #ai #intelligence #notebooklm |
 | CL-20260322-007 | Audit & MCP Core Implementation | v1.8.1 | 2026-03-22 | MINOR | #docs #audit #mcp #procurement |
 | CL-20260322-006 | Meta Ads Domain in MCP (v1.8.0) + adsOptimizeRepo Bug Fix | v1.8.0 | 2026-03-22 | MINOR | #mcp #ads #marketing #bugfix |
 | CL-20260322-005 | MCP Server v1.7.0 — Dual Transport stdio + Streamable HTTP (ADR-050) | v1.7.0 | 2026-03-22 | MINOR | #mcp #api #infrastructure #auth #middleware |
@@ -35,6 +36,17 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-008] v1.9.0 — NotebookLM Chat Intelligence + Knowledge Tree
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #ai #intelligence #notebooklm #mermaid
+
+#### Changes
+- **Daily Intelligence:** New engine to summarize conversations and generate Mermaid.js "Knowledge Tree" diagrams.
+- **Repository:** Created `src/lib/repositories/intelligenceRepo.js`.
+- **Database:** Added `ConversationIntelligence` model to Prisma.
+- **MCP Tool:** Upgraded to v1.9.0 with `intelligence.get_chat_tree` tool.
+
+---
 
 ### [CL-20260322-007] v1.8.1 — Audit & MCP Core Implementation
 **Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #docs #audit #mcp #procurement

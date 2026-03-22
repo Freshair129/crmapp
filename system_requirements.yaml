@@ -4,13 +4,13 @@
 # ─────────────────────────────────────────────────────────
 
 system_name: "The V School CRM v2"
-version: "1.5.3"
+version: "1.9.0"
 description: |
   Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
   รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,
   Course Enrollment, Asset Management, Recipe & Package management,
   Procurement, Inventory Control, Ads Optimization, V Point Loyalty,
-  Web Push Notifications, and Automated Certification.
+  Web Push Notifications, Automated Certification, and NotebookLM Intelligence.
 
 tech_stack:
   framework: "Next.js 14 App Router"
@@ -577,6 +577,26 @@ functional_requirements:
       - name: "FR24.1: Context-Aware Reply"
         status: "✅ Working"
         description: "Generate replies using Gemini 2.0 Flash based on knowledge files and chat history"
+
+  # ── MODULE 25: DAILY CHAT INTELLIGENCE ───────────────
+
+  - module: "Daily Chat Intelligence"
+    ui_tab: ["UnifiedInbox", "IntelligenceDashboard"]
+    status: "✅ Working"
+    description: "NotebookLM-style conversation analysis and knowledge mapping"
+    features:
+      - name: "FR25.1: Automated Summary"
+        status: "✅ Working"
+        description: "Generate concise daily summaries and key takeaways from chat history"
+
+      - name: "FR25.2: Knowledge Tree Mapping"
+        status: "✅ Working"
+        description: "Visualize customer interests and pain points via Mermaid.js tree diagrams"
+        implementation: "intelligenceRepo.generateChatAnalysis(conversationId)"
+
+      - name: "FR25.3: MCP Tooling"
+        status: "✅ Working"
+        description: "AI Agent access to intelligence data via intelligence.get_chat_tree tool"
 
 # ─────────────────────────────────────────────────────────
 # NON-FUNCTIONAL REQUIREMENTS

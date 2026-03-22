@@ -5,7 +5,15 @@
 
 ---
 
-## Protocol
+- **What**: Implemented NotebookLM-style Daily Chat Intelligence (Summary + Knowledge Tree).
+- **Why**: To provide AI-native visualization of customer interests and automated reporting.
+- **Where**: `src/lib/repositories/intelligenceRepo.js`, `src/mcp/vschool-mcp-server.js`, `prisma/schema.prisma`.
+- **Learned**: Gemini 2.0 Flash excels at generating valid Mermaid.js code when prompted with strict JSON schema.
+
+---
+
+### Protocol
+
 
 ### เมื่อเริ่ม session (ทั้ง Claude และ Antigravity)
 1. อ่าน MEMORY.md → ดู Last Entry → เข้าใจว่าอีกฝ่ายทำอะไรไป
