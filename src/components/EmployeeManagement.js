@@ -120,6 +120,24 @@ function calcEmployeeScore(linked) {
     };
 }
 
+// ─── Tenure calculator ───────────────────────────────────────────────────────
+function calcTenure(createdAt) {
+    if (!createdAt) return null;
+    const start = new Date(createdAt);
+    const now   = new Date();
+    let years  = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth()    - start.getMonth();
+    if (months < 0) { years--; months += 12; }
+    if (years < 0)  return null;
+    if (years === 0 && months === 0) {
+        const days = Math.floor((now - start) / 86400000);
+        return { label: `${days} วัน`, short: `${days}d` };
+    }
+    if (years === 0) return { label: `${months} เดือน`, short: `${months}m` };
+    if (months === 0) return { label: `${years} ปี`, short: `${years}y` };
+    return { label: `${years} ปี ${months} เดือน`, short: `${years}y ${months}m` };
+}
+
 // Circular SVG score ring
 function ScoreRing({ score, color, size = 56 }) {
     const r    = (size - 7) / 2;
@@ -571,6 +589,21 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                             {emp.employeeId}
                                         </p>
                                     )}
+                                    {/* Tenure badge */}
+                                    {(() => {
+                                        const tenure = calcTenure(emp.createdAt);
+                                        if (!tenure) return null;
+                                        return (
+                                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
+                                                style={{ background: `${avatarColors[0]}20`, border: `1px solid ${avatarColors[0]}40`, color: avatarColors[0] }}>
+                                                <svg width="7" height="7" viewBox="0 0 7 7" fill="none" style={{ display:'inline' }}>
+                                                    <circle cx="3.5" cy="3.5" r="3" stroke="currentColor" strokeWidth="1"/>
+                                                    <path d="M3.5 2v1.5l1 0.7" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round"/>
+                                                </svg>
+                                                {tenure.label}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
@@ -1156,6 +1189,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     <StatCard icon={Receipt} label="Orders" value={sales.length} />
                                     <StatCard icon={Coins} label="Revenue" value={`฿${totalRevenue.toLocaleString()}`} accent />
                                     <StatCard icon={Star} label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
+                                    {(() => { const t = calcTenure(emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
                                 </div>
 
                                 {/* Info card */}
@@ -1167,10 +1201,11 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: Mail,      label: 'Email',       val: emp.email },
                                         { icon: Phone,     label: 'Phone',       val: emp.phone || '—' },
                                         { icon: Building2, label: 'แผนก',        val: emp.department || '—' },
-                                        { icon: Briefcase,  label: 'ตำแหน่ง',     val: emp.jobTitle || '—' },
+                                        { icon: Briefcase, label: 'ตำแหน่ง',     val: emp.jobTitle || '—' },
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                         { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
                                         { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
+                                        { icon: ArrowUpRight, label: 'อายุงาน', val: (() => { const t = calcTenure(emp.createdAt); return t ? t.label : '—'; })() },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
