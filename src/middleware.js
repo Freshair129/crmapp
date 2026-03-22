@@ -25,6 +25,8 @@ const ROUTE_ROLES = [
   { prefix: '/api/mcp',              role: null },   // MCP server — Bearer token auth handled in route
   { prefix: '/api/members/register', role: null },   // public — customer self-registration
   { prefix: '/api/health',           role: null },   // public — health check
+  { prefix: '/api/workers',          role: null },   // QStash workers — verify signature in route
+  { prefix: '/api/notion',           role: 'MGR' },  // Notion sync — MGR+ only
   { prefix: '/api/products',         role: 'AGT' },
   { prefix: '/api/employees',        role: 'ADM' },
   { prefix: '/api/audit',            role: 'ADM' },  // audit log — ADM+ only

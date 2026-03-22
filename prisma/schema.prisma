@@ -642,6 +642,7 @@ model Task {
   status      String    @default("PENDING")
   dueDate     DateTime? @map("due_date")
   completedAt DateTime? @map("completed_at")
+  notionId    String?   @map("notion_id")   // Notion page ID for bidirectional sync
   aiGenerated Boolean   @default(false) @map("ai_generated")
   aiContext   Json?     @map("ai_context")
   createdAt   DateTime  @default(now()) @map("created_at")

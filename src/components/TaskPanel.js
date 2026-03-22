@@ -7,8 +7,70 @@ import {
     MinusCircle, Archive,
     User, Calendar, Tag, CheckCircle2, Circle, RotateCcw,
     Trash2, Pen, List, CalendarDays, ChevronLeft, ChevronRight,
+    RefreshCw, ExternalLink,
 } from 'lucide-react';
 import { can } from '@/lib/permissionMatrix';
+
+// ─── Notion Sync Button ───────────────────────────────────────────────────────
+function NotionSyncButton({ canManage }) {
+    const [syncing, setSyncing]   = useState(false);
+    const [status, setStatus]     = useState(null); // null | 'ok' | 'err'
+    const [msg, setMsg]           = useState('');
+    const NOTION_DB_URL = `https://www.notion.so/${(process.env.NEXT_PUBLIC_NOTION_TASK_DB_ID || '').replace(/-/g,'')}`;
+
+    const doSync = async (direction) => {
+        setSyncing(true); setStatus(null); setMsg('');
+        try {
+            const res = await fetch(`/api/notion/sync?direction=${direction}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                setStatus('ok');
+                setMsg(direction === 'pull'
+                    ? `นำเข้า ${data.imported} งาน · อัปเดต ${data.updated} งาน`
+                    : `ส่ง ${data.created + data.updated} งาน → Notion`);
+            } else {
+                setStatus('err'); setMsg(data.error || 'Sync failed');
+            }
+        } catch (e) {
+            setStatus('err'); setMsg(e.message);
+        } finally {
+            setSyncing(false);
+            setTimeout(() => { setStatus(null); setMsg(''); }, 4000);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            {/* Notion deep link */}
+            <a href="https://www.notion.so" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:border-white/20 text-[9px] font-black uppercase tracking-widest transition-all">
+                <ExternalLink size={11} />Notion
+            </a>
+
+            {/* Pull from Notion */}
+            <button onClick={() => doSync('pull')} disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:border-white/20 text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-40">
+                <RefreshCw size={11} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? 'Syncing…' : 'Pull'}
+            </button>
+
+            {/* Push to Notion — manager only */}
+            {canManage && (
+                <button onClick={() => doSync('push')} disabled={syncing}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:border-white/20 text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-40">
+                    Push
+                </button>
+            )}
+
+            {/* Status message */}
+            {msg && (
+                <span className={`text-[9px] font-black ${status === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {msg}
+                </span>
+            )}
+        </div>
+    );
+}
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 export const PRIORITY_CONFIG = {
@@ -734,6 +796,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                             <Plus size={12} />สร้างงาน
                         </button>
                     )}
+                    <NotionSyncButton canManage={canManage} />
                 </div>
             </div>
 
