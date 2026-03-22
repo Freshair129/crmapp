@@ -22,11 +22,13 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 | `v0.24.0` | Comprehensive Unit Test Expansion — 50+ cases | ✅ released |
 | `v0.25.0` | Production Hardening Complete — RBAC + Security + Build | ✅ released |
 | `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 | ✅ released |
-| `v0.27.0` | Upstash Migration — QStash + Upstash Redis, zero local infra | ✅ released ← HEAD |
-| `v1.0.0` | Production Ready | 🔲 planned |
+| `v0.27.0` | Upstash Migration — QStash + Upstash Redis, zero local infra | ✅ released |
+| `v1.0.0` – `v1.8.0` | Production Ready → MCP Server → Meta Ads MCP | ✅ released |
+| `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree | ✅ released |
+| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup + hiredAt | ✅ released ← HEAD |
 
 **branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 22 Repository Refactor = ✅ DONE · Phase 27 Upstash Migration = ✅ DONE
+Phase 34 Multi-Role RBAC + hiredAt = ✅ DONE
 
 > ⚠️ **ถ้า task ที่รับมา ≠ version HEAD ใน CHANGELOG.md → หยุดและแจ้ง Claude ก่อนเสมอ**
 > อย่า implement งานที่อาจซ้ำ/outdated โดยไม่ยืนยัน
@@ -146,6 +148,9 @@ Phase 22:    [DONE]    Repository Layer Full Compliance (Marketing/Inbox)
 Phase 14b:   [DONE]    Production Hardening — RBAC + Security + Build (v0.24.0–v0.25.0)
 Phase 26:    [DONE]    Chat-First Revenue Attribution — Slip OCR + REQ-07 (v0.26.0)
 Phase 27:    [DONE]    Upstash Infrastructure Migration — zero local infra (v0.27.0)
+Phase 28-33: [DONE]    v1.0.0–v1.9.0 Production + MCP + NotebookLM Intelligence
+Phase 34:    [DONE]    Multi-Role RBAC + OWNER + hiredAt field (v1.9.1)
+Phase 35:    [NEXT]    Visual Calendar + Class Attendance (v2.0.0)
 ```
 
 ## 📋 Changelog System (รู้ไว้ — ไม่ต้อง implement)

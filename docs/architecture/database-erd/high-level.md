@@ -1,6 +1,6 @@
 # Database ERD — High-Level Overview
 
-**Last Updated:** 2026-03-21 — v1.3.0
+**Last Updated:** 2026-03-23 — v1.9.1
 **Reference:** `prisma/schema.prisma`
 
 ---

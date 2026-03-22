@@ -1,6 +1,6 @@
 # Database Schema — Full Reference
 
-**Last Updated:** 2026-03-21 — v1.3.0
+**Last Updated:** 2026-03-23 — v1.9.1
 **Reference:** `prisma/schema.prisma`
 **Model Count:** 47 models
 
@@ -191,6 +191,39 @@ erDiagram
         Float    shippingWeightG     "น้ำหนักรวมสำหรับจัดส่ง (g)"
     }
 ```
+
+### DOMAIN: Employee (Staff Registry)
+
+```mermaid
+erDiagram
+    Employee {
+        String   id             PK  "UUID"
+        String   employeeId     UK  "TVS-[TYPE]-[DEPT]-[NNN]"
+        String   firstName
+        String   lastName
+        String   nickName
+        String   email          UK
+        String   phone
+        String   department
+        String   jobTitle
+        String   role               "primary role (UPPERCASE) — backward compat"
+        String[] roles              "multi-role array e.g. ['EMPLOYEE','ADMIN']"
+        String   status             "ACTIVE | INACTIVE"
+        String   agentId            "AGT-[TYPE]-[YYMM]-[SERIAL]"
+        String   agentCode
+        String   passwordHash
+        DateTime hiredAt            "วันที่เริ่มงาน — Optional; calcTenure fallback to createdAt"
+        DateTime lastLoginAt
+        DateTime createdAt
+        DateTime updatedAt
+    }
+```
+
+> **Role Hierarchy (v1.9.1):** DEVELOPER(5) > OWNER(4.5) > MANAGER(4) > ADMIN(2) > MARKETING/HEAD_CHEF(2.5) > EMPLOYEE(1.5) > AGENT(1) > GUEST(0)
+> **OWNER role:** executive read-only — ไม่มีสิทธิ์ write operations ใดๆ
+> **Multi-role:** `roles[]` additive — permission = union of all roles
+
+---
 
 ### DOMAIN: Web Push Notifications (ADR-044)
 

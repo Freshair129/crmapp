@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-22 (Phase 1–33 complete | v1.9.0 HEAD | Phase 33–39 planned)
+> Last updated: 2026-03-23 (Phase 1–34 complete | v1.9.1 HEAD | Phase 35–40 planned)
 
 ---
 
@@ -53,13 +53,14 @@
 | Phase 31 | MCP Server — Dual Transport stdio + Streamable HTTP (v1.7.0) | ✅ Done | — |
 | Phase 32 | Meta Ads Domain in MCP — 22 tools (v1.8.0) | ✅ Done | — |
 | Phase 33 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree (v1.9.0) | ✅ Done | — |
-| **Phase 34** | **Visual Calendar + Class Attendance (v2.0.0)** | **⏳ Next** | 0/8 |
-| Phase 35 | Student Self-Service Portal (v2.1.0) | 🔲 Planned | 0/10 |
-| Phase 36 | Certificate PDF + Document Generation (v2.2.0) | 🔲 Planned | 0/8 |
-| Phase 37 | AI Smart Inbox — Reply Draft + Lead Score (v2.3.0) | 🔲 Planned | 0/10 |
-| Phase 38 | Procurement Full Lifecycle Completion (v2.4.0) | 🔲 Planned | 0/9 |
-| Phase 39 | Advanced BI + Reporting Export (v2.5.0) | 🔲 Planned | 0/9 |
-| Phase 40 | Mobile PWA + WhatsApp Channel (v3.0.0) | 🔲 Planned | 0/7 |
+| Phase 34 | Multi-Role RBAC + OWNER Role + Employee DB Cleanup + hiredAt (v1.9.1) | ✅ Done | 8/8 |
+| **Phase 35** | **Visual Calendar + Class Attendance (v2.0.0)** | **⏳ Next** | 0/8 |
+| Phase 36 | Student Self-Service Portal (v2.1.0) | 🔲 Planned | 0/10 |
+| Phase 37 | Certificate PDF + Document Generation (v2.2.0) | 🔲 Planned | 0/8 |
+| Phase 38 | AI Smart Inbox — Reply Draft + Lead Score (v2.3.0) | 🔲 Planned | 0/10 |
+| Phase 39 | Procurement Full Lifecycle Completion (v2.4.0) | 🔲 Planned | 0/9 |
+| Phase 40 | Advanced BI + Reporting Export (v2.5.0) | 🔲 Planned | 0/9 |
+| Phase 41 | Mobile PWA + WhatsApp Channel (v3.0.0) | 🔲 Planned | 0/7 |
 
 ---
 
@@ -535,3 +536,25 @@
 
 > ⚠️ **Known Gotcha — SVG path**: 4 identical path strings in EmployeeManagement.js (base/tint/glow/border) — update all 4 when changing shape
 > ⚠️ **SVG Final Path**: `M 28 0 Q 0 0 0 28 L 0 344 Q 0 372 28 372 L 344 372 Q 372 372 372 344 L 372 100 L 322 0 Z` (viewBox 0 0 372 372)
+
+---
+
+## ✅ Phase 34: Multi-Role RBAC + OWNER Role + Employee DB Cleanup + hiredAt (v1.9.1)
+> **Goal:** Multi-role support, OWNER executive role, employee DB cleanup, hiredAt field
+> **Version:** v1.9.1 | **Implemented by:** Claude
+> **CL:** CL-20260323-001
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 34.1 | `prisma/schema.prisma` — roles String[] + hiredAt DateTime? | 🧠 Claude | ✅ |
+| 34.2 | Supabase migration — ADD COLUMN roles TEXT[], hired_at TIMESTAMPTZ | 🧠 Claude | ✅ |
+| 34.3 | `src/lib/rbac.js` — OWNER role (L4.5), getMaxRoleLevel(), hasMultiRolePermission() | 🧠 Claude | ✅ |
+| 34.4 | `src/lib/authOptions.js` — roles[] in JWT/session, fallback to [role] | 🧠 Claude | ✅ |
+| 34.5 | `src/lib/sidebarProfiles.js` — OWNER profile, canSeeItem(string\|string[]) | 🧠 Claude | ✅ |
+| 34.6 | `src/app/api/employees/route.js` + `[id]/route.js` — roles[], hiredAt CRUD | 🧠 Claude | ✅ |
+| 34.7 | `src/components/EmployeeManagement.js` — MiniDashboard, ScoreRing, Rank, calcTenure, hiredAt forms | 🧠 Claude | ✅ |
+| 34.8 | Employee DB cleanup — fix IDs, emails, INACTIVE old records; set คุณวอลเตอร์ → OWNER | 🧠 Claude | ✅ |
+
+> ⚠️ **Known Gotcha — OWNER role**: read-only executive view — ไม่มีสิทธิ์แก้ไข config, users, หรือ write operations
+> ⚠️ **Known Gotcha — Multi-role assign UI**: roles[] ผ่าน Edit Modal checkbox grid — primary role ต้องอยู่ใน roles[] เสมอ
+> ⚠️ **Known Gotcha — hiredAt**: Optional — ถ้าไม่กรอก calcTenure จะ fallback ไปใช้ createdAt
