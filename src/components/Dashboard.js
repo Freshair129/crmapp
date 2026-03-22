@@ -131,7 +131,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
             {/* Page Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight mb-2">Executive Dashboard</h2>
+                    <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-2">Executive Dashboard</h2>
                     <p className="text-white/40 text-sm font-bold uppercase tracking-[0.2em]">V SCHOOL METRICS OVERVIEW</p>
                 </div>
                 <div className="flex items-center gap-4">

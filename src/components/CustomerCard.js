@@ -190,7 +190,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 <div className="lg:col-span-3 space-y-5">
                     <div className="bg-[#19273a]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
-                        <div className="p-[15px] pb-20 bg-gradient-to-br from-[#19273a]/80 to-[#1F3A5F]/80 relative">
+                        <div className="p-[15px] pb-20 bg-gradient-to-br from-[#19273a]/80 to-[#19273a]/80 relative">
                             <div className="flex flex-col items-center text-center">
                                 <div className="relative mb-4">
                                     <div className="w-[140px] h-[140px] rounded-full bg-[#19273a] p-0.5 ring-2 ring-[#cc9d37]/20 shadow-xl overflow-hidden">
@@ -206,7 +206,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                     </div>
                                 </div>
 
-                                <h3 className="text-lg font-black text-[#F8F8F6] mb-0.5 tracking-tight leading-tight">{profile.first_name} {profile.last_name}</h3>
+                                <h3 className="text-lg font-black text-[#f5f8fb] mb-0.5 tracking-tight leading-tight">{profile.first_name} {profile.last_name}</h3>
                                 <p className="text-white/40 font-bold text-[8px] tracking-[0.2em] uppercase mb-4">
                                     {profile.nick_name ? `"${profile.nick_name}"` : 'Premium Member'}
                                 </p>
@@ -443,7 +443,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mb-0">{item.label}</p>
-                                            <p className="text-[11px] font-bold text-[#F8F8F6] truncate">{item.val}</p>
+                                            <p className="text-[11px] font-bold text-[#f5f8fb] truncate">{item.val}</p>
                                         </div>
                                     </div>
                                 ))}

@@ -100,7 +100,7 @@ export default function NotificationCenter({ language = 'TH' }) {
         <div className="p-10 max-w-6xl mx-auto animate-fade-in">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
                 <div>
-                    <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                    <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
                 </div>
                 <button className="bg-white/5 border border-white/10 text-white/40 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white/10 transition-all flex items-center gap-3">

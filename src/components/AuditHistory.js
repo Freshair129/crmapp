@@ -41,7 +41,7 @@ export default function AuditHistory({ language = 'TH' }) {
         <div className="p-10 max-w-7xl mx-auto animate-fade-in">
             <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between border-b border-white/5 pb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                    <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Financial Integrity & Audit Trail</p>
                 </div>
                 <div className="relative w-80 mt-6 md:mt-0">
@@ -75,7 +75,7 @@ export default function AuditHistory({ language = 'TH' }) {
                                         <Receipt size={18} />
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-[#F8F8F6] tracking-tight">{order.orderId}</span>
+                                        <span className="font-bold text-[#f5f8fb] tracking-tight">{order.orderId}</span>
                                         <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">
                                             {order.customer?.firstName} {order.customer?.lastName || ''}
                                         </span>

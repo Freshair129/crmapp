@@ -233,7 +233,7 @@ export default function AIConfigPage() {
             <input ref={fileRef} type="file" accept={FILE_ACCEPT} className="hidden" onChange={handleFileChange} />
 
             {/* ── Section 1: Persona ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-3">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
                     <Bot size={15} className="text-violet-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">Persona</span>
@@ -245,12 +245,12 @@ export default function AIConfigPage() {
                     onChange={e => setConfig(prev => ({ ...prev, persona: e.target.value }))}
                     rows={7}
                     placeholder="เช่น: คุณคือผู้ช่วยแอดมินของ V School ที่อบอุ่นและเป็นมืออาชีพ ก่อนตอบทุกครั้งให้อ่านไฟล์ความรู้ก่อน..."
-                    className="w-full bg-[#060f1e] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-violet-500/50 font-mono leading-relaxed"
+                    className="w-full bg-[#0c1a2f] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-violet-500/50 font-mono leading-relaxed"
                 />
             </div>
 
             {/* ── Section 2: Knowledge Base (quick notes) ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-3">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
                     <BookOpen size={15} className="text-blue-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">Quick Notes</span>
@@ -263,12 +263,12 @@ export default function AIConfigPage() {
                     onChange={e => setConfig(prev => ({ ...prev, knowledge: e.target.value }))}
                     rows={4}
                     placeholder="เช่น: V School เปิด Mon–Sat 9:00–18:00 ที่ กรุงเทพฯ ติดต่อ LINE: @vschool"
-                    className="w-full bg-[#060f1e] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-blue-500/50 font-mono leading-relaxed"
+                    className="w-full bg-[#0c1a2f] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-blue-500/50 font-mono leading-relaxed"
                 />
             </div>
 
             {/* ── Section 2.5: Introduction Prompt ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-3">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
                     <MessageSquare size={15} className="text-amber-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">Introduction (แนวทางการตอบ)</span>
@@ -283,12 +283,12 @@ export default function AIConfigPage() {
                     onChange={e => setConfig(prev => ({ ...prev, introduction: e.target.value }))}
                     rows={4}
                     placeholder="เช่น: เน้นความเป็นกันเอง ตอบสั้นกระชับ ถ้ามีโอกาสให้แนะนำหลักสูตรเบื้องต้นก่อนเสมอ และชวนให้ทดลองเรียน trial class"
-                    className="w-full bg-[#060f1e] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-amber-500/50 font-mono leading-relaxed"
+                    className="w-full bg-[#0c1a2f] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none focus:outline-none focus:border-amber-500/50 font-mono leading-relaxed"
                 />
             </div>
 
             {/* ── Section 3: Knowledge Files ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Upload size={15} className="text-pink-400" />
@@ -391,7 +391,7 @@ export default function AIConfigPage() {
             </div>
 
             {/* ── Section 4: Reply Length ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2">
                     <SlidersHorizontal size={15} className="text-cyan-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">ความยาวของการตอบ</span>
@@ -438,7 +438,7 @@ export default function AIConfigPage() {
             </div>
 
             {/* ── Section 5: Admin Style Mode ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2">
                     <User size={15} className="text-rose-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">Admin Style Mode</span>
@@ -458,7 +458,7 @@ export default function AIConfigPage() {
                         <select
                             value={selectedEmpId}
                             onChange={e => setSelectedEmpId(e.target.value)}
-                            className="w-full appearance-none bg-[#060f1e] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:border-rose-500/40 pr-8"
+                            className="w-full appearance-none bg-[#0c1a2f] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:border-rose-500/40 pr-8"
                         >
                             <option value="">เลือกแอดมิน...</option>
                             {employees.map(emp => (
@@ -510,7 +510,7 @@ export default function AIConfigPage() {
                             value={analyzeResult.profile}
                             onChange={e => setAnalyzeResult(prev => ({ ...prev, profile: e.target.value }))}
                             rows={8}
-                            className="w-full bg-[#060f1e] border border-rose-500/15 rounded-xl px-4 py-3 text-[11px] text-white/70 resize-none focus:outline-none focus:border-rose-500/30 font-mono leading-relaxed"
+                            className="w-full bg-[#0c1a2f] border border-rose-500/15 rounded-xl px-4 py-3 text-[11px] text-white/70 resize-none focus:outline-none focus:border-rose-500/30 font-mono leading-relaxed"
                         />
                     </div>
                 )}
@@ -525,7 +525,7 @@ export default function AIConfigPage() {
             </div>
 
             {/* ── Section 6: Tone Presets ── */}
-            <div className="bg-[#0d1829] border border-white/8 rounded-2xl p-5 space-y-4">
+            <div className="bg-[#0c1a2f] border border-white/8 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2 mb-1">
                     <MessageSquare size={15} className="text-amber-400" />
                     <span className="text-sm font-black text-white uppercase tracking-widest">Tone Presets</span>
@@ -539,7 +539,7 @@ export default function AIConfigPage() {
                                 value={config[key] ?? ''}
                                 onChange={e => setConfig(prev => ({ ...prev, [key]: e.target.value }))}
                                 rows={4}
-                                className="w-full bg-[#060f1e] border border-white/8 rounded-xl px-3 py-2.5 text-xs text-white/70 placeholder-white/20 resize-none focus:outline-none focus:border-white/20 font-mono leading-relaxed"
+                                className="w-full bg-[#0c1a2f] border border-white/8 rounded-xl px-3 py-2.5 text-xs text-white/70 placeholder-white/20 resize-none focus:outline-none focus:border-white/20 font-mono leading-relaxed"
                             />
                         </div>
                     ))}

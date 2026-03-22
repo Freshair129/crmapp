@@ -6,7 +6,7 @@ export default function Settings() {
     return (
         <div className="animate-fade-in space-y-8">
             <div>
-                <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight mb-2">System Settings</h2>
+                <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-2">System Settings</h2>
                 <p className="text-white/40 text-sm font-bold uppercase tracking-[0.2em]">CONFIGURATION & PARAMETERS</p>
             </div>
 

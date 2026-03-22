@@ -526,9 +526,9 @@ export default function UnifiedInbox({ language = 'TH' }) {
             </div>
 
             {/* Message Thread */}
-            <div className="flex-1 flex flex-col bg-[#0D2040] overflow-hidden relative min-w-0">
+            <div className="flex-1 flex flex-col bg-[#0c1a2f] overflow-hidden relative min-w-0">
                 {/* Fixed background to prevent stretching */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#0D2040] to-[#051020] z-0 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-[#0c1a2f] to-[#051020] z-0 pointer-events-none"></div>
                 
                 {selectedId ? (
                     <div className="flex-1 flex flex-col min-h-0 relative z-10">
@@ -679,7 +679,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
             {/* ── Right Panel: Customer Card ── */}
             {selectedConv ? (
-                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex flex-col" style={{ minHeight: 0 }}>
+                <div className="w-64 shrink-0 border-l border-white/5 bg-[#0c1a2f] flex flex-col" style={{ minHeight: 0 }}>
                 {/* ── TOP HALF: Customer Profile (scrollable) ── */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
 
@@ -1019,7 +1019,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                 </div>
                 </div>
             ) : (
-                <div className="w-64 shrink-0 border-l border-white/5 bg-[#060f1e] flex items-center justify-center">
+                <div className="w-64 shrink-0 border-l border-white/5 bg-[#0c1a2f] flex items-center justify-center">
                     <p className="text-[9px] font-black text-white/5 uppercase tracking-widest rotate-90 whitespace-nowrap">Customer Details</p>
                 </div>
             )}

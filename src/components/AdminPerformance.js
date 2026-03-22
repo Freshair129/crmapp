@@ -68,7 +68,7 @@ function HourHeatmap({ hours }) {
     const getColor = (v) => {
         const r = v / maxVal;
         if (r < 0.05) return '#1A1A1A';
-        if (r < 0.2)  return '#1e3a5f';
+        if (r < 0.2)  return '#19273a';
         if (r < 0.4)  return '#1d4ed8';
         if (r < 0.65) return '#3b82f6';
         if (r < 0.85) return '#60a5fa';
@@ -92,7 +92,7 @@ function HourHeatmap({ hours }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', fontSize: '11px', color: '#64748b' }}>
                 <span>น้อย</span>
-                {['#1e3a5f','#1d4ed8','#3b82f6','#60a5fa','#93c5fd'].map(c => (
+                {['#19273a','#1d4ed8','#3b82f6','#60a5fa','#93c5fd'].map(c => (
                     <div key={c} style={{ width: '13px', height: '13px', borderRadius: '3px', background: c }} />
                 ))}
                 <span>มาก</span>

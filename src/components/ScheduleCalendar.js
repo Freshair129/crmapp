@@ -581,7 +581,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่เริ่มสอน</label>
                     <input
                       required type="date"
-                      className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
+                      className="w-full bg-[#0c1a2f] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
                       value={addForm.scheduledDate}
                       onChange={e => setAddForm({ ...addForm, scheduledDate: e.target.value })}
                     />
@@ -607,7 +607,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาเริ่ม</label>
                     <input
                       required type="time"
-                      className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
+                      className="w-full bg-[#0c1a2f] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
                       value={addForm.startTime}
                       onChange={e => setAddForm({ ...addForm, startTime: e.target.value })}
                     />
@@ -616,7 +616,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เวลาสิ้นสุด</label>
                     <input
                       required type="time"
-                      className="w-full bg-[#0d2340] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
+                      className="w-full bg-[#0c1a2f] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
                       value={addForm.endTime}
                       onChange={e => setAddForm({ ...addForm, endTime: e.target.value })}
                     />

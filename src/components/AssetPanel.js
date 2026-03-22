@@ -305,7 +305,7 @@ export default function AssetPanel({ language = 'TH' }) {
             <div className="bg-[#0c1a2f]/50 backdrop-blur-xl rounded-[2.5rem] border border-white/10 p-8">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
                     <div>
-                        <h1 className="text-4xl font-black text-[#F8F8F6] uppercase tracking-tighter mb-4">{t.title}</h1>
+                        <h1 className="text-4xl font-black text-[#f5f8fb] uppercase tracking-tighter mb-4">{t.title}</h1>
                         <div className="flex gap-4">
                             <div className="bg-white/5 px-6 py-2 rounded-2xl border border-white/10">
                                 <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t.total}</p>

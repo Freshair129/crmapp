@@ -97,7 +97,7 @@ export default function TeamKPI({ customers = [] }) {
             {/* Header & Filter */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight mb-2 uppercase">Team Performance</h2>
+                    <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-2 uppercase">Team Performance</h2>
                     <p className="text-[#cc9d37] text-xs font-black uppercase tracking-[0.2em]">REVENUE & CONVERSION ANALYTICS</p>
                 </div>
 

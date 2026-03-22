@@ -244,7 +244,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                     {/* Tooltip — collapsed only */}
                                     {!isOpen && (
                                         <div className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[200] opacity-0 group-hover/item:opacity-100 transition-opacity duration-100 whitespace-nowrap">
-                                            <div className="bg-[#0d1f35] border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-xl">
+                                            <div className="bg-[#0c1a2f] border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-xl">
                                                 {item.label}
                                             </div>
                                         </div>
@@ -281,7 +281,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                     {/* Tooltip when collapsed */}
                     {!isOpen && (
                         <div className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[200] opacity-0 group-hover/user:opacity-100 transition-opacity duration-100 whitespace-nowrap">
-                            <div className="bg-[#0d1f35] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
+                            <div className="bg-[#0c1a2f] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
                                 {userName} · {userRole}
                             </div>
                         </div>
@@ -317,7 +317,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                     </button>
                     {!isOpen && (
                         <div className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[200] opacity-0 group-hover/logout:opacity-100 transition-opacity duration-100 whitespace-nowrap">
-                            <div className="bg-[#0d1f35] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
+                            <div className="bg-[#0c1a2f] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
                                 ออกจากระบบ
                             </div>
                         </div>
@@ -359,7 +359,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                         {/* Mode popup menu */}
                         {modeMenuOpen && (
                             <div
-                                className="absolute bottom-full mb-2 z-[300] bg-[#0d1f35] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                                className="absolute bottom-full mb-2 z-[300] bg-[#0c1a2f] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
                                 style={{ left: isOpen ? 8 : '50%', transform: isOpen ? 'none' : 'translateX(-50%)', minWidth: 180 }}
                             >
                                 <div className="px-3 py-2 border-b border-white/5">
@@ -395,7 +395,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                         {/* Tooltip when collapsed */}
                         {!isOpen && !modeMenuOpen && (
                             <div className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-[200] opacity-0 group-hover/mode:opacity-100 transition-opacity duration-100 whitespace-nowrap">
-                                <div className="bg-[#0d1f35] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
+                                <div className="bg-[#0c1a2f] border border-white/10 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-xl">
                                     {MODE_META[sidebarMode]?.title}
                                 </div>
                             </div>

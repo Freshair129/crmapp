@@ -301,7 +301,7 @@ export default function CampaignTracking({ customers }) {
             <div className="flex justify-between items-end">
                 <div>
                     <div className="flex items-center gap-6 mb-2">
-                        <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight">Campaign Tracking</h2>
+                        <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight">Campaign Tracking</h2>
                         <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
                             <button
                                 onClick={() => {

@@ -127,7 +127,7 @@
   background-color: #fff8f0 !important;
 }
 
-/* Inline style overrides — dark backgrounds */
+/* Inline style overrides — dark background-color */
 [data-theme="light"] [style*="background-color: rgb(12, 26, 47)"],
 [data-theme="light"] [style*="background-color: #0c1a2f"],
 [data-theme="light"] [style*="background-color: #0C1A2F"],
@@ -142,6 +142,14 @@
   background-color: #fff8f0 !important;
 }
 
+/* Inline linear-gradient with dark colors → light gradient */
+[data-theme="light"] [style*="linear-gradient"][style*="#0c1a2f"],
+[data-theme="light"] [style*="linear-gradient"][style*="#0C1A2F"],
+[data-theme="light"] [style*="linear-gradient"][style*="#19273a"],
+[data-theme="light"] [style*="linear-gradient"][style*="#19273A"] {
+  background: linear-gradient(135deg, #f5f8fb 0%, #fff8f0 60%, #fff8f0 100%) !important;
+}
+
 /* ── Translucent cards ── */
 [data-theme="light"] .bg-white\/5  { background-color: rgba(26,26,26,0.04) !important; }
 [data-theme="light"] .bg-white\/8  { background-color: rgba(26,26,26,0.06) !important; }
@@ -151,8 +159,10 @@
 [data-theme="light"] .glass-card   { background-color: rgba(26,26,26,0.04) !important; border-color: rgba(26,26,26,0.08) !important; }
 [data-theme="light"] .glass-card:hover { background-color: rgba(26,26,26,0.07) !important; }
 
-/* ── White text → dark ── */
+/* ── White / off-white text → dark ── */
 [data-theme="light"] .text-white        { color: #1A1A1A !important; }
+[data-theme="light"] .text-white\/10    { color: rgba(26,26,26,0.18) !important; }
+[data-theme="light"] .text-white\/15    { color: rgba(26,26,26,0.22) !important; }
 [data-theme="light"] .text-white\/20    { color: rgba(26,26,26,0.30) !important; }
 [data-theme="light"] .text-white\/25    { color: rgba(26,26,26,0.35) !important; }
 [data-theme="light"] .text-white\/30    { color: rgba(26,26,26,0.40) !important; }
@@ -161,6 +171,14 @@
 [data-theme="light"] .text-white\/60    { color: rgba(26,26,26,0.70) !important; }
 [data-theme="light"] .text-white\/70    { color: rgba(26,26,26,0.75) !important; }
 [data-theme="light"] .text-white\/80    { color: rgba(26,26,26,0.80) !important; }
+[data-theme="light"] .text-white\/90    { color: rgba(26,26,26,0.90) !important; }
+
+/* ── f5f8fb text (replaces off-white F8F8F6) → dark ── */
+[data-theme="light"] .text-\[#f5f8fb\],
+[data-theme="light"] .text-\[#F5F8FB\] { color: #1A1A1A !important; }
+
+/* ── Hover text-white → dark ── */
+[data-theme="light"] .hover\:text-white:hover { color: #1A1A1A !important; }
 
 /* ── Muted text ── */
 [data-theme="light"] .text-\[#c9c6bf\],

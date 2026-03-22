@@ -23,7 +23,7 @@ export default function LineConnect({ language = 'TH' }) {
                         <MessageCircle size={36} />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                        <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                         <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
                     </div>
                 </div>
@@ -35,7 +35,7 @@ export default function LineConnect({ language = 'TH' }) {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10 shadow-3xl">
-                    <h3 className="text-xl font-black text-[#F8F8F6] uppercase tracking-tight italic mb-8">Recent Interactions</h3>
+                    <h3 className="text-xl font-black text-[#f5f8fb] uppercase tracking-tight italic mb-8">Recent Interactions</h3>
                     <div className="space-y-4">
                         {mockChats.map((chat, i) => (
                             <div key={i} className="bg-white/5 border border-white/5 p-6 rounded-3xl flex items-center justify-between hover:bg-white/10 transition-all cursor-pointer group">

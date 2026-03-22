@@ -146,7 +146,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
             className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
             onClick={handleBackdrop}
         >
-            <div className="relative bg-[#0d1f35] border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
+            <div className="relative bg-[#0c1a2f] border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
 
                 {/* Close */}
                 <button
@@ -157,7 +157,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                 </button>
 
                 {/* ── Image gallery ── */}
-                <div className="relative w-full bg-[#0a1628] flex-shrink-0" style={{ height: 220 }}>
+                <div className="relative w-full bg-[#0c1a2f] flex-shrink-0" style={{ height: 220 }}>
                     {rawImages.length > 0 ? (
                         <>
                             <img
@@ -189,7 +189,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                             <span className="text-[#cc9d37] text-[8px] font-black uppercase tracking-[0.3em] opacity-60">V SCHOOL</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d1f35] via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c1a2f] via-transparent to-transparent pointer-events-none" />
                 </div>
 
                 {/* ── Scrollable body ── */}
@@ -198,7 +198,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                     {/* Name + price row */}
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-lg font-black text-[#F8F8F6] leading-snug">{product.name}</h2>
+                            <h2 className="text-lg font-black text-[#f5f8fb] leading-snug">{product.name}</h2>
                             {product.productId && (
                                 <p className="text-[9px] font-mono text-white/25 mt-0.5 tracking-wider">{product.productId}</p>
                             )}
@@ -263,7 +263,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                             <div className="grid grid-cols-2 gap-2 text-[11px]">
                                 {/* hand */}
                                 {product.hand && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#19273a] border border-white/8">
                                         <span className="text-base leading-none">{product.hand === 'LEFT' ? '✋' : '🤚'}</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">มือที่ใช้</p>
@@ -273,7 +273,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 )}
                                 {/* material */}
                                 {product.material && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#19273a] border border-white/8">
                                         <span className="text-base leading-none">⚙️</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">วัสดุ</p>
@@ -283,7 +283,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 )}
                                 {/* product dimension */}
                                 {product.dimension && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#19273a] border border-white/8">
                                         <span className="text-base leading-none">📐</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">ขนาดสินค้า</p>
@@ -293,7 +293,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 )}
                                 {/* product weight */}
                                 {product.unitAmount && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#19273a] border border-white/8">
                                         <span className="text-base leading-none">⚖️</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">น้ำหนักสินค้า</p>
@@ -303,7 +303,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 )}
                                 {/* box size */}
                                 {product.size && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a2535] border border-white/8">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#19273a] border border-white/8">
                                         <span className="text-base leading-none">📦</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">ขนาดกล่อง</p>
@@ -364,7 +364,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                         onChange={e => setSpecEdit(s => ({ ...s, brand: e.target.value }))}
                                         onBlur={() => saveSpec({ brand: specEdit.brand })}
                                         placeholder="เช่น Masahiro, Suehiro"
-                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#cc9d37]/40 transition-all"
+                                        className="w-full px-3 py-2 rounded-xl bg-[#19273a] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#cc9d37]/40 transition-all"
                                     />
                                 </div>
                                 <div>
@@ -376,7 +376,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                             setSpecEdit(s => ({ ...s, originCountry: val }));
                                             saveSpec({ originCountry: val });
                                         }}
-                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold outline-none focus:border-[#cc9d37]/40 transition-all appearance-none cursor-pointer"
+                                        className="w-full px-3 py-2 rounded-xl bg-[#19273a] border border-white/10 text-white text-[11px] font-bold outline-none focus:border-[#cc9d37]/40 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="">— เลือกประเทศ —</option>
                                         {ORIGIN_COUNTRIES.map(c => (
@@ -954,7 +954,7 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Receipt Modal ── */}
             {showReceiptModal && lastOrder && lastCustomer && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
+                    <div className="bg-[#19273a] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
                         {/* Header — PENDING vs CLOSED */}
                         <div className={`${lastOrder.orderStatus === 'PENDING' ? 'bg-amber-500' : 'bg-[#cc9d37]'} text-[#0c1a2f] px-8 py-5 rounded-t-[2rem] flex items-center justify-between`}>
                             <div className="flex items-center gap-3">
@@ -994,7 +994,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         )}
 
                         {/* Receipt Body — printable */}
-                        <div id="receipt-body" className="flex-1 overflow-y-auto px-8 py-6 space-y-4 text-[#F8F8F6]">
+                        <div id="receipt-body" className="flex-1 overflow-y-auto px-8 py-6 space-y-4 text-[#f5f8fb]">
                             {/* Customer */}
                             <div className="bg-white/5 rounded-xl px-4 py-3 flex justify-between items-center">
                                 <span className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest">ลูกค้า</span>
@@ -1077,7 +1077,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 onClick={() => {
                                     const el = document.getElementById('receipt-body');
                                     if (!el || !window.html2canvas) { alert('กำลังโหลด กรุณาลองอีกครั้ง'); return; }
-                                    window.html2canvas(el, { backgroundColor: '#111827', scale: 2 }).then(canvas => {
+                                    window.html2canvas(el, { backgroundColor: '#19273a', scale: 2 }).then(canvas => {
                                         const a = document.createElement('a');
                                         a.download = `receipt-${lastOrder.orderId?.slice(0,8) || Date.now()}.png`;
                                         a.href = canvas.toDataURL();
@@ -1119,9 +1119,9 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Order Type Modal (Step 0) ── */}
             {showOrderTypeModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col">
+                    <div className="bg-[#19273a] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col">
                         <div className="px-8 py-6 border-b border-white/10">
-                            <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">ประเภทออเดอร์</h2>
+                            <h2 className="text-2xl font-black text-[#f5f8fb] italic uppercase">ประเภทออเดอร์</h2>
                             <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest mt-1">Order Type</p>
                         </div>
                         <div className="px-8 py-6 space-y-5">
@@ -1209,9 +1209,9 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Payment Details Modal ── */}
             {showPaymentModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+                    <div className="bg-[#19273a] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
                         <div className="px-8 py-6 border-b border-white/10">
-                            <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">รายละเอียดการชำระเงิน</h2>
+                            <h2 className="text-2xl font-black text-[#f5f8fb] italic uppercase">รายละเอียดการชำระเงิน</h2>
                             <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest mt-1">Payment Details</p>
                         </div>
                         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
@@ -1368,9 +1368,9 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Customer Modal ── */}
             {showCustomerModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6">
-                    <div className="bg-[#111827] border border-[#cc9d37]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
+                    <div className="bg-[#19273a] border border-[#cc9d37]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
                         <div className="text-center">
-                            <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">
+                            <h2 className="text-3xl font-black text-[#f5f8fb] italic uppercase mb-2">
                                 {showRegisterForm ? 'ลงทะเบียนลูกค้าใหม่' : 'ค้นหาลูกค้า'}
                             </h2>
                             <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest">Customer Authentication</p>
@@ -1491,7 +1491,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             placeholder={mainMode === 'course' ? 'ค้นหาคอร์ส...' : mainMode === 'food' ? 'ค้นหาเมนูอาหาร...' : 'ค้นหาอุปกรณ์...'}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-72 pl-11 pr-5 py-3 bg-[#1a2535] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#cc9d37]/40 outline-none transition-all"
+                            className="w-72 pl-11 pr-5 py-3 bg-[#19273a] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#cc9d37]/40 outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -1512,7 +1512,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             className={`flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-black text-sm flex-shrink-0 transition-all ${
                                 mainMode === key
                                     ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/20'
-                                    : 'bg-[#1a2535] text-white/35 hover:text-white/60 border border-white/8'
+                                    : 'bg-[#19273a] text-white/35 hover:text-white/60 border border-white/8'
                             }`}
                         >
                             <span className="text-base leading-none">{icon}</span>
@@ -1540,7 +1540,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs flex-shrink-0 transition-all border ${
                                     isActive
                                         ? 'border-[#cc9d37]/60 bg-[#cc9d37]/10 text-white/90'
-                                        : 'border-white/6 bg-[#1a2535]/70 text-white/30 hover:text-white/55 hover:border-white/15'
+                                        : 'border-white/6 bg-[#19273a]/70 text-white/30 hover:text-white/55 hover:border-white/15'
                                 }`}
                             >
                                 <span className="text-sm leading-none">{icon}</span>
@@ -1663,17 +1663,17 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             {product.category === 'equipment' && (
                                                 <div className="flex flex-wrap gap-1">
                                                     {product.material && (
-                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#19273a] border border-white/8 text-[8px] font-bold text-white/40">
                                                             {product.material}
                                                         </span>
                                                     )}
                                                     {product.size && (
-                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#19273a] border border-white/8 text-[8px] font-bold text-white/40">
                                                             {product.size}
                                                         </span>
                                                     )}
                                                     {product.originCountry && COUNTRY_MAP[product.originCountry] && (
-                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#1a2535] border border-white/8 text-[8px] font-bold text-white/40">
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#19273a] border border-white/8 text-[8px] font-bold text-white/40">
                                                             {COUNTRY_MAP[product.originCountry].flag}
                                                         </span>
                                                     )}
@@ -1703,7 +1703,7 @@ export default function PremiumPOS({ language = 'TH' }) {
             )}
 
             {/* ── Order Panel (right) ── */}
-            <div className="w-[300px] bg-[#111827] border-l border-white/8 flex flex-col flex-shrink-0">
+            <div className="w-[300px] bg-[#19273a] border-l border-white/8 flex flex-col flex-shrink-0">
 
                 {/* Panel header */}
                 <div className="px-6 pt-6 pb-5 flex items-center justify-between border-b border-white/8 flex-shrink-0">
@@ -1787,7 +1787,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 {cartCustomerLoading && <Loader2 size={12} className="text-white/30 animate-spin flex-shrink-0"/>}
                             </div>
                             {cartCustomerResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-[#1a2535] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                                <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-[#19273a] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
                                     {cartCustomerResults.map(c => {
                                         const tier = c.membershipTier || 'TIER1';
                                         const meta = TIER_META[tier] || TIER_META['TIER1'];
@@ -1824,7 +1824,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             return (
                                 <div key={item.id} className="flex items-start gap-3 group">
                                     {/* Thumbnail */}
-                                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#1a2535] flex-shrink-0">
+                                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#19273a] flex-shrink-0">
                                         {item.image ? (
                                             <img
                                                 src={item.image}
@@ -1833,7 +1833,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                             />
                                         ) : null}
-                                        <div className={`w-full h-full items-center justify-center text-2xl bg-[#1a2535] ${item.image ? 'hidden' : 'flex'}`}>
+                                        <div className={`w-full h-full items-center justify-center text-2xl bg-[#19273a] ${item.image ? 'hidden' : 'flex'}`}>
                                             {emoji}
                                         </div>
                                     </div>

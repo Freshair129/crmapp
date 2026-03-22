@@ -99,7 +99,7 @@ export default function InventoryManager({ language = 'TH' }) {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div>
-                    <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                    <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Inventory Control & Distribution</p>
                 </div>
                 <button
@@ -145,7 +145,7 @@ export default function InventoryManager({ language = 'TH' }) {
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
-                                        <span className="font-bold text-[#F8F8F6] text-sm group-hover:text-[#cc9d37] transition-colors">{p.name}</span>
+                                        <span className="font-bold text-[#f5f8fb] text-sm group-hover:text-[#cc9d37] transition-colors">{p.name}</span>
                                     </td>
                                     <td className="px-8 py-6">
                                         <span className="px-3 py-1 bg-[#cc9d37]/10 border border-[#cc9d37]/30 rounded-full text-[9px] font-black text-[#cc9d37] uppercase tracking-widest">
@@ -181,7 +181,7 @@ export default function InventoryManager({ language = 'TH' }) {
             {/* CRUD Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0c1a2f]/80 backdrop-blur-md p-6 animate-fade-in">
-                    <div className="bg-[#F8F8F6] w-full max-w-2xl rounded-[3rem] shadow-3xl overflow-hidden animate-scale-up border-8 border-[#0c1a2f]/10">
+                    <div className="bg-[#f5f8fb] w-full max-w-2xl rounded-[3rem] shadow-3xl overflow-hidden animate-scale-up border-8 border-[#0c1a2f]/10">
                         <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <h2 className="text-3xl font-black text-[#0c1a2f] italic tracking-tight uppercase leading-none">
                                 {editingProduct ? 'Update Product' : 'Provision Asset'}

@@ -16,7 +16,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     <Settings size={32} />
                 </div>
                 <div>
-                    <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                    <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Global System Parameters</p>
                 </div>
             </div>
@@ -30,7 +30,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                                 <Globe size={24} />
                             </div>
                             <div>
-                                <h3 className="font-black text-[#F8F8F6] text-lg uppercase tracking-tight">{labels.lang}</h3>
+                                <h3 className="font-black text-[#f5f8fb] text-lg uppercase tracking-tight">{labels.lang}</h3>
                                 <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mt-1">Multi-regional Interface Toggle</p>
                             </div>
                         </div>
@@ -39,13 +39,13 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     <div className="flex gap-4 p-2 bg-black/30 rounded-3xl border border-white/5">
                         <button
                             onClick={() => setLanguage('EN')}
-                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'EN' ? 'bg-[#F8F8F6] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'EN' ? 'bg-[#f5f8fb] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
                         >
                             <span className="text-xl">🇺🇸</span> English (US)
                         </button>
                         <button
                             onClick={() => setLanguage('TH')}
-                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'TH' ? 'bg-[#F8F8F6] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'TH' ? 'bg-[#f5f8fb] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
                         >
                             <span className="text-xl">🇹🇭</span> ภาษาไทย
                         </button>
@@ -59,7 +59,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                             <Bell size={24} />
                         </div>
                         <div>
-                            <h3 className="font-black text-[#F8F8F6] text-lg uppercase tracking-tight">{labels.notify}</h3>
+                            <h3 className="font-black text-[#f5f8fb] text-lg uppercase tracking-tight">{labels.notify}</h3>
                             <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mt-1">Real-time Dashboard Alerts</p>
                         </div>
                     </div>

@@ -79,7 +79,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-[#0D2040] border border-white/10 p-3 rounded-xl shadow-2xl">
+                <div className="bg-[#0c1a2f] border border-white/10 p-3 rounded-xl shadow-2xl">
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{label}</p>
                     {payload.map((entry, index) => (
                         <div key={index} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
@@ -110,7 +110,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
         <div className="max-w-7xl mx-auto animate-fade-in space-y-8 p-4 md:p-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
+                    <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase">{labels.title}</h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Real-time Business Intelligence Engine</p>
                 </div>
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
@@ -134,7 +134,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                             )}
                         </div>
                         <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-1 truncate">{stat.label}</p>
-                        <p className="text-2xl font-black text-[#F8F8F6] italic tracking-tight truncate">{stat.value}</p>
+                        <p className="text-2xl font-black text-[#f5f8fb] italic tracking-tight truncate">{stat.value}</p>
                     </div>
                 ))}
             </div>
@@ -144,7 +144,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                 <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-[3rem] p-8 shadow-3xl">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-xl font-black text-[#F8F8F6] uppercase tracking-tight italic">Revenue Trends</h3>
+                            <h3 className="text-xl font-black text-[#f5f8fb] uppercase tracking-tight italic">Revenue Trends</h3>
                             <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">Growth Comparison (Ads vs Store)</p>
                         </div>
                         <div className="flex bg-white/5 p-1 rounded-xl">
@@ -224,7 +224,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
             {session?.user?.role && can(session.user.role, 'marketing', 'view') && (
                 <div className="mt-12 space-y-6">
                     <div>
-                        <h2 className="text-2xl font-black text-[#F8F8F6] tracking-tight italic uppercase">Active Campaigns</h2>
+                        <h2 className="text-2xl font-black text-[#f5f8fb] tracking-tight italic uppercase">Active Campaigns</h2>
                         <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Manage & Optimize</p>
                     </div>
 

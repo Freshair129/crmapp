@@ -808,7 +808,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                     <div key={msg.id || i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[70%] p-3.5 rounded-2xl text-xs leading-relaxed font-medium shadow-xl backdrop-blur-sm ${isMe
                                             ? 'bg-blue-600/90 text-white rounded-tr-sm border border-blue-500/50'
-                                            : 'bg-[#1e3a5f]/80 text-[#fff8f0] rounded-tl-sm border border-white/10'
+                                            : 'bg-[#19273a]/80 text-[#fff8f0] rounded-tl-sm border border-white/10'
                                             }`}>
                                             {msg.message}
                                             {msg.attachments?.data?.map(att => (
@@ -861,7 +861,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
 
             {/* Right Sidebar: Customer Card */}
             {selectedConv && (
-                <div className="w-72 border-l border-white/5 bg-[#060f1e] flex flex-col overflow-y-auto custom-scrollbar shrink-0">
+                <div className="w-72 border-l border-white/5 bg-[#0c1a2f] flex flex-col overflow-y-auto custom-scrollbar shrink-0">
 
                     {/* ── Profile Header ── */}
                     <div className="px-5 pt-6 pb-5 border-b border-white/5 text-center">

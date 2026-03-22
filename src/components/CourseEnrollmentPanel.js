@@ -88,7 +88,7 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
     <div className="bg-[#0c1a2f]/50 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <h2 className="text-3xl font-black text-[#F8F8F6] uppercase tracking-widest flex items-center gap-3">
+          <h2 className="text-3xl font-black text-[#f5f8fb] uppercase tracking-widest flex items-center gap-3">
             <BookOpen className="text-[#cc9d37]" /> {t.title}
           </h2>
           <div className="flex gap-4 mt-4">

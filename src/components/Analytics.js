@@ -755,7 +755,7 @@ export default function Analytics({ customers, products }) {
             {/* Header & Tabs */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight mb-2">Data Analytics</h2>
+                    <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-2">Data Analytics</h2>
                     <div className="flex items-center gap-3">
                         <p className="text-white/40 text-sm font-bold uppercase tracking-[0.2em]">STRATEGIC INSIGHTS & GROWTH</p>
                         <div className="h-[1px] w-24 bg-white/10"></div>

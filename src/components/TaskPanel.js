@@ -130,7 +130,7 @@ function PrioritySelect({ value, onChange }) {
                 <ChevronDown size={10} />
             </button>
             {open && (
-                <div className="absolute top-full mt-1 left-0 z-50 bg-[#0d1f35] border border-white/10 rounded-2xl shadow-2xl overflow-hidden min-w-[220px]">
+                <div className="absolute top-full mt-1 left-0 z-50 bg-[#0c1a2f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden min-w-[220px]">
                     <div className="px-3 py-2 border-b border-white/5">
                         <span className="text-[9px] font-black uppercase tracking-widest text-white/30">เลือกระดับความสำคัญ</span>
                     </div>
@@ -280,7 +280,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
 
     return (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-[#0D2040] border border-white/10 rounded-[2rem] w-full max-w-lg p-8 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-lg p-8 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-white font-black text-lg">{isEdit ? 'แก้ไขงาน' : 'สร้างงานใหม่'}</h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center">
@@ -442,7 +442,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
             {/* Header */}
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-[#F8F8F6] tracking-tight mb-1">Task Board</h2>
+                    <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-1">Task Board</h2>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
                         {displayed.length} งาน
                         {urgentCount > 0 && (
