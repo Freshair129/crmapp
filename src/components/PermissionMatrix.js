@@ -39,8 +39,10 @@ function cellStyle(val) {
   return                       { icon: CheckCircle2,  color: 'text-emerald-400',bg: 'hover:bg-emerald-500/10', title: 'Allowed' }
 }
 
-export default function PermissionMatrix({ currentUserRole }) {
-  const [selectedRole, setSelectedRole]   = useState('MANAGER')
+export default function PermissionMatrix({ currentUserRole, targetRole }) {
+  // ถ้ามี targetRole (employee's role) → ใช้เป็นค่าเริ่มต้น, fallback MANAGER
+  const initialRole = (targetRole && ROLES.includes(targetRole)) ? targetRole : 'MANAGER'
+  const [selectedRole, setSelectedRole]   = useState(initialRole)
   const [draft, setDraft]                 = useState(null)   // full permissions object
   const [loading, setLoading]             = useState(true)
   const [saving, setSaving]               = useState(false)
@@ -48,6 +50,13 @@ export default function PermissionMatrix({ currentUserRole }) {
 
   // Deep clone helper
   const clonePerms = (p) => JSON.parse(JSON.stringify(p))
+
+  // Sync selectedRole เมื่อ targetRole เปลี่ยน (เช่น user เปลี่ยน role dropdown)
+  useEffect(() => {
+    if (targetRole && ROLES.includes(targetRole)) {
+      setSelectedRole(targetRole)
+    }
+  }, [targetRole])
 
   // Load from API on mount
   useEffect(() => {

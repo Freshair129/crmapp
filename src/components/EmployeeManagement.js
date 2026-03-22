@@ -1509,7 +1509,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                         {/* TAB: Permissions (Role-based Permission Matrix) */}
                         {activeTab === 'permissions' && (
                             <div className="bg-white/5 border border-white/8 rounded-2xl p-6">
-                                <PermissionMatrix currentUserRole={currentUser?.role} />
+                                <PermissionMatrix currentUserRole={currentUser?.role} targetRole={editForm.role || emp?.role} />
                             </div>
                         )}
 
