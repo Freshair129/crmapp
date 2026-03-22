@@ -56,15 +56,15 @@ describe('Course Management Unit Tests (Phase 17)', () => {
     describe('courseRepo.js', () => {
         
         // 1. listCourses()
-        it('listCourses - ควรดึงข้อมูลคอร์สที่ category="course" และรวม relations ที่เกี่ยวข้อง', async () => {
+        it('listCourses - ควรดึงข้อมูลคอร์สที่ category in COURSE_CATEGORIES และรวม relations ที่เกี่ยวข้อง', async () => {
             mockPrisma.product.findMany.mockResolvedValue([{ id: 'c1', name: 'Thai Food' }]);
             const result = await courseRepo.listCourses({ isActive: true });
 
             expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
-                where: { category: 'course', isActive: true },
-                include: expect.objectContaining({ 
-                    courseMenus: expect.anything(), 
-                    courseEquipment: expect.anything() 
+                where: { category: { in: expect.arrayContaining(['course', 'japanese_culinary']) }, isActive: true },
+                include: expect.objectContaining({
+                    courseMenus: expect.anything(),
+                    courseEquipment: expect.anything()
                 }),
                 orderBy: { name: 'asc' }
             }));
@@ -72,21 +72,21 @@ describe('Course Management Unit Tests (Phase 17)', () => {
         });
 
         // 2 & 8. createCourse() and generateCourseId()
-        it('createCourse - ควรสร้างคอร์สใหม่พร้อม generate ID format TVS-CRS-YY-XXXX', async () => {
-            // Mock generateCourseId internal call (findFirst for prefix)
-            mockPrisma.product.findFirst.mockResolvedValue({ productId: 'TVS-CRS-26-0005' });
+        it('createCourse - ควรสร้างคอร์สใหม่พร้อม generate ID format TVS-[CUISINE]-[PACK]-[SUBCAT]-[NN]', async () => {
+            // Mock generateProductId internal call (findFirst for prefix TVS-JP-2FC-HO-)
+            mockPrisma.product.findFirst.mockResolvedValue({ productId: 'TVS-JP-2FC-HO-05' });
             mockPrisma.product.create.mockImplementation(({ data }) => Promise.resolve({ id: 'new-uid', ...data }));
 
-            const courseData = { 
-                name: 'Ramen Master', 
-                price: 2500, 
-                hours: 15, 
-                days: 2 
+            const courseData = {
+                name: 'Ramen Master',
+                price: 2500,
+                hours: 15,
+                days: 2
             };
             const result = await courseRepo.createCourse(courseData);
 
-            // ตรวจสอบ ID generation (2026 -> 26, 0005 + 1 = 0006)
-            expect(result.productId).toBe('TVS-CRS-26-0006');
+            // Default cuisine=JP, pack=2FC, subcat=HO → TVS-JP-2FC-HO-06
+            expect(result.productId).toBe('TVS-JP-2FC-HO-06');
             expect(result.category).toBe('course');
             expect(result.price).toBe(2500);
             expect(result.hours).toBe(15);

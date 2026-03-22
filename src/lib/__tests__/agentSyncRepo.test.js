@@ -62,7 +62,7 @@ describe('agentSyncRepo', () => {
             const count = await agentSyncRepo.attributeByMsgId('c1', 'm1', 'e1');
             expect(count).toBe(1);
             expect(mockPrisma.message.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-                where: { conversationId: 'c1', messageId: 'm1' },
+                where: { conversationId: 'c1', messageId: 'm1', responderId: null },
                 data: { responderId: 'e1' }
             }));
         });
