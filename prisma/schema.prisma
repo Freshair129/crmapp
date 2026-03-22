@@ -288,6 +288,7 @@ model Employee {
   permissions  Json?     @default("[]") // granular overrides, e.g. ["edit_orders"]
   lastLoginAt  DateTime? @map("last_login_at")
   profilePicture String?  @map("profile_picture") // รูปโปรไฟล์ (base64 หรือ URL)
+  grade        String?   // เกรดพนักงาน: S / A / B / C / D (S = Special, food plating specialist)
   hiredAt      DateTime? @map("hired_at")       // วันที่เริ่มงานจริง (ต่างจาก createdAt ที่เป็นวันลงระบบ)
   dateOfBirth  DateTime? @map("date_of_birth")  // วันเดือนปีเกิด ค.ศ.
   createdAt    DateTime  @default(now()) @map("created_at")

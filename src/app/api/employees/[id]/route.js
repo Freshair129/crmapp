@@ -27,7 +27,7 @@ export async function PATCH(req, { params }) {
         const updateData = {};
         const allowed = [
             'firstName', 'lastName', 'nickName', 'phone', 'department', 'jobTitle',
-            'role', 'status', 'facebookName', 'facebookUrl', 'profilePicture',
+            'role', 'status', 'facebookName', 'facebookUrl', 'profilePicture', 'grade',
         ];
         for (const key of allowed) {
             if (key in body) updateData[key] = body[key] || null;
@@ -75,6 +75,7 @@ export async function PATCH(req, { params }) {
                 facebookName: true,
                 facebookUrl: true,
                 profilePicture: true,
+                grade: true,
                 hiredAt: true,
                 dateOfBirth: true,
             },

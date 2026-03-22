@@ -31,6 +31,7 @@ import {
     Briefcase,
     Camera,
     Cake,
+    Medal,
 } from 'lucide-react';
 import PermissionMatrix from './PermissionMatrix';
 import { can } from '@/lib/permissionMatrix';
@@ -49,6 +50,16 @@ const ROLE_META = {
 };
 
 const ALL_ROLES = ['DEVELOPER','OWNER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOYEE','AGENT','GUEST'];
+
+// ─── Grade config ──────────────────────────────────────────────────────────────
+// S = Special (food plating specialist / chef competition winner)
+const GRADE_META = {
+    S: { label: 'S', desc: 'Special',   color: '#f0c040', bg: 'rgba(240,192,64,0.18)',  border: 'rgba(240,192,64,0.45)' },
+    A: { label: 'A', desc: 'ดีมาก',     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  border: 'rgba(96,165,250,0.40)' },
+    B: { label: 'B', desc: 'ดี',        color: '#34d399', bg: 'rgba(52,211,153,0.15)',  border: 'rgba(52,211,153,0.40)' },
+    C: { label: 'C', desc: 'พอใช้',     color: '#fbbf24', bg: 'rgba(251,191,36,0.15)',  border: 'rgba(251,191,36,0.40)' },
+    D: { label: 'D', desc: 'ต้องปรับปรุง', color: '#f87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.40)' },
+};
 
 // Avatar gradient colors (for card dark-bg design)
 const ROLE_AVATAR = {
@@ -749,21 +760,34 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                             {emp.employeeId}
                                         </p>
                                     )}
-                                    {/* Tenure badge */}
-                                    {(() => {
-                                        const tenure = calcTenure(emp.hiredAt, emp.createdAt);
-                                        if (!tenure) return null;
-                                        return (
-                                            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
-                                                style={{ background: `${avatarColors[0]}20`, border: `1px solid ${avatarColors[0]}40`, color: avatarColors[0] }}>
-                                                <svg width="7" height="7" viewBox="0 0 7 7" fill="none" style={{ display:'inline' }}>
-                                                    <circle cx="3.5" cy="3.5" r="3" stroke="currentColor" strokeWidth="1"/>
-                                                    <path d="M3.5 2v1.5l1 0.7" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round"/>
-                                                </svg>
-                                                {tenure.label}
-                                            </span>
-                                        );
-                                    })()}
+                                    {/* Tenure + Grade badges row */}
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {(() => {
+                                            const tenure = calcTenure(emp.hiredAt, emp.createdAt);
+                                            if (!tenure) return null;
+                                            return (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
+                                                    style={{ background: `${avatarColors[0]}20`, border: `1px solid ${avatarColors[0]}40`, color: avatarColors[0] }}>
+                                                    <svg width="7" height="7" viewBox="0 0 7 7" fill="none" style={{ display:'inline' }}>
+                                                        <circle cx="3.5" cy="3.5" r="3" stroke="currentColor" strokeWidth="1"/>
+                                                        <path d="M3.5 2v1.5l1 0.7" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round"/>
+                                                    </svg>
+                                                    {tenure.label}
+                                                </span>
+                                            );
+                                        })()}
+                                        {/* Grade badge */}
+                                        {emp.grade && GRADE_META[emp.grade] && (() => {
+                                            const g = GRADE_META[emp.grade];
+                                            return (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
+                                                    style={{ background: g.bg, border: `1px solid ${g.border}`, color: g.color }}>
+                                                    <Medal size={7} style={{ display:'inline' }} />
+                                                    Grade {g.label} · {g.desc}
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
 
@@ -1001,7 +1025,7 @@ function StatCard({ icon: Icon, label, value, rawValue, format, sub, accent = fa
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '', hiredAt: '', dateOfBirth: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '', hiredAt: '', dateOfBirth: '', grade: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -1159,6 +1183,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
                                 <input
                                     type="text"
+                                    autoComplete="nope"
                                     placeholder="เช่น สมชาย ใจดี"
                                     value={form.facebookName || ''}
                                     onChange={e => setForm(f => ({ ...f, facebookName: e.target.value }))}
@@ -1169,6 +1194,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
                                 <input
                                     type="text"
+                                    autoComplete="nope"
                                     placeholder="facebook.com/username"
                                     value={form.facebookUrl || ''}
                                     onChange={e => setForm(f => ({ ...f, facebookUrl: e.target.value }))}
@@ -1445,6 +1471,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: Building2, label: 'แผนก',        val: emp.department || '—' },
                                         { icon: Briefcase, label: 'ตำแหน่ง',     val: emp.jobTitle || '—' },
                                         { icon: Cake,      label: 'วันเกิด',     val: (() => { const d = formatDOB(emp.dateOfBirth); return d ? d.full : '—'; })() },
+                                        { icon: Medal,     label: 'เกรด',        val: emp.grade && GRADE_META[emp.grade] ? `${emp.grade} · ${GRADE_META[emp.grade].desc}` : '—' },
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                         { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
                                         { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
@@ -1714,7 +1741,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
                                         <input
                                             type="text"
-                                            autoComplete="off"
+                                            autoComplete="nope"
                                             placeholder="เช่น สมชาย ใจดี"
                                             value={editForm.facebookName || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookName: e.target.value }))}
@@ -1725,13 +1752,42 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
                                         <input
                                             type="text"
-                                            autoComplete="off"
+                                            autoComplete="nope"
                                             placeholder="facebook.com/username หรือ https://..."
                                             value={editForm.facebookUrl || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookUrl: e.target.value }))}
                                             className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 transition-all font-mono"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* ── Grade ───────────────────────────────────────── */}
+                            <div className="border-t border-white/8 pt-4">
+                                <p className="text-[9px] text-[#f0c040]/70 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                    <Medal size={10} /> เกรดพนักงาน
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                    {[null, 'S', 'A', 'B', 'C', 'D'].map(g => {
+                                        const meta = g ? GRADE_META[g] : null;
+                                        const isSelected = (editForm.grade || null) === g;
+                                        return (
+                                            <button
+                                                key={g ?? 'none'}
+                                                type="button"
+                                                onClick={() => setEditForm(f => ({ ...f, grade: g }))}
+                                                className="px-3 py-1.5 rounded-xl text-[11px] font-black transition-all border"
+                                                style={isSelected
+                                                    ? meta
+                                                        ? { background: meta.bg, border: `1.5px solid ${meta.border}`, color: meta.color, boxShadow: `0 0 10px ${meta.color}40` }
+                                                        : { background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }
+                                                    : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.35)' }
+                                                }
+                                            >
+                                                {g ? `${g} · ${meta.desc}` : '— ไม่มี'}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

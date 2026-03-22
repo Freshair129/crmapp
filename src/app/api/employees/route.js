@@ -31,6 +31,7 @@ export async function GET(req) {
                 facebookName: true,
                 facebookUrl: true,
                 profilePicture: true,
+                grade: true,
                 identities: true,
                 hiredAt: true,
                 dateOfBirth: true,
@@ -54,7 +55,7 @@ export async function POST(req) {
     try {
         const prisma = await getPrisma();
         const body = await req.json();
-        const { firstName, lastName, nickName, email, phone, department, jobTitle, role, password, facebookName, facebookUrl, employmentType, agentCode, agentType, hiredAt, dateOfBirth } = body;
+        const { firstName, lastName, nickName, email, phone, department, jobTitle, role, password, facebookName, facebookUrl, employmentType, agentCode, agentType, hiredAt, dateOfBirth, grade } = body;
 
         if (!firstName || !lastName || !email || !password) {
             return NextResponse.json(
@@ -101,6 +102,7 @@ export async function POST(req) {
                 passwordHash,
                 facebookName: facebookName || null,
                 facebookUrl: facebookUrl || null,
+                grade: grade || null,
                 hiredAt: hiredAt ? new Date(hiredAt) : null,
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
             },
@@ -121,6 +123,7 @@ export async function POST(req) {
                 facebookName: true,
                 facebookUrl: true,
                 profilePicture: true,
+                grade: true,
                 hiredAt: true,
                 dateOfBirth: true,
                 createdAt: true,
