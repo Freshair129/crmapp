@@ -1714,6 +1714,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
                                         <input
                                             type="text"
+                                            autoComplete="off"
                                             placeholder="เช่น สมชาย ใจดี"
                                             value={editForm.facebookName || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookName: e.target.value }))}
@@ -1724,6 +1725,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
                                         <input
                                             type="text"
+                                            autoComplete="off"
                                             placeholder="facebook.com/username หรือ https://..."
                                             value={editForm.facebookUrl || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookUrl: e.target.value }))}
