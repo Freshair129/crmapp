@@ -156,6 +156,36 @@ model TimelineEvent {
 // DOMAIN: Conversation
 // ─────────────────────────────────────────────
 
+// ─────────────────────────────────────────────
+// DOMAIN: Intelligence (NotebookLM Style)
+// ─────────────────────────────────────────────
+
+model ConversationIntelligence {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  date           DateTime @default(now())
+  
+  // NotebookLM-style Summary
+  summary        String?  @db.Text
+  keyTakeaways   Json     @default("[]") @map("key_takeaways")
+  
+  // Knowledge Tree (Mermaid.js code)
+  treeCode       String?  @db.Text @map("tree_code")
+  
+  // Metadata
+  sentiment      String?  @default("NEUTRAL") // POSITIVE | NEUTRAL | NEGATIVE
+  intent         String?  // SALES | SUPPORT | INQUIRY
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([date])
+  @@map("conversation_intelligence")
+}
+
 model Conversation {
   id                 String    @id @default(uuid())
   conversationId     String    @unique @map("conversation_id")
@@ -176,8 +206,9 @@ model Conversation {
   assignedEmployee Employee?     @relation("ConversationAssignee", fields: [assignedEmployeeId], references: [id])
   customer         Customer?     @relation(fields: [customerId], references: [id])
   episodes         ChatEpisode[]
-  messages         Message[]
-  orders           Order[]       @relation("OrderConversation")
+  messages      Message[]
+  intelligence  ConversationIntelligence[]
+  orders        Order[]       @relation("OrderConversation")
 
   @@index([status])
   @@index([channel])

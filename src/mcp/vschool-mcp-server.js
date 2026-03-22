@@ -20,6 +20,7 @@ import * as scheduleRepo from '../lib/repositories/scheduleRepo.js';
 import * as kitchenRepo from '../lib/repositories/kitchenRepo.js';
 import * as marketingRepo from '../lib/repositories/marketingRepo.js';
 import * as adsOptimizeRepo from '../lib/repositories/adsOptimizeRepo.js';
+import * as intelligenceRepo from '../lib/repositories/intelligenceRepo.js';
 import { logger } from '../lib/logger.js';
 
 const MODULE = 'V-School-MCP';
@@ -31,7 +32,7 @@ const MODULE = 'V-School-MCP';
 const server = new Server(
     {
         name: 'vschool-crm-server',
-        version: '1.8.0',
+        version: '1.9.0',
     },
     {
         capabilities: {
@@ -324,6 +325,20 @@ const TOOLS = [
             required: ['adsetId', 'newBudget', 'actorEmployeeId'],
         },
     },
+
+    // ─── Intelligence Domain (NotebookLM Style) ─────────────────────────
+    {
+        name: 'intelligence.get_chat_tree',
+        description: 'สร้างหรือดึงแผนภูมิต้นไม้ (Knowledge Tree) และสรุปประวัติแชทของลูกค้า (NotebookLM Style)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                conversationId: { type: 'string', description: 'UUID ของ Conversation' },
+                refresh: { type: 'boolean', description: 'ถ้าเป็น true จะทำการวิเคราะห์ใหม่ทันที' },
+            },
+            required: ['conversationId'],
+        },
+    },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
@@ -613,6 +628,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     newBudget: args.newBudget,
                     metaResponse: result,
                 });
+            }
+
+            // ─── Intelligence ───────────────────────────────────────────
+            case 'intelligence.get_chat_tree': {
+                let result;
+                if (args.refresh) {
+                    result = await intelligenceRepo.generateChatAnalysis(args.conversationId);
+                } else {
+                    result = await intelligenceRepo.getLatestAnalysis(args.conversationId);
+                    if (!result) {
+                        result = await intelligenceRepo.generateChatAnalysis(args.conversationId);
+                    }
+                }
+                return textResult(result);
             }
 
             default:
