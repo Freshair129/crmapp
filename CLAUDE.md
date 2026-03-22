@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-22)
+## Version Status (อัพเดท: 2026-03-23)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -50,7 +50,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
 | `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree + MCP tool | ✅ released |
 | `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released |
-| `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released ← HEAD |
+| `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released |
+| `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released ← HEAD |
+
+
+### v1.9.3 — สิ่งที่ทำแล้ว (Phase 35 — Ingredient Yield Percent) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Ingredient.yieldPercent | ✅ updated | `Float @default(100)` — % usable หลัง prep |
+| Supabase DB migration | ✅ done | `ALTER TABLE ingredients ADD COLUMN yield_percent FLOAT NOT NULL DEFAULT 100` |
+| `src/lib/repositories/kitchenRepo.js` | ✅ updated | upsertIngredient รับ yieldPercent; calculateStockNeeded ใช้ `(100/yieldPercent)` multiplier |
+| `src/app/api/kitchen/ingredients/[id]/route.js` | ✅ updated | PATCH validate yieldPercent 1–100, routing logic |
+| `src/components/KitchenStockPanel.js` | ✅ updated | YIELD% column + badge สี + inline edit + Add modal field |
+
+> ⚠️ **Known Gotcha — yieldPercent default**: existing ingredients ทั้งหมดมี yieldPercent=100 — ต้องให้ Head Chef ตั้งค่าทีละตัว
+> ⚠️ **Known Gotcha — calculateStockNeeded include**: ต้องแน่ใจว่า Prisma include chain ส่ง `ingredient.yieldPercent` มาถึง `getBOMForProduct` เสมอ
 
 
 ### v1.9.2 — สิ่งที่ทำแล้ว (Phase 34.5 — Audit Log) ✅ — by Claude
