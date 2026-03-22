@@ -953,7 +953,13 @@ function ThumbnailStrip({ employees, activeIndex, onSelect }) {
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, sub, accent = false }) {
+// rawValue: numeric target for count-up animation
+// format: (n) => string  — e.g. v => `฿${v.toLocaleString()}` or v => `${v}%`
+function StatCard({ icon: Icon, label, value, rawValue, format, sub, accent = false }) {
+    const animVal = useCountUp(typeof rawValue === 'number' ? rawValue : 0);
+    const display = typeof rawValue === 'number'
+        ? (format ? format(animVal) : String(animVal))
+        : value;
     return (
         <div className={`rounded-2xl p-5 border flex flex-col gap-2 ${accent
             ? 'bg-[#cc9d37]/10 border-[#cc9d37]/20'
@@ -962,7 +968,7 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
                 <Icon size={16} />
             </div>
             <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">{label}</p>
-            <p className={`text-xl font-black ${accent ? 'text-[#cc9d37]' : 'text-white'}`}>{value}</p>
+            <p className={`text-xl font-black ${accent ? 'text-[#cc9d37]' : 'text-white'}`}>{display}</p>
             {sub && <p className="text-white/30 text-[10px]">{sub}</p>}
         </div>
     );
@@ -1172,6 +1178,10 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const emp = filtered[safeIndex] || null;
     const { assignedCustomers, sales, totalRevenue } = getLinkedData(emp, customers);
     const empDomain = getEmployeeDomain(emp);
+    const validSalesCount = sales.filter(s => s.status !== 'CANCELLED').length;
+    const closeRate = assignedCustomers.length > 0
+        ? Math.round((validSalesCount / assignedCustomers.length) * 100)
+        : 0;
 
     const goNext = () => setActiveIndex(i => (i + 1) % filtered.length);
     const goPrev = () => setActiveIndex(i => (i - 1 + filtered.length) % filtered.length);
@@ -1345,11 +1355,27 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         </>
                                     ) : (
                                         <>
-                                            <StatCard icon={Users}        label="Customers" value={assignedCustomers.length} />
-                                            <StatCard icon={Receipt}      label="Orders"    value={sales.length} />
-                                            <StatCard icon={Coins}        label="Revenue"   value={`฿${totalRevenue.toLocaleString()}`} accent />
-                                            <StatCard icon={Star}         label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
-                                            {(() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
+                                            <StatCard
+                                                icon={Users}
+                                                label="ลูกค้าที่ดูแล"
+                                                rawValue={assignedCustomers.length}
+                                                sub={`${assignedCustomers.length} ราย`}
+                                            />
+                                            <StatCard
+                                                icon={Coins}
+                                                label="ยอดสะสม"
+                                                rawValue={totalRevenue}
+                                                format={v => `฿${v.toLocaleString()}`}
+                                                accent
+                                            />
+                                            <StatCard
+                                                icon={Receipt}
+                                                label="%ปิดการขาย"
+                                                rawValue={closeRate}
+                                                format={v => `${v}%`}
+                                                sub={`${validSalesCount} / ${assignedCustomers.length} ออเดอร์`}
+                                            />
+                                            <StatCard icon={Star} label="Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
                                         </>
                                     )}
                                 </div>
