@@ -290,7 +290,7 @@ export default function CampaignTracking({ customers }) {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                <div className="w-12 h-12 border-4 border-[#C9A34E] border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-[#cc9d37] border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-white/40 font-black text-xs uppercase tracking-widest">Loading Tracking Intelligence...</p>
             </div>
         );
@@ -309,13 +309,13 @@ export default function CampaignTracking({ customers }) {
                                     setDateRange('last_30d'); // Ensure valid fallback date
                                     setStatusFilter('');
                                 }}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'timeline' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'timeline' ? 'bg-[#cc9d37] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                             >
                                 <ListChecks className="mr-2" size={14} /> Timeline
                             </button>
                             <button
                                 onClick={() => setViewMode('performance')}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'performance' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'performance' ? 'bg-[#cc9d37] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                             >
                                 <TrendingUp className="mr-2" size={14} /> Performance
                             </button>
@@ -329,19 +329,19 @@ export default function CampaignTracking({ customers }) {
                             <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
                                 <button
                                     onClick={() => setDateRange('this_month')}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'this_month' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'this_month' ? 'bg-[#cc9d37] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                                 >
                                     This Mth
                                 </button>
                                 <button
                                     onClick={() => setDateRange('last_month')}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'last_month' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'last_month' ? 'bg-[#cc9d37] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                                 >
                                     Last Mth
                                 </button>
                                 <button
                                     onClick={() => setDateRange('last_30d')}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'last_30d' ? 'bg-[#C9A34E] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${dateRange === 'last_30d' ? 'bg-[#cc9d37] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                                 >
                                     30 Days
                                 </button>
@@ -352,7 +352,7 @@ export default function CampaignTracking({ customers }) {
                                     onClick={() => setStatusFilter('DELIVERING')}
                                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'DELIVERING' ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                                 >
-                                    <Flame className="text-[#C9A34E] mr-1" size={14} /> Delivering
+                                    <Flame className="text-[#cc9d37] mr-1" size={14} /> Delivering
                                 </button>
                                 <button
                                     onClick={() => setStatusFilter('ACTIVE')}
@@ -385,7 +385,7 @@ export default function CampaignTracking({ customers }) {
                                 </select>
                                 <button
                                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                                    className="ml-3 text-white/40 hover:text-[#C9A34E] transition-colors"
+                                    className="ml-3 text-white/40 hover:text-[#cc9d37] transition-colors"
                                 >
                                     <i className={`fas ${sortOrder === 'desc' ? 'fa-arrow-down' : 'fa-arrow-up'} text-[10px]`}></i>
                                 </button>
@@ -394,7 +394,7 @@ export default function CampaignTracking({ customers }) {
                             <select
                                 value={selectedCampaignId}
                                 onChange={(e) => setSelectedCampaignId(e.target.value)}
-                                className="bg-white/5 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-xl outline-none focus:border-[#C9A34E] transition-colors"
+                                className="bg-white/5 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-xl outline-none focus:border-[#cc9d37] transition-colors"
                             >
                                 <option value="all">View All Campaigns</option>
                                 {campaigns.map(c => (
@@ -461,7 +461,7 @@ export default function CampaignTracking({ customers }) {
                                 </div>
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">
                                     <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <Wallet className="text-[#C9A34E]" size={14} /> Revenue Generated
+                                        <Wallet className="text-[#cc9d37]" size={14} /> Revenue Generated
                                     </div>
                                     <p className="text-2xl font-black text-white">฿{fmt(totalRevenue)}</p>
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${overallRoas >= 1 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -520,7 +520,7 @@ export default function CampaignTracking({ customers }) {
                                             <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-1">
                                                 Attribution Gap
                                             </p>
-                                            <p className={`text-xl font-black ${Math.abs(campaign.metrics.revenueGap) < 20 ? 'text-[#C9A34E]' : 'text-rose-500'}`}>
+                                            <p className={`text-xl font-black ${Math.abs(campaign.metrics.revenueGap) < 20 ? 'text-[#cc9d37]' : 'text-rose-500'}`}>
                                                 {campaign.metrics.revenueGap > 0 ? '+' : ''}{campaign.metrics.revenueGap.toFixed(1)}%
                                             </p>
                                             <p className="text-[9px] text-white/20 font-bold" title="Revenue recorded by FB Pixel">FB Val: ฿{fmt(campaign.metrics.fbRevenue)} <MetricSource source="FB" /></p>
@@ -544,7 +544,7 @@ export default function CampaignTracking({ customers }) {
                                                     }}
                                                 />
                                             </div>
-                                            <p className={`text-lg font-black ${roas >= 2 ? 'text-[#C9A34E]' : 'text-white/60'}`}>{fmt(roas, 2)}x</p>
+                                            <p className={`text-lg font-black ${roas >= 2 ? 'text-[#cc9d37]' : 'text-white/60'}`}>{fmt(roas, 2)}x</p>
                                         </div>
                                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 group/metric">
                                             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Orders <MetricSource source="CRM" type="internal" /></p>
@@ -664,7 +664,7 @@ export default function CampaignTracking({ customers }) {
                                                                 <td className="py-3 px-2 text-right text-xs text-white/60">฿{fmt(adset.cpm, 2)}</td>
                                                                 <td className="py-3 px-2 text-right pr-4">
                                                                     <div className="flex items-center justify-end gap-1">
-                                                                        <span className="text-xs font-bold text-[#C9A34E]">{fmt(fbRoas, 2)}x</span>
+                                                                        <span className="text-xs font-bold text-[#cc9d37]">{fmt(fbRoas, 2)}x</span>
                                                                         <MetricSource source="FB PIXEL" />
                                                                         <AskAIButton
                                                                             context={{
@@ -715,7 +715,7 @@ export default function CampaignTracking({ customers }) {
                                                                                                             <div className="w-full h-full flex items-center justify-center"><Image className="text-white/20" size={10} /></div>
                                                                                                         )}
                                                                                                         {(ad.thumbnail || ad.image) && (
-                                                                                                            <div className="absolute top-0 left-10 hidden group-hover/img:block w-32 h-32 rounded-lg border-2 border-[#C9A34E] overflow-hidden z-10 shadow-xl">
+                                                                                                            <div className="absolute top-0 left-10 hidden group-hover/img:block w-32 h-32 rounded-lg border-2 border-[#cc9d37] overflow-hidden z-10 shadow-xl">
                                                                                                                 <img src={ad.thumbnail || ad.image} alt="" className="w-full h-full object-cover" />
                                                                                                             </div>
                                                                                                         )}
@@ -749,7 +749,7 @@ export default function CampaignTracking({ customers }) {
                                                                                                 <td className="py-2 px-4 text-right text-[10px] text-white/80 font-bold">{results}</td>
                                                                                                 <td className="py-2 px-4 text-right">
                                                                                                     <div className="flex items-center justify-end gap-1">
-                                                                                                        <span className="text-[10px] text-[#C9A34E] font-bold">{fmt(adRoas, 2)}x</span>
+                                                                                                        <span className="text-[10px] text-[#cc9d37] font-bold">{fmt(adRoas, 2)}x</span>
                                                                                                         <MetricSource source="FB PIXEL" />
                                                                                                         <AskAIButton
                                                                                                             context={{
@@ -814,7 +814,7 @@ export default function CampaignTracking({ customers }) {
                                                                 {new Date(order.date).toLocaleDateString()}
                                                             </td>
                                                             <td className="py-4 px-2">
-                                                                <p className="text-xs font-black text-white group-hover:text-[#C9A34E] transition-colors">{order.customerName}</p>
+                                                                <p className="text-xs font-black text-white group-hover:text-[#cc9d37] transition-colors">{order.customerName}</p>
                                                             </td>
                                                             <td className="py-4 px-2">
                                                                 <div className="flex flex-wrap gap-1">

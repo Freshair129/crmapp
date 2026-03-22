@@ -129,13 +129,13 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="bg-[#0A1A2F] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100] overflow-x-hidden overflow-y-hidden select-none"
+            className="bg-[#0c1a2f] border-r border-white/5 flex flex-col h-screen shrink-0 sticky top-0 z-[100] overflow-x-hidden overflow-y-hidden select-none"
         >
             {/* ── Client Identity ───────────────────────────────────────── */}
             <div className="h-10 flex items-center border-b border-white/5 shrink-0 px-4 gap-2">
                 {/* Collapsed: show abbreviated client ID */}
                 <span
-                    className="text-[#C9A34E] font-black text-[10px] uppercase tracking-[0.18em] whitespace-nowrap shrink-0"
+                    className="text-[#cc9d37] font-black text-[10px] uppercase tracking-[0.18em] whitespace-nowrap shrink-0"
                     style={{
                         opacity: isOpen ? 0 : 1,
                         maxWidth: isOpen ? 0 : 40,
@@ -154,7 +154,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                         transition: 'opacity 140ms, max-width 180ms cubic-bezier(0.4,0,0.2,1)',
                     }}
                 >
-                    <span className="text-[#C9A34E] font-black text-[11px] tracking-[0.1em] whitespace-nowrap leading-none">
+                    <span className="text-[#cc9d37] font-black text-[11px] tracking-[0.1em] whitespace-nowrap leading-none">
                         The V School
                     </span>
                     <span className="text-white/25 font-mono text-[8px] tracking-widest whitespace-nowrap leading-none mt-0.5">
@@ -200,7 +200,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                         onClick={() => onViewChange(item.id)}
                                         className={`relative flex items-center gap-3 h-9 my-px rounded-xl transition-all duration-150 ${
                                             isActive
-                                                ? 'bg-[#C9A34E]/12 text-[#C9A34E]'
+                                                ? 'bg-[#cc9d37]/12 text-[#cc9d37]'
                                                 : 'text-white/40 hover:text-white hover:bg-white/5'
                                         }`}
                                         style={{
@@ -216,7 +216,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                     >
                                         {/* Active indicator */}
                                         {isActive && (
-                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#C9A34E] rounded-r-full" />
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#cc9d37] rounded-r-full" />
                                         )}
 
                                         <Icon size={16} className="shrink-0" />
@@ -263,7 +263,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                 <div
                     className="flex items-center gap-3 px-3 py-1.5 group/user cursor-default relative"
                 >
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center border border-white/10 shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#cc9d37] to-amber-600 flex items-center justify-center border border-white/10 shrink-0">
                         <span className="text-white font-black text-[11px]">{(userName || 'U').charAt(0)}</span>
                     </div>
                     <span
@@ -374,7 +374,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                             onClick={() => setMode(key)}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                                                 isActive
-                                                    ? 'bg-[#C9A34E]/12 text-[#C9A34E]'
+                                                    ? 'bg-[#cc9d37]/12 text-[#cc9d37]'
                                                     : 'text-white/50 hover:text-white hover:bg-white/5'
                                             }`}
                                         >
@@ -384,7 +384,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                                 <div className="text-[9px] text-white/30">{meta.title}</div>
                                             </div>
                                             {isActive && (
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A34E] shrink-0" />
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[#cc9d37] shrink-0" />
                                             )}
                                         </button>
                                     );

@@ -133,15 +133,15 @@ function AddCourseModal({ onClose, onCreated }) {
     }
 
     const maxDays = form.days ? Math.max(1, Math.ceil(parseFloat(form.days))) : 1;
-    const inputCls = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-[#C9A34E]/50';
+    const inputCls = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-[#cc9d37]/50';
 
     return createPortal(
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-xl flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-xl flex flex-col shadow-2xl overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
                     <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                        <BookMarked size={22} className="text-[#C9A34E]" /> สร้างคอร์สเรียนใหม่
+                        <BookMarked size={22} className="text-[#cc9d37]" /> สร้างคอร์สเรียนใหม่
                     </h3>
                     <button onClick={onClose} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors">
                         <X size={20} />
@@ -270,7 +270,7 @@ function AddCourseModal({ onClose, onCreated }) {
                                         const name = emp.nickName || emp.firstName || emp.employeeId;
                                         return (
                                             <button key={emp.id} type="button" onClick={() => toggleInstructor(emp.id)}
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${active ? 'bg-[#C9A34E]/20 border-[#C9A34E]/50 text-[#C9A34E]' : 'border-white/10 text-white/30 hover:text-white/60'}`}>
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${active ? 'bg-[#cc9d37]/20 border-[#cc9d37]/50 text-[#cc9d37]' : 'border-white/10 text-white/30 hover:text-white/60'}`}>
                                                 {name}
                                             </button>
                                         );
@@ -286,7 +286,7 @@ function AddCourseModal({ onClose, onCreated }) {
 
                 <div className="px-8 pb-7 pt-4 border-t border-white/10 shrink-0">
                     <button type="submit" form="create-course-form" disabled={saving}
-                        className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+                        className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-4 uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
                         {saving ? 'กำลังสร้าง...' : `สร้างคอร์ส${menuRows.filter(m=>m.recipeId).length > 0 ? ` + ${menuRows.filter(m=>m.recipeId).length} เมนู` : ''}`}
                     </button>
                 </div>
@@ -329,7 +329,7 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
 
     return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-            <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/10 shrink-0">
                     <h4 className="font-black text-white uppercase tracking-tighter">เพิ่มเมนูในคอร์ส</h4>
                     <button onClick={onClose} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10"><X size={18} /></button>
@@ -341,7 +341,7 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
                             {loading ? <div className="text-white/30 text-sm">กำลังโหลด...</div> : (
                                 <select
                                     required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                     value={form.recipeId}
                                     onChange={e => setForm({ ...form, recipeId: e.target.value })}
                                 >
@@ -356,7 +356,7 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
                             <div>
                                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">วันที่</label>
                                 <select
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                     value={form.dayNumber}
                                     onChange={e => setForm({ ...form, dayNumber: e.target.value })}
                                 >
@@ -368,7 +368,7 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
                             <div>
                                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">Session</label>
                                 <select
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                     value={form.sessionSlot}
                                     onChange={e => setForm({ ...form, sessionSlot: e.target.value })}
                                 >
@@ -383,7 +383,7 @@ function AddMenuModal({ courseId, maxDays, onClose, onAdded }) {
                 </div>
                 <div className="px-6 pb-6 pt-4 border-t border-white/10 shrink-0">
                     <button type="submit" form="add-menu-form" disabled={saving}
-                        className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-3 uppercase tracking-widest disabled:opacity-50">
+                        className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-3 uppercase tracking-widest disabled:opacity-50">
                         {saving ? 'กำลังเพิ่ม...' : 'เพิ่มเมนู'}
                     </button>
                 </div>
@@ -416,7 +416,7 @@ function AddEquipmentModal({ courseId, onClose, onAdded }) {
 
     return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-            <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/10 shrink-0">
                     <h4 className="font-black text-white uppercase tracking-tighter">เพิ่มอุปกรณ์คอร์ส</h4>
                     <button onClick={onClose} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10"><X size={18} /></button>
@@ -426,7 +426,7 @@ function AddEquipmentModal({ courseId, onClose, onAdded }) {
                         <div>
                             <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">ชื่ออุปกรณ์ *</label>
                             <input required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                 placeholder="เช่น ผ้ากันเปื้อน V School"
                                 value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                             />
@@ -435,14 +435,14 @@ function AddEquipmentModal({ courseId, onClose, onAdded }) {
                             <div>
                                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">จำนวน/คน</label>
                                 <input type="number" min="1"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                     value={form.qty} onChange={e => setForm({ ...form, qty: e.target.value })}
                                 />
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-1.5">ต้นทุน (฿)</label>
                                 <input type="number" min="0"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                                     placeholder="0" value={form.estimatedCost}
                                     onChange={e => setForm({ ...form, estimatedCost: e.target.value })}
                                 />
@@ -467,7 +467,7 @@ function AddEquipmentModal({ courseId, onClose, onAdded }) {
                 </div>
                 <div className="px-6 pb-6 pt-4 border-t border-white/10 shrink-0">
                     <button type="submit" form="add-eq-form" disabled={saving}
-                        className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-3 uppercase tracking-widest disabled:opacity-50">
+                        className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-3 uppercase tracking-widest disabled:opacity-50">
                         {saving ? 'กำลังเพิ่ม...' : 'เพิ่มอุปกรณ์'}
                     </button>
                 </div>
@@ -509,7 +509,7 @@ function CourseCard({ course, onUpdated }) {
     }
 
     return (
-        <div className="bg-white/5 rounded-[2rem] border border-white/10 hover:border-[#C9A34E]/30 transition-all">
+        <div className="bg-white/5 rounded-[2rem] border border-white/10 hover:border-[#cc9d37]/30 transition-all">
             {/* Header row */}
             <div className="p-6 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -521,7 +521,7 @@ function CourseCard({ course, onUpdated }) {
 
                     {/* Stat chips */}
                     <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="text-[#C9A34E] font-black text-sm">
+                        <span className="text-[#cc9d37] font-black text-sm">
                             ฿{course.price?.toLocaleString()}
                         </span>
                         {course.hours && (
@@ -575,7 +575,7 @@ function CourseCard({ course, onUpdated }) {
                             <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">เมนูในคอร์ส</span>
                             <button
                                 onClick={() => setShowMenuModal(true)}
-                                className="flex items-center gap-1.5 text-[10px] font-black text-[#C9A34E] hover:text-amber-300 uppercase tracking-widest"
+                                className="flex items-center gap-1.5 text-[10px] font-black text-[#cc9d37] hover:text-amber-300 uppercase tracking-widest"
                             >
                                 <Plus size={12} /> เพิ่มเมนู
                             </button>
@@ -592,7 +592,7 @@ function CourseCard({ course, onUpdated }) {
                                             {items.map(m => (
                                                 <div key={m.id} className="flex items-center justify-between bg-white/3 rounded-xl px-4 py-2.5 border border-white/5">
                                                     <div className="flex items-center gap-3">
-                                                        <Utensils size={13} className="text-[#C9A34E] shrink-0" />
+                                                        <Utensils size={13} className="text-[#cc9d37] shrink-0" />
                                                         <div>
                                                             <p className="text-sm font-bold text-white">{m.recipe?.name}</p>
                                                             <p className="text-[9px] text-white/25">{m.recipe?.recipeId} {m.recipe?.chef ? `· ${m.recipe.chef}` : ''}</p>
@@ -619,7 +619,7 @@ function CourseCard({ course, onUpdated }) {
                             <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">อุปกรณ์คอร์ส</span>
                             <button
                                 onClick={() => setShowEqModal(true)}
-                                className="flex items-center gap-1.5 text-[10px] font-black text-[#C9A34E] hover:text-amber-300 uppercase tracking-widest"
+                                className="flex items-center gap-1.5 text-[10px] font-black text-[#cc9d37] hover:text-amber-300 uppercase tracking-widest"
                             >
                                 <Plus size={12} /> เพิ่ม
                             </button>
@@ -694,22 +694,22 @@ export default function CoursePage({ language = 'TH' }) {
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-20 space-y-4">
-            <Loader2 className="w-12 h-12 text-[#C9A34E] animate-spin" />
-            <span className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลดคอร์สเรียน...</span>
+            <Loader2 className="w-12 h-12 text-[#cc9d37] animate-spin" />
+            <span className="text-[#cc9d37] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลดคอร์สเรียน...</span>
         </div>
     );
 
     return (
-        <div className="bg-[#0A1A2F]/30 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8">
+        <div className="bg-[#0c1a2f]/30 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
                 <div className="flex items-center gap-6">
-                    <div className="bg-[#C9A34E] p-4 rounded-3xl shadow-xl shadow-amber-900/30">
-                        <BookMarked size={32} className="text-[#0A1A2F]" />
+                    <div className="bg-[#cc9d37] p-4 rounded-3xl shadow-xl shadow-amber-900/30">
+                        <BookMarked size={32} className="text-[#0c1a2f]" />
                     </div>
                     <div>
                         <h2 className="text-4xl font-black text-white uppercase tracking-tighter">คอร์สเรียน</h2>
-                        <span className="text-xs font-black text-[#C9A34E] uppercase tracking-widest">{courses.length} คอร์ส</span>
+                        <span className="text-xs font-black text-[#cc9d37] uppercase tracking-widest">{courses.length} คอร์ส</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -718,11 +718,11 @@ export default function CoursePage({ language = 'TH' }) {
                         placeholder="ค้นหาคอร์ส..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-sm font-bold placeholder:text-white/20 focus:outline-none focus:border-[#C9A34E]/40 w-48"
+                        className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-white text-sm font-bold placeholder:text-white/20 focus:outline-none focus:border-[#cc9d37]/40 w-48"
                     />
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 bg-[#C9A34E] text-[#0A1A2F] font-black text-xs uppercase tracking-widest px-5 py-2.5 rounded-2xl hover:scale-105 active:scale-95 transition-all"
+                        className="flex items-center gap-2 bg-[#cc9d37] text-[#0c1a2f] font-black text-xs uppercase tracking-widest px-5 py-2.5 rounded-2xl hover:scale-105 active:scale-95 transition-all"
                     >
                         <Plus size={16} /> สร้างคอร์ส
                     </button>

@@ -67,7 +67,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-[#0A1A2F] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#0c1a2f] border border-white/10 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-start justify-between">
           <div>
@@ -98,7 +98,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
               <select
                 value={requestType}
                 onChange={(e) => setRequestType(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#C9A34E]/50"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#cc9d37]/50"
               >
                 <option value="lifetime_budget">Lifetime Budget</option>
                 <option value="daily_budget">Daily Budget</option>
@@ -109,7 +109,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
             {/* Current Budget Display */}
             <div className="bg-white/5 p-4 rounded-xl border border-white/10">
               <p className="text-[10px] text-white/40 font-bold mb-1">Current lifetime budget:</p>
-              <p className="text-lg font-black text-[#C9A34E]">฿{campaign.lifetimeBudget?.toLocaleString() || 'N/A'}</p>
+              <p className="text-lg font-black text-[#cc9d37]">฿{campaign.lifetimeBudget?.toLocaleString() || 'N/A'}</p>
             </div>
 
             {/* Proposed Budget */}
@@ -122,7 +122,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
                   value={proposedBudget}
                   onChange={(e) => setProposedBudget(e.target.value)}
                   placeholder="Enter new budget amount"
-                  className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                  className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50"
                 />
                 <span className="flex items-center text-white/40 font-bold">฿</span>
               </div>
@@ -135,7 +135,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Explain why this change is needed..."
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50 resize-none h-24"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50 resize-none h-24"
               />
             </div>
 
@@ -169,7 +169,7 @@ export default function AdsOptimizeRequestModal({ campaign, onClose, onSubmitted
               <button
                 onClick={handleSubmit}
                 disabled={loading || !proposedBudget || !reason}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 size={12} className="animate-spin" /> : 'Submit Request'}
               </button>

@@ -203,8 +203,8 @@ export default function Home() {
     // Guard: Loading State
     if (!authInited) {
         return (
-            <div className="h-screen w-screen bg-[#0A1A2F] flex items-center justify-center">
-                <Loader2 className="animate-spin text-[#C9A34E]" size={40} />
+            <div className="h-screen w-screen bg-[#0c1a2f] flex items-center justify-center">
+                <Loader2 className="animate-spin text-[#cc9d37]" size={40} />
             </div>
         );
     }
@@ -217,7 +217,7 @@ export default function Home() {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#0A1A2F] text-white">
+        <div className="flex h-screen overflow-hidden bg-[#0c1a2f] text-white">
             <Sidebar
                 activeView={activeView}
                 onViewChange={handleViewChange}
@@ -246,7 +246,7 @@ export default function Home() {
                 )}
 
                 <div className={`flex-1 relative min-h-0 ${activeView === 'facebook-chat' ? 'flex flex-col overflow-hidden' : 'p-8'}`}>
-                    <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#C9A34E]/5 blur-[120px] -z-10 pointer-events-none" />
+                    <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-[#cc9d37]/5 blur-[120px] -z-10 pointer-events-none" />
                     <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] -z-10 pointer-events-none" />
 
                     <AnimatePresence mode="wait">
@@ -289,7 +289,7 @@ export default function Home() {
                                 </div>
                             ) : loading ? (
                                 <div className="flex items-center justify-center h-64">
-                                    <Loader2 className="animate-spin text-[#C9A34E]" size={28} />
+                                    <Loader2 className="animate-spin text-[#cc9d37]" size={28} />
                                 </div>
                             ) : (
                                 <CustomerList

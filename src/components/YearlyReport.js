@@ -62,11 +62,11 @@ export default function YearlyReport({ dailyData }) {
                 <span className="border-b border-white/20 border-dotted group-hover:border-white/60 transition-colors py-1">
                     {label}
                 </span>
-                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0A1A2F] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0c1a2f] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <p className="text-[11px] font-bold leading-relaxed normal-case tracking-normal text-white/90 text-center">
                         {description}
                     </p>
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0A1A2F] border-l border-t border-white/10 rotate-45"></div>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0c1a2f] border-l border-t border-white/10 rotate-45"></div>
                 </div>
             </div>
         </th>
@@ -89,7 +89,7 @@ export default function YearlyReport({ dailyData }) {
             </div>
 
             {/* Yearly Trend Chart */}
-            <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-8">
+            <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-8">
                 <h3 className="text-center font-black text-white text-md uppercase tracking-widest mb-8">Year-over-Year Revenue Comparison</h3>
                 <div className="space-y-6">
                     {yearlyStats.map((y, i) => (
@@ -101,14 +101,14 @@ export default function YearlyReport({ dailyData }) {
                                     className="h-full bg-gradient-to-r from-purple-600 to-indigo-400 rounded-full transition-all duration-1000 group-hover:brightness-125"
                                 ></div>
                             </div>
-                            <div className="w-24 text-[11px] font-black text-[#C9A34E]">฿{fmt(y.revenue)}</div>
+                            <div className="w-24 text-[11px] font-black text-[#cc9d37]">฿{fmt(y.revenue)}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Main Table */}
-            <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] overflow-hidden">
+            <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -133,7 +133,7 @@ export default function YearlyReport({ dailyData }) {
                                     <td className="p-5 text-right text-emerald-400">{fmt(y.conversions)}</td>
                                     <td className="p-5 text-right font-black">฿{fmt(y.revenue, 2)}</td>
                                     <td className="p-5 text-right text-red-400">฿{fmt(y.costPerConv, 2)}</td>
-                                    <td className="p-5 text-right pr-8 font-black text-[#C9A34E] text-sm">{fmt(y.roas, 2)}x</td>
+                                    <td className="p-5 text-right pr-8 font-black text-[#cc9d37] text-sm">{fmt(y.roas, 2)}x</td>
                                 </tr>
                             ))}
                         </tbody>

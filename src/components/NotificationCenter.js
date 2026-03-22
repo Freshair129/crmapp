@@ -101,7 +101,7 @@ export default function NotificationCenter({ language = 'TH' }) {
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                    <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
+                    <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
                 </div>
                 <button className="bg-white/5 border border-white/10 text-white/40 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-white/10 transition-all flex items-center gap-3">
                     <Plus size={16} />
@@ -113,13 +113,13 @@ export default function NotificationCenter({ language = 'TH' }) {
                 {/* Sync Mode Toggle & Interval Card */}
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col">
                     <div className="flex justify-between items-start mb-10">
-                        <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
+                        <div className="w-12 h-12 bg-[#0c1a2f] rounded-2xl flex items-center justify-center text-[#cc9d37] shadow-xl border border-white/10">
                             <Settings size={20} />
                         </div>
                         <div className="flex gap-2">
                             <button 
                                 onClick={() => updateConfig({ mode: 'manual' })}
-                                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${config.mode === 'manual' ? 'bg-[#C9A34E] text-[#0A1A2F] border-transparent' : 'border-white/10 text-white/40'}`}
+                                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${config.mode === 'manual' ? 'bg-[#cc9d37] text-[#0c1a2f] border-transparent' : 'border-white/10 text-white/40'}`}
                             >
                                 {labels.manual}
                             </button>
@@ -136,12 +136,12 @@ export default function NotificationCenter({ language = 'TH' }) {
                     
                     <div className="space-y-6 mt-2">
                         <div>
-                            <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-2">{labels.interval}</p>
+                            <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest mb-2">{labels.interval}</p>
                             <select 
                                 value={config.interval}
                                 onChange={(e) => updateConfig({ interval: e.target.value })}
                                 disabled={config.mode === 'manual'}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-[#C9A34E] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-[#cc9d37] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <option value="15">15 Minutes</option>
                                 <option value="30">30 Minutes</option>
@@ -153,7 +153,7 @@ export default function NotificationCenter({ language = 'TH' }) {
 
                         <div>
                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{labels.lastSync}</p>
-                            <p className="text-xs font-bold text-[#C9A34E]">
+                            <p className="text-xs font-bold text-[#cc9d37]">
                                 {config.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString(language === 'TH' ? 'th-TH' : 'en-US') : 'Never'}
                             </p>
                         </div>
@@ -163,10 +163,10 @@ export default function NotificationCenter({ language = 'TH' }) {
                 {/* Manual Trigger Card */}
                 <div 
                     onClick={!isSyncing ? handleManualSync : null}
-                    className={`bg-gradient-to-br from-[#0A1A2F] to-[#162a44] border-2 ${syncResult === 'success' ? 'border-emerald-500/50' : 'border-[#C9A34E]/20'} p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:scale-[102%] cursor-pointer group`}
+                    className={`bg-gradient-to-br from-[#0c1a2f] to-[#19273a] border-2 ${syncResult === 'success' ? 'border-emerald-500/50' : 'border-[#cc9d37]/20'} p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:scale-[102%] cursor-pointer group`}
                 >
                     <div className="flex justify-between items-start mb-10">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl border ${isSyncing ? 'bg-amber-500 text-white animate-spin' : 'bg-[#C9A34E] text-[#0A1A2F] border-white/10'}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl border ${isSyncing ? 'bg-amber-500 text-white animate-spin' : 'bg-[#cc9d37] text-[#0c1a2f] border-white/10'}`}>
                             {isSyncing ? <RotateCw size={20} /> : <Zap size={20} />}
                         </div>
                         {syncResult === 'success' && (
@@ -181,9 +181,9 @@ export default function NotificationCenter({ language = 'TH' }) {
 
                     <div className="flex items-center gap-3 mt-auto">
                         <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                            {isSyncing && <div className="h-full bg-[#C9A34E] animate-shimmer" style={{ width: '60%' }}></div>}
+                            {isSyncing && <div className="h-full bg-[#cc9d37] animate-shimmer" style={{ width: '60%' }}></div>}
                         </div>
-                        <span className="text-[10px] font-black uppercase text-[#C9A34E] tracking-tighter">
+                        <span className="text-[10px] font-black uppercase text-[#cc9d37] tracking-tighter">
                             {isSyncing ? labels.syncing : 'Push Trigger'}
                         </span>
                     </div>
@@ -197,7 +197,7 @@ export default function NotificationCenter({ language = 'TH' }) {
                 {rules.map((rule, i) => (
                     <div key={i} className={`bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:bg-white/10 ${!rule.active ? 'opacity-50 grayscale' : ''}`}>
                         <div className="flex justify-between items-start mb-10">
-                            <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
+                            <div className="w-12 h-12 bg-[#0c1a2f] rounded-2xl flex items-center justify-center text-[#cc9d37] shadow-xl border border-white/10">
                                 <Bell size={20} />
                             </div>
                             <div className="flex items-center gap-2">
@@ -210,11 +210,11 @@ export default function NotificationCenter({ language = 'TH' }) {
 
                         <div className="space-y-4 mb-8">
                             <div>
-                                <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">Trigger Condition</p>
+                                <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest mb-1">Trigger Condition</p>
                                 <p className="text-sm font-bold text-white/60">{rule.trigger}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">Notification Path</p>
+                                <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest mb-1">Notification Path</p>
                                 <div className="flex items-center gap-2 text-[#06C755] font-black text-xs">
                                     <MessageSquare size={14} />
                                     {rule.target}
@@ -232,8 +232,8 @@ export default function NotificationCenter({ language = 'TH' }) {
                 ))}
 
                 {/* Automation Add Card (Minimized) */}
-                <div className="border-4 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-[#C9A34E]/30 transition-all gap-4">
-                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-white/20 group-hover:bg-[#C9A34E]/10 group-hover:text-[#C9A34E] transition-all text-2xl">
+                <div className="border-4 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-10 group cursor-pointer hover:border-[#cc9d37]/30 transition-all gap-4">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-white/20 group-hover:bg-[#cc9d37]/10 group-hover:text-[#cc9d37] transition-all text-2xl">
                         <Plus size={32} />
                     </div>
                     <p className="font-black text-[10px] uppercase tracking-[0.3em] text-white/20 group-hover:text-white transition-all">Define Automation</p>

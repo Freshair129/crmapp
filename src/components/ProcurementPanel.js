@@ -85,7 +85,7 @@ function GoldButton({ onClick, children, disabled, small, className = '' }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed ${small ? 'px-3 py-1.5 text-[10px]' : 'px-5 py-2.5 text-xs'} ${className}`}
+      className={`bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed ${small ? 'px-3 py-1.5 text-[10px]' : 'px-5 py-2.5 text-xs'} ${className}`}
     >
       {children}
     </button>
@@ -114,7 +114,7 @@ function InputField({ label, value, onChange, type = 'text', placeholder, requir
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none transition-colors placeholder:text-white/20"
+        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none transition-colors placeholder:text-white/20"
       />
     </div>
   );
@@ -127,11 +127,11 @@ function SelectField({ label, value, onChange, options, placeholder }) {
       <select
         value={value}
         onChange={onChange}
-        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none transition-colors appearance-none"
+        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none transition-colors appearance-none"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map(o => (
-          <option key={o.value} value={o.value} className="bg-[#0A1A2F] text-white">{o.label}</option>
+          <option key={o.value} value={o.value} className="bg-[#0c1a2f] text-white">{o.label}</option>
         ))}
       </select>
     </div>
@@ -303,16 +303,16 @@ function POListTab() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="ค้นหา PO ID, ซัพพลายเออร์..."
-            className="w-full bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2.5 rounded-xl text-sm placeholder:text-white/20 focus:border-[#C9A34E]/50 focus:outline-none"
+            className="w-full bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2.5 rounded-xl text-sm placeholder:text-white/20 focus:border-[#cc9d37]/50 focus:outline-none"
           />
         </div>
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm appearance-none focus:border-[#C9A34E]/50 focus:outline-none"
+          className="bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm appearance-none focus:border-[#cc9d37]/50 focus:outline-none"
         >
           {PO_STATUSES.map(s => (
-            <option key={s} value={s} className="bg-[#0A1A2F]">{STATUS_LABELS[s] || s}</option>
+            <option key={s} value={s} className="bg-[#0c1a2f]">{STATUS_LABELS[s] || s}</option>
           ))}
         </select>
         <input
@@ -320,7 +320,7 @@ function POListTab() {
           value={classFilter}
           onChange={e => setClassFilter(e.target.value)}
           placeholder="Class ID..."
-          className="bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm w-40 placeholder:text-white/20 focus:border-[#C9A34E]/50 focus:outline-none"
+          className="bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm w-40 placeholder:text-white/20 focus:border-[#cc9d37]/50 focus:outline-none"
         />
         <GoldButton onClick={() => setShowCreateModal(true)}>
           <span className="flex items-center gap-1.5"><Plus size={14} /> สร้าง PO</span>
@@ -329,7 +329,7 @@ function POListTab() {
 
       {/* PO Cards */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
       ) : filtered.length === 0 ? (
         <EmptyState text="ไม่พบรายการ PO" />
       ) : (
@@ -345,8 +345,8 @@ function POListTab() {
                   onClick={() => setExpandedId(isExpanded ? null : po.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#C9A34E]/10 flex items-center justify-center">
-                      <FileText size={18} className="text-[#C9A34E]" />
+                    <div className="w-10 h-10 rounded-xl bg-[#cc9d37]/10 flex items-center justify-center">
+                      <FileText size={18} className="text-[#cc9d37]" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ function POListTab() {
                                     value={grnItems[idx] ?? ''}
                                     onChange={e => setGrnItems(g => ({ ...g, [idx]: e.target.value }))}
                                     placeholder="รับจริง"
-                                    className="w-24 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-lg text-xs focus:border-[#C9A34E]/50 focus:outline-none"
+                                    className="w-24 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-lg text-xs focus:border-[#cc9d37]/50 focus:outline-none"
                                   />
                                 </div>
                               ))}
@@ -567,7 +567,7 @@ function POListTab() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">รายการสินค้า</p>
-              <button type="button" onClick={addItem} className="text-[#C9A34E] hover:text-amber-400 text-xs flex items-center gap-1">
+              <button type="button" onClick={addItem} className="text-[#cc9d37] hover:text-amber-400 text-xs flex items-center gap-1">
                 <Plus size={12} /> เพิ่มรายการ
               </button>
             </div>
@@ -580,20 +580,20 @@ function POListTab() {
                     onChange={e => updateItem(idx, 'description', e.target.value)}
                     placeholder="รายละเอียด"
                     required
-                    className="flex-1 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm placeholder:text-white/20 focus:border-[#C9A34E]/50 focus:outline-none"
+                    className="flex-1 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm placeholder:text-white/20 focus:border-[#cc9d37]/50 focus:outline-none"
                   />
                   <input
                     type="number"
                     min="1"
                     value={item.qty}
                     onChange={e => updateItem(idx, 'qty', Number(e.target.value))}
-                    className="w-20 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none"
+                    className="w-20 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none"
                   />
                   <input
                     type="text"
                     value={item.unit}
                     onChange={e => updateItem(idx, 'unit', e.target.value)}
-                    className="w-20 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none"
+                    className="w-20 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none"
                   />
                   <input
                     type="number"
@@ -602,7 +602,7 @@ function POListTab() {
                     value={item.unitPrice}
                     onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))}
                     placeholder="ราคา"
-                    className="w-28 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm placeholder:text-white/20 focus:border-[#C9A34E]/50 focus:outline-none"
+                    className="w-28 bg-white/5 border border-white/10 text-white px-3 py-2 rounded-xl text-sm placeholder:text-white/20 focus:border-[#cc9d37]/50 focus:outline-none"
                   />
                   {createForm.items.length > 1 && (
                     <button type="button" onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-300">
@@ -709,7 +709,7 @@ function BOMTab() {
 
       {/* BOM Results */}
       {loading && (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
       )}
 
       {bomData && !loading && (
@@ -862,7 +862,7 @@ function SuppliersTab() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
       ) : suppliers.length === 0 ? (
         <EmptyState text="ยังไม่มีซัพพลายเออร์" />
       ) : (
@@ -870,13 +870,13 @@ function SuppliersTab() {
           {suppliers.map(sup => (
             <div
               key={sup.id}
-              className="bg-white/5 border border-white/8 rounded-2xl p-5 hover:border-[#C9A34E]/20 transition-colors cursor-pointer group"
+              className="bg-white/5 border border-white/8 rounded-2xl p-5 hover:border-[#cc9d37]/20 transition-colors cursor-pointer group"
               onClick={() => openEdit(sup)}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#C9A34E]/10 flex items-center justify-center">
-                    <Building2 size={18} className="text-[#C9A34E]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#cc9d37]/10 flex items-center justify-center">
+                    <Building2 size={18} className="text-[#cc9d37]" />
                   </div>
                   <div>
                     <h4 className="text-white font-bold text-sm">{sup.name}</h4>
@@ -932,7 +932,7 @@ function SuppliersTab() {
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={3}
-              className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none resize-none placeholder:text-white/20"
+              className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none resize-none placeholder:text-white/20"
             />
           </div>
           <div className="flex justify-end pt-2">
@@ -1021,7 +1021,7 @@ function AdvancesTab() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
       ) : advances.length === 0 ? (
         <EmptyState text="ไม่มีรายการเงินทดรอง" />
       ) : (
@@ -1039,7 +1039,7 @@ function AdvancesTab() {
                       <StatusBadge status={adv.status} colorMap={ADVANCE_STATUS_COLORS} labelMap={{ PENDING: 'รออนุมัติ', APPROVED: 'อนุมัติแล้ว', REIMBURSED: 'เบิกคืนแล้ว', REJECTED: 'ไม่อนุมัติ' }} />
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      {adv.poId && <span className="text-[10px] text-[#C9A34E]/60 font-mono">{adv.poId}</span>}
+                      {adv.poId && <span className="text-[10px] text-[#cc9d37]/60 font-mono">{adv.poId}</span>}
                       {adv.paidBy && <span className="text-[10px] text-white/40">{adv.paidBy}</span>}
                       <span className="text-[10px] text-white/30">{formatDate(adv.createdAt)}</span>
                     </div>
@@ -1056,7 +1056,7 @@ function AdvancesTab() {
 
               {adv.receiptUrl && (
                 <div className="pl-[52px] mb-3">
-                  <a href={adv.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-[#C9A34E] text-xs flex items-center gap-1 hover:text-amber-400">
+                  <a href={adv.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-[#cc9d37] text-xs flex items-center gap-1 hover:text-amber-400">
                     <ExternalLink size={12} /> ดูใบเสร็จ
                   </a>
                 </div>
@@ -1096,7 +1096,7 @@ function AdvancesTab() {
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={3}
               placeholder="รายละเอียดการเบิก..."
-              className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#C9A34E]/50 focus:outline-none resize-none placeholder:text-white/20"
+              className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:border-[#cc9d37]/50 focus:outline-none resize-none placeholder:text-white/20"
             />
           </div>
           <InputField label="ลิงก์ใบเสร็จ" value={form.receiptUrl} onChange={e => setForm(f => ({ ...f, receiptUrl: e.target.value }))} placeholder="https://..." />
@@ -1181,7 +1181,7 @@ function TrackingTab() {
   return (
     <div className="space-y-4">
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
       ) : trackingPOs.length === 0 ? (
         <EmptyState text="ไม่มี PO ที่ต้องติดตาม" />
       ) : (
@@ -1256,7 +1256,7 @@ function TrackingTab() {
                                         disabled={idx <= currentStep || updatingStatus === `${track.id}-${step}`}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
                                           isCurrent
-                                            ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/30'
+                                            ? 'bg-[#cc9d37]/20 text-[#cc9d37] border border-[#cc9d37]/30'
                                             : isCompleted
                                               ? 'bg-emerald-500/10 text-emerald-400'
                                               : 'bg-white/5 text-white/20 hover:bg-white/10 hover:text-white/40'
@@ -1343,7 +1343,7 @@ export default function ProcurementPanel() {
   const [activeTab, setActiveTab] = useState('po-list');
 
   return (
-    <div className="min-h-screen bg-[#0A1A2F] text-white">
+    <div className="min-h-screen bg-[#0c1a2f] text-white">
       {/* Header */}
       <div className="px-6 pt-6 pb-4">
         <h1 className="text-xl font-black tracking-tight">จัดซื้อ — Procurement</h1>
@@ -1362,7 +1362,7 @@ export default function ProcurementPanel() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
                   isActive
-                    ? 'bg-[#C9A34E] text-[#0A1A2F]'
+                    ? 'bg-[#cc9d37] text-[#0c1a2f]'
                     : 'text-white/30 hover:text-white/50 hover:bg-white/5'
                 }`}
               >

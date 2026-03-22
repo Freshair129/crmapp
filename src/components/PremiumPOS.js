@@ -43,11 +43,11 @@ function ProductPlaceholder({ category, name }) {
     const emoji = getEmoji(category, name);
     return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none"
-             style={{ background: 'linear-gradient(135deg, #0d2240 0%, #152A47 60%, #1a1a2e 100%)' }}>
+             style={{ background: 'linear-gradient(135deg, #0c1a2f 0%, #19273a 60%, #19273a 100%)' }}>
             <span style={{ fontSize: '2.8rem', lineHeight: 1, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}>
                 {emoji}
             </span>
-            <span className="text-[#C9A34E] text-[7px] font-black uppercase tracking-[0.2em] opacity-70">
+            <span className="text-[#cc9d37] text-[7px] font-black uppercase tracking-[0.2em] opacity-70">
                 V SCHOOL
             </span>
         </div>
@@ -173,7 +173,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                         <button
                                             key={i}
                                             onClick={() => setActiveImg(i)}
-                                            className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${i === activeImg ? 'border-[#C9A34E]' : 'border-white/20 opacity-60 hover:opacity-100'}`}
+                                            className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${i === activeImg ? 'border-[#cc9d37]' : 'border-white/20 opacity-60 hover:opacity-100'}`}
                                         >
                                             <img src={img} className="w-full h-full object-cover" alt="" />
                                         </button>
@@ -184,9 +184,9 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                     ) : (
                         /* No image — show large emoji */
                         <div className="w-full h-full flex flex-col items-center justify-center gap-3"
-                             style={{ background: 'linear-gradient(135deg,#0d2240 0%,#152A47 60%,#1a1a2e 100%)' }}>
+                             style={{ background: 'linear-gradient(135deg,#0c1a2f 0%,#19273a 60%,#19273a 100%)' }}>
                             <span style={{ fontSize: '4rem', lineHeight: 1, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }}>{emoji}</span>
-                            <span className="text-[#C9A34E] text-[8px] font-black uppercase tracking-[0.3em] opacity-60">V SCHOOL</span>
+                            <span className="text-[#cc9d37] text-[8px] font-black uppercase tracking-[0.3em] opacity-60">V SCHOOL</span>
                         </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0d1f35] via-transparent to-transparent pointer-events-none" />
@@ -207,7 +207,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                             )}
                         </div>
                         <div className="text-right flex-shrink-0">
-                            <p className="text-2xl font-black text-[#C9A34E]">฿{Number(product.price).toLocaleString()}</p>
+                            <p className="text-2xl font-black text-[#cc9d37]">฿{Number(product.price).toLocaleString()}</p>
                             {product.basePrice && product.basePrice !== product.price && (
                                 <p className="text-[10px] text-white/30 line-through">฿{Number(product.basePrice).toLocaleString()}</p>
                             )}
@@ -231,7 +231,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 {s}
                             </span>
                         ))}
-                        <span className="px-2.5 py-1 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/20 text-[10px] font-black text-[#C9A34E]">
+                        <span className="px-2.5 py-1 rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/20 text-[10px] font-black text-[#cc9d37]">
                             {product.category}
                         </span>
                     </div>
@@ -313,11 +313,11 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                 )}
                                 {/* country */}
                                 {(specEdit.originCountry || product.originCountry) && (
-                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#C9A34E]/8 border border-[#C9A34E]/20">
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#cc9d37]/8 border border-[#cc9d37]/20">
                                         <span className="text-base leading-none">{COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.flag}</span>
                                         <div>
                                             <p className="text-[8px] font-black uppercase text-white/25">ผู้ผลิต</p>
-                                            <p className="font-bold text-[#C9A34E]">{COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.label}</p>
+                                            <p className="font-bold text-[#cc9d37]">{COUNTRY_MAP[specEdit.originCountry || product.originCountry]?.label}</p>
                                         </div>
                                     </div>
                                 )}
@@ -364,7 +364,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                         onChange={e => setSpecEdit(s => ({ ...s, brand: e.target.value }))}
                                         onBlur={() => saveSpec({ brand: specEdit.brand })}
                                         placeholder="เช่น Masahiro, Suehiro"
-                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#C9A34E]/40 transition-all"
+                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold placeholder:text-white/15 outline-none focus:border-[#cc9d37]/40 transition-all"
                                     />
                                 </div>
                                 <div>
@@ -376,7 +376,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                                             setSpecEdit(s => ({ ...s, originCountry: val }));
                                             saveSpec({ originCountry: val });
                                         }}
-                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold outline-none focus:border-[#C9A34E]/40 transition-all appearance-none cursor-pointer"
+                                        className="w-full px-3 py-2 rounded-xl bg-[#1a2535] border border-white/10 text-white text-[11px] font-bold outline-none focus:border-[#cc9d37]/40 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="">— เลือกประเทศ —</option>
                                         {ORIGIN_COUNTRIES.map(c => (
@@ -406,7 +406,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                         ) : stats ? (
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
-                                    <p className="text-lg font-black text-[#C9A34E]">{stats.totalSold}</p>
+                                    <p className="text-lg font-black text-[#cc9d37]">{stats.totalSold}</p>
                                     <p className="text-[9px] font-black uppercase tracking-wide text-white/30 mt-0.5 flex items-center justify-center gap-1">
                                         <ShoppingBag size={8} /> ขายแล้ว
                                     </p>
@@ -444,7 +444,7 @@ function ProductDetailModal({ product, onClose, onAddToCart, inCart, onProductUp
                 <div className="px-6 py-4 border-t border-white/5 flex-shrink-0">
                     <button
                         onClick={() => { onAddToCart(product); onClose(); }}
-                        className="w-full flex items-center justify-center gap-3 bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
+                        className="w-full flex items-center justify-center gap-3 bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
                     >
                         {inCart ? (
                             <>
@@ -660,7 +660,7 @@ export default function PremiumPOS({ language = 'TH' }) {
     const TIER_META = {
         TIER1: { label: 'V Member',   color: '#9CA3AF', bg: 'bg-gray-500/20',   badge: '🥈' },
         TIER2: { label: 'V Silver',   color: '#C0C0C0', bg: 'bg-gray-300/20',   badge: '🥈' },
-        TIER3: { label: 'V Gold',     color: '#C9A34E', bg: 'bg-amber-500/20',  badge: '🥇' },
+        TIER3: { label: 'V Gold',     color: '#cc9d37', bg: 'bg-amber-500/20',  badge: '🥇' },
         TIER4: { label: 'V Platinum', color: '#E5E4E2', bg: 'bg-slate-300/20',  badge: '💎' },
         TIER5: { label: 'V Black',    color: '#9b8cff', bg: 'bg-purple-500/20', badge: '⬛' },
     };
@@ -944,7 +944,7 @@ export default function PremiumPOS({ language = 'TH' }) {
     if (loading) {
         return (
             <div className="flex h-full items-center justify-center bg-[#0d1626] rounded-[2.5rem]">
-                <div className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลด...</div>
+                <div className="text-[#cc9d37] font-black animate-pulse uppercase tracking-[0.3em]">กำลังโหลด...</div>
             </div>
         );
     }
@@ -954,9 +954,9 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Receipt Modal ── */}
             {showReceiptModal && lastOrder && lastCustomer && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
+                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
                         {/* Header — PENDING vs CLOSED */}
-                        <div className={`${lastOrder.orderStatus === 'PENDING' ? 'bg-amber-500' : 'bg-[#C9A34E]'} text-[#0A1A2F] px-8 py-5 rounded-t-[2rem] flex items-center justify-between`}>
+                        <div className={`${lastOrder.orderStatus === 'PENDING' ? 'bg-amber-500' : 'bg-[#cc9d37]'} text-[#0c1a2f] px-8 py-5 rounded-t-[2rem] flex items-center justify-between`}>
                             <div className="flex items-center gap-3">
                                 {lastOrder.orderStatus === 'PENDING'
                                     ? <Clock size={28} />
@@ -973,7 +973,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             </div>
                             <div className="text-right">
                                 <div className="font-black text-2xl">฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
-                                {lastOrder.pmtForm?.isDeposit && <div className="text-[10px] font-black bg-[#0A1A2F]/20 px-2 py-0.5 rounded-full">มัดจำ ฿{Number(lastOrder.pmtForm?.depositAmount || 0).toLocaleString()}</div>}
+                                {lastOrder.pmtForm?.isDeposit && <div className="text-[10px] font-black bg-[#0c1a2f]/20 px-2 py-0.5 rounded-full">มัดจำ ฿{Number(lastOrder.pmtForm?.depositAmount || 0).toLocaleString()}</div>}
                             </div>
                         </div>
 
@@ -997,13 +997,13 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <div id="receipt-body" className="flex-1 overflow-y-auto px-8 py-6 space-y-4 text-[#F8F8F6]">
                             {/* Customer */}
                             <div className="bg-white/5 rounded-xl px-4 py-3 flex justify-between items-center">
-                                <span className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest">ลูกค้า</span>
+                                <span className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest">ลูกค้า</span>
                                 <span className="font-bold text-sm">{lastCustomer.firstName} {lastCustomer.lastName}</span>
                             </div>
 
                             {/* Items */}
                             <div className="space-y-1">
-                                <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">รายการสินค้า</div>
+                                <div className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest mb-2">รายการสินค้า</div>
                                 {(lastOrder.cartSnapshot || []).map((item, i) => (
                                     <div key={i} className="flex justify-between text-sm py-1 border-b border-white/5">
                                         <span className="text-white/80">{item.name} × {item.quantity}</span>
@@ -1017,12 +1017,12 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="flex justify-between text-white/60"><span>ยอดรวม</span><span>฿{(lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0).toLocaleString()}</span></div>
                                 <div className="flex justify-between text-white/60"><span>VAT 7%</span><span>฿{(((lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0)) * 0.07).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
                                 {lastOrder.discountApplied > 0 && <div className="flex justify-between text-green-400"><span>ส่วนลด{lastOrder.pmtForm?.promoCode ? ` (${lastOrder.pmtForm.promoCode})` : ''}</span><span>-฿{lastOrder.discountApplied.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>}
-                                <div className="flex justify-between font-black text-[#C9A34E] text-base border-t border-white/10 pt-2"><span>ยอดสุทธิ</span><span>฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+                                <div className="flex justify-between font-black text-[#cc9d37] text-base border-t border-white/10 pt-2"><span>ยอดสุทธิ</span><span>฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
                             </div>
 
                             {/* Payment Info */}
                             <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
-                                <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">วิธีชำระเงิน</div>
+                                <div className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest mb-2">วิธีชำระเงิน</div>
                                 <div className="flex justify-between"><span className="text-white/60">ประเภท</span><span className="font-bold">{{ CASH: 'เงินสด', TRANSFER: 'โอนเงิน', CREDIT_CARD: 'บัตรเครดิต' }[lastOrder.pmtForm?.method] || '-'}</span></div>
                                 {lastOrder.pmtForm?.bankName && <div className="flex justify-between"><span className="text-white/60">ธนาคาร</span><span className="font-bold">{lastOrder.pmtForm.bankName}</span></div>}
                                 {lastOrder.pmtForm?.isDeposit && <div className="flex justify-between text-amber-400"><span>ชำระมัดจำ</span><span>฿{Number(lastOrder.pmtForm.depositAmount || 0).toLocaleString()}</span></div>}
@@ -1040,7 +1040,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             {/* Staff */}
                             {(lastOrder.assignedStaffSnap || lastOrder.pmtForm?.closedById || lastOrder.pmtForm?.cashierId) && (
                                 <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
-                                    <div className="text-[10px] font-black uppercase text-[#C9A34E] tracking-widest mb-2">พนักงาน</div>
+                                    <div className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest mb-2">พนักงาน</div>
                                     {lastOrder.assignedStaffSnap && <div className="flex justify-between"><span className="text-white/60">ดูแลลูกค้า</span><span className="font-bold">{lastOrder.assignedStaffSnap.firstName} {lastOrder.assignedStaffSnap.lastName || ''}</span></div>}
                                     {lastOrder.pmtForm?.closedById && <div className="flex justify-between"><span className="text-white/60">ปิดการขาย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.closedById)?.firstName || '-'}</span></div>}
                                     {lastOrder.pmtForm?.cashierId && <div className="flex justify-between"><span className="text-white/60">แคชเชีย</span><span className="font-bold">{employees.find(e => e.id === lastOrder.pmtForm.cashierId)?.firstName || '-'}</span></div>}
@@ -1048,17 +1048,17 @@ export default function PremiumPOS({ language = 'TH' }) {
                             )}
                             {enrollmentCount > 0 && <div className="text-center text-green-400 font-bold text-sm py-2">✅ ลงทะเบียนคอร์ส {enrollmentCount} รายการแล้ว</div>}
                             {lastOrder.earnedVp > 0 && (
-                                <div className="bg-gradient-to-r from-[#C9A34E]/15 to-[#C9A34E]/5 border border-[#C9A34E]/30 rounded-xl px-4 py-3 flex items-center justify-between">
+                                <div className="bg-gradient-to-r from-[#cc9d37]/15 to-[#cc9d37]/5 border border-[#cc9d37]/30 rounded-xl px-4 py-3 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">⭐</span>
                                         <div>
-                                            <div className="text-[10px] text-[#C9A34E]/70 font-black uppercase tracking-widest">V Point ที่ได้รับ</div>
+                                            <div className="text-[10px] text-[#cc9d37]/70 font-black uppercase tracking-widest">V Point ที่ได้รับ</div>
                                             <div className="text-white/50 text-[10px]">สะสมทุก ฿150 = 300 VP</div>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-[#C9A34E] font-black text-xl">+{lastOrder.earnedVp.toLocaleString()}</div>
-                                        <div className="text-[#C9A34E]/60 text-[10px] font-bold">V POINTS</div>
+                                        <div className="text-[#cc9d37] font-black text-xl">+{lastOrder.earnedVp.toLocaleString()}</div>
+                                        <div className="text-[#cc9d37]/60 text-[10px] font-bold">V POINTS</div>
                                     </div>
                                 </div>
                             )}
@@ -1106,7 +1106,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     setCartCustomerSearch('');
                                     setCartCustomerResults([]);
                                 }}
-                                className="flex flex-col items-center gap-1.5 py-3 bg-[#C9A34E] hover:bg-[#B8923D] rounded-xl transition-all text-[#0A1A2F] text-xs font-black uppercase tracking-wider"
+                                className="flex flex-col items-center gap-1.5 py-3 bg-[#cc9d37] hover:bg-[#cc9d37] rounded-xl transition-all text-[#0c1a2f] text-xs font-black uppercase tracking-wider"
                             >
                                 <CheckCircle className="w-5 h-5" />
                                 เสร็จสิ้น
@@ -1119,17 +1119,17 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Order Type Modal (Step 0) ── */}
             {showOrderTypeModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col">
+                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col">
                         <div className="px-8 py-6 border-b border-white/10">
                             <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">ประเภทออเดอร์</h2>
-                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest mt-1">Order Type</p>
+                            <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest mt-1">Order Type</p>
                         </div>
                         <div className="px-8 py-6 space-y-5">
                             {/* Order Type */}
                             <div className="grid grid-cols-3 gap-2">
                                 {[['DINE_IN','🍽️','Walk In'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']].map(([val,icon,label]) => (
                                     <button key={val} onClick={() => setOrderTypeForm(f => ({ ...f, type: val }))}
-                                        className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                        className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                         <span className="text-2xl">{icon}</span>
                                         {label}
                                     </button>
@@ -1144,7 +1144,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         <div className="grid grid-cols-3 gap-2 flex-wrap">
                                             {['GrabFood','Foodpanda','LINE MAN','Shopee Food','Robinhood','อื่นๆ'].map(p => (
                                                 <button key={p} onClick={() => setOrderTypeForm(f => ({ ...f, platform: p }))}
-                                                    className={`py-2 px-2 rounded-lg font-bold text-[10px] uppercase transition-all ${orderTypeForm.platform === p ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                                    className={`py-2 px-2 rounded-lg font-bold text-[10px] uppercase transition-all ${orderTypeForm.platform === p ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                                     {p}
                                                 </button>
                                             ))}
@@ -1152,12 +1152,12 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     </div>
                                     <input type="text" placeholder="เลขออเดอร์จากแพลตฟอร์ม" value={orderTypeForm.platformOrderId}
                                         onChange={e => setOrderTypeForm(f => ({ ...f, platformOrderId: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all" />
                                     <div className="flex items-center gap-3">
                                         <label className="text-[10px] font-black uppercase text-white/50 tracking-widest whitespace-nowrap">GP (%)</label>
                                         <input type="number" min="0" max="50" value={orderTypeForm.gpRate}
                                             onChange={e => setOrderTypeForm(f => ({ ...f, gpRate: e.target.value }))}
-                                            className="w-24 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-black outline-none focus:border-[#C9A34E]/50 transition-all text-center" />
+                                            className="w-24 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white font-black outline-none focus:border-[#cc9d37]/50 transition-all text-center" />
                                         <span className="text-white/40 text-sm font-bold">
                                             ยอดสุทธิหลังหัก GP: ฿{(total * (1 - Number(orderTypeForm.gpRate || 0) / 100)).toLocaleString('th-TH', { minimumFractionDigits: 0 })}
                                         </span>
@@ -1173,7 +1173,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         <div className="text-[10px] text-white/40 mt-0.5">ใส่ช้อนซ่อมในถุงด้วย</div>
                                     </div>
                                     <button onClick={() => setOrderTypeForm(f => ({ ...f, includeUtensils: !f.includeUtensils }))}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${orderTypeForm.includeUtensils ? 'bg-[#C9A34E]' : 'bg-white/10'}`}>
+                                        className={`w-12 h-6 rounded-full transition-all relative ${orderTypeForm.includeUtensils ? 'bg-[#cc9d37]' : 'bg-white/10'}`}>
                                         <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${orderTypeForm.includeUtensils ? 'left-7' : 'left-1'}`} />
                                     </button>
                                 </div>
@@ -1186,7 +1186,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                     <div className="text-[10px] text-white/40 mt-0.5">ข้ามการกรอกเบอร์โทร / เลขสมาชิก</div>
                                 </div>
                                 <button onClick={() => setIsGuestMode(g => !g)}
-                                    className={`w-12 h-6 rounded-full transition-all relative ${isGuestMode ? 'bg-[#C9A34E]' : 'bg-white/10'}`}>
+                                    className={`w-12 h-6 rounded-full transition-all relative ${isGuestMode ? 'bg-[#cc9d37]' : 'bg-white/10'}`}>
                                     <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isGuestMode ? 'left-7' : 'left-1'}`} />
                                 </button>
                             </div>
@@ -1198,7 +1198,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             </button>
                             <button onClick={handleOrderTypeConfirmWithCartCustomer}
                                 disabled={orderTypeForm.type === 'DELIVERY' && !orderTypeForm.platform}
-                                className="flex-[2] py-4 bg-[#C9A34E] hover:bg-[#B8923D] disabled:opacity-40 rounded-2xl text-[#0A1A2F] font-black text-sm uppercase transition-all">
+                                className="flex-[2] py-4 bg-[#cc9d37] hover:bg-[#cc9d37] disabled:opacity-40 rounded-2xl text-[#0c1a2f] font-black text-sm uppercase transition-all">
                                 ถัดไป →
                             </button>
                         </div>
@@ -1209,16 +1209,16 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Payment Details Modal ── */}
             {showPaymentModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-4">
-                    <div className="bg-[#111827] border border-[#C9A34E]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+                    <div className="bg-[#111827] border border-[#cc9d37]/30 rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
                         <div className="px-8 py-6 border-b border-white/10">
                             <h2 className="text-2xl font-black text-[#F8F8F6] italic uppercase">รายละเอียดการชำระเงิน</h2>
-                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest mt-1">Payment Details</p>
+                            <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest mt-1">Payment Details</p>
                         </div>
                         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
                             {/* Summary */}
-                            <div className="bg-[#C9A34E]/10 border border-[#C9A34E]/30 rounded-xl px-4 py-3 flex justify-between items-center">
+                            <div className="bg-[#cc9d37]/10 border border-[#cc9d37]/30 rounded-xl px-4 py-3 flex justify-between items-center">
                                 <span className="text-white/60 text-sm font-bold">ยอดรวม (incl. VAT 7%)</span>
-                                <span className="text-[#C9A34E] text-xl font-black">฿{total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-[#cc9d37] text-xl font-black">฿{total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
                             </div>
 
                             {/* Payment Method */}
@@ -1227,7 +1227,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="grid grid-cols-3 gap-2">
                                     {[['CASH','เงินสด','💵'],['TRANSFER','โอนเงิน','🏦'],['CREDIT_CARD','บัตรเครดิต','💳']].map(([val,label,icon]) => (
                                         <button key={val} onClick={() => setPaymentForm(f => ({ ...f, method: val }))}
-                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.method === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.method === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                             {icon} {label}
                                         </button>
                                     ))}
@@ -1240,7 +1240,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">ธนาคาร</label>
                                     <select value={paymentForm.bankName} onChange={e => setPaymentForm(f => ({ ...f, bankName: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 transition-all">
                                         <option value="">-- เลือกธนาคาร --</option>
                                         {['กสิกรไทย (KBank)','กรุงไทย (KTB)','ไทยพาณิชย์ (SCB)','กรุงเทพ (BBL)','ทหารไทยธนชาต (TTB)','ออมสิน','PromptPay','อื่นๆ'].map(b => <option key={b} value={b}>{b}</option>)}
                                     </select>
@@ -1249,15 +1249,15 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 {/* Slip Upload */}
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">แนบสลิป <span className="text-white/30 normal-case font-normal">(ไม่บังคับ — Gemini OCR)</span></label>
-                                    <label className={`flex flex-col items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${slipFile ? 'border-[#C9A34E]/60 bg-[#C9A34E]/5' : 'border-white/15 hover:border-white/30 bg-white/3'}`}>
+                                    <label className={`flex flex-col items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${slipFile ? 'border-[#cc9d37]/60 bg-[#cc9d37]/5' : 'border-white/15 hover:border-white/30 bg-white/3'}`}>
                                         <input type="file" accept="image/*" className="hidden"
                                             onChange={e => { if (e.target.files[0]) handleSlipUpload(e.target.files[0]); }} />
                                         {slipUploading ? (
-                                            <><Loader2 size={20} className="text-[#C9A34E] animate-spin"/><span className="text-[11px] text-white/50">กำลังตรวจสอบสลิป…</span></>
+                                            <><Loader2 size={20} className="text-[#cc9d37] animate-spin"/><span className="text-[11px] text-white/50">กำลังตรวจสอบสลิป…</span></>
                                         ) : slipOcr ? (
                                             <div className="w-full px-3 space-y-1 text-xs">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[#C9A34E] font-black">✅ ตรวจสอบสลิปแล้ว</span>
+                                                    <span className="text-[#cc9d37] font-black">✅ ตรวจสอบสลิปแล้ว</span>
                                                     <span className={`px-2 py-0.5 rounded-full font-black text-[10px] ${slipOcr.confidence >= 0.8 ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                                         {Math.round((slipOcr.confidence || 0) * 100)}% match
                                                     </span>
@@ -1284,7 +1284,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="grid grid-cols-2 gap-2">
                                     {[[false,'ชำระเต็ม','💯'],[true,'มัดจำ','📋']].map(([val,label,icon]) => (
                                         <button key={String(val)} onClick={() => setPaymentForm(f => ({ ...f, isDeposit: val }))}
-                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.isDeposit === val ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                            className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.isDeposit === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                             {icon} {label}
                                         </button>
                                     ))}
@@ -1292,7 +1292,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 {paymentForm.isDeposit && (
                                     <input type="number" placeholder="จำนวนมัดจำ (฿)" value={paymentForm.depositAmount}
                                         onChange={e => setPaymentForm(f => ({ ...f, depositAmount: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all" />
                                 )}
                             </div>
 
@@ -1302,14 +1302,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <div className="grid grid-cols-2 gap-2">
                                     <input type="number" placeholder="ส่วนลด (฿)" value={paymentForm.discountAmount}
                                         onChange={e => setPaymentForm(f => ({ ...f, discountAmount: e.target.value, discountPercent: '' }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all" />
                                     <input type="number" placeholder="ส่วนลด (%)" value={paymentForm.discountPercent}
                                         onChange={e => setPaymentForm(f => ({ ...f, discountPercent: e.target.value, discountAmount: '' }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all" />
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all" />
                                 </div>
                                 <input type="text" placeholder="โค้ดโปรโมชั่น" value={paymentForm.promoCode}
                                     onChange={e => setPaymentForm(f => ({ ...f, promoCode: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all uppercase" />
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all uppercase" />
                             </div>
 
                             {/* Staff */}
@@ -1317,22 +1317,22 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">พนักงาน</label>
                                 <div className="grid grid-cols-1 gap-2">
                                     {/* พนักงานดูแล — read-only จาก customer profile */}
-                                    <div className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between ${assignedStaff ? 'bg-[#C9A34E]/10 border-[#C9A34E]/40' : 'bg-white/5 border-white/10'}`}>
+                                    <div className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between ${assignedStaff ? 'bg-[#cc9d37]/10 border-[#cc9d37]/40' : 'bg-white/5 border-white/10'}`}>
                                         <span className="text-[10px] font-black uppercase text-white/40 tracking-wider">👤 พนักงานดูแลลูกค้า</span>
                                         {assignedStaff
-                                            ? <span className="font-black text-sm text-[#C9A34E]">{assignedStaff.firstName} {assignedStaff.lastName || ''}<span className="text-white/40 font-normal text-[10px] ml-1">({assignedStaff.employeeId || 'assigned'})</span></span>
+                                            ? <span className="font-black text-sm text-[#cc9d37]">{assignedStaff.firstName} {assignedStaff.lastName || ''}<span className="text-white/40 font-normal text-[10px] ml-1">({assignedStaff.employeeId || 'assigned'})</span></span>
                                             : <span className="text-white/30 text-sm italic">ไม่มีข้อมูล</span>
                                         }
                                     </div>
                                     {/* พนักงานปิดการขาย — selectable */}
                                     <select value={paymentForm.closedById} onChange={e => setPaymentForm(f => ({ ...f, closedById: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 transition-all">
                                         <option value="">🏆 พนักงานปิดการขาย</option>
                                         {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
                                     </select>
                                     {/* แคชเชีย — selectable, default = current user */}
                                     <select value={paymentForm.cashierId} onChange={e => setPaymentForm(f => ({ ...f, cashierId: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 transition-all">
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 transition-all">
                                         <option value="">🧾 แคชเชีย (ออกบิล)</option>
                                         {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.employeeId})</option>)}
                                     </select>
@@ -1344,7 +1344,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">หมายเหตุ</label>
                                 <textarea placeholder="หมายเหตุ (ถ้ามี)" value={paymentForm.notes}
                                     onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))} rows={2}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20 transition-all resize-none" />
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20 transition-all resize-none" />
                             </div>
                         </div>
 
@@ -1357,7 +1357,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             <button
                                 onClick={() => processOrder(pendingCustomer, paymentForm)}
                                 disabled={paymentForm.isDeposit && !paymentForm.depositAmount}
-                                className="flex-[2] py-4 bg-[#C9A34E] hover:bg-[#B8923D] disabled:opacity-40 rounded-2xl text-[#0A1A2F] font-black text-sm uppercase transition-all">
+                                className="flex-[2] py-4 bg-[#cc9d37] hover:bg-[#cc9d37] disabled:opacity-40 rounded-2xl text-[#0c1a2f] font-black text-sm uppercase transition-all">
                                 ✅ ยืนยันชำระเงิน
                             </button>
                         </div>
@@ -1368,12 +1368,12 @@ export default function PremiumPOS({ language = 'TH' }) {
             {/* ── Customer Modal ── */}
             {showCustomerModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6">
-                    <div className="bg-[#111827] border border-[#C9A34E]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
+                    <div className="bg-[#111827] border border-[#cc9d37]/30 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md flex flex-col gap-6">
                         <div className="text-center">
                             <h2 className="text-3xl font-black text-[#F8F8F6] italic uppercase mb-2">
                                 {showRegisterForm ? 'ลงทะเบียนลูกค้าใหม่' : 'ค้นหาลูกค้า'}
                             </h2>
-                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest">Customer Authentication</p>
+                            <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest">Customer Authentication</p>
                         </div>
 
                         <div className="space-y-4">
@@ -1384,14 +1384,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         placeholder="เบอร์โทรศัพท์"
                                         value={customerPhone}
                                         onChange={(e) => setCustomerPhone(e.target.value)}
-                                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#C9A34E]/50 outline-none transition-all text-center text-xl"
+                                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#cc9d37]/50 outline-none transition-all text-center text-xl"
                                     />
                                     {customerError && (
                                         <div className="flex flex-col items-center gap-3">
                                             <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>
                                             <button
                                                 onClick={() => setShowRegisterForm(true)}
-                                                className="text-[#C9A34E] flex items-center gap-2 font-black text-[10px] uppercase hover:underline"
+                                                className="text-[#cc9d37] flex items-center gap-2 font-black text-[10px] uppercase hover:underline"
                                             >
                                                 <UserPlus size={14} /> สร้างลูกค้าใหม่
                                             </button>
@@ -1406,14 +1406,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             placeholder="ชื่อ"
                                             value={regForm.firstName}
                                             onChange={(e) => setRegForm({...regForm, firstName: e.target.value})}
-                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#cc9d37]/50"
                                         />
                                         <input
                                             type="text"
                                             placeholder="นามสกุล"
                                             value={regForm.lastName}
                                             onChange={(e) => setRegForm({...regForm, lastName: e.target.value})}
-                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                            className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#cc9d37]/50"
                                         />
                                     </div>
                                     <input
@@ -1421,7 +1421,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         placeholder="ชื่อเล่น (ถ้ามี)"
                                         value={regForm.nickName}
                                         onChange={(e) => setRegForm({...regForm, nickName: e.target.value})}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#C9A34E]/50"
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#cc9d37]/50"
                                     />
                                     <input
                                         type="text"
@@ -1464,7 +1464,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             <button
                                 onClick={showRegisterForm ? handleRegisterCustomer : handleConfirmCheckout}
                                 disabled={customerLookupLoading || !customerPhone.trim()}
-                                className="flex-1 bg-[#C9A34E] text-[#0A1A2F] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#cc9d37] text-[#0c1a2f] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
                                 {customerLookupLoading ? <Loader2 size={16} className="animate-spin" /> : 'ยืนยัน'}
                             </button>
@@ -1491,7 +1491,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             placeholder={mainMode === 'course' ? 'ค้นหาคอร์ส...' : mainMode === 'food' ? 'ค้นหาเมนูอาหาร...' : 'ค้นหาอุปกรณ์...'}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-72 pl-11 pr-5 py-3 bg-[#1a2535] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#C9A34E]/40 outline-none transition-all"
+                            className="w-72 pl-11 pr-5 py-3 bg-[#1a2535] border border-white/8 rounded-2xl text-white text-sm font-medium placeholder:text-white/20 focus:border-[#cc9d37]/40 outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -1511,14 +1511,14 @@ export default function PremiumPOS({ language = 'TH' }) {
                             onClick={() => { setMainMode(key); setActiveCategory('All'); }}
                             className={`flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-black text-sm flex-shrink-0 transition-all ${
                                 mainMode === key
-                                    ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
+                                    ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/20'
                                     : 'bg-[#1a2535] text-white/35 hover:text-white/60 border border-white/8'
                             }`}
                         >
                             <span className="text-base leading-none">{icon}</span>
                             <span>{label}</span>
                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-lg ${
-                                mainMode === key ? 'bg-[#0A1A2F]/20 text-[#0A1A2F]' : 'bg-white/8 text-white/25'
+                                mainMode === key ? 'bg-[#0c1a2f]/20 text-[#0c1a2f]' : 'bg-white/8 text-white/25'
                             }`}>{count}</span>
                         </button>
                     ))}
@@ -1539,7 +1539,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 onClick={() => setActiveCategory(cat)}
                                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs flex-shrink-0 transition-all border ${
                                     isActive
-                                        ? 'border-[#C9A34E]/60 bg-[#C9A34E]/10 text-white/90'
+                                        ? 'border-[#cc9d37]/60 bg-[#cc9d37]/10 text-white/90'
                                         : 'border-white/6 bg-[#1a2535]/70 text-white/30 hover:text-white/55 hover:border-white/15'
                                 }`}
                             >
@@ -1568,7 +1568,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             </p>
                             {fetchError && (
                                 <button
-                                    className="text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:underline"
+                                    className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:underline"
                                     onClick={() => {
                                         setFetchError(null);
                                         setLoading(true);
@@ -1593,7 +1593,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         {/* Image card */}
                                         <div className={`relative w-full aspect-square rounded-2xl overflow-hidden mb-3 transition-all duration-200 ${
                                             inCart
-                                                ? 'ring-2 ring-[#C9A34E]/70 shadow-lg shadow-[#C9A34E]/10'
+                                                ? 'ring-2 ring-[#cc9d37]/70 shadow-lg shadow-[#cc9d37]/10'
                                                 : 'hover:ring-2 hover:ring-white/15'
                                         }`}>
                                             {product.image ? (
@@ -1612,7 +1612,7 @@ export default function PremiumPOS({ language = 'TH' }) {
 
                                             {/* Cart qty badge */}
                                             {inCart && (
-                                                <div className="absolute top-2 left-2 bg-[#C9A34E] text-[#0A1A2F] min-w-[22px] h-[22px] px-1 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">
+                                                <div className="absolute top-2 left-2 bg-[#cc9d37] text-[#0c1a2f] min-w-[22px] h-[22px] px-1 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">
                                                     {inCart.quantity}
                                                 </div>
                                             )}
@@ -1633,7 +1633,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             {/* Quick-add button */}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); addItem(product); }}
-                                                className="absolute bottom-2 right-2 w-9 h-9 bg-[#C9A34E] hover:bg-amber-300 text-[#0A1A2F] rounded-xl flex items-center justify-center shadow-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100"
+                                                className="absolute bottom-2 right-2 w-9 h-9 bg-[#cc9d37] hover:bg-amber-300 text-[#0c1a2f] rounded-xl flex items-center justify-center shadow-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100"
                                             >
                                                 <Plus size={16} />
                                             </button>
@@ -1652,7 +1652,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                                 {product.name}
                                             </h4>
                                             <div className="flex items-center justify-between mb-1.5">
-                                                <span className="text-[#C9A34E] font-black text-sm">
+                                                <span className="text-[#cc9d37] font-black text-sm">
                                                     ฿{Number(product.price).toLocaleString()}
                                                 </span>
                                                 {product.hours && (
@@ -1711,8 +1711,8 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <h2 className="text-xl font-black text-white">Order</h2>
                         <p className="text-white/30 text-[11px] font-bold mt-0.5">Walk In · {cart.length} รายการ</p>
                     </div>
-                    <div className="w-8 h-8 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/25 flex items-center justify-center">
-                        <ShoppingBasket size={14} className="text-[#C9A34E]" />
+                    <div className="w-8 h-8 rounded-xl bg-[#cc9d37]/10 border border-[#cc9d37]/25 flex items-center justify-center">
+                        <ShoppingBasket size={14} className="text-[#cc9d37]" />
                     </div>
                 </div>
 
@@ -1723,7 +1723,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <div className="bg-white/5 rounded-2xl p-3 space-y-2">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-[#C9A34E]/20 flex items-center justify-center text-sm font-black text-[#C9A34E]">
+                                    <div className="w-8 h-8 rounded-full bg-[#cc9d37]/20 flex items-center justify-center text-sm font-black text-[#cc9d37]">
                                         {(cartCustomer.firstName || '?')[0]}
                                     </div>
                                     <div>
@@ -1752,7 +1752,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${meta.bg}`} style={{ color: meta.color }}>
                                                 {meta.badge} {meta.label}
                                             </span>
-                                            <span className="text-[#C9A34E] font-black text-[11px]">
+                                            <span className="text-[#cc9d37] font-black text-[11px]">
                                                 {vp.toLocaleString()} <span className="text-white/40 font-normal">V Point</span>
                                             </span>
                                         </div>
@@ -1775,7 +1775,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                     ) : (
                         // Search input
                         <div className="relative">
-                            <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/8 focus-within:border-[#C9A34E]/40 transition-all">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/8 focus-within:border-[#cc9d37]/40 transition-all">
                                 <Search size={13} className="text-white/30 flex-shrink-0"/>
                                 <input
                                     type="text"
@@ -1794,7 +1794,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         return (
                                             <button key={c.id} onClick={() => selectCartCustomer(c)}
                                                 className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-colors text-left">
-                                                <div className="w-7 h-7 rounded-full bg-[#C9A34E]/15 flex items-center justify-center text-xs font-black text-[#C9A34E] flex-shrink-0">
+                                                <div className="w-7 h-7 rounded-full bg-[#cc9d37]/15 flex items-center justify-center text-xs font-black text-[#cc9d37] flex-shrink-0">
                                                     {(c.firstName || '?')[0]}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -1850,12 +1850,12 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         <div className="flex items-center gap-2 mt-2">
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#C9A34E] flex items-center justify-center transition-colors"
+                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#cc9d37] flex items-center justify-center transition-colors"
                                             ><Minus size={9} /></button>
                                             <span className="text-white/60 text-[10px] font-black w-4 text-center">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#C9A34E] flex items-center justify-center transition-colors"
+                                                className="w-5 h-5 rounded-md bg-white/8 text-white/40 hover:text-[#cc9d37] flex items-center justify-center transition-colors"
                                             ><Plus size={9} /></button>
                                         </div>
                                     </div>
@@ -1892,7 +1892,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                     <button
                         disabled={cart.length === 0}
                         onClick={handleCheckout}
-                        className="w-full mt-1 bg-[#C9A34E] hover:bg-amber-400 disabled:bg-white/8 disabled:text-white/15 text-[#0A1A2F] py-4 rounded-2xl font-black text-sm shadow-lg shadow-[#C9A34E]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        className="w-full mt-1 bg-[#cc9d37] hover:bg-amber-400 disabled:bg-white/8 disabled:text-white/15 text-[#0c1a2f] py-4 rounded-2xl font-black text-sm shadow-lg shadow-[#cc9d37]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                         <ShoppingBasket size={16} />
                         ชำระเงิน

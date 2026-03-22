@@ -26,12 +26,12 @@ export default function Settings() {
                             <input
                                 type="text"
                                 defaultValue="Admin User"
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-[#cc9d37] transition-colors"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Control Access Level</label>
-                            <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-[#C9A34E] appearance-none transition-colors">
+                            <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-[#cc9d37] appearance-none transition-colors">
                                 <option>System Controller</option>
                                 <option>Sales Manager</option>
                                 <option>Inventory Specialist</option>
@@ -73,12 +73,12 @@ export default function Settings() {
                 </div>
 
                 {/* Branding Accent */}
-                <div className="md:col-span-2 bg-gradient-to-r from-[#0A1A2F] to-[#1A2F4F] border border-[#C9A34E]/30 rounded-[2.5rem] p-8 flex items-center justify-between">
+                <div className="md:col-span-2 bg-gradient-to-r from-[#0c1a2f] to-[#19273a] border border-[#cc9d37]/30 rounded-[2.5rem] p-8 flex items-center justify-between">
                     <div>
-                        <h3 className="font-black text-[#C9A34E] text-xl tracking-tight mb-2 uppercase italic">Visual Identity Engine</h3>
-                        <p className="text-white/40 text-sm font-medium">Currently using <span className="text-[#C9A34E] font-bold">Deep Navy & Champagne Gold</span> premium theme.</p>
+                        <h3 className="font-black text-[#cc9d37] text-xl tracking-tight mb-2 uppercase italic">Visual Identity Engine</h3>
+                        <p className="text-white/40 text-sm font-medium">Currently using <span className="text-[#cc9d37] font-bold">Deep Navy & Champagne Gold</span> premium theme.</p>
                     </div>
-                    <button className="bg-[#C9A34E] text-[#0A1A2F] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
+                    <button className="bg-[#cc9d37] text-[#0c1a2f] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
                         Customize Branding
                     </button>
                 </div>

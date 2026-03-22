@@ -44,7 +44,7 @@ export const PRIORITY_CONFIG = {
         color: 'text-yellow-400',
         bg: 'bg-yellow-500/10',
         border: 'border-yellow-500/25',
-        badge: 'bg-yellow-500 text-[#0A1A2F]',
+        badge: 'bg-yellow-500 text-[#0c1a2f]',
         dot: 'bg-yellow-400',
         pulse: false,
     },
@@ -90,7 +90,7 @@ const PRIORITIES = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'];
 
 const STATUS_CONFIG = {
     PENDING:     { label: 'รอดำเนินการ', icon: Circle,       color: 'text-white/40' },
-    IN_PROGRESS: { label: 'กำลังทำ',     icon: RotateCcw,    color: 'text-[#C9A34E]' },
+    IN_PROGRESS: { label: 'กำลังทำ',     icon: RotateCcw,    color: 'text-[#cc9d37]' },
     DONE:        { label: 'เสร็จแล้ว',   icon: CheckCircle2, color: 'text-emerald-400' },
     CANCELLED:   { label: 'ยกเลิก',      icon: X,            color: 'text-red-400/60' },
 };
@@ -296,7 +296,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         <input
                             type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                             placeholder="เช่น โทรติดตามลูกค้า คุณสมชาย"
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                         />
                     </div>
 
@@ -312,7 +312,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ประเภทงาน</label>
                         <select
                             value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 appearance-none"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none"
                         >
                             {TASK_TYPES.map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
                         </select>
@@ -324,7 +324,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         <textarea
                             value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                             rows={3} placeholder="รายละเอียดเพิ่มเติม..."
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all resize-none"
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all resize-none"
                         />
                     </div>
 
@@ -333,7 +333,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">มอบหมายให้</label>
                         <select
                             value={form.assigneeId} onChange={e => setForm(f => ({ ...f, assigneeId: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 appearance-none"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none"
                         >
                             <option value="">— ไม่ระบุ —</option>
                             {employees.map(emp => (
@@ -347,7 +347,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">กำหนดเสร็จ</label>
                         <input
                             type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                         />
                     </div>
                 </div>
@@ -358,7 +358,7 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                         Cancel
                     </button>
                     <button onClick={handleSubmit} disabled={saving}
-                        className="flex-1 py-3 rounded-xl bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#C9A34E]/20 disabled:opacity-50">
+                        className="flex-1 py-3 rounded-xl bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#cc9d37]/20 disabled:opacity-50">
                         {saving ? <Loader2 className="animate-spin inline-block" size={14} /> : (isEdit ? 'บันทึก' : 'สร้างงาน')}
                     </button>
                 </div>
@@ -456,13 +456,13 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                         <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
                         <input
                             type="text" placeholder="ค้นหา..." value={search} onChange={e => setSearch(e.target.value)}
-                            className="bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 w-40 transition-all"
+                            className="bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 w-40 transition-all"
                         />
                     </div>
                     {canManage && (
                         <button
                             onClick={() => { setEditingTask(null); setShowModal(true); }}
-                            className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-[#C9A34E]/20 active:scale-95 flex items-center gap-2">
+                            className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-[#cc9d37]/20 active:scale-95 flex items-center gap-2">
                             <Plus size={12} />สร้างงาน
                         </button>
                     )}
@@ -479,7 +479,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                         { v: 'DONE', label: 'เสร็จแล้ว' },
                     ].map(({ v, label }) => (
                         <button key={v} onClick={() => setFilterStatus(v)}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === v ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white'}`}>
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === v ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white'}`}>
                             {label}
                         </button>
                     ))}

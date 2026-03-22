@@ -149,7 +149,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                         disabled={syncing}
                         className={`bg-white/5 border border-white/10 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 shadow-xl ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {syncing ? <Loader2 className="w-4 h-4 animate-spin text-[#C9A34E]" /> : <RefreshCw className="w-4 h-4 text-[#C9A34E]" />}
+                        {syncing ? <Loader2 className="w-4 h-4 animate-spin text-[#cc9d37]" /> : <RefreshCw className="w-4 h-4 text-[#cc9d37]" />}
                         {syncing ? 'Syncing...' : 'Sync Messenger Leads'}
                     </button>
                 </div>
@@ -166,7 +166,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                             <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">Live Sync</span>
                         </div>
                         <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                        <p className="text-2xl font-black text-white group-hover:text-[#C9A34E] transition-colors font-mono">
+                        <p className="text-2xl font-black text-white group-hover:text-[#cc9d37] transition-colors font-mono">
                             <AnimatedNumber
                                 value={stat.value}
                                 prefix={stat.prefix}
@@ -176,7 +176,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                         </p>
                         {stat.subValue && (
                             <p className="text-[10px] font-bold text-white/40 mt-1 flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-[#C9A34E]" />
+                                <Clock className="w-3 h-3 text-[#cc9d37]" />
                                 {stat.subValue}
                             </p>
                         )}
@@ -191,7 +191,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="font-black text-white text-xl tracking-tight">Recent Student Activity</h3>
-                            <button className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest hover:underline">View All Notifications</button>
+                            <button className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest hover:underline">View All Notifications</button>
                         </div>
                         <div className="space-y-4">
                             {[...customers]
@@ -208,7 +208,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-black text-white group-hover/item:text-[#C9A34E] transition-colors">
+                                            <p className="text-sm font-black text-white group-hover/item:text-[#cc9d37] transition-colors">
                                                 {customer.profile?.nick_name || customer.profile?.first_name} {customer.profile?.last_name}
                                             </p>
                                             <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
@@ -230,11 +230,11 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                 </div>
 
                 {/* Quick Insights */}
-                <div className="bg-[#C9A34E] rounded-[2.5rem] p-8 text-[#0A1A2F] shadow-2xl shadow-[#C9A34E]/20 relative overflow-hidden group">
+                <div className="bg-[#cc9d37] rounded-[2.5rem] p-8 text-[#0c1a2f] shadow-2xl shadow-[#cc9d37]/20 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                     <div className="relative z-10 h-full flex flex-col">
                         <div className="mb-8">
-                            <div className="w-12 h-12 bg-[#0A1A2F] text-[#C9A34E] rounded-2xl flex items-center justify-center text-xl mb-4 shadow-xl">
+                            <div className="w-12 h-12 bg-[#0c1a2f] text-[#cc9d37] rounded-2xl flex items-center justify-center text-xl mb-4 shadow-xl">
                                 <Lightbulb className="w-6 h-6" />
                             </div>
                             <h3 className="font-black text-2xl tracking-tight leading-tight">AI Insights Peak Performance</h3>
@@ -245,7 +245,7 @@ export default function Dashboard({ customers, products, orders = [], onRefresh 
                             <p>Most popular course category: <span className="underline decoration-2">{topCourse}</span>.</p>
                         </div>
 
-                        <button className="mt-8 w-full bg-[#0A1A2F] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
+                        <button className="mt-8 w-full bg-[#0c1a2f] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl">
                             Run Full Analysis
                         </button>
                     </div>

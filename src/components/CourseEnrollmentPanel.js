@@ -64,8 +64,8 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 space-y-4">
-      <Loader2 className="w-12 h-12 text-[#C9A34E] animate-spin" />
-      <span className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">{t.loading}</span>
+      <Loader2 className="w-12 h-12 text-[#cc9d37] animate-spin" />
+      <span className="text-[#cc9d37] font-black animate-pulse uppercase tracking-[0.3em]">{t.loading}</span>
     </div>
   );
 
@@ -78,31 +78,31 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
   const getCertBadge = (hours) => {
     if (hours >= 201) return { label: t.cert3, color: 'bg-slate-400 text-white' };
     if (hours >= 111) return { label: t.cert2, color: 'bg-zinc-300 text-zinc-800' };
-    if (hours >= 30) return { label: t.cert1, color: 'bg-[#C9A34E] text-[#0A1A2F]' };
+    if (hours >= 30) return { label: t.cert1, color: 'bg-[#cc9d37] text-[#0c1a2f]' };
     return null;
   };
 
   const cert = getCertBadge(totalHours);
 
   return (
-    <div className="bg-[#0A1A2F]/50 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
+    <div className="bg-[#0c1a2f]/50 backdrop-blur-md rounded-[2.5rem] border border-white/10 p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-3xl font-black text-[#F8F8F6] uppercase tracking-widest flex items-center gap-3">
-            <BookOpen className="text-[#C9A34E]" /> {t.title}
+            <BookOpen className="text-[#cc9d37]" /> {t.title}
           </h2>
           <div className="flex gap-4 mt-4">
             <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
               <span className="text-xs text-white/40 uppercase font-bold tracking-tighter block">{t.totalCourses}</span>
-              <span className="text-xl font-black text-[#C9A34E]">{totalCourses}</span>
+              <span className="text-xl font-black text-[#cc9d37]">{totalCourses}</span>
             </div>
             <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
               <span className="text-xs text-white/40 uppercase font-bold tracking-tighter block">{t.completed}</span>
-              <span className="text-xl font-black text-[#C9A34E]">{completedCount}</span>
+              <span className="text-xl font-black text-[#cc9d37]">{completedCount}</span>
             </div>
             <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
               <span className="text-xs text-white/40 uppercase font-bold tracking-tighter block">{t.totalHours}</span>
-              <span className="text-xl font-black text-[#C9A34E]">{totalHours} <small className="text-xs font-normal opacity-60">HRS</small></span>
+              <span className="text-xl font-black text-[#cc9d37]">{totalHours} <small className="text-xs font-normal opacity-60">HRS</small></span>
             </div>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
             </div>
             <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#C9A34E] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(201,163,78,0.5)]"
+                className="h-full bg-[#cc9d37] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(201,163,78,0.5)]"
                 style={{ width: `${Math.min(100, (totalHours / 201) * 100)}%` }}
               />
             </div>
@@ -136,7 +136,7 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
           </div>
         ) : (
           enrollments.map((enrollment) => (
-            <div key={enrollment.id} className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden hover:border-[#C9A34E]/30 transition-all">
+            <div key={enrollment.id} className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden hover:border-[#cc9d37]/30 transition-all">
               <div
                 className="p-6 cursor-pointer flex items-center justify-between"
                 onClick={() => setExpandedId(expandedId === enrollment.id ? null : enrollment.id)}
@@ -169,11 +169,11 @@ export default function CourseEnrollmentPanel({ customerId, language = 'TH' }) {
                       <div key={idx} className="flex flex-col gap-2">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-white/80 font-bold">{item.courseName}</span>
-                          <span className="text-xs font-black text-[#C9A34E]">{item.hoursCompleted} / {item.duration} {t.hours}</span>
+                          <span className="text-xs font-black text-[#cc9d37]">{item.hoursCompleted} / {item.duration} {t.hours}</span>
                         </div>
                         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#C9A34E]/60 transition-all duration-700"
+                            className="h-full bg-[#cc9d37]/60 transition-all duration-700"
                             style={{ width: `${Math.min(100, (item.hoursCompleted / (item.duration || 1)) * 100)}%` }}
                           />
                         </div>

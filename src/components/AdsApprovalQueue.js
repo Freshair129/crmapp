@@ -81,14 +81,14 @@ export default function AdsApprovalQueue({ currentUserRole }) {
     <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl">
       <div className="mb-4">
         <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span className="text-[#C9A34E]">📋</span> Pending Ad Requests ({pendingCount})
+          <span className="text-[#cc9d37]">📋</span> Pending Ad Requests ({pendingCount})
         </h3>
         <p className="text-[10px] text-white/40 font-bold">Manager approval queue</p>
       </div>
 
       {loading ? (
         <div className="py-4 flex items-center justify-center">
-          <Loader2 size={14} className="animate-spin text-[#C9A34E]" />
+          <Loader2 size={14} className="animate-spin text-[#cc9d37]" />
         </div>
       ) : requests.length === 0 ? (
         <p className="text-[10px] text-white/40 font-bold py-4">No pending requests</p>
@@ -98,7 +98,7 @@ export default function AdsApprovalQueue({ currentUserRole }) {
             <div key={req.id} className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest truncate">{req.id}</p>
+                  <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest truncate">{req.id}</p>
                   <p className="text-xs font-bold text-white mt-1 truncate">"{req.campaignName}"</p>
                   <p className="text-[10px] text-white/60 font-bold mt-1">
                     {req.requestType === 'lifetime_budget'

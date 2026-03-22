@@ -12,12 +12,12 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
     return (
         <div className="p-10 max-w-4xl mx-auto animate-fade-in space-y-12">
             <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-[#C9A34E] text-[#0A1A2F] rounded-[1.5rem] flex items-center justify-center text-3xl shadow-2xl rotate-[-6deg]">
+                <div className="w-16 h-16 bg-[#cc9d37] text-[#0c1a2f] rounded-[1.5rem] flex items-center justify-center text-3xl shadow-2xl rotate-[-6deg]">
                     <Settings size={32} />
                 </div>
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                    <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Global System Parameters</p>
+                    <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Global System Parameters</p>
                 </div>
             </div>
 
@@ -26,7 +26,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                 <div className="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] shadow-2xl group hover:bg-white/10 transition-all">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
+                            <div className="w-12 h-12 bg-[#0c1a2f] rounded-2xl flex items-center justify-center text-[#cc9d37] shadow-xl border border-white/10">
                                 <Globe size={24} />
                             </div>
                             <div>
@@ -39,13 +39,13 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     <div className="flex gap-4 p-2 bg-black/30 rounded-3xl border border-white/5">
                         <button
                             onClick={() => setLanguage('EN')}
-                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'EN' ? 'bg-[#F8F8F6] text-[#0A1A2F] shadow-xl' : 'text-white/40 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'EN' ? 'bg-[#F8F8F6] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
                         >
                             <span className="text-xl">🇺🇸</span> English (US)
                         </button>
                         <button
                             onClick={() => setLanguage('TH')}
-                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'TH' ? 'bg-[#F8F8F6] text-[#0A1A2F] shadow-xl' : 'text-white/40 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${language === 'TH' ? 'bg-[#F8F8F6] text-[#0c1a2f] shadow-xl' : 'text-white/40 hover:text-white'}`}
                         >
                             <span className="text-xl">🇹🇭</span> ภาษาไทย
                         </button>
@@ -55,7 +55,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                 {/* Notifications Toggle */}
                 <div className="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] flex items-center justify-between group hover:bg-white/10 transition-all shadow-2xl">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-[#0A1A2F] rounded-2xl flex items-center justify-center text-[#C9A34E] shadow-xl border border-white/10">
+                        <div className="w-12 h-12 bg-[#0c1a2f] rounded-2xl flex items-center justify-center text-[#cc9d37] shadow-xl border border-white/10">
                             <Bell size={24} />
                         </div>
                         <div>
@@ -65,7 +65,7 @@ export default function SystemConfig({ language = 'TH', setLanguage }) {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" defaultChecked className="sr-only peer" />
-                        <div className="w-14 h-8 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[#C9A34E] after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-white/10"></div>
+                        <div className="w-14 h-8 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[#cc9d37] after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-white/10"></div>
                     </label>
                 </div>
 

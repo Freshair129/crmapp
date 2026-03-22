@@ -141,7 +141,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
     return (
         <div className="animate-fade-in pb-12 overflow-hidden">
             {/* Top Toolbar - Compact */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5 bg-[#162A47]/80 p-4 lg:p-5 rounded-[1.5rem] shadow-lg relative overflow-hidden ring-1 ring-white/10 backdrop-blur-md">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5 bg-[#19273a]/80 p-4 lg:p-5 rounded-[1.5rem] shadow-lg relative overflow-hidden ring-1 ring-white/10 backdrop-blur-md">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none"></div>
                 <div className="relative z-10">
                     <h2 className="text-xl font-black text-white tracking-tight">Customer Engagement</h2>
@@ -152,7 +152,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                 <div className="flex-1 max-w-xs mx-auto hidden lg:block">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="text-slate-400 text-xs group-focus-within:text-[#0A1A2F] transition-colors" />
+                            <Search className="text-slate-400 text-xs group-focus-within:text-[#0c1a2f] transition-colors" />
                         </div>
                         <input
                             type="text"
@@ -189,19 +189,19 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 <div className="lg:col-span-3 space-y-5">
-                    <div className="bg-[#162A47]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
-                        <div className="p-[15px] pb-20 bg-gradient-to-br from-[#162A47]/80 to-[#1F3A5F]/80 relative">
+                    <div className="bg-[#19273a]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
+                        <div className="p-[15px] pb-20 bg-gradient-to-br from-[#19273a]/80 to-[#1F3A5F]/80 relative">
                             <div className="flex flex-col items-center text-center">
                                 <div className="relative mb-4">
-                                    <div className="w-[140px] h-[140px] rounded-full bg-[#162A47] p-0.5 ring-2 ring-[#C9A34E]/20 shadow-xl overflow-hidden">
+                                    <div className="w-[140px] h-[140px] rounded-full bg-[#19273a] p-0.5 ring-2 ring-[#cc9d37]/20 shadow-xl overflow-hidden">
                                         <img
-                                            src={profile.profile_picture || profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.first_name || 'C'}&background=0A1A2F&color=C9A34E`}
+                                            src={profile.profile_picture || profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.first_name || 'C'}&background=0c1a2f&color=cc9d37`}
                                             alt="Avatar"
                                             className="w-full h-full object-cover rounded-full"
-                                            onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=' + (profile.first_name || 'C') + '&background=0A1A2F&color=C9A34E'; }}
+                                            onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=' + (profile.first_name || 'C') + '&background=0c1a2f&color=cc9d37'; }}
                                         />
                                     </div>
-                                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-[#162A47] rounded-full flex items-center justify-center shadow-md">
+                                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-[#19273a] rounded-full flex items-center justify-center shadow-md">
                                         <Check className="text-white text-[9px]" />
                                     </div>
                                 </div>
@@ -255,7 +255,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                             </div>
                                         </div>
                                         {intel.main_interest && (
-                                            <p className="text-[9px] font-bold text-[#C9A34E] italic">
+                                            <p className="text-[9px] font-bold text-[#cc9d37] italic">
                                                 Interest: {intel.main_interest}
                                             </p>
                                         )}
@@ -310,7 +310,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                 )}
 
                                 {/* Wallet Section - 2-Row Grid with Actions */}
-                                <div className="w-full max-w-[240px] bg-[#162A47] rounded-2xl p-5 mb-6 border border-white/10 relative overflow-hidden">
+                                <div className="w-full max-w-[240px] bg-[#19273a] rounded-2xl p-5 mb-6 border border-white/10 relative overflow-hidden">
                                     <div className="space-y-4 relative z-10">
                                         {/* Row 1: Wallet */}
                                         <div className="flex items-center justify-between">
@@ -336,8 +336,8 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                         <div className="flex items-center justify-between">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">P. VP</span>
-                                                <div className="text-xl font-black text-[#C9A34E] flex items-baseline gap-1">
-                                                    <span className="text-xs text-[#C9A34E]/60 font-bold">VP</span>
+                                                <div className="text-xl font-black text-[#cc9d37] flex items-baseline gap-1">
+                                                    <span className="text-xs text-[#cc9d37]/60 font-bold">VP</span>
                                                     {wallet.points?.toLocaleString()}
                                                 </div>
                                             </div>
@@ -350,7 +350,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
 
                                 <div className="flex flex-wrap justify-center gap-2 max-w-full px-2">
                                     {intel.tags?.map((tag, i) => (
-                                        <span key={i} className="px-3 py-1 bg-[#C9A34E]/10 text-[#C9A34E] text-[10px] font-bold uppercase tracking-wider rounded-lg border border-[#C9A34E]/20 whitespace-nowrap shadow-sm">
+                                        <span key={i} className="px-3 py-1 bg-[#cc9d37]/10 text-[#cc9d37] text-[10px] font-bold uppercase tracking-wider rounded-lg border border-[#cc9d37]/20 whitespace-nowrap shadow-sm">
                                             {tag}
                                         </span>
                                     ))}
@@ -359,7 +359,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                         </div>
                     </div>
 
-                    <div className="w-full mb-4 p-3 bg-[#162A47] rounded-xl border border-white/10 shadow-inner">
+                    <div className="w-full mb-4 p-3 bg-[#19273a] rounded-xl border border-white/10 shadow-inner">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                                 {nextTier ? `Next: ${nextTier.label.split(' ')[0]}` : 'Tier: Elite (Max)'}
@@ -379,9 +379,9 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                     </div>
 
                     {/* Sales Agent & Status Editor */}
-                    <div className="bg-[#162A47]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
+                    <div className="bg-[#19273a]/80 rounded-[1.5rem] shadow-lg border border-white/10 overflow-hidden relative group backdrop-blur-md">
                         <div className="px-5 pt-4 pb-4 border-t border-white/5 bg-white/5">
-                            <p className="text-[9px] font-black text-[#C9A34E] uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <p className="text-[9px] font-black text-[#cc9d37] uppercase tracking-widest mb-3 flex items-center gap-2">
                                 <UserCog className="w-2.5 h-2.5" /> Sales Assignment
                             </p>
                             <div className="space-y-3">
@@ -392,7 +392,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                         value={editAgent}
                                         onChange={(e) => setEditAgent(e.target.value)}
                                         placeholder="Sales Representative Name"
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#C9A34E]/50 transition-all font-inter"
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#cc9d37]/50 transition-all font-inter"
                                     />
                                 </div>
                                 <div>
@@ -400,7 +400,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                     <select
                                         value={editStatus}
                                         onChange={(e) => setEditStatus(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer"
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-[#cc9d37]/50 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="New Lead">New Lead</option>
                                         <option value="Interested">Interested</option>
@@ -413,7 +413,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                 <button
                                     onClick={handleSaveProfile}
                                     disabled={isSaving}
-                                    className="w-full bg-[#C9A34E] text-[#0A1A2F] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                                    className="w-full bg-[#cc9d37] text-[#0c1a2f] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? <Loader2 className="animate-spin text-[10px]" /> : <Save className="text-[10px]" />}
                                     {isSaving ? 'SAVING...' : 'UPDATE SALES INFO'}
@@ -435,7 +435,7 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
                                     { Icon: Mail, label: 'E-mail', val: contact.email || profile.email || '-', color: 'text-blue-400' },
                                     { Icon: Phone, label: 'Phone', val: contact.phone_primary || profile.phone_primary || '-', color: 'text-green-400' },
                                     { Icon: MessageSquare, label: 'Line ID', val: contact.line_id || '-', color: 'text-emerald-400' },
-                                    { Icon: UserCog, label: 'Current Agent', val: profile.agent || 'Unassigned', color: 'text-[#C9A34E]' }
+                                    { Icon: UserCog, label: 'Current Agent', val: profile.agent || 'Unassigned', color: 'text-[#cc9d37]' }
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-center gap-3">
                                         <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">

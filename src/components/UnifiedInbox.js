@@ -389,14 +389,14 @@ export default function UnifiedInbox({ language = 'TH' }) {
     }, [aiOutput]);
 
     return (
-        <div className="flex w-full flex-1 min-h-0 bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
+        <div className="flex w-full flex-1 min-h-0 bg-[#0c1a2f] text-white rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative">
             {/* Conversation List */}
-            <div className="w-80 border-r border-white/5 flex flex-col bg-[#0A1A2F] overflow-hidden relative z-10 shrink-0">
-                <div className="flex-shrink-0 p-6 space-y-4 border-b border-white/5 bg-[#0A1A2F]/95 backdrop-blur-md sticky top-0 z-30">
+            <div className="w-80 border-r border-white/5 flex flex-col bg-[#0c1a2f] overflow-hidden relative z-10 shrink-0">
+                <div className="flex-shrink-0 p-6 space-y-4 border-b border-white/5 bg-[#0c1a2f]/95 backdrop-blur-md sticky top-0 z-30">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                            <h2 className="text-xl font-black tracking-tight">{language === 'TH' ? 'กล่องข้อความ' : 'Inbox'}</h2>
-                           <span className="text-[10px] text-[#C9A34E] font-black uppercase tracking-[0.2em] opacity-80">{conversations.length} {language === 'TH' ? 'บทสนทนา' : 'Active Chats'}</span>
+                           <span className="text-[10px] text-[#cc9d37] font-black uppercase tracking-[0.2em] opacity-80">{conversations.length} {language === 'TH' ? 'บทสนทนา' : 'Active Chats'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Sync FB Chat — Graph API pull (works offline/local) */}
@@ -408,7 +408,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             >
                                 <RefreshCw size={13} className={`text-blue-400 ${syncing ? 'animate-spin' : ''}`} />
                             </button>
-                            <MessageCircle size={20} className="text-[#C9A34E]" />
+                            <MessageCircle size={20} className="text-[#cc9d37]" />
                         </div>
                     </div>
                     {syncResult && (
@@ -418,11 +418,11 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     )}
                     
                     <div className="relative group">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#C9A34E] transition-colors" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#cc9d37] transition-colors" />
                         <input 
                             type="text" 
                             placeholder={language === 'TH' ? 'ค้นหาลูกค้า...' : 'Search customers...'}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs focus:outline-none focus:border-[#C9A34E]/50 transition-all font-black uppercase tracking-widest"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs focus:outline-none focus:border-[#cc9d37]/50 transition-all font-black uppercase tracking-widest"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -435,7 +435,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     key={ch}
                                     onClick={() => setChannel(ch)}
                                     className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                                        channel === ch ? 'bg-[#C9A34E] text-white shadow-lg shadow-[#C9A34E]/20' : 'text-white/40 hover:bg-white/5 hover:text-white'
+                                        channel === ch ? 'bg-[#cc9d37] text-white shadow-lg shadow-[#cc9d37]/20' : 'text-white/40 hover:bg-white/5 hover:text-white'
                                     }`}
                                 >
                                     {ch === 'ALL' ? (language === 'TH' ? 'ทั้งหมด' : 'All') : ch}
@@ -458,10 +458,10 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0A1A2F] min-h-0">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0c1a2f] min-h-0">
                     {loading && page === 1 ? (
                         <div className="flex flex-col items-center justify-center p-20 space-y-4 opacity-50">
-                            <div className="w-8 h-8 border-2 border-[#C9A34E] border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-8 h-8 border-2 border-[#cc9d37] border-t-transparent rounded-full animate-spin"></div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">Syncing...</p>
                         </div>
                     ) : conversations.length === 0 ? (
@@ -479,7 +479,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     }`}
                                 >
                                     {selectedId === conv.id && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C9A34E] shadow-[0_0_15px_rgba(201,163,78,0.5)]"></div>
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#cc9d37] shadow-[0_0_15px_rgba(201,163,78,0.5)]"></div>
                                     )}
                                     
                                     <div className="flex justify-between items-start mb-1">
@@ -514,7 +514,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                 <div className="p-8 text-center">
                                     <button 
                                         onClick={loadMore}
-                                        className="py-2 px-6 rounded-xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-[#C9A34E] hover:bg-white/5 hover:scale-105 transition-all"
+                                        className="py-2 px-6 rounded-xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-[#cc9d37] hover:bg-white/5 hover:scale-105 transition-all"
                                     >
                                         {language === 'TH' ? 'โหลดเพิ่ม...' : 'Load more...'}
                                     </button>
@@ -532,7 +532,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                 
                 {selectedId ? (
                     <div className="flex-1 flex flex-col min-h-0 relative z-10">
-                        <div className="flex-shrink-0 p-6 border-b border-white/5 flex items-center justify-between bg-[#0A1A2F]/95 backdrop-blur-xl relative z-30">
+                        <div className="flex-shrink-0 p-6 border-b border-white/5 flex items-center justify-between bg-[#0c1a2f]/95 backdrop-blur-xl relative z-30">
                             <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-xl shadow-black/20 shrink-0 ${
                                     selectedConv?.channel === 'FACEBOOK' ? 'bg-gradient-to-br from-[#1877F2] to-[#0062E0]' : 'bg-gradient-to-br from-[#06C755] to-[#05b34b]'
@@ -568,7 +568,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             {msgHasMore && (
                                 <button 
                                     onClick={loadMoreMessages}
-                                    className="self-center py-2 px-4 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest text-[#C9A34E] hover:bg-white/10 hover:text-white transition-all mb-4 shrink-0 border border-white/5"
+                                    className="self-center py-2 px-4 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest text-[#cc9d37] hover:bg-white/10 hover:text-white transition-all mb-4 shrink-0 border border-white/5"
                                 >
                                     {msgLoading && msgPage > 1 ? (
                                         <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -580,7 +580,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
 
                             {msgLoading && messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center flex-1 space-y-4 opacity-50">
-                                    <div className="w-10 h-10 border-3 border-[#C9A34E] border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-10 h-10 border-3 border-[#cc9d37] border-t-transparent rounded-full animate-spin"></div>
                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">Loading Threads...</p>
                                 </div>
                             ) : messages.length === 0 ? (
@@ -595,7 +595,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                             <div className={`max-w-[70%] space-y-1.5`}>
                                                 <div className={`rounded-3xl text-sm font-medium leading-relaxed shadow-lg overflow-hidden ${
                                                     msg.senderType === 'AGENT'
-                                                        ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/20 rounded-tr-none'
+                                                        ? 'bg-[#cc9d37]/20 text-[#cc9d37] border border-[#cc9d37]/20 rounded-tr-none'
                                                         : 'bg-white/10 text-white border border-white/5 rounded-tl-none'
                                                 }`}>
                                                     {/* Attachment: render image if URL exists (type may be null for FB backfilled msgs) */}
@@ -641,13 +641,13 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             )}
                         </div>
 
-                        <div className="flex-shrink-0 p-6 bg-[#0A1A2F]/95 backdrop-blur-xl border-t border-white/5 z-40 relative">
+                        <div className="flex-shrink-0 p-6 bg-[#0c1a2f]/95 backdrop-blur-xl border-t border-white/5 z-40 relative">
                             <form onSubmit={handleSend} className="relative group">
                                 <textarea
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder={language === 'TH' ? 'พิมพ์ข้อความเพื่อตอบกลับ...' : 'Type a message to reply...'}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-5 pr-16 text-sm font-medium focus:outline-none focus:border-[#C9A34E]/50 transition-all resize-none min-h-[60px] max-h-[150px] custom-scrollbar text-white placeholder:text-white/20"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-5 pr-16 text-sm font-medium focus:outline-none focus:border-[#cc9d37]/50 transition-all resize-none min-h-[60px] max-h-[150px] custom-scrollbar text-white placeholder:text-white/20"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
@@ -659,7 +659,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     type="submit"
                                     disabled={!replyText.trim() || sending}
                                     className={`absolute right-3 bottom-3 p-3 rounded-xl transition-all ${
-                                        replyText.trim() && !sending ? 'bg-[#C9A34E] text-white shadow-lg shadow-[#C9A34E]/30 hover:scale-105 active:scale-95' : 'bg-white/5 text-white/30'
+                                        replyText.trim() && !sending ? 'bg-[#cc9d37] text-white shadow-lg shadow-[#cc9d37]/30 hover:scale-105 active:scale-95' : 'bg-white/5 text-white/30'
                                     }`}
                                 >
                                     <Send size={18} className={sending ? 'animate-pulse' : ''} />
@@ -698,7 +698,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                         </p>
                         <div className="flex justify-center gap-1.5 mt-3 flex-wrap">
                             {selectedConv.customer.membershipTier && (
-                                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border bg-[#C9A34E]/20 text-[#C9A34E] border-[#C9A34E]/30">
+                                <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border bg-[#cc9d37]/20 text-[#cc9d37] border-[#cc9d37]/30">
                                     {selectedConv.customer.membershipTier}
                                 </span>
                             )}
@@ -776,9 +776,9 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     {totalSpend > 0 && (
                                         <div>
                                             <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
-                                                <Tag size={9} className="text-[#C9A34E]" /> Total Spend
+                                                <Tag size={9} className="text-[#cc9d37]" /> Total Spend
                                             </p>
-                                            <p className="text-base font-black text-[#C9A34E] italic">฿{Number(totalSpend).toLocaleString()}</p>
+                                            <p className="text-base font-black text-[#cc9d37] italic">฿{Number(totalSpend).toLocaleString()}</p>
                                         </div>
                                     )}
                                     {courses.length > 0 && (
@@ -840,8 +840,8 @@ export default function UnifiedInbox({ language = 'TH' }) {
                     {/* Header row: title + style selector + tone selector */}
                     <div className="px-4 pt-3 pb-2 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-1.5">
-                            <Sparkles size={11} className="text-[#C9A34E]" />
-                            <span className="text-[9px] font-black text-[#C9A34E] uppercase tracking-[0.15em]">AI Reply Helper</span>
+                            <Sparkles size={11} className="text-[#cc9d37]" />
+                            <span className="text-[9px] font-black text-[#cc9d37] uppercase tracking-[0.15em]">AI Reply Helper</span>
                         </div>
                         <div className="flex items-center gap-1 min-w-0 overflow-hidden">
                             {/* Admin Style selector */}
@@ -893,7 +893,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             onClick={() => setAiTab('generate')}
                             className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
                                 aiTab === 'generate'
-                                    ? 'bg-[#C9A34E]/20 text-[#C9A34E] border border-[#C9A34E]/30'
+                                    ? 'bg-[#cc9d37]/20 text-[#cc9d37] border border-[#cc9d37]/30'
                                     : 'text-white/30 hover:text-white/50'
                             }`}
                         >
@@ -923,7 +923,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generateAiReply(); }}
                                     placeholder="ปรับเฉพาะแชทนี้ เช่น 'เน้นว่ายังมีที่ว่างแค่ 2 ที่' (ถ้าว่างจะใช้ Introduction จาก Config)"
                                     rows={2}
-                                    className="w-full bg-[#0A1A2F] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#C9A34E]/40 transition-all custom-scrollbar leading-relaxed"
+                                    className="w-full bg-[#0c1a2f] border border-white/10 rounded-xl text-[10px] text-white/80 placeholder-white/20 p-2.5 resize-none outline-none focus:border-[#cc9d37]/40 transition-all custom-scrollbar leading-relaxed"
                                 />
                             </div>
 
@@ -933,7 +933,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                                     onClick={generateAiReply}
                                     disabled={aiLoading}
                                     className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    style={{ background: aiLoading ? '#1e293b' : 'linear-gradient(135deg, #C9A34E, #e8bf6e)', color: aiLoading ? '#64748b' : '#0A1A2F' }}
+                                    style={{ background: aiLoading ? '#19273a' : 'linear-gradient(135deg, #cc9d37, #cc9d37)', color: aiLoading ? '#64748b' : '#0c1a2f' }}
                                 >
                                     {aiLoading ? (
                                         <>
@@ -952,7 +952,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             {aiOutput && (
                                 <div className="px-4 pb-3">
                                     <p className="text-[8px] text-white/25 uppercase tracking-widest font-black mb-1">คำตอบที่ generate</p>
-                                    <div className="relative bg-[#0A1A2F] border border-[#C9A34E]/20 rounded-xl p-2.5">
+                                    <div className="relative bg-[#0c1a2f] border border-[#cc9d37]/20 rounded-xl p-2.5">
                                         <p className="text-[10px] text-white/80 leading-relaxed whitespace-pre-wrap pr-6">{aiOutput}</p>
                                         <button
                                             onClick={copyAiOutput}
@@ -985,7 +985,7 @@ export default function UnifiedInbox({ language = 'TH' }) {
                             ) : (
                                 <div className="space-y-2 pt-1">
                                     {aiHistory.map((log) => (
-                                        <div key={log.id} className="bg-[#0A1A2F] border border-white/6 rounded-xl p-2.5 space-y-1.5">
+                                        <div key={log.id} className="bg-[#0c1a2f] border border-white/6 rounded-xl p-2.5 space-y-1.5">
                                             {/* Meta */}
                                             <div className="flex items-center justify-between">
                                                 <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${

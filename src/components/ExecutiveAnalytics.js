@@ -68,7 +68,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
     };
 
     const stats = [
-        { label: labels.daily, value: data?.totalRevenue !== undefined ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', ...fmtChange(data?.revenueChange), icon: <TrendingUp size={16} />, color: 'text-[#C9A34E]' },
+        { label: labels.daily, value: data?.totalRevenue !== undefined ? '฿' + Math.round(data.totalRevenue).toLocaleString() : '-', ...fmtChange(data?.revenueChange), icon: <TrendingUp size={16} />, color: 'text-[#cc9d37]' },
         { label: 'Ads Revenue', value: data?.revenueAds !== undefined ? '฿' + Math.round(data.revenueAds).toLocaleString() : '-', ...fmtChange(data?.revenueAdsChange), icon: <Facebook size={16} />, color: 'text-blue-500' },
         { label: 'Store Revenue', value: data?.revenueStore !== undefined ? '฿' + Math.round(data.revenueStore).toLocaleString() : '-', ...fmtChange(data?.revenueStoreChange), icon: <Store size={16} />, color: 'text-emerald-500' },
         { label: labels.weekly, value: data?.ordersCount !== undefined ? data.ordersCount.toLocaleString() + ' Orders' : '-', text: '', hasData: false, isUp: true, icon: <Receipt size={16} />, color: 'text-indigo-500' },
@@ -99,8 +99,8 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
         return (
             <div className="p-8 flex items-center justify-center min-h-[400px]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-[#C9A34E]/20 border-t-[#C9A34E] rounded-full animate-spin"></div>
-                    <p className="text-[#C9A34E] font-black text-xs uppercase tracking-widest animate-pulse">{labels.loading}</p>
+                    <div className="w-10 h-10 border-4 border-[#cc9d37]/20 border-t-[#cc9d37] rounded-full animate-spin"></div>
+                    <p className="text-[#cc9d37] font-black text-xs uppercase tracking-widest animate-pulse">{labels.loading}</p>
                 </div>
             </div>
         );
@@ -111,11 +111,11 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                    <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Real-time Business Intelligence Engine</p>
+                    <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Real-time Business Intelligence Engine</p>
                 </div>
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
                     {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([key, label]) => (
-                        <button key={key} onClick={() => setTimeframe(key)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === key ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg' : 'text-white/40 hover:text-white'}`}>{label}</button>
+                        <button key={key} onClick={() => setTimeframe(key)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === key ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg' : 'text-white/40 hover:text-white'}`}>{label}</button>
                     ))}
                 </div>
             </div>
@@ -123,9 +123,9 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 {stats.map((stat, i) => (
                     <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] hover:bg-white/10 transition-all group shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-white/5 group-hover:bg-[#C9A34E]/20 transition-all"></div>
+                        <div className="absolute top-0 left-0 w-full h-1 bg-white/5 group-hover:bg-[#cc9d37]/20 transition-all"></div>
                         <div className="flex justify-between items-start mb-4">
-                            <div className={`w-10 h-10 bg-[#0A1A2F] rounded-xl flex items-center justify-center ${stat.color} shadow-xl ring-1 ring-white/10`}>{stat.icon}</div>
+                            <div className={`w-10 h-10 bg-[#0c1a2f] rounded-xl flex items-center justify-center ${stat.color} shadow-xl ring-1 ring-white/10`}>{stat.icon}</div>
                             {stat.hasData && (
                                 <div className={`flex items-center gap-1 text-[10px] font-black ${stat.isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {stat.isUp ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
@@ -162,8 +162,8 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                                         <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                                     </linearGradient>
                                     <linearGradient id="colorStore" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#C9A34E" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#C9A34E" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#cc9d37" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#cc9d37" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -171,7 +171,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                                 <YAxis hide />
                                 <Tooltip content={<CustomTooltip />} cursor={{stroke: 'rgba(255,255,255,0.1)'}} />
                                 <Area name="Ads Revenue" type="monotone" dataKey="adsRevenue" stroke="#ef4444" fillOpacity={1} fill="url(#colorAds)" strokeWidth={3} />
-                                <Area name="Store Revenue" type="monotone" dataKey="storeRevenue" stroke="#C9A34E" fillOpacity={1} fill="url(#colorStore)" strokeWidth={3} />
+                                <Area name="Store Revenue" type="monotone" dataKey="storeRevenue" stroke="#cc9d37" fillOpacity={1} fill="url(#colorStore)" strokeWidth={3} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -187,7 +187,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                                     <XAxis dataKey="dateLabel" hide />
                                     <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
                                     <Bar name="Ads Count" dataKey="adsCount" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                                    <Bar name="Store Count" dataKey="storeCount" fill="#C9A34E" radius={[4, 4, 0, 0]} />
+                                    <Bar name="Store Count" dataKey="storeCount" fill="#cc9d37" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -195,7 +195,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                 </div>
 
                 {/* Conversion Gauge */}
-                <div className="bg-[#C9A34E] rounded-[3rem] p-10 text-[#0A1A2F] shadow-3xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+                <div className="bg-[#cc9d37] rounded-[3rem] p-10 text-[#0c1a2f] shadow-3xl flex flex-col items-center justify-center text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 w-full">
                         <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2 leading-none">{labels.target}</h3>
@@ -203,7 +203,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                         <div className="relative w-48 h-48 mx-auto mb-10">
                             <svg className="w-full h-full rotate-[-90deg]">
                                 <circle cx="96" cy="96" r="88" fill="transparent" stroke="#000" strokeWidth="16" className="opacity-10" />
-                                <circle cx="96" cy="96" r="88" fill="transparent" stroke="#0A1A2F" strokeWidth="16" strokeDasharray="552.92" strokeDashoffset={552.92 - (552.92 * (data?.conversionRate || 0) / 100)} strokeLinecap="round" className="drop-shadow-xl transition-all duration-1000" />
+                                <circle cx="96" cy="96" r="88" fill="transparent" stroke="#0c1a2f" strokeWidth="16" strokeDasharray="552.92" strokeDashoffset={552.92 - (552.92 * (data?.conversionRate || 0) / 100)} strokeLinecap="round" className="drop-shadow-xl transition-all duration-1000" />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                                 <span className="text-4xl font-black italic">{data?.conversionRate ? data.conversionRate.toFixed(1) + '%' : '0%'}</span>
@@ -213,7 +213,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                         <div className="space-y-2">
                             <p className="text-sm font-black italic leading-none">{data?.ordersCount || 0} Successes</p>
                             <div className="w-full h-1 bg-black/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0A1A2F] transition-all duration-1000" style={{ width: `${Math.min(data?.conversionRate || 0, 100)}%` }}></div>
+                                <div className="h-full bg-[#0c1a2f] transition-all duration-1000" style={{ width: `${Math.min(data?.conversionRate || 0, 100)}%` }}></div>
                             </div>
                         </div>
                     </div>
@@ -225,14 +225,14 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                 <div className="mt-12 space-y-6">
                     <div>
                         <h2 className="text-2xl font-black text-[#F8F8F6] tracking-tight italic uppercase">Active Campaigns</h2>
-                        <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Manage & Optimize</p>
+                        <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Manage & Optimize</p>
                     </div>
 
                     {campaignsLoading ? (
                         <div className="p-8 flex items-center justify-center">
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-10 h-10 border-4 border-[#C9A34E]/20 border-t-[#C9A34E] rounded-full animate-spin"></div>
-                                <p className="text-[#C9A34E] font-black text-xs uppercase tracking-widest animate-pulse">Loading campaigns...</p>
+                                <div className="w-10 h-10 border-4 border-[#cc9d37]/20 border-t-[#cc9d37] rounded-full animate-spin"></div>
+                                <p className="text-[#cc9d37] font-black text-xs uppercase tracking-widest animate-pulse">Loading campaigns...</p>
                             </div>
                         </div>
                     ) : campaigns.length === 0 ? (
@@ -268,7 +268,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="font-bold text-[#C9A34E]">฿{campaign.dailyBudget?.toLocaleString() || '—'}</p>
+                                                <p className="font-bold text-[#cc9d37]">฿{campaign.dailyBudget?.toLocaleString() || '—'}</p>
                                                 <p className="text-[10px] text-white/40">/day</p>
                                             </td>
                                             <td className="px-6 py-4">
@@ -281,7 +281,7 @@ export default function ExecutiveAnalytics({ language = 'TH' }) {
                                                 {can(session.user.role, 'marketing', 'edit') && (
                                                     <button
                                                         onClick={() => setSelectedCampaign(campaign)}
-                                                        className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all"
+                                                        className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all"
                                                     >
                                                         <Zap size={10} /> Optimize
                                                     </button>

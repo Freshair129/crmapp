@@ -52,13 +52,13 @@ const TIMEFRAMES = [
 
 // ─── Shared style tokens ───────────────────────────────────────────────────────
 const S = {
-    card:       { background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', padding: '22px 24px' },
+    card:       { background: '#19273a', border: '1px solid #334155', borderRadius: '12px', padding: '22px 24px' },
     cardTitle:  { fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '7px' },
     label:      { fontSize: '11px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' },
     value:      { fontSize: '32px', fontWeight: 800, color: '#f1f5f9', margin: '5px 0 4px', lineHeight: 1 },
     sub:        { fontSize: '11px', color: '#94a3b8' },
     tHead:      { fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '8px 10px', textAlign: 'left', borderBottom: '1px solid #334155' },
-    tCell:      { padding: '10px 10px', borderBottom: '1px solid #1e293b', verticalAlign: 'middle' },
+    tCell:      { padding: '10px 10px', borderBottom: '1px solid #19273a', verticalAlign: 'middle' },
 };
 
 // ─── Hour Heatmap ──────────────────────────────────────────────────────────────
@@ -67,14 +67,14 @@ function HourHeatmap({ hours }) {
     const maxVal = Math.max(...hours.map(h => h.messages), 1);
     const getColor = (v) => {
         const r = v / maxVal;
-        if (r < 0.05) return '#0f172a';
+        if (r < 0.05) return '#1A1A1A';
         if (r < 0.2)  return '#1e3a5f';
         if (r < 0.4)  return '#1d4ed8';
         if (r < 0.65) return '#3b82f6';
         if (r < 0.85) return '#60a5fa';
         return '#93c5fd';
     };
-    const getTextColor = (v) => (v / maxVal) >= 0.4 ? '#0f172a' : '#94a3b8';
+    const getTextColor = (v) => (v / maxVal) >= 0.4 ? '#1A1A1A' : '#94a3b8';
 
     return (
         <div>
@@ -324,10 +324,10 @@ function AdminModal({ admin, color, allMonths, onClose }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
             onClick={onClose}>
-            <div style={{ ...S.card, background: '#0f172a', position: 'relative', width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px' }}
+            <div style={{ ...S.card, background: '#1A1A1A', position: 'relative', width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px' }}
                 onClick={e => e.stopPropagation()}>
 
-                <button onClick={onClose} style={{ position: 'absolute', top: '14px', right: '14px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '6px 8px', color: '#64748b', cursor: 'pointer' }}>
+                <button onClick={onClose} style={{ position: 'absolute', top: '14px', right: '14px', background: '#19273a', border: '1px solid #334155', borderRadius: '8px', padding: '6px 8px', color: '#64748b', cursor: 'pointer' }}>
                     <X size={15} />
                 </button>
 
@@ -353,7 +353,7 @@ function AdminModal({ admin, color, allMonths, onClose }) {
                         { label: 'Closing Rate',  val: `${stats.closingRate}%`,                                                             color: '#6366f1' },
                         { label: 'Follow-up',     val: `${stats.followUpRate}%`,                                                            color: '#f59e0b' },
                     ].map(s => (
-                        <div key={s.label} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '12px 14px' }}>
+                        <div key={s.label} style={{ background: '#19273a', border: '1px solid #334155', borderRadius: '10px', padding: '12px 14px' }}>
                             <div style={{ ...S.label, marginBottom: '6px' }}>{s.label}</div>
                             <div style={{ fontSize: '22px', fontWeight: 800, color: s.color }}>{s.val}</div>
                         </div>
@@ -364,7 +364,7 @@ function AdminModal({ admin, color, allMonths, onClose }) {
                 {allMonths?.length > 0 && (
                     <div style={{ marginBottom: '20px' }}>
                         <div style={{ ...S.label, marginBottom: '10px' }}>Monthly Trend</div>
-                        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '14px' }}>
+                        <div style={{ background: '#19273a', border: '1px solid #334155', borderRadius: '10px', padding: '14px' }}>
                             <MonthlyLineChart data={[admin]} colors={[color]} months={allMonths} height={80} />
                         </div>
                     </div>
@@ -374,7 +374,7 @@ function AdminModal({ admin, color, allMonths, onClose }) {
                 {activityLog?.length > 0 && (
                     <div>
                         <div style={{ ...S.label, marginBottom: '10px' }}>Latest Activity</div>
-                        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '4px 14px' }}>
+                        <div style={{ background: '#19273a', border: '1px solid #334155', borderRadius: '10px', padding: '4px 14px' }}>
                             {activityLog.map(log => {
                                 const preview = log.content ? log.content : log.hasAttachment ? `[${log.attachmentType || 'ไฟล์'}]` : '—';
                                 return (
@@ -384,7 +384,7 @@ function AdminModal({ admin, color, allMonths, onClose }) {
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.customerName}</span>
+                                                <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.customerName}</span>
                                                 <span style={{ fontSize: '10px', color: '#475569', flexShrink: 0 }}>{fmtRelTime(log.createdAt)}</span>
                                             </div>
                                             <div style={{ fontSize: '10px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview}</div>
@@ -467,13 +467,13 @@ export default function AdminPerformance() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-                        style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '7px', padding: '6px 10px', fontSize: '11px', fontWeight: 600, color: '#94a3b8', outline: 'none', cursor: 'pointer' }}>
+                        style={{ background: '#1A1A1A', border: '1px solid #334155', borderRadius: '7px', padding: '6px 10px', fontSize: '11px', fontWeight: 600, color: '#94a3b8', outline: 'none', cursor: 'pointer' }}>
                         <option value="volume">Highest Volume</option>
                         <option value="speed">Fastest Response</option>
                         <option value="revenue">Highest Revenue</option>
                         <option value="closing">Best Closing Rate</option>
                     </select>
-                    <div style={{ display: 'flex', background: '#0f172a', border: '1px solid #334155', borderRadius: '7px', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', background: '#1A1A1A', border: '1px solid #334155', borderRadius: '7px', overflow: 'hidden' }}>
                         {TIMEFRAMES.map(tf => (
                             <button key={tf.key} onClick={() => setTimeframe(tf.key)}
                                 style={{ padding: '6px 13px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.15s', background: timeframe === tf.key ? '#6366f1' : 'transparent', color: timeframe === tf.key ? '#fff' : '#64748b' }}>
@@ -482,7 +482,7 @@ export default function AdminPerformance() {
                         ))}
                     </div>
                     <button onClick={fetchPerformance}
-                        style={{ padding: '7px 9px', background: '#0f172a', border: '1px solid #334155', borderRadius: '7px', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        style={{ padding: '7px 9px', background: '#1A1A1A', border: '1px solid #334155', borderRadius: '7px', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
@@ -564,15 +564,15 @@ export default function AdminPerformance() {
                                         <tr key={admin.id}
                                             onClick={() => openModal(admin, color)}
                                             style={{ cursor: 'pointer', transition: 'background 0.1s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = '#0f172a'}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#1A1A1A'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                             <td style={S.tCell}>
-                                                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: i < 3 ? '14px' : '11px', fontWeight: 700, background: i === 0 ? '#f59e0b22' : i === 1 ? '#94a3b822' : i === 2 ? '#cd7f3222' : '#0f172a', color: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : '#475569', border: i >= 3 ? '1px solid #334155' : 'none' }}>
+                                                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: i < 3 ? '14px' : '11px', fontWeight: 700, background: i === 0 ? '#f59e0b22' : i === 1 ? '#94a3b822' : i === 2 ? '#cd7f3222' : '#1A1A1A', color: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : '#475569', border: i >= 3 ? '1px solid #334155' : 'none' }}>
                                                     {i < 3 ? rankIcons[i] : i + 1}
                                                 </div>
                                             </td>
                                             <td style={S.tCell}>
-                                                <div style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '13px' }}>{admin.fullName}</div>
+                                                <div style={{ fontWeight: 600, color: '#fff8f0', fontSize: '13px' }}>{admin.fullName}</div>
                                                 <div style={{ fontSize: '10px', color: '#475569', fontFamily: 'monospace' }}>{admin.employeeId}</div>
                                             </td>
                                             <td style={S.tCell}>
@@ -615,7 +615,7 @@ export default function AdminPerformance() {
 
                 {/* ── Unidentified messages footnote ── */}
                 {unidentifiedAdmin && (
-                    <div style={{ marginTop: '10px', padding: '10px 16px', background: '#0f172a', border: '1px dashed #334155', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                    <div style={{ marginTop: '10px', padding: '10px 16px', background: '#1A1A1A', border: '1px dashed #334155', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '14px' }}>⚠️</span>
                             <div>
@@ -684,7 +684,7 @@ export default function AdminPerformance() {
                                                     {(admin.firstName || 'A').charAt(0)}
                                                 </div>
                                                 {isTop && (
-                                                    <div style={{ position: 'absolute', bottom: '-5px', right: '-7px', background: color, color: '#0f172a', fontSize: '7px', fontWeight: 900, padding: '2px 5px', borderRadius: '99px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>MVP</div>
+                                                    <div style={{ position: 'absolute', bottom: '-5px', right: '-7px', background: color, color: '#1A1A1A', fontSize: '7px', fontWeight: 900, padding: '2px 5px', borderRadius: '99px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>MVP</div>
                                                 )}
                                             </div>
                                             <div>
@@ -700,11 +700,11 @@ export default function AdminPerformance() {
 
                                     {/* Core stats 2×2 */}
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px', paddingLeft: '8px' }}>
-                                        <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px' }}>
+                                        <div style={{ background: '#1A1A1A', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px' }}>
                                             <div style={{ ...S.label, marginBottom: '4px' }}>Messages</div>
                                             <div style={{ fontSize: '20px', fontWeight: 800, color: '#f1f5f9' }}>{admin.stats.messages.toLocaleString()}</div>
                                         </div>
-                                        <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px' }}>
+                                        <div style={{ background: '#1A1A1A', border: '1px solid #334155', borderRadius: '8px', padding: '10px 12px' }}>
                                             <div style={{ ...S.label, marginBottom: '4px' }}>Conversations</div>
                                             <div style={{ fontSize: '20px', fontWeight: 800, color }}>{admin.stats.conversationsHandled.toLocaleString()}</div>
                                         </div>
@@ -728,12 +728,12 @@ export default function AdminPerformance() {
 
                                     {/* Activity preview */}
                                     {admin.activityLog?.length > 0 && (
-                                        <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px', marginLeft: '8px' }}>
+                                        <div style={{ background: '#1A1A1A', border: '1px solid #334155', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px', marginLeft: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '8px', fontWeight: 700, textTransform: 'uppercase', color: '#475569', marginBottom: '6px', letterSpacing: '0.08em' }}>
                                                 <Activity size={8} /> Latest Activity
                                             </div>
                                             {admin.activityLog.slice(0, 2).map(log => (
-                                                <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', padding: '3px 0', borderBottom: '1px solid #1e293b' }}>
+                                                <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', padding: '3px 0', borderBottom: '1px solid #19273a' }}>
                                                     <span style={{ fontWeight: 600, color: '#94a3b8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.customerName}</span>
                                                     <span style={{ color: '#475569', flexShrink: 0 }}>{fmtRelTime(log.createdAt)}</span>
                                                 </div>

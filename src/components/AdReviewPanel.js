@@ -80,21 +80,21 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
 
     if (loading) {
         return (
-            <div className="bg-[#0A1A2F] border border-white/5 rounded-[2rem] p-8 flex flex-col items-center justify-center min-h-[300px]">
+            <div className="bg-[#0c1a2f] border border-white/5 rounded-[2rem] p-8 flex flex-col items-center justify-center min-h-[300px]">
                 <div className="relative w-16 h-16">
-                    <div className="absolute inset-0 border-4 border-[#C9A34E]/20 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-t-[#C9A34E] rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 border-4 border-[#cc9d37]/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-t-[#cc9d37] rounded-full animate-spin"></div>
                 </div>
-                <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-6 animate-pulse">{labels.loading}</p>
+                <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-6 animate-pulse">{labels.loading}</p>
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className="bg-[#0A1A2F] border border-rose-500/20 rounded-[2rem] p-8 text-center">
+            <div className="bg-[#0c1a2f] border border-rose-500/20 rounded-[2rem] p-8 text-center">
                 <p className="text-rose-500 text-xs font-bold">{error || 'Failed to load audit data'}</p>
-                <button onClick={fetchReview} className="mt-4 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 mx-auto">
+                <button onClick={fetchReview} className="mt-4 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 mx-auto">
                     <RefreshCcw size={12} /> {labels.refresh}
                 </button>
             </div>
@@ -104,7 +104,7 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
     const config = getRiskConfig(data.riskLevel);
 
     return (
-        <div className="bg-[#0A1A2F] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
+        <div className="bg-[#0c1a2f] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl">
             {/* Header */}
             <div className="p-8 border-b border-white/5 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
                         </p>
                     </div>
                 </div>
-                <button onClick={fetchReview} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white/40 hover:text-[#C9A34E] hover:bg-white/10 transition-all">
+                <button onClick={fetchReview} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white/40 hover:text-[#cc9d37] hover:bg-white/10 transition-all">
                     <RefreshCcw size={16} />
                 </button>
             </div>
@@ -127,13 +127,13 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
                 {/* Score & Checks */}
                 <div className="space-y-8">
                     <div className="flex flex-col items-center justify-center bg-white/5 p-8 rounded-[2rem] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A34E]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#cc9d37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                         
                         <div className="relative w-32 h-32 mb-4">
                             <svg className="w-full h-full rotate-[-90deg]">
                                 <circle cx="64" cy="64" r="58" fill="transparent" stroke="rgba(201, 163, 78, 0.1)" strokeWidth="8" />
                                 <motion.circle 
-                                    cx="64" cy="64" r="58" fill="transparent" stroke="#C9A34E" strokeWidth="8" 
+                                    cx="64" cy="64" r="58" fill="transparent" stroke="#cc9d37" strokeWidth="8" 
                                     strokeDasharray="364.4" 
                                     initial={{ strokeDashoffset: 364.4 }}
                                     animate={{ strokeDashoffset: 364.4 - (364.4 * data.overallScore / 100) }}
@@ -146,7 +146,7 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
                                 <span className="text-[8px] font-black text-white/40 uppercase tracking-widest mt-1">/ 100</span>
                             </div>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#C9A34E]">{labels.score}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#cc9d37]">{labels.score}</p>
                     </div>
 
                     <div className="bg-white/5 rounded-[2rem] p-6">
@@ -182,7 +182,7 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="h-full flex flex-col gap-6"
                             >
-                                <div className="bg-[#C9A34E] text-[#0A1A2F] p-8 rounded-[2.5rem] relative overflow-hidden flex-1 shadow-xl">
+                                <div className="bg-[#cc9d37] text-[#0c1a2f] p-8 rounded-[2.5rem] relative overflow-hidden flex-1 shadow-xl">
                                     <div className="absolute top-0 right-0 p-6 opacity-20">
                                         <Sparkles size={48} />
                                     </div>
@@ -230,11 +230,11 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
 
                                     {data.phaseB.rewriteSuggestion && (
                                         <div className="pt-6 border-t border-white/5">
-                                            <h5 className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <h5 className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest mb-4 flex items-center gap-2">
                                                 <RefreshCcw size={12} /> {labels.suggestions}
                                             </h5>
-                                            <div className="bg-[#C9A34E]/5 p-4 rounded-2xl relative border border-[#C9A34E]/20">
-                                                <div className="absolute -top-3 left-6 px-3 bg-[#0A1A2F] text-[#C9A34E] text-[8px] font-black uppercase tracking-widest border border-white/5 rounded-full">Pro Recommendation</div>
+                                            <div className="bg-[#cc9d37]/5 p-4 rounded-2xl relative border border-[#cc9d37]/20">
+                                                <div className="absolute -top-3 left-6 px-3 bg-[#0c1a2f] text-[#cc9d37] text-[8px] font-black uppercase tracking-widest border border-white/5 rounded-full">Pro Recommendation</div>
                                                 <p className="text-xs text-white/80 leading-relaxed font-medium italic">
                                                     {data.phaseB.rewriteSuggestion}
                                                 </p>
@@ -245,7 +245,7 @@ export default function AdReviewPanel({ adId, language = 'TH' }) {
                             </motion.div>
                         ) : (
                             <div className="bg-white/5 rounded-[2.5rem] p-8 h-full flex flex-col items-center justify-center text-center group">
-                                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-white/10 mb-6 group-hover:scale-110 group-hover:bg-[#C9A34E]/10 group-hover:text-[#C9A34E] transition-all">
+                                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-white/10 mb-6 group-hover:scale-110 group-hover:bg-[#cc9d37]/10 group-hover:text-[#cc9d37] transition-all">
                                     <Sparkles size={32} />
                                 </div>
                                 <h4 className="text-white/40 text-xs font-black uppercase tracking-widest mb-2">V-Insight Intelligence</h4>

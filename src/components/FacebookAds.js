@@ -557,7 +557,7 @@ export default function FacebookAds({ customers }) {
                     </button>
                     <button
                         onClick={() => setDashboardMode('daily_report')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily_report' ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/40' : 'text-white/30 hover:text-white/60'}`}
+                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily_report' ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/40' : 'text-white/30 hover:text-white/60'}`}
                     >
                         <CalendarDays className="w-4 h-4" /> Daily
                     </button>
@@ -590,7 +590,7 @@ export default function FacebookAds({ customers }) {
                             value={filterKeyword}
                             onChange={e => setFilterKeyword(e.target.value)}
                             placeholder="กรอง campaign... เช่น ญี่ปุ่น, Sushi, Thai"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/25 focus:outline-none focus:border-[#C9A34E]/50"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/25 focus:outline-none focus:border-[#cc9d37]/50"
                         />
                         {filterKeyword && (
                             <button onClick={() => setFilterKeyword('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
@@ -603,7 +603,7 @@ export default function FacebookAds({ customers }) {
                         <button
                             key={kw}
                             onClick={() => setFilterKeyword(filterKeyword === kw ? '' : kw)}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${filterKeyword === kw ? 'bg-[#C9A34E] text-[#0A1A2F] border-[#C9A34E]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${filterKeyword === kw ? 'bg-[#cc9d37] text-[#0c1a2f] border-[#cc9d37]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
                         >
                             {kw}
                         </button>
@@ -631,7 +631,7 @@ export default function FacebookAds({ customers }) {
                         {isTokenExpired && (
                             <div className="mb-8 p-6 bg-rose-500/10 border border-rose-500/30 rounded-[2rem] flex items-center justify-between animate-pulse">
                                 <div className="flex items-center gap-6">
-                                    <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center text-[#0A1A2F] shadow-lg shadow-rose-500/20">
+                                    <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center text-[#0c1a2f] shadow-lg shadow-rose-500/20">
                                         <KeyRound className="w-6 h-6" />
                                     </div>
                                     <div>
@@ -652,7 +652,7 @@ export default function FacebookAds({ customers }) {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
                                 { label: 'Total Spend', value: `฿${fmt(totalSpend, 2)}`, Icon: Banknote, color: 'from-blue-600 to-blue-500', iconBg: 'bg-blue-500/20 text-blue-400' },
-                                { label: 'ROAS', value: `${fmt(avgROAS, 2)}x`, Icon: TrendingUp, color: 'from-[#C9A34E] to-amber-500', iconBg: 'bg-[#C9A34E]/20 text-[#C9A34E]' },
+                                { label: 'ROAS', value: `${fmt(avgROAS, 2)}x`, Icon: TrendingUp, color: 'from-[#cc9d37] to-amber-500', iconBg: 'bg-[#cc9d37]/20 text-[#cc9d37]' },
                                 {
                                     label: 'Purchases',
                                     value: fmt(totalPurchases),
@@ -667,7 +667,7 @@ export default function FacebookAds({ customers }) {
                                 <div
                                     key={i}
                                     onClick={kpi.onClick}
-                                    className={`bg-[#0A1A2F]/60 border border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-white/20 transition-all ${kpi.cursor || ''}`}
+                                    className={`bg-[#0c1a2f]/60 border border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-white/20 transition-all ${kpi.cursor || ''}`}
                                 >
                                     <div className={`absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r ${kpi.color}`}></div>
                                     <div className="flex items-start justify-between mb-3">
@@ -693,7 +693,7 @@ export default function FacebookAds({ customers }) {
                                 { label: 'CTR', value: `${fmt(avgCTR, 2)}%`, Icon: Percent, iconBg: 'bg-purple-500/20 text-purple-400', color: 'from-purple-600 to-purple-500' },
                                 { label: 'Active Campaigns', value: activeCampaigns.toString(), Icon: Megaphone, iconBg: 'bg-slate-500/20 text-slate-400', color: 'from-slate-600 to-slate-500' },
                             ].map((kpi, i) => (
-                                <div key={i + 4} className="bg-[#0A1A2F]/60 border border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-white/20 transition-all">
+                                <div key={i + 4} className="bg-[#0c1a2f]/60 border border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-white/20 transition-all">
                                     <div className={`absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r ${kpi.color}`}></div>
                                     <div className="flex items-start justify-between mb-3">
                                         <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{kpi.label} {dashboardMode === 'daily' ? '(Daily)' : '(30-Day)'}</p>
@@ -719,7 +719,7 @@ export default function FacebookAds({ customers }) {
                         </div>
 
                         {/* Daily Trend Chart */}
-                        <div className="bg-[#0A1A2F]/60 border border-white/10 rounded-[2rem] p-8">
+                        <div className="bg-[#0c1a2f]/60 border border-white/10 rounded-[2rem] p-8">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h2 className="font-black text-white text-xl tracking-tight">Daily Performance</h2>
@@ -762,13 +762,13 @@ export default function FacebookAds({ customers }) {
                                             const dateStr = new Date(d.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
                                             return (
                                                 <div key={i} className="flex-1 flex flex-col items-center group relative px-[1px]" style={{ minWidth: 0 }}>
-                                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#162A47] text-white text-[9px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-white/10 shadow-xl pointer-events-none">
+                                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#19273a] text-white text-[9px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-white/10 shadow-xl pointer-events-none">
                                                         <p className="font-black">{chartMetric === 'spend' ? `฿${fmt(val, 2)}` : fmt(val)}</p>
                                                         <p className="text-white/40">{dateStr}</p>
                                                     </div>
                                                     <div
                                                         style={{ height: `${Math.max(height, 1)}%` }}
-                                                        className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-sm transition-all duration-300 group-hover:from-[#C9A34E] group-hover:to-amber-300 cursor-pointer"
+                                                        className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-sm transition-all duration-300 group-hover:from-[#cc9d37] group-hover:to-amber-300 cursor-pointer"
                                                     ></div>
                                                 </div>
                                             );
@@ -804,7 +804,7 @@ export default function FacebookAds({ customers }) {
                         </div>
 
                         {/* Campaign Performance Table */}
-                        <div className="bg-[#0A1A2F]/60 border border-white/10 rounded-[2rem] overflow-hidden">
+                        <div className="bg-[#0c1a2f]/60 border border-white/10 rounded-[2rem] overflow-hidden">
                             <div className="p-8 pb-0">
                                 <h2 className="font-black text-white text-xl tracking-tight mb-1">Campaign Performance</h2>
                                 <p className="text-xs text-white/40 font-bold mb-6">Click a campaign row to see its ad sets</p>
@@ -880,7 +880,7 @@ export default function FacebookAds({ customers }) {
                                                         </td>
                                                         <td className="p-4 text-right text-white/80">฿{fmt(c.spend, 2)}</td>
                                                         <td className="p-4 text-right">
-                                                            <span className={roas >= 4 ? 'text-[#C9A34E]' : roas >= 2 ? 'text-emerald-400' : 'text-white/30'}>
+                                                            <span className={roas >= 4 ? 'text-[#cc9d37]' : roas >= 2 ? 'text-emerald-400' : 'text-white/30'}>
                                                                 {fmt(roas, 2)}x
                                                             </span>
                                                         </td>
@@ -927,7 +927,7 @@ export default function FacebookAds({ customers }) {
                                                                     </td>
                                                                     <td className="p-3 text-right text-white/50 text-[11px]">฿{fmt(adset.spend, 2)}</td>
                                                                     <td className="p-3 text-right text-[11px]">
-                                                                        <span className={asRoas >= 4 ? 'text-[#C9A34E]' : asRoas >= 2 ? 'text-emerald-400/70' : 'text-white/30'}>
+                                                                        <span className={asRoas >= 4 ? 'text-[#cc9d37]' : asRoas >= 2 ? 'text-emerald-400/70' : 'text-white/30'}>
                                                                             {fmt(asRoas, 2)}x
                                                                         </span>
                                                                     </td>
@@ -975,7 +975,7 @@ export default function FacebookAds({ customers }) {
                                                                             </td>
                                                                             <td className="p-2 text-right text-white/30 text-[10px]">฿{fmt(ad.spend, 2)}</td>
                                                                             <td className="p-2 text-right text-[10px]">
-                                                                                <span className={adRoas >= 4 ? 'text-[#C9A34E]' : 'text-white/20'}>
+                                                                                <span className={adRoas >= 4 ? 'text-[#cc9d37]' : 'text-white/20'}>
                                                                                     {fmt(adRoas, 2)}x
                                                                                 </span>
                                                                             </td>
@@ -1017,7 +1017,7 @@ export default function FacebookAds({ customers }) {
                         {/* Actions Summary */}
                         {
                             campaigns.some(c => c.actions?.length > 0) && (
-                                <div className="bg-[#0A1A2F]/60 border border-white/10 rounded-[2rem] p-8">
+                                <div className="bg-[#0c1a2f]/60 border border-white/10 rounded-[2rem] p-8">
                                     <h2 className="font-black text-white text-xl tracking-tight mb-6">Campaign Actions / Results</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                         {campaigns.filter(c => c.actions?.length > 0).map((c, i) => (
@@ -1029,7 +1029,7 @@ export default function FacebookAds({ customers }) {
                                                             <span className="text-[10px] text-white/50 font-bold capitalize">
                                                                 {action.action_type?.replace(/_/g, ' ') || 'Action'}
                                                             </span>
-                                                            <span className="text-xs font-black text-[#C9A34E]">{fmt(action.value)}</span>
+                                                            <span className="text-xs font-black text-[#cc9d37]">{fmt(action.value)}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1064,8 +1064,8 @@ export default function FacebookAds({ customers }) {
             {/* Purchase Breakdown Modal */}
             {purchaseModalOpen && (
                 <div className="fixed top-0 left-0 w-full h-full z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
-                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0A1A2F] shrink-0">
+                    <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
+                        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0c1a2f] shrink-0">
                             <div>
                                 <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">

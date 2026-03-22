@@ -124,12 +124,12 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-[#0A1A2F] border-l border-white/10 shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-[#0c1a2f] border-l border-white/10 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Zap size={14} className="text-[#C9A34E]" />
+              <Zap size={14} className="text-[#cc9d37]" />
               <h2 className="text-sm font-black text-white uppercase tracking-widest">Optimize Campaign</h2>
             </div>
             <p className="text-xs text-white/40 font-bold">{campaign.name}</p>
@@ -180,7 +180,7 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
             <div className="space-y-3">
               <h3 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Daily Budget</h3>
               <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-2">
-                <p className="text-[10px] text-white/40 font-bold">Current: <span className="text-[#C9A34E]">฿{campaign.dailyBudget?.toLocaleString() || 'N/A'}/day</span></p>
+                <p className="text-[10px] text-white/40 font-bold">Current: <span className="text-[#cc9d37]">฿{campaign.dailyBudget?.toLocaleString() || 'N/A'}/day</span></p>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -188,14 +188,14 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
                     value={newDailyBudget}
                     onChange={(e) => setNewDailyBudget(e.target.value)}
                     placeholder="New amount"
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50"
                   />
                   <span className="flex items-center text-white/40 font-bold">฿</span>
                 </div>
                 <button
                   onClick={handleUpdateBudget}
                   disabled={!newDailyBudget || loadingAction === 'budget'}
-                  className="w-full px-3 py-2 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loadingAction === 'budget' ? <Loader2 size={12} className="animate-spin" /> : 'Update Budget'}
                 </button>
@@ -208,7 +208,7 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
             <div className="space-y-3">
               <h3 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Bid Amount</h3>
               <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-2">
-                <p className="text-[10px] text-white/40 font-bold">Current: <span className="text-[#C9A34E]">฿{campaign.bidAmount?.toLocaleString() || 'N/A'} per click</span></p>
+                <p className="text-[10px] text-white/40 font-bold">Current: <span className="text-[#cc9d37]">฿{campaign.bidAmount?.toLocaleString() || 'N/A'} per click</span></p>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -216,14 +216,14 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
                     value={newBidAmount}
                     onChange={(e) => setNewBidAmount(e.target.value)}
                     placeholder="New bid"
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50"
                   />
                   <span className="flex items-center text-white/40 font-bold">฿</span>
                 </div>
                 <button
                   onClick={handleUpdateBid}
                   disabled={!newBidAmount || loadingAction === 'bid'}
-                  className="w-full px-3 py-2 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loadingAction === 'bid' ? <Loader2 size={12} className="animate-spin" /> : 'Update Bid'}
                 </button>
@@ -240,12 +240,12 @@ export default function AdsOptimizePanel({ campaign, onClose, onSuccess, current
                   type="text"
                   value={newDupeName}
                   onChange={(e) => setNewDupeName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50"
                 />
                 <button
                   onClick={handleDuplicate}
                   disabled={!newDupeName || loadingAction === 'duplicate'}
-                  className="w-full px-3 py-2 rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-[10px] font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-[10px] font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loadingAction === 'duplicate' ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
                   Duplicate Campaign

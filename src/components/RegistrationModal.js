@@ -98,11 +98,11 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
 
             <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="bg-[#0A1A2F] p-8 text-white relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A34E]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                <div className="bg-[#0c1a2f] p-8 text-white relative">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#cc9d37]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                     <div className="flex justify-between items-start relative z-10">
                         <div>
-                            <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.2em] mb-2">SYSTEM PORTAL</p>
+                            <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.2em] mb-2">SYSTEM PORTAL</p>
                             <h2 className="text-3xl font-black tracking-tight">Register New Customer</h2>
                         </div>
                         <button onClick={onClose} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors">
@@ -116,7 +116,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Member ID</label>
-                            <div className="w-full bg-[#0A1A2F] border border-[#0A1A2F] rounded-2xl px-5 py-3 text-[#C9A34E] font-mono font-bold text-sm shadow-inner">
+                            <div className="w-full bg-[#0c1a2f] border border-[#0c1a2f] rounded-2xl px-5 py-3 text-[#cc9d37] font-mono font-bold text-sm shadow-inner">
                                 {nextMemberId}
                             </div>
                         </div>
@@ -134,7 +134,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <input
                                 required
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.first_name}
                                 onChange={e => setFormData({ ...formData, first_name: e.target.value })}
                             />
@@ -144,7 +144,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <input
                                 required
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.last_name}
                                 onChange={e => setFormData({ ...formData, last_name: e.target.value })}
                             />
@@ -156,7 +156,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nickname</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.nick_name}
                                 onChange={e => setFormData({ ...formData, nick_name: e.target.value })}
                             />
@@ -165,7 +165,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Birthday</label>
                             <input
                                 type="date"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.birthday}
                                 onChange={e => setFormData({ ...formData, birthday: e.target.value })}
                             />
@@ -177,7 +177,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Occupation</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.occupation}
                                 onChange={e => setFormData({ ...formData, occupation: e.target.value })}
                             />
@@ -190,7 +190,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <input
                                 required
                                 type="email"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
@@ -200,7 +200,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <input
                                 required
                                 type="tel"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.phone}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                             />
@@ -212,7 +212,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Line ID</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.line_id}
                                 onChange={e => setFormData({ ...formData, line_id: e.target.value })}
                             />
@@ -221,7 +221,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Facebook</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.facebook}
                                 onChange={e => setFormData({ ...formData, facebook: e.target.value })}
                             />
@@ -232,7 +232,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Lead Channel</label>
                             <select
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors appearance-none"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors appearance-none"
                                 value={formData.lead_channel}
                                 onChange={e => setFormData({ ...formData, lead_channel: e.target.value })}
                             >
@@ -247,7 +247,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                             <input
                                 required
                                 type="text"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors"
                                 value={formData.agent_name}
                                 onChange={e => setFormData({ ...formData, agent_name: e.target.value })}
                                 placeholder="E.g. Admin, Sales-A"
@@ -259,7 +259,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Campaign (Marketing)</label>
                             <select
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors appearance-none"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors appearance-none"
                                 value={formData.attribution_campaign_id}
                                 onChange={e => setFormData({ ...formData, attribution_campaign_id: e.target.value })}
                             >
@@ -272,7 +272,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ad Set (Marketing)</label>
                             <select
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#C9A34E] transition-colors appearance-none"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-slate-800 font-bold outline-none focus:border-[#cc9d37] transition-colors appearance-none"
                                 value={formData.attribution_adset_id}
                                 onChange={e => setFormData({ ...formData, attribution_adset_id: e.target.value })}
                             >
@@ -285,7 +285,7 @@ export default function RegistrationModal({ isOpen, onClose, onRegister, nextId,
                     </div>
 
                     <div className="pt-4">
-                        <button type="submit" className="w-full bg-[#0A1A2F] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform active:scale-95">
+                        <button type="submit" className="w-full bg-[#0c1a2f] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-transform active:scale-95">
                             COMPLETE REGISTRATION
                         </button>
                     </div>

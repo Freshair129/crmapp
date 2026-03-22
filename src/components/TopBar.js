@@ -30,7 +30,7 @@ function UserAvatar({ firstName, lastName, size = 'sm' }) {
     const initials = `${(firstName || 'U')[0]}${(lastName || '')[0] || ''}`.toUpperCase();
     const sizeClass = size === 'sm' ? 'w-7 h-7 text-[9px]' : 'w-9 h-9 text-[10px]';
     return (
-        <div className={`${sizeClass} rounded-lg bg-[#C9A34E]/10 border border-[#C9A34E]/30 flex items-center justify-center font-black text-[#C9A34E] select-none shrink-0`}>
+        <div className={`${sizeClass} rounded-lg bg-[#cc9d37]/10 border border-[#cc9d37]/30 flex items-center justify-center font-black text-[#cc9d37] select-none shrink-0`}>
             {initials || <User size={12} />}
         </div>
     );
@@ -68,12 +68,12 @@ export default function TopBar({
         : currentUser?.name || 'User';
 
     return (
-        <header className="sticky top-0 z-[90] w-full bg-[#0A1A2F]/90 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 h-10 shrink-0 transition-all">
+        <header className="sticky top-0 z-[90] w-full bg-[#0c1a2f]/90 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 h-10 shrink-0 transition-all">
 
             {/* ── Left: Logo breadcrumb ─────────────────────────────── */}
             <div className="flex items-center gap-2 shrink-0">
                 {/* V logo badge */}
-                <div className="w-6 h-6 rounded-md bg-[#C9A34E] flex items-center justify-center text-[#0A1A2F] font-black text-xs shadow-sm shadow-[#C9A34E]/30 shrink-0">
+                <div className="w-6 h-6 rounded-md bg-[#cc9d37] flex items-center justify-center text-[#0c1a2f] font-black text-xs shadow-sm shadow-[#cc9d37]/30 shrink-0">
                     V
                 </div>
                 <span className="text-white/70 text-[11px] font-semibold hidden sm:block">V School CRM</span>
@@ -85,13 +85,13 @@ export default function TopBar({
 
             {/* ── Center: Search ────────────────────────────────────── */}
             <div className="flex-1 max-w-xs mx-4 relative group">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-white/20 group-focus-within:text-[#C9A34E] transition-colors">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-white/20 group-focus-within:text-[#cc9d37] transition-colors">
                     <Search size={12} />
                 </div>
                 <input
                     type="text"
                     placeholder={language === 'TH' ? 'ค้นหา...' : 'Search...'}
-                    className="w-full bg-white/5 border border-white/8 rounded-lg py-1 pl-8 pr-3 text-[11px] text-white placeholder:text-white/20 focus:outline-none focus:border-[#C9A34E]/40 focus:bg-white/8 transition-all"
+                    className="w-full bg-white/5 border border-white/8 rounded-lg py-1 pl-8 pr-3 text-[11px] text-white placeholder:text-white/20 focus:outline-none focus:border-[#cc9d37]/40 focus:bg-white/8 transition-all"
                 />
             </div>
 
@@ -103,13 +103,13 @@ export default function TopBar({
                     <button
                         onClick={() => setLanguage('TH')}
                         className={`px-2 py-0.5 rounded-md text-[9px] font-black tracking-widest transition-all ${
-                            language === 'TH' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/30 hover:text-white'
+                            language === 'TH' ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/30 hover:text-white'
                         }`}
                     >TH</button>
                     <button
                         onClick={() => setLanguage('EN')}
                         className={`px-2 py-0.5 rounded-md text-[9px] font-black tracking-widest transition-all ${
-                            language === 'EN' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/30 hover:text-white'
+                            language === 'EN' ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/30 hover:text-white'
                         }`}
                     >EN</button>
                 </div>
@@ -117,7 +117,7 @@ export default function TopBar({
                 {/* Theme toggle */}
                 <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="w-7 h-7 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-white/30 hover:text-[#C9A34E] hover:bg-white/10 transition-all"
+                    className="w-7 h-7 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-white/30 hover:text-[#cc9d37] hover:bg-white/10 transition-all"
                     title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
                 >
                     {theme === 'dark' ? <Moon size={12} /> : <Sun size={12} />}
@@ -126,7 +126,7 @@ export default function TopBar({
                 {/* Bell */}
                 <button className="relative w-7 h-7 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-white/30 hover:text-white transition-all">
                     <Bell size={12} />
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#0A1A2F]" />
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#0c1a2f]" />
                 </button>
 
                 {/* Divider */}
@@ -147,7 +147,7 @@ export default function TopBar({
 
                     {/* Dropdown */}
                     {profileOpen && (
-                        <div className="absolute right-0 top-[calc(100%+6px)] w-64 bg-[#0A1A2F] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                        <div className="absolute right-0 top-[calc(100%+6px)] w-64 bg-[#0c1a2f] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
                             {/* Header */}
                             <div className="p-4 border-b border-white/5 flex items-center gap-3">
                                 <UserAvatar firstName={currentUser?.firstName} lastName={currentUser?.lastName} size="md" />

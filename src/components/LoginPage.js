@@ -77,8 +77,8 @@ export default function LoginPage({ onLogin, error: externalError }) {
                 {/* V School logo — bottom left */}
                 <div className="absolute bottom-8 left-8 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                         style={{ background: '#C9A34E' }}>
-                        <span style={{ color: '#0A1A2F', fontWeight: 900, fontSize: 18 }}>V</span>
+                         style={{ background: '#cc9d37' }}>
+                        <span style={{ color: '#0c1a2f', fontWeight: 900, fontSize: 18 }}>V</span>
                     </div>
                     <div>
                         <p style={{ color: 'white', fontWeight: 900, fontSize: 13, letterSpacing: '0.1em' }}>V SCHOOL</p>
@@ -105,7 +105,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
             >
                 {/* Decorative bolts */}
                 <Bolt size={26} color="#1a1a1a" style={{ position: 'absolute', top: 28, right: 320, opacity: 0.5, transform: 'rotate(5deg)' }} />
-                <Bolt size={20} color='#C9A34E' style={{ position: 'absolute', bottom: 120, right: 48, opacity: 0.6, transform: 'rotate(-15deg)' }} />
+                <Bolt size={20} color='#cc9d37' style={{ position: 'absolute', bottom: 120, right: 48, opacity: 0.6, transform: 'rotate(-15deg)' }} />
                 <Bolt size={18} color="#1a1a1a" style={{ position: 'absolute', bottom: 40, left: 40, opacity: 0.35, transform: 'rotate(8deg)' }} />
 
                 {/* Faded corner ingredient images */}
@@ -153,7 +153,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                                 color: '#1a1a1a',
                                 fontSize: 14,
                             }}
-                            onFocus={e => e.target.style.borderColor = '#C9A34E'}
+                            onFocus={e => e.target.style.borderColor = '#cc9d37'}
                             onBlur={e => e.target.style.borderColor = 'transparent'}
                         />
 
@@ -172,7 +172,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                                     color: '#1a1a1a',
                                     fontSize: 14,
                                 }}
-                                onFocus={e => e.target.style.borderColor = '#C9A34E'}
+                                onFocus={e => e.target.style.borderColor = '#cc9d37'}
                                 onBlur={e => e.target.style.borderColor = 'transparent'}
                             />
                             <button
@@ -189,7 +189,7 @@ export default function LoginPage({ onLogin, error: externalError }) {
                         {/* Forgot password */}
                         <div className="text-right">
                             <span className="text-sm font-bold cursor-pointer hover:underline"
-                                  style={{ color: '#C9A34E' }}>
+                                  style={{ color: '#cc9d37' }}>
                                 ลืมรหัสผ่าน?
                             </span>
                         </div>
@@ -200,8 +200,8 @@ export default function LoginPage({ onLogin, error: externalError }) {
                             disabled={isLoading}
                             className="w-full rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                             style={{
-                                background: '#C9A34E',
-                                color: '#0A1A2F',
+                                background: '#cc9d37',
+                                color: '#0c1a2f',
                                 padding: '16px',
                                 fontSize: 14,
                                 letterSpacing: '0.05em',
@@ -231,13 +231,13 @@ export default function LoginPage({ onLogin, error: externalError }) {
                                 onClick={() => setRememberMe(v => !v)}
                                 className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0"
                                 style={{
-                                    background: rememberMe ? '#C9A34E' : 'transparent',
-                                    borderColor: rememberMe ? '#C9A34E' : 'rgba(0,0,0,0.2)',
+                                    background: rememberMe ? '#cc9d37' : 'transparent',
+                                    borderColor: rememberMe ? '#cc9d37' : 'rgba(0,0,0,0.2)',
                                 }}
                             >
                                 {rememberMe && (
                                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                        <path d="M1 4l3 3 5-6" stroke="#0A1A2F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M1 4l3 3 5-6" stroke="#0c1a2f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 )}
                             </button>

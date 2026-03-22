@@ -44,11 +44,11 @@ export default function Orders({ customers }) {
                                 </td>
                                 <td className="px-8 py-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#C9A34E]/20 text-[#C9A34E] flex items-center justify-center text-[10px] font-black border border-[#C9A34E]/30">
+                                        <div className="w-8 h-8 rounded-lg bg-[#cc9d37]/20 text-[#cc9d37] flex items-center justify-center text-[10px] font-black border border-[#cc9d37]/30">
                                             {(order.customerName || 'C').charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white group-hover:text-[#C9A34E] transition-colors">{order.customerName}</p>
+                                            <p className="text-sm font-black text-white group-hover:text-[#cc9d37] transition-colors">{order.customerName}</p>
                                             <p className="text-[10px] text-white/30 font-bold tracking-widest">{order.customerId}</p>
                                         </div>
                                     </div>
@@ -58,7 +58,7 @@ export default function Orders({ customers }) {
                                     <p className="text-[10px] text-white/40 mt-1">Ref ID: {order.id}</p>
                                 </td>
                                 <td className="px-8 py-6">
-                                    <p className="text-sm font-black text-[#C9A34E]">
+                                    <p className="text-sm font-black text-[#cc9d37]">
                                         ฿{(order.details?.amount || 0).toLocaleString()}
                                     </p>
                                 </td>

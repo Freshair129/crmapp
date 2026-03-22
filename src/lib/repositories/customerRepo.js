@@ -133,9 +133,9 @@ export async function upsertCustomerByPhone(phone, data) {
 export const TIER_CONFIG = [
     { tier: 'TIER1', label: 'V Member',   minSpend: 0,      minHours: 0,   color: '#9CA3AF', badge: '🥈' },
     { tier: 'TIER2', label: 'V Silver',   minSpend: 20000,  minHours: 0,   color: '#C0C0C0', badge: '🥈' },
-    { tier: 'TIER3', label: 'V Gold',     minSpend: 50000,  minHours: 30,  color: '#C9A34E', badge: '🥇' },
+    { tier: 'TIER3', label: 'V Gold',     minSpend: 50000,  minHours: 30,  color: '#cc9d37', badge: '🥇' },
     { tier: 'TIER4', label: 'V Platinum', minSpend: 100000, minHours: 111, color: '#E5E4E2', badge: '💎' },
-    { tier: 'TIER5', label: 'V Black',    minSpend: 200000, minHours: 201, color: '#1a1a2e', badge: '⬛' },
+    { tier: 'TIER5', label: 'V Black',    minSpend: 200000, minHours: 201, color: '#19273a', badge: '⬛' },
 ];
 
 /** 300 V Point ทุกๆ 150 THB */

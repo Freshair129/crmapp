@@ -112,13 +112,13 @@ export default function PermissionMatrix({ currentUserRole }) {
         </h3>
         <div className="flex items-center gap-3">
           <p className="text-white/40 text-xs font-bold">
-            Editing: <span className="text-[#C9A34E]">{selectedRole}</span>
+            Editing: <span className="text-[#cc9d37]">{selectedRole}</span>
           </p>
           {isDirty && (
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-[#C9A34E]/20">
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-[#cc9d37]/20">
               {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -134,7 +134,7 @@ export default function PermissionMatrix({ currentUserRole }) {
             onClick={() => setSelectedRole(role)}
             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
               selectedRole === role
-                ? 'bg-[#C9A34E] text-[#0A1A2F] border-[#C9A34E]'
+                ? 'bg-[#cc9d37] text-[#0c1a2f] border-[#cc9d37]'
                 : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30 hover:text-white/80'
             }`}
           >

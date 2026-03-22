@@ -362,7 +362,7 @@ export default function StoreGrid({ products = [], allProducts = [], activeCusto
                         {/* Checkout Footer - Fixed at Bottom */}
                         {cart.length > 0 && (
                             <div className="p-6 border-t border-slate-100 bg-white flex-shrink-0">
-                                <div className="p-6 bg-[#0A1A2F] rounded-3xl text-white shadow-2xl relative overflow-hidden">
+                                <div className="p-6 bg-[#0c1a2f] rounded-3xl text-white shadow-2xl relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
                                     {/* Payment Method Selector - Only Wallet now */}
                                     <div className="grid grid-cols-1 gap-3 mb-2">

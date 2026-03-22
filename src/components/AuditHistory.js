@@ -32,7 +32,7 @@ export default function AuditHistory({ language = 'TH' }) {
     if (loading) {
         return (
             <div className="p-10 max-w-7xl mx-auto animate-pulse flex flex-col items-center justify-center min-h-[400px]">
-                <div className="text-[#C9A34E] font-black uppercase tracking-[0.3em]">{labels.loading}</div>
+                <div className="text-[#cc9d37] font-black uppercase tracking-[0.3em]">{labels.loading}</div>
             </div>
         );
     }
@@ -42,14 +42,14 @@ export default function AuditHistory({ language = 'TH' }) {
             <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between border-b border-white/5 pb-10">
                 <div>
                     <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                    <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Financial Integrity & Audit Trail</p>
+                    <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">Financial Integrity & Audit Trail</p>
                 </div>
                 <div className="relative w-80 mt-6 md:mt-0">
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                     <input
                         type="text"
                         placeholder="Search Order ID..."
-                        className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:bg-white/10 focus:border-[#C9A34E]/50 transition-all outline-none"
+                        className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:bg-white/10 focus:border-[#cc9d37]/50 transition-all outline-none"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -95,7 +95,7 @@ export default function AuditHistory({ language = 'TH' }) {
                                     <span className="font-black text-white text-lg italic tracking-tighter">฿{order.totalAmount.toLocaleString()}</span>
                                 </td>
                                 <td className="px-8 py-6 text-right">
-                                    <button className="w-10 h-10 bg-white/5 hover:bg-[#C9A34E] hover:text-[#0A1A2F] text-white/20 rounded-xl transition-all flex items-center justify-center group-hover:scale-110">
+                                    <button className="w-10 h-10 bg-white/5 hover:bg-[#cc9d37] hover:text-[#0c1a2f] text-white/20 rounded-xl transition-all flex items-center justify-center group-hover:scale-110">
                                         <Eye size={18} />
                                     </button>
                                 </td>
@@ -111,7 +111,7 @@ export default function AuditHistory({ language = 'TH' }) {
             </div>
 
             <div className="mt-12 flex justify-center gap-4">
-                <button className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#C9A34E] font-black shadow-lg">1</button>
+                <button className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#cc9d37] font-black shadow-lg">1</button>
             </div>
         </div>
     );

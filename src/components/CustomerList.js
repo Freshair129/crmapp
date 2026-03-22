@@ -345,14 +345,14 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                 {/* Search */}
                 <div className="relative flex-1 group">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <Search size={14} className="text-[#C9A34E] group-focus-within:scale-110 transition-transform" />
+                        <Search size={14} className="text-[#cc9d37] group-focus-within:scale-110 transition-transform" />
                     </div>
                     <input
                         type="text"
                         placeholder="Search name, nickname, or Member ID..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/50 focus:border-[#C9A34E] transition-all"
+                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/50 focus:border-[#cc9d37] transition-all"
                     />
                 </div>
 
@@ -364,7 +364,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                             type="date"
                             value={filterStartDate}
                             onChange={(e) => { setFilterStartDate(e.target.value); setCurrentPage(1); }}
-                            className="bg-transparent py-3 text-xs font-bold text-white/70 focus:outline-none focus:text-[#C9A34E] transition-colors appearance-none cursor-pointer"
+                            className="bg-transparent py-3 text-xs font-bold text-white/70 focus:outline-none focus:text-[#cc9d37] transition-colors appearance-none cursor-pointer"
                             title="Start Date"
                         />
                         <span className="text-white/20 px-1">-</span>
@@ -372,7 +372,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                             type="date"
                             value={filterEndDate}
                             onChange={(e) => { setFilterEndDate(e.target.value); setCurrentPage(1); }}
-                            className="bg-transparent py-3 text-xs font-bold text-white/70 focus:outline-none focus:text-[#C9A34E] transition-colors appearance-none cursor-pointer"
+                            className="bg-transparent py-3 text-xs font-bold text-white/70 focus:outline-none focus:text-[#cc9d37] transition-colors appearance-none cursor-pointer"
                             title="End Date"
                         />
                     </div>
@@ -381,7 +381,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     <select
                         value={filterLifecycle || ''}
                         onChange={(e) => { setFilterLifecycle(e.target.value || null); setCurrentPage(1); }}
-                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#cc9d37]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
                     >
                         <option value="">All Lifecycle</option>
                         {lifecycleOptions.map(l => <option key={l} value={l}>{l}</option>)}
@@ -391,7 +391,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     <select
                         value={filterAgent}
                         onChange={(e) => { setFilterAgent(e.target.value); setCurrentPage(1); }}
-                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#cc9d37]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
                     >
                         <option value="">All Agents</option>
                         {uniqueAgents.map(a => <option key={a} value={a}>{a}</option>)}
@@ -401,7 +401,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     <select
                         value={filterStatus}
                         onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#cc9d37]/50 transition-all appearance-none cursor-pointer min-w-[120px]"
                     >
                         <option value="">All Statuses</option>
                         {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -411,7 +411,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#C9A34E]/50 transition-all appearance-none cursor-pointer min-w-[140px]"
+                        className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white/70 focus:outline-none focus:border-[#cc9d37]/50 transition-all appearance-none cursor-pointer min-w-[140px]"
                     >
                         <option value="revenue_desc">Revenue ↓</option>
                         <option value="revenue_asc">Revenue ↑</option>
@@ -436,13 +436,13 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden ml-auto">
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`px-3.5 py-3 text-xs transition-all flex items-center justify-center ${viewMode === 'table' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white/70'}`}
+                            className={`px-3.5 py-3 text-xs transition-all flex items-center justify-center ${viewMode === 'table' ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white/70'}`}
                         >
                             <List size={14} />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`px-3.5 py-3 text-xs transition-all flex items-center justify-center ${viewMode === 'grid' ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white/70'}`}
+                            className={`px-3.5 py-3 text-xs transition-all flex items-center justify-center ${viewMode === 'grid' ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white/70'}`}
                         >
                             <Grid2X2 size={14} />
                         </button>
@@ -462,7 +462,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                         <button
                             key={size}
                             onClick={() => { setPageSize(size); setCurrentPage(1); }}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${pageSize === size ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/30 hover:text-white/60'}`}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${pageSize === size ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/30 hover:text-white/60'}`}
                         >
                             {size}
                         </button>
@@ -495,11 +495,11 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                         <tr key={c.id} className="hover:bg-white/5 transition-all group cursor-pointer" onClick={() => onSelectCustomer(c._raw)}>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-[#C9A34E]/10 flex items-center justify-center text-[#C9A34E] font-black text-sm shrink-0">
+                                                    <div className="w-10 h-10 rounded-xl bg-[#cc9d37]/10 flex items-center justify-center text-[#cc9d37] font-black text-sm shrink-0">
                                                         {(c.firstName || 'C')[0]}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-black text-white group-hover:text-[#C9A34E] transition-colors truncate">
+                                                        <p className="text-sm font-black text-white group-hover:text-[#cc9d37] transition-colors truncate">
                                                             {c.firstName || c.lastName ? `${c.firstName} ${c.lastName}`.trim() : <span className="text-white/30 italic">ไม่ระบุชื่อ</span>}
                                                         </p>
                                                         <p className="text-[10px] font-bold text-white/30 truncate">{c.nickName || c.memberId || c.facebookId || c.id}</p>
@@ -542,7 +542,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:bg-[#C9A34E]/10 group-hover:text-[#C9A34E] group-hover:border-[#C9A34E]/20 transition-all">
+                                                <span className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:bg-[#cc9d37]/10 group-hover:text-[#cc9d37] group-hover:border-[#cc9d37]/20 transition-all">
                                                     {c.lifecycleStage}
                                                 </span>
                                             </td>
@@ -560,12 +560,12 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                                     </a>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onGoToChat && onGoToChat(c._raw); }}
-                                                        className="w-8 h-8 rounded-lg bg-[#C9A34E]/10 text-[#C9A34E] flex items-center justify-center hover:bg-[#C9A34E] hover:text-[#0A1A2F] transition-all text-xs"
+                                                        className="w-8 h-8 rounded-lg bg-[#cc9d37]/10 text-[#cc9d37] flex items-center justify-center hover:bg-[#cc9d37] hover:text-[#0c1a2f] transition-all text-xs"
                                                         title="CRM Chat"
                                                     >
                                                         <MessageCircle size={12} />
                                                     </button>
-                                                    <button className="w-8 h-8 rounded-lg bg-white/5 text-white/30 flex items-center justify-center hover:bg-[#C9A34E] hover:text-[#0A1A2F] transition-all text-xs">
+                                                    <button className="w-8 h-8 rounded-lg bg-white/5 text-white/30 flex items-center justify-center hover:bg-[#cc9d37] hover:text-[#0c1a2f] transition-all text-xs">
                                                         <ChevronRight size={12} />
                                                     </button>
                                                 </div>
@@ -591,17 +591,17 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                             <div
                                 key={c.id}
                                 onClick={() => onSelectCustomer(c._raw)}
-                                className="bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer group hover:bg-white/[0.08] hover:border-[#C9A34E]/30 hover:shadow-xl hover:shadow-[#C9A34E]/5 transition-all duration-300"
+                                className="bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer group hover:bg-white/[0.08] hover:border-[#cc9d37]/30 hover:shadow-xl hover:shadow-[#cc9d37]/5 transition-all duration-300"
                             >
                                 <div className="flex items-start gap-4">
                                     {/* Avatar */}
-                                    <div className="w-14 h-14 rounded-2xl bg-[#C9A34E]/10 flex items-center justify-center text-[#C9A34E] font-black text-lg shrink-0 group-hover:scale-105 transition-transform">
+                                    <div className="w-14 h-14 rounded-2xl bg-[#cc9d37]/10 flex items-center justify-center text-[#cc9d37] font-black text-lg shrink-0 group-hover:scale-105 transition-transform">
                                         {(c.firstName || 'C')[0]}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between">
                                             <div className="min-w-0">
-                                                <p className="font-black text-white text-sm group-hover:text-[#C9A34E] transition-colors truncate">{c.firstName} {c.lastName}</p>
+                                                <p className="font-black text-white text-sm group-hover:text-[#cc9d37] transition-colors truncate">{c.firstName} {c.lastName}</p>
                                                 <p className="text-[10px] font-bold text-white/30 truncate">{c.nickName || c.id}</p>
                                             </div>
                                             <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[8px] font-black uppercase ${tier.color} shrink-0`}>
@@ -635,7 +635,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                         {/* Bottom Row */}
                                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'Won / Enrolled' ? 'bg-green-500' : 'bg-[#C9A34E] animate-pulse'}`}></div>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'Won / Enrolled' ? 'bg-green-500' : 'bg-[#cc9d37] animate-pulse'}`}></div>
                                                 <span className="text-[9px] font-bold text-white/40">{c.agent || 'Unassigned'}</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
@@ -651,11 +651,11 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                                 </a>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onGoToChat && onGoToChat(c._raw); }}
-                                                    className="w-7 h-7 rounded-md bg-[#C9A34E]/10 text-[#C9A34E] flex items-center justify-center hover:bg-[#C9A34E] hover:text-[#0A1A2F] transition-all text-[10px]"
+                                                    className="w-7 h-7 rounded-md bg-[#cc9d37]/10 text-[#cc9d37] flex items-center justify-center hover:bg-[#cc9d37] hover:text-[#0c1a2f] transition-all text-[10px]"
                                                 >
                                                     <MessageCircle size={10} />
                                                 </button>
-                                                <button className="w-7 h-7 rounded-md bg-white/5 text-white/30 flex items-center justify-center hover:bg-[#C9A34E] hover:text-[#0A1A2F] transition-all text-[10px]">
+                                                <button className="w-7 h-7 rounded-md bg-white/5 text-white/30 flex items-center justify-center hover:bg-[#cc9d37] hover:text-[#0c1a2f] transition-all text-[10px]">
                                                     <ArrowRight size={10} />
                                                 </button>
                                             </div>
@@ -695,7 +695,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-9 h-9 rounded-xl text-xs font-black flex items-center justify-center transition-all ${page === safePage
-                                    ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
+                                    ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/20'
                                     : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10'
                                     }`}
                             >
@@ -722,7 +722,7 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
                     </div>
                     <p className="text-white/30 text-sm font-bold mb-1">No customers match your filters</p>
                     <p className="text-white/15 text-xs mb-4">Try adjusting your search or filter criteria</p>
-                    <button onClick={clearAllFilters} className="px-4 py-2 bg-[#C9A34E]/10 text-[#C9A34E] border border-[#C9A34E]/20 rounded-xl text-xs font-bold hover:bg-[#C9A34E]/20 transition-all flex items-center gap-2">
+                    <button onClick={clearAllFilters} className="px-4 py-2 bg-[#cc9d37]/10 text-[#cc9d37] border border-[#cc9d37]/20 rounded-xl text-xs font-bold hover:bg-[#cc9d37]/20 transition-all flex items-center gap-2">
                         <RefreshCw size={12} />Clear All Filters
                     </button>
                 </div>

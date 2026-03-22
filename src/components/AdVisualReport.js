@@ -42,7 +42,7 @@ export default function AdVisualReport({ ad, onClose }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-8 animate-fade-in">
             <div className="absolute inset-0 bg-[#050B18]/90 backdrop-blur-xl" onClick={onClose}></div>
 
-            <div className="relative w-full max-w-5xl bg-[#0A1A2F] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-5xl bg-[#0c1a2f] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-8 border-b border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-5">
@@ -182,7 +182,7 @@ export default function AdVisualReport({ ad, onClose }) {
                                                 <tr key={i} className="hover:bg-white/5 transition-colors">
                                                     <td className="p-4 pl-8 capitalize">{act.action_type.replace(/_/g, ' ')}</td>
                                                     <td className="p-4 text-right font-black text-emerald-400">{fmt(act.value)}</td>
-                                                    <td className="p-4 text-right pr-8 font-black text-[#C9A34E]">฿{fmt(val, 2)}</td>
+                                                    <td className="p-4 text-right pr-8 font-black text-[#cc9d37]">฿{fmt(val, 2)}</td>
                                                 </tr>
                                             );
                                         }) : (

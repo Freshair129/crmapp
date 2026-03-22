@@ -499,9 +499,9 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
     }
 
     return (
-        <div className="flex h-full bg-[#0A1A2F] text-white rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl">
+        <div className="flex h-full bg-[#0c1a2f] text-white rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl">
             {/* Left Sidebar: Conversations */}
-            <div className="w-80 border-r border-white/5 flex flex-col bg-[#0A1A2F]">
+            <div className="w-80 border-r border-white/5 flex flex-col bg-[#0c1a2f]">
                 <div className="p-6 border-b border-white/5 space-y-4">
                     <div className="flex justify-between items-start">
                         <div>
@@ -578,12 +578,12 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                             <select
                                 value={filterAgent}
                                 onChange={(e) => setFilterAgent(e.target.value)}
-                                className="flex-1 bg-white/5 border border-white/10 text-white/70 text-[10px] font-bold px-3 py-2.5 rounded-xl outline-none focus:border-[#C9A34E]/50 transition-colors uppercase tracking-widest appearance-none cursor-pointer"
+                                className="flex-1 bg-white/5 border border-white/10 text-white/70 text-[10px] font-bold px-3 py-2.5 rounded-xl outline-none focus:border-[#cc9d37]/50 transition-colors uppercase tracking-widest appearance-none cursor-pointer"
                             >
-                                <option value="" className="bg-[#0A1A2F] text-white">All Agents</option>
-                                <option value="Unassigned" className="bg-[#0A1A2F] text-white">Unassigned</option>
+                                <option value="" className="bg-[#0c1a2f] text-white">All Agents</option>
+                                <option value="Unassigned" className="bg-[#0c1a2f] text-white">Unassigned</option>
                                 {Array.isArray(employees) && employees.map(emp => (
-                                    <option key={emp.employeeCode || emp.id} value={emp.nickName || emp.firstName} className="bg-[#0A1A2F] text-white">
+                                    <option key={emp.employeeCode || emp.id} value={emp.nickName || emp.firstName} className="bg-[#0c1a2f] text-white">
                                         {emp.nickName || emp.firstName}
                                     </option>
                                 ))}
@@ -641,7 +641,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                         <h3 className={`font-black text-sm truncate pr-2 flex items-center gap-1.5 ${selectedConv?.id === conv.id ? 'text-blue-400' : 'text-white'}`}>
                                             <button
                                                 onClick={(e) => handleToggleStar(conv.id, conv.isStarred, e)}
-                                                className={`transition-colors ${conv.isStarred ? 'text-[#C9A34E] hover:text-[#e0b961]' : 'text-white/20 hover:text-white/50'}`}
+                                                className={`transition-colors ${conv.isStarred ? 'text-[#cc9d37] hover:text-[#e0b961]' : 'text-white/20 hover:text-white/50'}`}
                                                 title={conv.isStarred ? "Unstar" : "Star"}
                                             >
                                                 <Star size={10} />
@@ -705,7 +705,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
             {selectedConv ? (
                 <div className="flex-1 flex flex-col bg-[#0f2440]/50 backdrop-blur-sm">
                     {/* Header */}
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0A1A2F]/80 backdrop-blur-md">
+                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0c1a2f]/80 backdrop-blur-md">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-black text-sm">
                                 {(getParticipantName(selectedConv) || 'P').charAt(0)}
@@ -715,7 +715,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                     {getParticipantName(selectedConv)}
                                     <button
                                         onClick={() => handleToggleStar(selectedConv.id, selectedConv.isStarred)}
-                                        className={`transition-colors flex items-center justify-center w-6 h-6 rounded-md hover:bg-white/10 ${selectedConv.isStarred ? 'text-[#C9A34E]' : 'text-white/20 hover:text-white/50'}`}
+                                        className={`transition-colors flex items-center justify-center w-6 h-6 rounded-md hover:bg-white/10 ${selectedConv.isStarred ? 'text-[#cc9d37]' : 'text-white/20 hover:text-white/50'}`}
                                         title={selectedConv.isStarred ? "Unstar Chat" : "Star Chat"}
                                     >
                                         <Star size={14} />
@@ -808,7 +808,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                                     <div key={msg.id || i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[70%] p-3.5 rounded-2xl text-xs leading-relaxed font-medium shadow-xl backdrop-blur-sm ${isMe
                                             ? 'bg-blue-600/90 text-white rounded-tr-sm border border-blue-500/50'
-                                            : 'bg-[#1e3a5f]/80 text-[#e2e8f0] rounded-tl-sm border border-white/10'
+                                            : 'bg-[#1e3a5f]/80 text-[#fff8f0] rounded-tl-sm border border-white/10'
                                             }`}>
                                             {msg.message}
                                             {msg.attachments?.data?.map(att => (
@@ -838,7 +838,7 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
                     </div>
 
                     {/* Input */}
-                    <form onSubmit={handleSend} className="p-6 bg-[#0A1A2F] border-t border-white/5 flex gap-4">
+                    <form onSubmit={handleSend} className="p-6 bg-[#0c1a2f] border-t border-white/5 flex gap-4">
                         <input
                             type="text"
                             value={inputText}

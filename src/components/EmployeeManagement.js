@@ -37,7 +37,7 @@ import { can } from '@/lib/permissionMatrix';
 const ROLE_META = {
     DEVELOPER: { label: 'Developer', level: 'L5', bg: 'from-violet-600 to-purple-800', badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
     MANAGER:   { label: 'Manager',   level: 'L4', bg: 'from-blue-600 to-blue-900',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    ADMIN:     { label: 'Admin',     level: 'L3', bg: 'from-[#C9A34E] to-amber-700',  badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    ADMIN:     { label: 'Admin',     level: 'L3', bg: 'from-[#cc9d37] to-amber-700',  badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
     MARKETING: { label: 'Marketing', level: 'L2.5', bg: 'from-pink-600 to-rose-800', badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
     HEAD_CHEF: { label: 'Head Chef', level: 'L2.5', bg: 'from-orange-500 to-orange-800', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
     EMPLOYEE:  { label: 'Employee',  level: 'L1.5', bg: 'from-teal-500 to-teal-800',  badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
@@ -51,12 +51,12 @@ const ALL_ROLES = ['DEVELOPER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOY
 const ROLE_AVATAR = {
     DEVELOPER: ['#7c3aed','#4c1d95'],
     MANAGER:   ['#2563eb','#1e3a8a'],
-    ADMIN:     ['#C9A34E','#92400e'],
+    ADMIN:     ['#cc9d37','#92400e'],
     MARKETING: ['#db2777','#831843'],
     HEAD_CHEF: ['#f97316','#9a3412'],
     EMPLOYEE:  ['#14b8a6','#134e4a'],
     AGENT:     ['#ef4444','#7f1d1d'],
-    GUEST:     ['#64748b','#1e293b'],
+    GUEST:     ['#64748b','#19273a'],
 };
 
 function getRoleMeta(role) {
@@ -537,7 +537,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     {/* Gold accent line at top */}
                                     <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
                                         style={{
-                                            background: 'linear-gradient(90deg, transparent, #C9A34E, transparent)',
+                                            background: 'linear-gradient(90deg, transparent, #cc9d37, transparent)',
                                             borderTopLeftRadius: 32, borderTopRightRadius: 32,
                                         }} />
                                     {/* YOU pill — bottom center */}
@@ -546,7 +546,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                             style={{
                                                 background: 'rgba(201,163,78,0.16)',
                                                 border: '1px solid rgba(201,163,78,0.50)',
-                                                color: '#C9A34E',
+                                                color: '#cc9d37',
                                             }}>
                                             ◆ การ์ดของคุณ
                                         </div>
@@ -616,10 +616,10 @@ function ThumbnailStrip({ employees, activeIndex, onSelect }) {
         <div ref={containerRef} className="relative overflow-hidden mt-5" style={{ height: 70 }}>
             {/* Left fade mask */}
             <div className="absolute inset-y-0 left-0 w-14 z-10 pointer-events-none"
-                style={{ background: 'linear-gradient(to right, #0A1A2F 30%, transparent)' }} />
+                style={{ background: 'linear-gradient(to right, #0c1a2f 30%, transparent)' }} />
             {/* Right fade mask */}
             <div className="absolute inset-y-0 right-0 w-14 z-10 pointer-events-none"
-                style={{ background: 'linear-gradient(to left, #0A1A2F 30%, transparent)' }} />
+                style={{ background: 'linear-gradient(to left, #0c1a2f 30%, transparent)' }} />
 
             {/* Center highlight ring */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[26px] w-[52px] h-[52px] rounded-full pointer-events-none z-0"
@@ -684,13 +684,13 @@ function ThumbnailStrip({ employees, activeIndex, onSelect }) {
 function StatCard({ icon: Icon, label, value, sub, accent = false }) {
     return (
         <div className={`rounded-2xl p-5 border flex flex-col gap-2 ${accent
-            ? 'bg-[#C9A34E]/10 border-[#C9A34E]/20'
+            ? 'bg-[#cc9d37]/10 border-[#cc9d37]/20'
             : 'bg-white/5 border-white/8'}`}>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${accent ? 'bg-[#C9A34E]/20 text-[#C9A34E]' : 'bg-white/10 text-white/40'}`}>
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${accent ? 'bg-[#cc9d37]/20 text-[#cc9d37]' : 'bg-white/10 text-white/40'}`}>
                 <Icon size={16} />
             </div>
             <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">{label}</p>
-            <p className={`text-xl font-black ${accent ? 'text-[#C9A34E]' : 'text-white'}`}>{value}</p>
+            <p className={`text-xl font-black ${accent ? 'text-[#cc9d37]' : 'text-white'}`}>{value}</p>
             {sub && <p className="text-white/30 text-[10px]">{sub}</p>}
         </div>
     );
@@ -751,7 +751,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 maxLength={maxLength}
                                 value={form[key] || ''}
                                 onChange={e => setForm(f => ({ ...f, [key]: key === 'agentCode' ? e.target.value.toUpperCase().replace(/[^A-Z]/g, '') : e.target.value }))}
-                                className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
+                                className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
                                 placeholder={key === 'agentCode' ? 'เช่น AOI, FAH, PNP' : ''}
                             />
                         </div>
@@ -762,7 +762,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         <select
                             value={form.employmentType}
                             onChange={e => setForm(f => ({ ...f, employmentType: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
                         >
                             <option value="employee">พนักงานประจำ (EMP)</option>
                             <option value="freelance">ฟรีแลนซ์ (FL)</option>
@@ -775,7 +775,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         <select
                             value={form.department}
                             onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
                         >
                             <option value="">-- เลือกแผนก --</option>
                             <option value="marketing">Marketing (MKT)</option>
@@ -800,7 +800,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                             placeholder="เช่น Pastry Chef, Marketing Officer"
                             value={form.jobTitle}
                             onChange={e => setForm(f => ({ ...f, jobTitle: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                         />
                     </div>
                     {/* Role select */}
@@ -809,7 +809,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         <select
                             value={form.role}
                             onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                            className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
                         >
                             {ALL_ROLES.map(r => (
                                 <option key={r} value={r}>{ROLE_META[r].label} ({ROLE_META[r].level})</option>
@@ -852,7 +852,7 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         Cancel
                     </button>
                     <button onClick={handleAdd} disabled={saving}
-                        className="flex-1 py-3 rounded-xl bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#C9A34E]/20 disabled:opacity-50">
+                        className="flex-1 py-3 rounded-xl bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#cc9d37]/20 disabled:opacity-50">
                         {saving ? <Loader2 className="animate-spin inline-block" size={14} /> : 'เพิ่มพนักงาน'}
                     </button>
                 </div>
@@ -950,14 +950,14 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                         <input
                             type="text" placeholder="Search..."
                             value={search} onChange={e => { setSearch(e.target.value); setActiveIndex(0); }}
-                            className="bg-white/5 border border-white/10 text-white pl-10 pr-5 py-2.5 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 w-48 transition-all"
+                            className="bg-white/5 border border-white/10 text-white pl-10 pr-5 py-2.5 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 w-48 transition-all"
                         />
                     </div>
                     {/* Add button — canManage only */}
                     {canManage ? (
                         <button
                             onClick={() => setIsAdding(true)}
-                            className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-[#C9A34E]/20 active:scale-95 flex items-center gap-2">
+                            className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-[#cc9d37]/20 active:scale-95 flex items-center gap-2">
                             <UserPlus size={12} />Add
                         </button>
                     ) : (
@@ -1021,7 +1021,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 ].map(tab => (
                                     <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id
-                                            ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg shadow-[#C9A34E]/20'
+                                            ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/20'
                                             : 'text-white/40 hover:text-white'}`}>
                                         <tab.icon size={12} />
                                         <span className="hidden md:inline">{tab.label}</span>
@@ -1032,7 +1032,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             {canManage && (
                                 <button
                                     onClick={() => { setEditForm({ ...emp }); setIsEditing(true); }}
-                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-[#C9A34E] hover:border-[#C9A34E]/30 text-[10px] font-black uppercase tracking-widest transition-all shrink-0">
+                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-[#cc9d37] hover:border-[#cc9d37]/30 text-[10px] font-black uppercase tracking-widest transition-all shrink-0">
                                     <Pen size={11} />แก้ไข
                                 </button>
                             )}
@@ -1111,7 +1111,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                         {activeTab === 'customers' && (
                             <div className="bg-white/5 border border-white/8 rounded-2xl p-6">
                                 <h3 className="text-white font-black text-sm uppercase tracking-widest mb-5">
-                                    Assigned Customers <span className="text-[#C9A34E] ml-2">{assignedCustomers.length}</span>
+                                    Assigned Customers <span className="text-[#cc9d37] ml-2">{assignedCustomers.length}</span>
                                 </h3>
                                 {assignedCustomers.length === 0
                                     ? <p className="text-white/30 text-xs text-center py-8">No customers assigned</p>
@@ -1194,7 +1194,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         value={editForm[key] || ''}
                                         onChange={e => setEditForm(f => ({ ...f, [key]: key === 'agentCode' ? e.target.value.toUpperCase().replace(/[^A-Z]/g, '') : e.target.value }))}
                                         maxLength={key === 'agentCode' ? 4 : undefined}
-                                        className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
+                                        className={`w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all ${key === 'agentCode' ? 'font-mono tracking-widest uppercase' : ''}`}
                                     />
                                 </div>
                             ))}
@@ -1204,7 +1204,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 <select
                                     value={editForm.department || ''}
                                     onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))}
-                                    className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                                    className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
                                 >
                                     <option value="">-- เลือกแผนก --</option>
                                     <option value="marketing">Marketing (MKT)</option>
@@ -1229,7 +1229,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     placeholder="เช่น Pastry Chef, Marketing Officer"
                                     value={editForm.jobTitle || ''}
                                     onChange={e => setEditForm(f => ({ ...f, jobTitle: e.target.value }))}
-                                    className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                                    className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                                 />
                             </div>
 
@@ -1268,7 +1268,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 <select
                                     value={editForm.role || 'AGENT'}
                                     onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
-                                    className="w-full bg-[#0A1A2F] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all appearance-none"
+                                    className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
                                 >
                                     {ALL_ROLES.map(r => (
                                         <option key={r} value={r}>{ROLE_META[r].label} — {ROLE_META[r].level}</option>
@@ -1287,7 +1287,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     value={editForm._newPassword || ''}
                                     onChange={e => setEditForm(f => ({ ...f, _newPassword: e.target.value }))}
                                     placeholder="••••••••"
-                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A34E]/40 transition-all"
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                                 />
                             </div>
                         </div>
@@ -1305,7 +1305,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     handleSave(payload); // pass directly — avoids React async state
                                 }}
                                 disabled={isSaving}
-                                className="flex-1 py-3 rounded-xl bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#C9A34E]/20 disabled:opacity-50">
+                                className="flex-1 py-3 rounded-xl bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[#cc9d37]/20 disabled:opacity-50">
                                 {isSaving ? <Loader2 className="animate-spin inline-block" size={14} /> : 'Save Changes'}
                             </button>
                         </div>

@@ -163,7 +163,7 @@ export default function Analytics({ customers, products }) {
     };
 
     const segmentStats = {
-        A: { count: segments.A.length, spend: segments.A.reduce((s, d) => s + d.spend, 0), color: 'bg-[#C9A34E]' },
+        A: { count: segments.A.length, spend: segments.A.reduce((s, d) => s + d.spend, 0), color: 'bg-[#cc9d37]' },
         B: { count: segments.B.length, spend: segments.B.reduce((s, d) => s + d.spend, 0), color: 'bg-slate-300' },
         C: { count: segments.C.length, spend: segments.C.reduce((s, d) => s + d.spend, 0), color: 'bg-slate-600' }
     };
@@ -369,7 +369,7 @@ export default function Analytics({ customers, products }) {
         const top4 = mixData.slice(0, 4);
         const othersCount = mixData.slice(4).reduce((sum, item) => sum + item.count, 0);
 
-        const colors = ['#C9A34E', '#ea580c', '#fbbf24', '#f59e0b', '#94a3b8'];
+        const colors = ['#cc9d37', '#ea580c', '#fbbf24', '#f59e0b', '#94a3b8'];
         const finalMix = top4.map((item, i) => ({ ...item, color: colors[i] }));
 
         if (othersCount > 0) {
@@ -780,7 +780,7 @@ export default function Analytics({ customers, products }) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-6 py-3 rounded-xl flex items-center gap-3 text-xs font-black uppercase tracking-wider transition-all ${activeTab === tab.id
-                                ? 'bg-[#C9A34E] text-[#0A1A2F] shadow-lg scale-100'
+                                ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg scale-100'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95'
                                 }`}
                         >
@@ -797,13 +797,13 @@ export default function Analytics({ customers, products }) {
                     {/* Main Analytics (8 Units) */}
                     <div className="lg:col-span-8 space-y-8">
                         {/* ABC Analysis Section */}
-                        <div className="bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-[#C9A34E]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-[#cc9d37]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                             <div className="relative z-10">
                                 <div className="flex justify-between items-end mb-10">
                                     <div>
-                                        <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mb-2">Segmentation Logic</p>
+                                        <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mb-2">Segmentation Logic</p>
                                         <h3 className="font-black text-white text-2xl tracking-tight">ABC Customer Analysis</h3>
                                     </div>
                                     <div className="text-right">
@@ -816,7 +816,7 @@ export default function Analytics({ customers, products }) {
                                     {['A', 'B', 'C'].map(cat => (
                                         <div key={cat} className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-colors">
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className={`w-10 h-10 rounded-xl ${segmentStats[cat].color} flex items-center justify-center text-[#0A1A2F] font-black text-xl shadow-lg`}>
+                                                <div className={`w-10 h-10 rounded-xl ${segmentStats[cat].color} flex items-center justify-center text-[#0c1a2f] font-black text-xl shadow-lg`}>
                                                     {cat}
                                                 </div>
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
@@ -826,7 +826,7 @@ export default function Analytics({ customers, products }) {
                                             <p className="text-2xl font-black text-white mb-1">฿{formatCurrency(segmentStats[cat].spend)}</p>
                                             <div className="flex justify-between items-center text-[10px] font-bold">
                                                 <span className="text-white/60">{segmentStats[cat].count} Customers</span>
-                                                <span className={cat === 'A' ? 'text-[#C9A34E]' : 'text-white/40'}>
+                                                <span className={cat === 'A' ? 'text-[#cc9d37]' : 'text-white/40'}>
                                                     {((segmentStats[cat].spend / totalRevenue) * 100).toFixed(1)}% Revenue
                                                 </span>
                                             </div>
@@ -849,7 +849,7 @@ export default function Analytics({ customers, products }) {
                                                     style={{ width: `${per}%` }}
                                                     className={`${segmentStats[cat].color} h-full relative group/tip`}
                                                 >
-                                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-[#0A1A2F] text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap z-20">
+                                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-[#0c1a2f] text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap z-20">
                                                         Category {cat}: {per.toFixed(1)}%
                                                     </div>
                                                 </div>
@@ -932,11 +932,11 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Top 10 Best Sellers Ranking (4 Units) */}
-                    <div className="lg:col-span-4 bg-[#0A1A2F]/40 border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden flex flex-col">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C9A34E]/50 to-transparent"></div>
+                    <div className="lg:col-span-4 bg-[#0c1a2f]/40 border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden flex flex-col">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#cc9d37]/50 to-transparent"></div>
                         <div className="mb-8">
                             <h3 className="font-black text-white text-xl tracking-tight leading-none mb-2">TOP 10 Ranking</h3>
-                            <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest">BEST SELLING PRODUCTS</p>
+                            <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest">BEST SELLING PRODUCTS</p>
                         </div>
                         {/* Period Switcher */}
                         <div className="flex bg-white/5 rounded-2xl p-1 mb-8">
@@ -944,7 +944,7 @@ export default function Analytics({ customers, products }) {
                                 <button
                                     key={p}
                                     onClick={() => setRankingPeriod(p)}
-                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${rankingPeriod === p ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'text-white/40 hover:text-white/60'
+                                    className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${rankingPeriod === p ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white/60'
                                         }`}
                                 >
                                     {p === 'day' ? 'Daily' : p === 'week' ? 'Weekly' : 'Monthly'}
@@ -954,7 +954,7 @@ export default function Analytics({ customers, products }) {
                         <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                             {bestSellers.map((item, i) => (
                                 <div key={i} className="flex items-center gap-4 group/rank">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${i === 0 ? 'bg-[#C9A34E] text-[#0A1A2F]' :
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${i === 0 ? 'bg-[#cc9d37] text-[#0c1a2f]' :
                                         i === 1 ? 'bg-slate-300 text-slate-800' :
                                             i === 2 ? 'bg-amber-600/50 text-white' :
                                                 'bg-white/5 text-white/40'
@@ -962,7 +962,7 @@ export default function Analytics({ customers, products }) {
                                         {i + 1}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-white truncate group-hover/rank:text-[#C9A34E] transition-colors">{item.name}</p>
+                                        <p className="text-[11px] font-bold text-white truncate group-hover/rank:text-[#cc9d37] transition-colors">{item.name}</p>
                                         <div className="flex items-center gap-2">
                                             <div className={`w-1 h-1 rounded-full ${item.color || 'bg-slate-500'}`}></div>
                                             <p className="text-[8px] font-black text-white/20 uppercase tracking-tighter">{item.sales} Units Sold</p>
@@ -984,7 +984,7 @@ export default function Analytics({ customers, products }) {
             {activeTab === 'customer' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     {/* CLV Distribution Chart - 6 Cols */}
-                    <div className="lg:col-span-6 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-6 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">CLV Distribution</h3>
                         <div className="flex items-end gap-3 h-48 px-2">
                             {Object.entries(clvBuckets).map(([bucket, count], i) => {
@@ -994,7 +994,7 @@ export default function Analytics({ customers, products }) {
                                         <div className="text-[10px] font-bold text-white mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{count}</div>
                                         <div
                                             style={{ height: `${height || 1}%` }}
-                                            className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all group-hover:from-[#C9A34E] group-hover:to-amber-300"
+                                            className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all group-hover:from-[#cc9d37] group-hover:to-amber-300"
                                         ></div>
                                         <div className="text-[8px] font-black text-white/40 uppercase rotate-0 tracking-tighter">{bucket}</div>
                                     </div>
@@ -1003,11 +1003,11 @@ export default function Analytics({ customers, products }) {
                         </div>
                         <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/5">
                             <div className="flex items-start gap-3">
-                                <div className="p-2 bg-[#C9A34E]/20 rounded-lg text-[#C9A34E]">
+                                <div className="p-2 bg-[#cc9d37]/20 rounded-lg text-[#cc9d37]">
                                     <Lightbulb size={14} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">INSIGHT</p>
+                                    <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest mb-1">INSIGHT</p>
                                     <p className="text-xs text-white/80">Only 4% of customers (฿100K+) generate 21% of total revenue. Focusing on this segment yields 5x ROI compared to acquisition.</p>
                                 </div>
                             </div>
@@ -1015,7 +1015,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Top 10 High CLV Customers - 6 Cols */}
-                    <div className="lg:col-span-6 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-6 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-black text-white text-xl tracking-tight">Top By Lifetime Value</h3>
                             <button className="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-white transition-colors">View All</button>
@@ -1031,7 +1031,7 @@ export default function Analytics({ customers, products }) {
                                 <div key={i} className="grid grid-cols-12 items-center px-4 py-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group">
                                     <div className="col-span-1 text-xs font-bold text-white/50">{i + 1}</div>
                                     <div className="col-span-5 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#162A47] to-[#0A1A2F] border border-white/10 flex items-center justify-center text-xs font-bold text-[#C9A34E]">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#19273a] to-[#0c1a2f] border border-white/10 flex items-center justify-center text-xs font-bold text-[#cc9d37]">
                                             {(c.profile?.first_name || 'C').charAt(0)}
                                         </div>
                                         <div className="min-w-0">
@@ -1042,7 +1042,7 @@ export default function Analytics({ customers, products }) {
                                     <div className="col-span-3 text-right text-[10px] font-bold text-white/60">
                                         {c.profile?.join_date ? new Date(c.profile.join_date).toLocaleDateString() : 'N/A'}
                                     </div>
-                                    <div className="col-span-3 text-right font-black text-[#C9A34E]">
+                                    <div className="col-span-3 text-right font-black text-[#cc9d37]">
                                         ฿{formatCurrency(c.intelligence?.metrics?.total_spend || 0)}
                                     </div>
                                 </div>
@@ -1051,7 +1051,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* CLV by Channel - 6 Cols */}
-                    <div className="lg:col-span-6 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-6 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">CLV by Acquisition Channel</h3>
                         <div className="space-y-5">
                             {channelData.map((ch, i) => (
@@ -1072,10 +1072,10 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Actionable Insights - 6 Cols */}
-                    <div className="lg:col-span-6 bg-gradient-to-br from-[#162A47] to-[#0A1A2F] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#C9A34E]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="lg:col-span-6 bg-gradient-to-br from-[#19273a] to-[#0c1a2f] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#cc9d37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                         <h3 className="font-black text-white text-xl tracking-tight mb-6 flex items-center gap-3 relative z-10">
-                            <Wand2 size={14} className="text-[#C9A34E]" />
+                            <Wand2 size={14} className="text-[#cc9d37]" />
                             Actionable Recommendations
                         </h3>
                         <div className="space-y-4 relative z-10">
@@ -1096,14 +1096,14 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* RFM Segmentation Section (New) */}
-                    <div className="lg:col-span-12 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8 mt-6">
+                    <div className="lg:col-span-12 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8 mt-6">
                         <h3 className="font-black text-white text-xl tracking-tight mb-2">RFM Segmentation</h3>
                         <p className="text-xs text-white/40 mb-6">Recency, Frequency, Monetary Analysis</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             {Object.entries(rfmSegments).map(([seg, list], i) => (
                                 <div key={i} className="bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <h4 className={`text-[10px] font-black uppercase tracking-widest mb-2 ${seg === 'Champions' ? 'text-[#C9A34E]' :
+                                    <h4 className={`text-[10px] font-black uppercase tracking-widest mb-2 ${seg === 'Champions' ? 'text-[#cc9d37]' :
                                         seg === 'At Risk' ? 'text-rose-400' :
                                             seg === 'Loyal' ? 'text-emerald-400' : 'text-white/60'
                                         }`}>{seg}</h4>
@@ -1117,12 +1117,12 @@ export default function Analytics({ customers, products }) {
                             <h4 className="text-sm font-bold text-white mb-4">Champions (Top Tier)</h4>
                             <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
                                 {rfmSegments['Champions'].slice(0, 8).map((c, i) => (
-                                    <div key={i} className="min-w-[140px] p-4 bg-gradient-to-br from-[#C9A34E]/20 to-[#0A1A2F] border border-[#C9A34E]/30 rounded-2xl flex flex-col items-center text-center">
-                                        <div className="w-10 h-10 rounded-full bg-[#C9A34E] text-[#0A1A2F] flex items-center justify-center font-black text-lg mb-2 shadow-lg">
+                                    <div key={i} className="min-w-[140px] p-4 bg-gradient-to-br from-[#cc9d37]/20 to-[#0c1a2f] border border-[#cc9d37]/30 rounded-2xl flex flex-col items-center text-center">
+                                        <div className="w-10 h-10 rounded-full bg-[#cc9d37] text-[#0c1a2f] flex items-center justify-center font-black text-lg mb-2 shadow-lg">
                                             {(c.profile?.first_name || 'C').charAt(0)}
                                         </div>
                                         <p className="text-xs font-bold text-white truncate w-full">{c.profile?.first_name}</p>
-                                        <p className="text-[10px] text-[#C9A34E] font-black">Score: 5-5-5</p>
+                                        <p className="text-[10px] text-[#cc9d37] font-black">Score: 5-5-5</p>
                                     </div>
                                 ))}
                             </div>
@@ -1142,7 +1142,7 @@ export default function Analytics({ customers, products }) {
                             { label: 'Operating Expenses', val: totalOpex, sub: `${((totalOpex / totalRevenue) * 100).toFixed(1)}%`, color: 'text-orange-400' },
                             { label: 'Net Profit', val: netProfit, sub: `${profitMargin.toFixed(1)}%`, color: 'text-emerald-400', highlight: true }
                         ].map((stat, i) => (
-                            <div key={i} className={`p-6 rounded-[2rem] border border-white/10 ${stat.highlight ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border-emerald-500/30' : 'bg-[#0A1A2F]/50'}`}>
+                            <div key={i} className={`p-6 rounded-[2rem] border border-white/10 ${stat.highlight ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border-emerald-500/30' : 'bg-[#0c1a2f]/50'}`}>
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{stat.label}</p>
                                 <p className={`text-2xl font-black ${stat.color} mb-1`}>฿{formatCurrency(stat.val, { maximumFractionDigits: 0 })}</p>
                                 <p className="text-[10px] font-bold text-white/30">{stat.sub} of Revenue</p>
@@ -1151,7 +1151,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Waterfall Chart Representation */}
-                    <div className="lg:col-span-8 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-8 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">Profitability Waterfall</h3>
                         <div className="space-y-6">
                             {/* Revenue Bar */}
@@ -1191,7 +1191,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Expense Breakdown */}
-                    <div className="lg:col-span-4 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-4 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">Expense Breakdown</h3>
                         <div className="space-y-4">
                             {Object.entries(opex).map(([key, val], i) => (
@@ -1222,7 +1222,7 @@ export default function Analytics({ customers, products }) {
                             { label: 'Paid Customers', val: paidCustomers, diff: '+15%', color: 'text-emerald-400' },
                             { label: 'Conversion Rate', val: `${conversionRate}%`, diff: '+2.4%', color: 'text-amber-400' }
                         ].map((stat, i) => (
-                            <div key={i} className="p-6 bg-[#0A1A2F]/50 rounded-[2rem] border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all">
+                            <div key={i} className="p-6 bg-[#0c1a2f]/50 rounded-[2rem] border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all">
                                 <div className={`absolute top-0 right-0 p-4 opacity-10 ${stat.color}`}>
                                     <AreaChart size={36} />
                                 </div>
@@ -1240,7 +1240,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Funnel Chart */}
-                    <div className="lg:col-span-8 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-8 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">Lead Funnel Stage</h3>
                         <div className="flex flex-col gap-4">
                             {funnelData.map((stage, i) => (
@@ -1269,7 +1269,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Channel Conversion Table */}
-                    <div className="lg:col-span-4 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-4 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-6">Conversion by Channel</h3>
                         <div className="overflow-hidden bg-white/5 rounded-2xl border border-white/5">
                             <table className="w-full text-left">
@@ -1320,7 +1320,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Alerts Table */}
-                    <div className="lg:col-span-12 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-12 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <div className="flex items-center gap-4 mb-6">
                             <button className="text-sm font-bold text-rose-400 border-b-2 border-rose-500 pb-1">Course Credit Alert</button>
                             <button className="text-sm font-bold text-white/40 hover:text-white pb-1 transition-colors">Churn Risk Alert</button>
@@ -1363,7 +1363,7 @@ export default function Analytics({ customers, products }) {
                         </h3>
                         <div className="space-y-1">
                             {salesTasks.map((task, i) => (
-                                <div key={i} className="flex justify-between items-center p-4 bg-[#0A1A2F]/30 hover:bg-[#0A1A2F]/50 rounded-xl border border-white/5 transition-colors group">
+                                <div key={i} className="flex justify-between items-center p-4 bg-[#0c1a2f]/30 hover:bg-[#0c1a2f]/50 rounded-xl border border-white/5 transition-colors group">
                                     <div className="flex items-center gap-4">
                                         <input type="checkbox" className="w-4 h-4 rounded border-white/20 bg-white/5 text-green-500 focus:ring-green-500/50" />
                                         <div>
@@ -1407,7 +1407,7 @@ export default function Analytics({ customers, products }) {
                     </div>
 
                     {/* Chart & Table */}
-                    <div className="lg:col-span-5 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-5 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">ROAS by Channel</h3>
                         <div className="flex items-end gap-4 h-64 border-l border-b border-white/10 pb-4 pl-4 relative">
                             {/* Y-Axis Lables Mock */}
@@ -1427,7 +1427,7 @@ export default function Analytics({ customers, products }) {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-7 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-7 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="font-black text-white text-xl tracking-tight mb-8">Revenue vs Ad Spend</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
@@ -1446,7 +1446,7 @@ export default function Analytics({ customers, products }) {
                                             <td className="p-4">{ch.channel}</td>
                                             <td className="p-4 text-right text-white/60">{formatCurrency(ch.spend)}</td>
                                             <td className="p-4 text-right">{formatCurrency(ch.sales)}</td>
-                                            <td className="p-4 text-right font-black text-[#C9A34E]">{ch.roas}x</td>
+                                            <td className="p-4 text-right font-black text-[#cc9d37]">{ch.roas}x</td>
                                             <td className="p-4 text-right text-emerald-400">+{formatCurrency(ch.profit)}</td>
                                         </tr>
                                     ))}
@@ -1472,7 +1472,7 @@ export default function Analytics({ customers, products }) {
                             <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-md">+25%</span>
                         </div>
                         <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Banknote size={12} className="text-[#C9A34E]" /> Sales from Events</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Banknote size={12} className="text-[#cc9d37]" /> Sales from Events</h4>
                             <p className="text-4xl font-black text-slate-800">฿{formatCurrency(eventStats.sales)}</p>
                         </div>
                     </div>
@@ -1561,7 +1561,7 @@ export default function Analytics({ customers, products }) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     {/* NEW: Live Delivery Dashboard */}
                     <div className="lg:col-span-12 space-y-8">
-                        <div className="bg-gradient-to-br from-indigo-900/40 via-[#0A1A2F]/80 to-[#0A1A2F]/50 border border-indigo-500/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+                        <div className="bg-gradient-to-br from-indigo-900/40 via-[#0c1a2f]/80 to-[#0c1a2f]/50 border border-indigo-500/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-10 opacity-10">
                                 <Radio size={96} className="text-indigo-400 animate-pulse" />
                             </div>
@@ -1637,7 +1637,7 @@ export default function Analytics({ customers, products }) {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-12 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-12 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <div className="flex justify-between items-center mb-8">
                             <div>
                                 <h3 className="font-black text-white text-xl tracking-tight mb-2">Sales Team Performance</h3>
@@ -1669,7 +1669,7 @@ export default function Analytics({ customers, products }) {
 
                                         <div className="relative z-10">
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-lg ${i === 0 ? 'bg-gradient-to-br from-[#C9A34E] to-amber-600 text-[#0A1A2F]' :
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-lg ${i === 0 ? 'bg-gradient-to-br from-[#cc9d37] to-amber-600 text-[#0c1a2f]' :
                                                     i === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-800' :
                                                         'bg-white/10 text-white'
                                                     }`}>
@@ -1684,7 +1684,7 @@ export default function Analytics({ customers, products }) {
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xs text-white/60">Revenue</span>
-                                                    <span className="text-lg font-black text-[#C9A34E]">฿{formatCurrency(agent.revenue)}</span>
+                                                    <span className="text-lg font-black text-[#cc9d37]">฿{formatCurrency(agent.revenue)}</span>
                                                 </div>
                                                 <div className="h-px w-full bg-white/5"></div>
                                                 <div className="flex justify-between items-center">
@@ -1790,11 +1790,11 @@ export default function Analytics({ customers, products }) {
             {/* TAB 9: Mapping Matrix (New) */}
             {activeTab === 'mapping' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
-                    <div className="lg:col-span-12 bg-[#0A1A2F]/50 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="lg:col-span-12 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="font-black text-white text-xl tracking-tight leading-none mb-2">Ad-to-Course Mapping Matrix</h3>
-                                <p className="text-[10px] font-black text-[#C9A34E] uppercase tracking-widest">DEFINITIVE PRODUCT ATTRIBUTION</p>
+                                <p className="text-[10px] font-black text-[#cc9d37] uppercase tracking-widest">DEFINITIVE PRODUCT ATTRIBUTION</p>
                             </div>
                             <div className="flex gap-2">
                                 <button
@@ -1803,7 +1803,7 @@ export default function Analytics({ customers, products }) {
                                 >
                                     <Wand2 size={14} className="mr-2" /> AI Auto-Map
                                 </button>
-                                <button className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors">
+                                <button className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-colors">
                                     Add New Mapping
                                 </button>
                             </div>
@@ -1818,7 +1818,7 @@ export default function Analytics({ customers, products }) {
                                     value={mappingFilter}
                                     onChange={e => setMappingFilter(e.target.value)}
                                     placeholder="กรอง... เช่น ญี่ปุ่น, Sushi, Thai"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-[#C9A34E]/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-[#cc9d37]/50"
                                 />
                                 {mappingFilter && (
                                     <button onClick={() => setMappingFilter('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
@@ -1830,7 +1830,7 @@ export default function Analytics({ customers, products }) {
                                 <button
                                     key={kw}
                                     onClick={() => setMappingFilter(mappingFilter === kw ? '' : kw)}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${mappingFilter === kw ? 'bg-[#C9A34E] text-[#0A1A2F] border-[#C9A34E]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${mappingFilter === kw ? 'bg-[#cc9d37] text-[#0c1a2f] border-[#cc9d37]' : 'border-white/10 text-white/40 hover:text-white hover:border-white/30'}`}
                                 >
                                     {kw}
                                 </button>
@@ -1840,7 +1840,7 @@ export default function Analytics({ customers, products }) {
                         <div className="space-y-8">
                             {/* Campaign Mappings Row */}
                             <div>
-                                <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-4 border-l-4 border-[#C9A34E] pl-3">Campaign Mappings</h4>
+                                <h4 className="text-sm font-black text-white/60 uppercase tracking-widest mb-4 border-l-4 border-[#cc9d37] pl-3">Campaign Mappings</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {(adMapping.campaign_mappings || []).filter(m => !mappingFilter || (m.campaign_name + ' ' + m.product_name).toLowerCase().includes(mappingFilter.toLowerCase())).map((m, i) => (
                                         <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl relative group overflow-hidden">
@@ -1850,8 +1850,8 @@ export default function Analytics({ customers, products }) {
                                             </div>
                                             <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Campaign</p>
                                             <p className="text-sm font-bold text-white mb-4 truncate">{m.campaign_name}</p>
-                                            <div className="p-3 bg-black/40 rounded-xl border border-[#C9A34E]/30">
-                                                <p className="text-[9px] font-black text-[#C9A34E] uppercase tracking-widest mb-1">Maps To Product</p>
+                                            <div className="p-3 bg-black/40 rounded-xl border border-[#cc9d37]/30">
+                                                <p className="text-[9px] font-black text-[#cc9d37] uppercase tracking-widest mb-1">Maps To Product</p>
                                                 <p className="text-xs font-bold text-white truncate">{m.product_name}</p>
                                             </div>
                                         </div>
@@ -1882,9 +1882,9 @@ export default function Analytics({ customers, products }) {
                         </div>
 
                         {/* Recommendation Card */}
-                        <div className="mt-12 p-6 bg-gradient-to-r from-[#C9A34E]/10 to-transparent border border-[#C9A34E]/20 rounded-3xl">
+                        <div className="mt-12 p-6 bg-gradient-to-r from-[#cc9d37]/10 to-transparent border border-[#cc9d37]/20 rounded-3xl">
                             <div className="flex items-start gap-4">
-                                <div className="p-3 bg-[#C9A34E]/20 rounded-2xl text-[#C9A34E]">
+                                <div className="p-3 bg-[#cc9d37]/20 rounded-2xl text-[#cc9d37]">
                                     <Lightbulb size={20} />
                                 </div>
                                 <div className="flex-1">

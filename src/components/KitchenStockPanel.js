@@ -229,20 +229,20 @@ export default function KitchenStockPanel({ language = 'TH' }) {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 space-y-4">
-      <Loader2 className="w-12 h-12 text-[#C9A34E] animate-spin" />
-      <span className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">LOADING INVENTORY...</span>
+      <Loader2 className="w-12 h-12 text-[#cc9d37] animate-spin" />
+      <span className="text-[#cc9d37] font-black animate-pulse uppercase tracking-[0.3em]">LOADING INVENTORY...</span>
     </div>
   );
 
   return (
-    <div className="bg-[#0A1A2F] rounded-[2.5rem] border border-white/10 p-8 shadow-2xl overflow-hidden">
+    <div className="bg-[#0c1a2f] rounded-[2.5rem] border border-white/10 p-8 shadow-2xl overflow-hidden">
       <div className="flex flex-col lg:flex-row justify-between gap-6 mb-8">
         <div>
           <h2 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-            <Package className="text-[#C9A34E]" size={36} /> {t.title}
+            <Package className="text-[#cc9d37]" size={36} /> {t.title}
             <button
               onClick={() => activeTab === 'ingredients' ? setShowAddModal(true) : setShowAddLotModal(true)}
-              className="ml-4 bg-[#C9A34E] text-[#0A1A2F] p-2 rounded-2xl hover:scale-110 transition-all font-black"
+              className="ml-4 bg-[#cc9d37] text-[#0c1a2f] p-2 rounded-2xl hover:scale-110 transition-all font-black"
             >
               <Plus size={24} />
             </button>
@@ -253,7 +253,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex items-center gap-2 px-5 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${
-                  activeTab === tab ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  activeTab === tab ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/40 hover:bg-white/10'
                 }`}
               >
                 <Icon size={14} /> {label}
@@ -263,7 +263,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           <div className="flex gap-4 mt-4">
             <div className="bg-white/5 px-6 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
               <span className="text-xs text-white/40 font-black uppercase tracking-widest">{t.total}</span>
-              <span className="text-2xl font-black text-[#C9A34E]">{ingredients.length}</span>
+              <span className="text-2xl font-black text-[#cc9d37]">{ingredients.length}</span>
             </div>
             {lowCount > 0 && (
               <div className="bg-red-500/10 px-6 py-2 rounded-2xl border border-red-500/30 flex items-center gap-3 animate-pulse">
@@ -280,7 +280,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
             <input
               type="text"
               placeholder={t.search}
-              className="bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-[#C9A34E]/50 w-full lg:w-80 font-bold"
+              className="bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-[#cc9d37]/50 w-full lg:w-80 font-bold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -291,7 +291,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 key={cat}
                 onClick={() => setFilter(cat)}
                 className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                  filter === cat ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  filter === cat ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/40 hover:bg-white/10'
                 }`}
               >
                 {cat === 'ALL' ? t.all : t[`cat_${cat}`]}
@@ -317,7 +317,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 key={s}
                 onClick={() => setLotFilter(s)}
                 className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                  lotFilter === s ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 hover:bg-white/10'
+                  lotFilter === s ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/40 hover:bg-white/10'
                 }`}
               >{s}</button>
             ))}
@@ -328,7 +328,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
       {activeTab === 'lots' ? (
         <div className="overflow-x-auto">
           {lotsLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#C9A34E]" size={28} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#cc9d37]" size={28} /></div>
           ) : lots.length === 0 ? (
             <div className="text-center py-12 text-white/20 font-black uppercase tracking-widest">ยังไม่มี Lot — กด + เพื่อรับสต็อกเข้า</div>
           ) : (
@@ -345,7 +345,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                   const isExpiringSoon = lot.expiresAt && new Date(lot.expiresAt) - new Date() < 7 * 86400000 && lot.status === 'ACTIVE';
                   return (
                     <tr key={lot.id} className={`transition-colors ${isExpiringSoon ? 'bg-amber-500/5' : 'hover:bg-white/[0.02]'}`}>
-                      <td className="py-3 px-3 font-mono text-[#C9A34E] text-xs font-black">{lot.lotId}</td>
+                      <td className="py-3 px-3 font-mono text-[#cc9d37] text-xs font-black">{lot.lotId}</td>
                       <td className="py-3 px-3 text-white font-bold text-sm">{lot.ingredient?.name ?? '—'}</td>
                       <td className="py-3 px-3 text-white/60 font-bold">{lot.receivedQty}</td>
                       <td className="py-3 px-3 font-black text-white">{lot.remainingQty}</td>
@@ -394,7 +394,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                       <input
                         autoFocus
                         type="number"
-                        className="w-20 bg-black/50 border border-[#C9A34E]/50 rounded px-2 py-1 text-[#C9A34E] font-black"
+                        className="w-20 bg-black/50 border border-[#cc9d37]/50 rounded px-2 py-1 text-[#cc9d37] font-black"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleUpdateStock(ing.id)}
@@ -404,7 +404,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-xl font-black ${ing.currentStock <= ing.minStock ? 'text-red-500' : 'text-[#C9A34E]'}`}>
+                      <span className={`text-xl font-black ${ing.currentStock <= ing.minStock ? 'text-red-500' : 'text-[#cc9d37]'}`}>
                         {ing.currentStock}
                       </span>
                       <span className="text-[10px] text-white/40 font-bold uppercase">{ing.unit}</span>
@@ -426,7 +426,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <td className="py-4 px-4 text-right">
                   <button
                     onClick={() => { setEditingId(ing.id); setEditValue(ing.currentStock.toString()); }}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-white/20 hover:text-[#C9A34E] transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-2 text-white/20 hover:text-[#cc9d37] transition-all"
                   >
                     <Edit3 size={16} />
                   </button>
@@ -441,19 +441,19 @@ export default function KitchenStockPanel({ language = 'TH' }) {
 
       {showAddLotModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative">
+          <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative">
             <button onClick={() => setShowAddLotModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white">
               <X size={24} />
             </button>
             <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-6 flex items-center gap-3">
-              <Truck className="text-[#C9A34E]" size={26} /> รับวัตถุดิบเข้า (Lot ใหม่)
+              <Truck className="text-[#cc9d37]" size={26} /> รับวัตถุดิบเข้า (Lot ใหม่)
             </h3>
             <form onSubmit={handleAddLot} className="space-y-5">
               <div>
                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วัตถุดิบ *</label>
                 <select
                   required
-                  className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                   value={lotForm.ingredientId}
                   onChange={e => {
                     const ing = ingredients.find(i => i.id === e.target.value);
@@ -468,14 +468,14 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <div>
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนที่รับเข้า *</label>
                   <input required type="number" step="0.001" min="0.001"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={lotForm.receivedQty}
                     onChange={e => setLotForm({ ...lotForm, receivedQty: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หน่วย</label>
                   <input type="text" placeholder="kg"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20"
                     value={lotForm.unit}
                     onChange={e => setLotForm({ ...lotForm, unit: e.target.value })} />
                 </div>
@@ -484,14 +484,14 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <div>
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันหมดอายุ</label>
                   <input type="date"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={lotForm.expiresAt}
                     onChange={e => setLotForm({ ...lotForm, expiresAt: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ต้นทุน/หน่วย (฿)</label>
                   <input type="number" step="0.01" min="0"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={lotForm.costPerUnit}
                     onChange={e => setLotForm({ ...lotForm, costPerUnit: e.target.value })} />
                 </div>
@@ -499,19 +499,19 @@ export default function KitchenStockPanel({ language = 'TH' }) {
               <div>
                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ผู้จำหน่าย</label>
                 <input type="text"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                   value={lotForm.supplier}
                   onChange={e => setLotForm({ ...lotForm, supplier: e.target.value })} />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หมายเหตุ</label>
                 <textarea rows={2}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 resize-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 resize-none"
                   value={lotForm.notes}
                   onChange={e => setLotForm({ ...lotForm, notes: e.target.value })} />
               </div>
               <button type="submit" disabled={lotSaving}
-                className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+                className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
                 {lotSaving ? 'กำลังบันทึก...' : 'รับ Lot เข้าระบบ'}
               </button>
             </form>
@@ -521,7 +521,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative animate-scale-up">
+          <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto relative animate-scale-up">
             <button 
               onClick={() => setShowAddModal(false)}
               className="absolute top-6 right-6 text-white/40 hover:text-white"
@@ -530,7 +530,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
             </button>
 
             <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
-              <Plus className="text-[#C9A34E]" size={28} /> เพิ่มวัตถุดิบใหม่
+              <Plus className="text-[#cc9d37]" size={28} /> เพิ่มวัตถุดิบใหม่
             </h3>
 
             <form onSubmit={handleAddIngredient} className="space-y-6">
@@ -541,7 +541,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                     required
                     type="text"
                     placeholder="ING-001"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20"
                     value={addForm.ingredientId}
                     onChange={e => setAddForm({...addForm, ingredientId: e.target.value.toUpperCase()})}
                   />
@@ -549,7 +549,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <div className="col-span-1">
                   <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หมวดหมู่</label>
                   <select
-                    className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={addForm.category}
                     onChange={e => setAddForm({...addForm, category: e.target.value})}
                   >
@@ -567,7 +567,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <input
                   required
                   type="text"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                   value={addForm.name}
                   onChange={e => setAddForm({...addForm, name: e.target.value})}
                 />
@@ -580,7 +580,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                     required
                     type="text"
                     placeholder="kg"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder:text-white/20"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20"
                     value={addForm.unit}
                     onChange={e => setAddForm({...addForm, unit: e.target.value})}
                   />
@@ -590,7 +590,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                   <input
                     type="number"
                     step="0.1"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={addForm.currentStock}
                     onChange={e => setAddForm({...addForm, currentStock: e.target.value})}
                   />
@@ -600,7 +600,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                   <input
                     type="number"
                     step="1"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                     value={addForm.minStock}
                     onChange={e => setAddForm({...addForm, minStock: e.target.value})}
                   />
@@ -612,7 +612,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
                   value={addForm.costPerUnit}
                   onChange={e => setAddForm({...addForm, costPerUnit: e.target.value})}
                 />
@@ -621,7 +621,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl shadow-amber-900/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl shadow-amber-900/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
               >
                 {saving ? 'กำลังสร้าง...' : 'สร้างวัตถุดิบใหม่'}
               </button>

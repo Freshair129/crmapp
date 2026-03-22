@@ -225,13 +225,13 @@ export default function AssetPanel({ language = 'TH' }) {
         DISPOSED: 'bg-white/5 text-white/40 border-white/10'
     };
 
-    const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#C9A34E]/50 placeholder-white/20";
+    const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 placeholder-white/20";
     const labelCls = "block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2";
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-20 space-y-4">
-            <Loader2 className="w-12 h-12 text-[#C9A34E] animate-spin" />
-            <span className="text-[#C9A34E] font-black animate-pulse uppercase tracking-[0.3em]">SYNCHRONIZING ASSETS...</span>
+            <Loader2 className="w-12 h-12 text-[#cc9d37] animate-spin" />
+            <span className="text-[#cc9d37] font-black animate-pulse uppercase tracking-[0.3em]">SYNCHRONIZING ASSETS...</span>
         </div>
     );
 
@@ -302,14 +302,14 @@ export default function AssetPanel({ language = 'TH' }) {
     return (
         <div className="space-y-8">
             {/* ── Header ─────────────────────────────────────────── */}
-            <div className="bg-[#0A1A2F]/50 backdrop-blur-xl rounded-[2.5rem] border border-white/10 p-8">
+            <div className="bg-[#0c1a2f]/50 backdrop-blur-xl rounded-[2.5rem] border border-white/10 p-8">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
                     <div>
                         <h1 className="text-4xl font-black text-[#F8F8F6] uppercase tracking-tighter mb-4">{t.title}</h1>
                         <div className="flex gap-4">
                             <div className="bg-white/5 px-6 py-2 rounded-2xl border border-white/10">
                                 <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t.total}</p>
-                                <p className="text-2xl font-black text-[#C9A34E]">{assets.length}</p>
+                                <p className="text-2xl font-black text-[#cc9d37]">{assets.length}</p>
                             </div>
                             <div className="bg-emerald-500/5 px-6 py-2 rounded-2xl border border-emerald-500/20">
                                 <p className="text-[10px] text-emerald-500/40 font-black uppercase tracking-widest">{t.active}</p>
@@ -322,7 +322,7 @@ export default function AssetPanel({ language = 'TH' }) {
                         </div>
                     </div>
                     <button onClick={() => setShowAddModal(true)}
-                        className="bg-[#C9A34E] text-[#0A1A2F] font-black rounded-2xl px-8 py-4 flex items-center gap-3 hover:bg-amber-400 transition-all shadow-xl shadow-amber-900/20 uppercase tracking-widest text-sm">
+                        className="bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl px-8 py-4 flex items-center gap-3 hover:bg-amber-400 transition-all shadow-xl shadow-amber-900/20 uppercase tracking-widest text-sm">
                         <Plus size={20} /> {t.add}
                     </button>
                 </div>
@@ -331,7 +331,7 @@ export default function AssetPanel({ language = 'TH' }) {
                     <div className="flex flex-wrap gap-2 pb-4 border-b border-white/5">
                         {['ALL', 'MARKETING', 'KITCHEN', 'OFFICE', 'GENERAL'].map(cat => (
                             <button key={cat} onClick={() => setFilter(cat)}
-                                className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${filter === cat ? 'bg-[#C9A34E] text-[#0A1A2F]' : 'bg-white/5 text-white/40 border border-white/10'}`}>
+                                className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${filter === cat ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/40 border border-white/10'}`}>
                                 <CategoryIcon cat={cat} size={14} />
                                 {cat === 'ALL' ? t.all : t[cat.toLowerCase()]}
                             </button>
@@ -341,7 +341,7 @@ export default function AssetPanel({ language = 'TH' }) {
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                             <input type="text" placeholder={t.search} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-[#C9A34E]/50 w-full font-bold" />
+                                className="bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-[#cc9d37]/50 w-full font-bold" />
                         </div>
                         <select className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-black uppercase tracking-widest text-xs focus:outline-none"
                             value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
@@ -361,7 +361,7 @@ export default function AssetPanel({ language = 'TH' }) {
                     const photos = Array.isArray(asset.photos) ? asset.photos : [];
                     return (
                         <div key={asset.id} onClick={() => openEdit(asset)}
-                            className="bg-white/5 rounded-3xl border border-white/10 p-6 cursor-pointer hover:border-[#C9A34E]/50 hover:bg-white/[0.07] transition-all group">
+                            className="bg-white/5 rounded-3xl border border-white/10 p-6 cursor-pointer hover:border-[#cc9d37]/50 hover:bg-white/[0.07] transition-all group">
                             {/* Thumbnail */}
                             {photos.length > 0 ? (
                                 <div className="w-full h-32 rounded-2xl overflow-hidden mb-4">
@@ -373,7 +373,7 @@ export default function AssetPanel({ language = 'TH' }) {
                                 </div>
                             )}
                             <div className="flex justify-between items-start mb-3">
-                                <div className={`p-2 rounded-xl ${asset.status === 'ACTIVE' ? 'bg-[#C9A34E]/10 text-[#C9A34E]' : 'bg-white/5 text-white/40'}`}>
+                                <div className={`p-2 rounded-xl ${asset.status === 'ACTIVE' ? 'bg-[#cc9d37]/10 text-[#cc9d37]' : 'bg-white/5 text-white/40'}`}>
                                     <CategoryIcon cat={asset.category} size={18} />
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColors[asset.status]}`}>
@@ -384,12 +384,12 @@ export default function AssetPanel({ language = 'TH' }) {
                             <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">{asset.assetId}</p>
                             <div className="space-y-2 pt-3 border-t border-white/5">
                                 <div className="flex items-center gap-2 text-white/40">
-                                    <MapPin size={12} className="text-[#C9A34E]/50" />
+                                    <MapPin size={12} className="text-[#cc9d37]/50" />
                                     <span className="text-xs font-bold uppercase truncate">{asset.location}</span>
                                 </div>
                                 {photos.length > 0 && (
                                     <div className="flex items-center gap-2 text-white/30">
-                                        <Camera size={12} className="text-[#C9A34E]/40" />
+                                        <Camera size={12} className="text-[#cc9d37]/40" />
                                         <span className="text-xs font-bold">{photos.length}/{MAX_PHOTOS} รูป</span>
                                     </div>
                                 )}
@@ -402,7 +402,7 @@ export default function AssetPanel({ language = 'TH' }) {
             {/* ══ ADD MODAL ══════════════════════════════════════════ */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex justify-between items-center mb-8">
                             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">{t.addModal}</h2>
                             <button onClick={() => setShowAddModal(false)} className="p-2 text-white/40 hover:text-white"><X size={24} /></button>
@@ -415,7 +415,7 @@ export default function AssetPanel({ language = 'TH' }) {
                                     {t.cancel}
                                 </button>
                                 <button type="submit" disabled={saving}
-                                    className="flex-1 py-4 rounded-2xl bg-[#C9A34E] text-[#0A1A2F] font-black uppercase tracking-widest text-sm hover:bg-amber-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                    className="flex-1 py-4 rounded-2xl bg-[#cc9d37] text-[#0c1a2f] font-black uppercase tracking-widest text-sm hover:bg-amber-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                                     {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                                     {t.create}
                                 </button>
@@ -428,12 +428,12 @@ export default function AssetPanel({ language = 'TH' }) {
             {/* ══ EDIT MODAL ═════════════════════════════════════════ */}
             {selectedAsset && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0A1A2F] border border-white/10 rounded-[2rem] w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
                         {/* Edit header */}
                         <div className="flex justify-between items-center p-8 pb-0">
                             <div>
                                 <h2 className="text-2xl font-black text-white uppercase tracking-tighter">{t.editModal}</h2>
-                                <p className="text-xs font-black text-[#C9A34E] uppercase tracking-widest mt-1">{selectedAsset.assetId}</p>
+                                <p className="text-xs font-black text-[#cc9d37] uppercase tracking-widest mt-1">{selectedAsset.assetId}</p>
                             </div>
                             <button onClick={() => setSelectedAsset(null)} className="p-2 text-white/40 hover:text-white"><X size={24} /></button>
                         </div>
@@ -446,7 +446,7 @@ export default function AssetPanel({ language = 'TH' }) {
                                     {(Array.isArray(selectedAsset.photos) ? selectedAsset.photos.length : 0) < MAX_PHOTOS && (
                                         <button type="button" onClick={() => fileInputRef.current?.click()}
                                             disabled={uploadingPhoto}
-                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C9A34E]/10 border border-[#C9A34E]/30 text-[#C9A34E] text-xs font-black uppercase tracking-widest hover:bg-[#C9A34E]/20 transition-all disabled:opacity-50">
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#cc9d37]/10 border border-[#cc9d37]/30 text-[#cc9d37] text-xs font-black uppercase tracking-widest hover:bg-[#cc9d37]/20 transition-all disabled:opacity-50">
                                             {uploadingPhoto ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                                             {t.addPhoto}
                                         </button>
@@ -467,7 +467,7 @@ export default function AssetPanel({ language = 'TH' }) {
                                     {/* Empty slots */}
                                     {Array.from({ length: MAX_PHOTOS - (Array.isArray(selectedAsset.photos) ? selectedAsset.photos.length : 0) }).map((_, i) => (
                                         <div key={`empty-${i}`} onClick={() => fileInputRef.current?.click()}
-                                            className="aspect-square rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-white/20 cursor-pointer hover:border-[#C9A34E]/30 hover:text-[#C9A34E]/40 transition-all">
+                                            className="aspect-square rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-white/20 cursor-pointer hover:border-[#cc9d37]/30 hover:text-[#cc9d37]/40 transition-all">
                                             <ImageIcon size={20} />
                                         </div>
                                     ))}
@@ -484,7 +484,7 @@ export default function AssetPanel({ language = 'TH' }) {
                                         {t.cancel}
                                     </button>
                                     <button type="submit" disabled={saving}
-                                        className="flex-1 py-4 rounded-2xl bg-[#C9A34E] text-[#0A1A2F] font-black uppercase tracking-widest text-sm hover:bg-amber-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                        className="flex-1 py-4 rounded-2xl bg-[#cc9d37] text-[#0c1a2f] font-black uppercase tracking-widest text-sm hover:bg-amber-400 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                                         {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                         {t.save}
                                     </button>

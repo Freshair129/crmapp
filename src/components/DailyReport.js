@@ -94,11 +94,11 @@ export default function DailyReport({ dailyData }) {
                 <span className="border-b border-white/20 border-dotted group-hover:border-white/60 transition-colors py-1">
                     {label}
                 </span>
-                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0A1A2F] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0c1a2f] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <p className="text-[11px] font-bold leading-relaxed normal-case tracking-normal text-white/90 text-center">
                         {description}
                     </p>
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0A1A2F] border-l border-t border-white/10 rotate-45"></div>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0c1a2f] border-l border-t border-white/10 rotate-45"></div>
                 </div>
             </div>
         </th>
@@ -119,7 +119,7 @@ export default function DailyReport({ dailyData }) {
                             <select
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                className="bg-[#0A1A2F] text-blue-400 border border-blue-500/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="bg-[#0c1a2f] text-blue-400 border border-blue-500/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
                             >
                                 {thaiMonths.map((m, i) => (
                                     <option key={i} value={i}>{m}</option>
@@ -128,7 +128,7 @@ export default function DailyReport({ dailyData }) {
                             <select
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="bg-[#0A1A2F] text-blue-400 border border-blue-500/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="bg-[#0c1a2f] text-blue-400 border border-blue-500/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-blue-500"
                             >
                                 {availableYears.map(year => (
                                     <option key={year} value={year}>{year}</option>
@@ -144,7 +144,7 @@ export default function DailyReport({ dailyData }) {
             {dailyStats.length > 0 && (
                 <div className="grid grid-cols-1 gap-12 mb-12">
                     {/* Combined Financial Performance Chart */}
-                    <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[600px]">
+                    <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[600px]">
                         <h3 className="text-center font-black text-white text-xs uppercase tracking-[0.2em] mb-10">Monthly Financial Overview (Spend, Revenue & ROAS)</h3>
                         <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
@@ -174,7 +174,7 @@ export default function DailyReport({ dailyData }) {
                                         label={{ value: 'Performance (ROAS)', angle: 90, position: 'insideRight', style: { fill: 'rgba(255,255,255,0.2)', fontSize: '10px', fontWeight: 'bold' } }}
                                     />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#0A1A2F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '12px' }}
+                                        contentStyle={{ backgroundColor: '#0c1a2f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '12px' }}
                                         itemStyle={{ fontSize: '11px', fontWeight: 'bold', padding: '2px 0' }}
                                         labelStyle={{ color: 'white', marginBottom: '8px', fontSize: '12px', fontWeight: 'black' }}
                                         formatter={(value, name) => {
@@ -190,9 +190,9 @@ export default function DailyReport({ dailyData }) {
                                         type="monotone"
                                         dataKey="roas"
                                         name="ROAS"
-                                        stroke="#C9A34E"
+                                        stroke="#cc9d37"
                                         strokeWidth={3}
-                                        dot={{ fill: '#C9A34E', r: 3, strokeWidth: 1.5, stroke: 'white' }}
+                                        dot={{ fill: '#cc9d37', r: 3, strokeWidth: 1.5, stroke: 'white' }}
                                         activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
                                     />
                                 </ComposedChart>
@@ -201,7 +201,7 @@ export default function DailyReport({ dailyData }) {
                     </div>
 
                     {/* Conversion Funnel: Clicks vs Conversions */}
-                    <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[500px]">
+                    <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-6 lg:p-10 flex flex-col h-[500px]">
                         <h3 className="text-center font-black text-white text-xs uppercase tracking-[0.2em] mb-8">Conversion Funnel (Clicks vs Conv)</h3>
                         <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
@@ -216,7 +216,7 @@ export default function DailyReport({ dailyData }) {
                                     <YAxis yAxisId="left" stroke="rgba(255,255,255,0.3)" fontSize={9} />
                                     <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.3)" fontSize={9} />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#0A1A2F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                                        contentStyle={{ backgroundColor: '#0c1a2f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                                         itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
                                         labelStyle={{ color: 'white', marginBottom: '4px', fontSize: '11px' }}
                                     />
@@ -231,7 +231,7 @@ export default function DailyReport({ dailyData }) {
             )}
 
             {/* Main Table */}
-            <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] overflow-hidden">
+            <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -260,7 +260,7 @@ export default function DailyReport({ dailyData }) {
                                     <td className="p-4 text-right text-white/60">฿{fmt(d.cpc, 2)}</td>
                                     <td className="p-4 text-right text-emerald-400">{fmt(d.conversions)}</td>
                                     <td className="p-4 text-right font-black">฿{fmt(d.revenue, 2)}</td>
-                                    <td className="p-4 text-right pr-8 font-black text-[#C9A34E]">{fmt(d.roas, 2)}</td>
+                                    <td className="p-4 text-right pr-8 font-black text-[#cc9d37]">{fmt(d.roas, 2)}</td>
                                 </tr>
                             )) : (
                                 <tr>
@@ -282,7 +282,7 @@ export default function DailyReport({ dailyData }) {
                                     <td className="p-5 text-right">฿{fmt(totalCPC, 2)}</td>
                                     <td className="p-5 text-right text-emerald-400">{fmt(totals.conversions)}</td>
                                     <td className="p-5 text-right">฿{fmt(totals.revenue, 2)}</td>
-                                    <td className="p-5 text-right pr-8 text-[#C9A34E]">{fmt(totalROAS, 2)}x</td>
+                                    <td className="p-5 text-right pr-8 text-[#cc9d37]">{fmt(totalROAS, 2)}x</td>
                                 </tr>
                             </tfoot>
                         )}

@@ -24,7 +24,7 @@ export default function LineConnect({ language = 'TH' }) {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black text-[#F8F8F6] tracking-tight italic uppercase">{labels.title}</h1>
-                        <p className="text-[#C9A34E] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
+                        <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-1">{labels.desc}</p>
                     </div>
                 </div>
                 <button className="bg-[#06C755] text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all flex items-center gap-3">
@@ -58,7 +58,7 @@ export default function LineConnect({ language = 'TH' }) {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-[#C9A34E] text-[#0A1A2F] p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-all">
+                    <div className="bg-[#cc9d37] text-[#0c1a2f] p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-all">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-y-1/2"></div>
                         <Fingerprint size={60} className="opacity-10 absolute bottom-10 right-10" />
                         <h4 className="text-3xl font-black italic tracking-tighter uppercase mb-2">{labels.status}</h4>

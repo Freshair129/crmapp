@@ -129,7 +129,7 @@ function StockOverviewTab({ warehouses }) {
         <select
           value={warehouseId}
           onChange={(e) => setWarehouseId(e.target.value)}
-          className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm appearance-none min-w-[180px]"
+          className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm appearance-none min-w-[180px]"
         >
           <option value="">คลังทั้งหมด</option>
           {warehouses.map((w) => (
@@ -196,11 +196,11 @@ function StockOverviewTab({ warehouses }) {
                       <tr
                         onClick={() => handleRowClick(item)}
                         className={`border-b border-white/5 cursor-pointer transition-colors ${
-                          isSelected ? 'bg-[#C9A34E]/10' : 'hover:bg-white/[0.03]'
+                          isSelected ? 'bg-[#cc9d37]/10' : 'hover:bg-white/[0.03]'
                         }`}
                       >
                         <td className="px-4 py-3 text-white font-medium flex items-center gap-2">
-                          {isSelected ? <ChevronDown size={12} className="text-[#C9A34E] shrink-0" /> : <ChevronRight size={12} className="text-white/20 shrink-0" />}
+                          {isSelected ? <ChevronDown size={12} className="text-[#cc9d37] shrink-0" /> : <ChevronRight size={12} className="text-white/20 shrink-0" />}
                           {item.name}
                         </td>
                         <td className="px-4 py-3 text-white/50">{item.category || '—'}</td>
@@ -415,7 +415,7 @@ function MovementsTab({ warehouses }) {
             <select
               value={form.warehouseId}
               onChange={(e) => setForm((f) => ({ ...f, warehouseId: e.target.value }))}
-              className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
+              className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
               required
             >
               <option value="">เลือกคลัง</option>
@@ -463,7 +463,7 @@ function MovementsTab({ warehouses }) {
               <select
                 value={form.reason}
                 onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
+                className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
               >
                 {MOVEMENT_REASONS.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -488,7 +488,7 @@ function MovementsTab({ warehouses }) {
         <button
           type="submit"
           disabled={submitting || !form.productId || !form.warehouseId || !form.quantity}
-          className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {submitting ? <Loader2 className="animate-spin" size={14} /> : subMode === 'RECEIVE' ? <ArrowDownToLine size={14} /> : <ArrowUpFromLine size={14} />}
           {subMode === 'RECEIVE' ? 'บันทึกรับเข้า' : 'บันทึกจ่ายออก'}
@@ -630,7 +630,7 @@ function TransferTab({ warehouses }) {
             <select
               value={form.fromWarehouseId}
               onChange={(e) => setForm((f) => ({ ...f, fromWarehouseId: e.target.value }))}
-              className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
+              className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
               required
             >
               <option value="">เลือกคลังต้นทาง</option>
@@ -646,7 +646,7 @@ function TransferTab({ warehouses }) {
             <select
               value={form.toWarehouseId}
               onChange={(e) => setForm((f) => ({ ...f, toWarehouseId: e.target.value }))}
-              className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
+              className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
               required
             >
               <option value="">เลือกคลังปลายทาง</option>
@@ -722,7 +722,7 @@ function TransferTab({ warehouses }) {
         <button
           type="submit"
           disabled={submitting || !form.productId || !form.fromWarehouseId || !form.toWarehouseId || !form.quantity}
-          className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           {submitting ? <Loader2 className="animate-spin" size={14} /> : <ArrowLeftRight size={14} />}
           บันทึกการโอนย้าย
@@ -887,7 +887,7 @@ function StockCountTab({ warehouses }) {
               <select
                 value={selectedWarehouse}
                 onChange={(e) => setSelectedWarehouse(e.target.value)}
-                className="bg-[#0A1A2F] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
+                className="bg-[#0c1a2f] border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm w-full appearance-none"
               >
                 <option value="">เลือกคลังสินค้า</option>
                 {warehouses.map((w) => (
@@ -898,7 +898,7 @@ function StockCountTab({ warehouses }) {
             <button
               onClick={startCount}
               disabled={startingCount || !selectedWarehouse}
-              className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2 whitespace-nowrap"
+              className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               {startingCount ? <Loader2 className="animate-spin" size={14} /> : <ClipboardCheck size={14} />}
               เริ่มนับสต็อก
@@ -906,17 +906,17 @@ function StockCountTab({ warehouses }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white/[0.02] border border-[#C9A34E]/30 rounded-2xl overflow-hidden">
-          <div className="bg-[#C9A34E]/10 px-5 py-3 flex items-center justify-between">
+        <div className="bg-white/[0.02] border border-[#cc9d37]/30 rounded-2xl overflow-hidden">
+          <div className="bg-[#cc9d37]/10 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ClipboardCheck size={16} className="text-[#C9A34E]" />
-              <span className="text-sm font-bold text-[#C9A34E] uppercase tracking-widest">กำลังนับสต็อก</span>
+              <ClipboardCheck size={16} className="text-[#cc9d37]" />
+              <span className="text-sm font-bold text-[#cc9d37] uppercase tracking-widest">กำลังนับสต็อก</span>
               <span className="text-white/40 text-xs">{activeCount.warehouseName || ''}</span>
             </div>
             <button
               onClick={completeCount}
               disabled={completingCount}
-              className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-5 py-2 rounded-xl text-xs disabled:opacity-30 transition-colors flex items-center gap-2"
+              className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-5 py-2 rounded-xl text-xs disabled:opacity-30 transition-colors flex items-center gap-2"
             >
               {completingCount ? <Loader2 className="animate-spin" size={12} /> : <CheckCircle2 size={12} />}
               เสร็จสิ้นการนับ
@@ -1071,7 +1071,7 @@ function WarehousesTab({ warehouses, onRefresh }) {
       <div className="flex justify-end">
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
+          className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2"
         >
           <Plus size={14} /> เพิ่มคลัง
         </button>
@@ -1092,7 +1092,7 @@ function WarehousesTab({ warehouses, onRefresh }) {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-white font-bold text-sm">{w.name}</h3>
-                  <span className="text-[10px] uppercase tracking-widest text-[#C9A34E] font-bold">WH-{w.code}</span>
+                  <span className="text-[10px] uppercase tracking-widest text-[#cc9d37] font-bold">WH-{w.code}</span>
                 </div>
                 <button
                   onClick={() => toggleActive(w)}
@@ -1203,7 +1203,7 @@ function WarehousesTab({ warehouses, onRefresh }) {
                   <button
                     type="submit"
                     disabled={saving || !form.name || !form.code || form.code.length < 2}
-                    className="bg-[#C9A34E] hover:bg-amber-400 text-[#0A1A2F] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    className="bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                   >
                     {saving ? <Loader2 className="animate-spin" size={14} /> : <Plus size={14} />}
                     สร้างคลัง
@@ -1244,8 +1244,8 @@ export default function InventoryControlPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#C9A34E]/20 flex items-center justify-center">
-            <Package size={18} className="text-[#C9A34E]" />
+          <div className="w-10 h-10 rounded-xl bg-[#cc9d37]/20 flex items-center justify-center">
+            <Package size={18} className="text-[#cc9d37]" />
           </div>
           <div>
             <h1 className="text-white font-bold text-lg">Inventory Control</h1>
@@ -1265,14 +1265,14 @@ export default function InventoryControlPanel() {
               onClick={() => setActiveTab(tab.key)}
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'text-[#0A1A2F]'
+                  ? 'text-[#0c1a2f]'
                   : 'text-white/40 hover:text-white/70'
               }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="inventoryTabBg"
-                  className="absolute inset-0 bg-[#C9A34E] rounded-xl"
+                  className="absolute inset-0 bg-[#cc9d37] rounded-xl"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}

@@ -67,7 +67,7 @@ Related Data: ${JSON.stringify(context.data || {})}
             {/* Trigger Button */}
             <button
                 onClick={() => setShowPopover(!showPopover)}
-                className={`text-[#C9A34E] hover:text-[#E0C06E] transition-colors ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}
+                className={`text-[#cc9d37] hover:text-[#E0C06E] transition-colors ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}
                 title="Ask AI about this"
             >
                 <Icon size={size === 'sm' ? 10 : 12} />
@@ -75,13 +75,13 @@ Related Data: ${JSON.stringify(context.data || {})}
 
             {/* Popover */}
             {showPopover && (
-                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-[#0A1A2F] border border-white/10 rounded-xl shadow-2xl p-4 animate-fade-in-up">
+                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-[#0c1a2f] border border-white/10 rounded-xl shadow-2xl p-4 animate-fade-in-up">
                     {/* Arrow */}
-                    <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0A1A2F] border-b border-l border-white/10 transform -rotate-45"></div>
+                    <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0c1a2f] border-b border-l border-white/10 transform -rotate-45"></div>
 
                     {/* Header */}
                     <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
-                        <Bot size={14} className="text-[#C9A34E]" />
+                        <Bot size={14} className="text-[#cc9d37]" />
                         <span className="text-xs font-bold text-white">AI Context: {context.label}</span>
                     </div>
 
@@ -95,13 +95,13 @@ Related Data: ${JSON.stringify(context.data || {})}
                                 value={question}
                                 onChange={(e) => setQuestion(e.target.value)}
                                 placeholder="Ask about this metric..."
-                                className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-white/20 mb-2 focus:outline-none focus:border-[#C9A34E]/50 resize-none h-20"
+                                className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-white/20 mb-2 focus:outline-none focus:border-[#cc9d37]/50 resize-none h-20"
                                 autoFocus
                             />
                             <button
                                 type="submit"
                                 disabled={loading || !question.trim()}
-                                className="w-full bg-[#C9A34E] text-black text-xs font-bold py-1.5 rounded-lg hover:bg-[#E0C06E] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-[#cc9d37] text-black text-xs font-bold py-1.5 rounded-lg hover:bg-[#E0C06E] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                             >
                                 {loading && <Loader2 size={14} className="animate-spin" />}
                                 {loading ? 'Analyzing...' : 'Ask AI'}
@@ -114,7 +114,7 @@ Related Data: ${JSON.stringify(context.data || {})}
                             </div>
                             <button
                                 onClick={() => { setAnswer(''); setQuestion(''); }}
-                                className="text-[10px] text-[#C9A34E] hover:underline w-full text-center"
+                                className="text-[10px] text-[#cc9d37] hover:underline w-full text-center"
                             >
                                 Ask another question
                             </button>

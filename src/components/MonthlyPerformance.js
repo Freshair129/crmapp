@@ -77,12 +77,12 @@ export default function MonthlyPerformance({ dailyData }) {
                     {label}
                 </span>
                 {/* Tooltip */}
-                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0A1A2F] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                <div className="absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-56 p-4 bg-[#0c1a2f] backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                     <p className="text-[11px] font-bold leading-relaxed normal-case tracking-normal text-white/90 text-center">
                         {description}
                     </p>
                     {/* Arrow */}
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0A1A2F] border-l border-t border-white/10 rotate-45"></div>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0c1a2f] border-l border-t border-white/10 rotate-45"></div>
                 </div>
             </div>
         </th>
@@ -93,17 +93,17 @@ export default function MonthlyPerformance({ dailyData }) {
             {/* Header Section */}
             <div className="flex flex-col items-center justify-center text-center space-y-4 mb-8">
                 <div className="flex items-center gap-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C9A34E] to-amber-600 flex items-center justify-center shadow-lg shadow-[#C9A34E]/20">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#cc9d37] to-amber-600 flex items-center justify-center shadow-lg shadow-[#cc9d37]/20">
                         <Table className="text-white w-6 h-6" />
                     </div>
                     <div className="text-left">
                         <h1 className="text-4xl font-black text-white tracking-widest uppercase">Monthly Report (Summary)</h1>
                         <div className="flex items-center gap-3 mt-1">
-                            <p className="text-[#C9A34E] font-bold text-sm tracking-[0.2em]">MONTHLY AD PERFORMANCE DASHBOARD •</p>
+                            <p className="text-[#cc9d37] font-bold text-sm tracking-[0.2em]">MONTHLY AD PERFORMANCE DASHBOARD •</p>
                             <select
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="bg-[#0A1A2F] text-[#C9A34E] border border-[#C9A34E]/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-[#C9A34E]"
+                                className="bg-[#0c1a2f] text-[#cc9d37] border border-[#cc9d37]/30 rounded-lg px-3 py-1 text-sm font-black focus:outline-none focus:ring-1 focus:ring-[#cc9d37]"
                             >
                                 {availableYears.map(year => (
                                     <option key={year} value={year}>{year}</option>
@@ -118,7 +118,7 @@ export default function MonthlyPerformance({ dailyData }) {
             {/* ROAS Summary (Horizontal Bars) & Table View */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 {/* ROAS Bars */}
-                <div className="xl:col-span-3 bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-6 flex flex-col">
+                <div className="xl:col-span-3 bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-6 flex flex-col">
                     <h3 className="text-center font-black text-white text-xl uppercase tracking-widest mb-8">ROAS</h3>
                     <div className="flex-1 space-y-4">
                         {monthlyStats.map((m, i) => (
@@ -127,10 +127,10 @@ export default function MonthlyPerformance({ dailyData }) {
                                 <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden relative border border-white/5">
                                     <div
                                         style={{ width: `${(m.roas / maxROAS) * 100}%` }}
-                                        className="h-full bg-gradient-to-r from-amber-600 to-[#C9A34E] rounded-full transition-all duration-1000 group-hover:from-amber-500 group-hover:to-amber-300"
+                                        className="h-full bg-gradient-to-r from-amber-600 to-[#cc9d37] rounded-full transition-all duration-1000 group-hover:from-amber-500 group-hover:to-amber-300"
                                     ></div>
                                 </div>
-                                <span className="text-[10px] font-black text-[#C9A34E] w-8">
+                                <span className="text-[10px] font-black text-[#cc9d37] w-8">
                                     {m.roas > 0 ? fmt(m.roas, 2) : '0.00'}
                                 </span>
                             </div>
@@ -139,7 +139,7 @@ export default function MonthlyPerformance({ dailyData }) {
                 </div>
 
                 {/* Main Performance Table */}
-                <div className="xl:col-span-9 bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem]">
+                <div className="xl:col-span-9 bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem]">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-[#BFA173]/20 text-[10px] font-black text-white uppercase tracking-[0.1em]">
@@ -163,7 +163,7 @@ export default function MonthlyPerformance({ dailyData }) {
                                     <td className="p-4 text-right text-emerald-400">{fmt(m.conversions)}</td>
                                     <td className="p-4 text-right font-black">฿{fmt(m.revenue, 2)}</td>
                                     <td className="p-4 text-right text-red-400">฿{fmt(m.costPerConv, 2)}</td>
-                                    <td className="p-4 text-right pr-8 font-black text-[#C9A34E]">{fmt(m.roas, 2)}</td>
+                                    <td className="p-4 text-right pr-8 font-black text-[#cc9d37]">{fmt(m.roas, 2)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -176,7 +176,7 @@ export default function MonthlyPerformance({ dailyData }) {
                                 <td className="p-5 text-right text-emerald-400">{fmt(monthlyStats.reduce((s, m) => s + m.conversions, 0))}</td>
                                 <td className="p-5 text-right">฿{fmt(monthlyStats.reduce((s, m) => s + m.revenue, 0), 2)}</td>
                                 <td className="p-5 text-right">-</td>
-                                <td className="p-5 text-right pr-8 text-[#C9A34E]">
+                                <td className="p-5 text-right pr-8 text-[#cc9d37]">
                                     {fmt(monthlyStats.reduce((s, m) => s + m.revenue, 0) / (monthlyStats.reduce((s, m) => s + m.spend, 0) || 1), 2)}x
                                 </td>
                             </tr>
@@ -188,7 +188,7 @@ export default function MonthlyPerformance({ dailyData }) {
             {/* Visual Trend Charts Section */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 {/* Revenue vs Ads Spent Area Chart */}
-                <div className="xl:col-span-8 bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-8">
+                <div className="xl:col-span-8 bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-8">
                     <div className="flex items-center justify-between mb-10">
                         <h3 className="font-black text-white text-xl uppercase tracking-widest">รายรับและรายจ่าย</h3>
                         <div className="flex items-center gap-6">
@@ -215,7 +215,7 @@ export default function MonthlyPerformance({ dailyData }) {
                                     {/* Revenue Bar */}
                                     <div
                                         style={{ height: `${(m.revenue / maxSpendRevenue) * 100}%` }}
-                                        className="w-full bg-[#C9A34E]/60 border-t-2 border-[#C9A34E] rounded-t-lg relative group-hover:bg-[#C9A34E] transition-all"
+                                        className="w-full bg-[#cc9d37]/60 border-t-2 border-[#cc9d37] rounded-t-lg relative group-hover:bg-[#cc9d37] transition-all"
                                     >
                                         <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-[8px] font-black opacity-0 group-hover:opacity-100 transition-opacity bg-white text-black px-1.5 py-0.5 rounded">฿{fmt(m.revenue)}</span>
                                     </div>
@@ -236,7 +236,7 @@ export default function MonthlyPerformance({ dailyData }) {
                 {/* Reach & Conversions Trends */}
                 <div className="xl:col-span-4 space-y-8">
                     {/* Reach Trends */}
-                    <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="text-center font-black text-white text-md uppercase tracking-widest mb-6">Reach</h3>
                         <div className="h-32 flex items-end gap-1.5">
                             {monthlyStats.map((m, i) => (
@@ -249,7 +249,7 @@ export default function MonthlyPerformance({ dailyData }) {
                     </div>
 
                     {/* Conversions Trends */}
-                    <div className="bg-[#0A1A2F]/80 border border-white/10 rounded-[2.5rem] p-8">
+                    <div className="bg-[#0c1a2f]/80 border border-white/10 rounded-[2.5rem] p-8">
                         <h3 className="text-center font-black text-white text-md uppercase tracking-widest mb-6">Conversions</h3>
                         <div className="h-32 flex items-end gap-1.5">
                             {monthlyStats.map((m, i) => (
