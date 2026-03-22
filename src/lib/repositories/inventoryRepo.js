@@ -58,32 +58,75 @@ export async function updateWarehouse(id, data) {
 
 // ─── Stock Levels ────────────────────────────────────────────────────────────
 
-export async function getStockLevels({ warehouseId, productId, lowStockOnly } = {}) {
+export async function getStockLevels({
+    warehouseId  = null,
+    productId    = null,
+    lowStockOnly = false,
+    search       = null,
+    page         = 1,
+    limit        = 25,
+} = {}) {
     try {
         const prisma = await getPrisma();
-        const where = {};
-        if (warehouseId) where.warehouseId = warehouseId;
-        if (productId) where.productId = productId;
+        const skip   = (Math.max(1, page) - 1) * limit;
 
-        let stocks = await prisma.warehouseStock.findMany({
-            where,
-            include: {
-                product: {
-                    select: { id: true, productId: true, name: true, category: true, image: true },
-                },
-            },
-            orderBy: { updatedAt: 'desc' },
-        });
+        // Build product name search filter
+        const productWhere = search
+            ? { name: { contains: search, mode: 'insensitive' } }
+            : undefined;
 
+        const where = {
+            ...(warehouseId ? { warehouseId }                            : {}),
+            ...(productId   ? { productId }                              : {}),
+            ...(search      ? { product: productWhere }                  : {}),
+        };
+
+        const include = {
+            product:   { select: { id: true, productId: true, name: true, category: true, image: true } },
+            warehouse: { select: { id: true, name: true, code: true } },
+        };
+
+        // lowStockOnly: Prisma can't compare two columns — post-filter
+        // So we fetch all for filtering, then paginate manually
         if (lowStockOnly) {
-            stocks = stocks.filter(s => s.quantity <= s.minStock);
+            const all = await prisma.warehouseStock.findMany({
+                where, include, orderBy: { updatedAt: 'desc' },
+            });
+            const filtered = all.filter(s => s.quantity <= s.minStock);
+            const total     = filtered.length;
+            const data      = filtered.slice(skip, skip + limit).map(normalizeStock);
+            return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
         }
 
-        return stocks;
+        const [data, total] = await Promise.all([
+            prisma.warehouseStock.findMany({
+                where, include, orderBy: { updatedAt: 'desc' },
+                skip, take: limit,
+            }),
+            prisma.warehouseStock.count({ where }),
+        ]);
+
+        return {
+            data:       data.map(normalizeStock),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     } catch (error) {
         logger.error('[InventoryRepo]', 'Failed to get stock levels', error);
         throw error;
     }
+}
+
+function normalizeStock(s) {
+    return {
+        ...s,
+        warehouseName: s.warehouse?.name ?? null,
+        warehouseCode: s.warehouse?.code ?? null,
+        name:          s.product?.name   ?? s.productId,
+        category:      s.product?.category ?? null,
+    };
 }
 
 export async function getLowStockAlerts() {

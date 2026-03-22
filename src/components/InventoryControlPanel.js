@@ -6,7 +6,8 @@ import {
   Package, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, ClipboardCheck,
   Warehouse, Search, Loader2, Plus, X, Filter, ScanBarcode, ChevronDown,
   ChevronRight, AlertTriangle, CheckCircle2, XCircle, RefreshCw,
-  MapPin, Hash, FileText, Truck, Calendar, Eye, ToggleLeft, ToggleRight
+  MapPin, Hash, FileText, Truck, Calendar, Eye, ToggleLeft, ToggleRight,
+  ChevronLeft, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 
 const TABS = [
@@ -65,8 +66,13 @@ function formatQty(n) {
 
 // ─── STOCK OVERVIEW TAB ────────────────────────────────────────────
 function StockOverviewTab({ warehouses }) {
+  const PAGE_LIMIT = 25;
+
   const [loading, setLoading] = useState(true);
   const [stock, setStock] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [warehouseId, setWarehouseId] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -74,24 +80,34 @@ function StockOverviewTab({ warehouses }) {
   const [movements, setMovements] = useState([]);
   const [movementsLoading, setMovementsLoading] = useState(false);
 
-  const fetchStock = useCallback(async () => {
+  const fetchStock = useCallback(async (targetPage = page) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (warehouseId) params.set('warehouseId', warehouseId);
-      if (lowStockOnly) params.set('lowStockOnly', 'true');
-      if (barcodeInput.trim()) params.set('search', barcodeInput.trim());
-      const res = await fetch(`/api/inventory/stock?${params}`);
+      if (warehouseId)          params.set('warehouseId', warehouseId);
+      if (lowStockOnly)         params.set('lowStockOnly', 'true');
+      if (barcodeInput.trim())  params.set('search', barcodeInput.trim());
+      params.set('page',  targetPage);
+      params.set('limit', PAGE_LIMIT);
+      const res  = await fetch(`/api/inventory/stock?${params}`);
       const data = await res.json();
-      setStock(data.success ? data.data : []);
+      if (data.success) {
+        setStock(data.data);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.totalPages ?? 1);
+      } else {
+        setStock([]);
+      }
     } catch (err) {
       console.error('[InventoryControlPanel] fetchStock error', err);
     } finally {
       setLoading(false);
     }
-  }, [warehouseId, lowStockOnly, barcodeInput]);
+  }, [warehouseId, lowStockOnly, barcodeInput, page]);
 
-  useEffect(() => { fetchStock(); }, [fetchStock]);
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1); setSelectedProduct(null); }, [warehouseId, lowStockOnly]);
+  useEffect(() => { fetchStock(page); }, [fetchStock]);
 
   const fetchMovements = async (productId) => {
     try {
@@ -156,12 +172,12 @@ function StockOverviewTab({ warehouses }) {
             placeholder="Barcode / ค้นหาสินค้า..."
             value={barcodeInput}
             onChange={(e) => setBarcodeInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchStock()}
+            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchStock(1); } }}
             className="bg-white/5 border border-white/10 text-white px-4 py-2.5 pl-9 rounded-xl text-sm w-full placeholder:text-white/20"
           />
         </div>
 
-        <button onClick={fetchStock} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/50 hover:text-white transition-colors">
+        <button onClick={() => { setPage(1); fetchStock(1); }} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/50 hover:text-white transition-colors">
           <RefreshCw size={14} />
         </button>
       </div>
@@ -248,6 +264,78 @@ function StockOverviewTab({ warehouses }) {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination bar */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+              {/* Info */}
+              <span className="text-[11px] text-white/30">
+                {((page - 1) * PAGE_LIMIT) + 1}–{Math.min(page * PAGE_LIMIT, total)} จาก {total.toLocaleString()} รายการ
+              </span>
+
+              {/* Controls */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { setPage(1); fetchStock(1); }}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsLeft size={14} />
+                </button>
+                <button
+                  onClick={() => { const p = page - 1; setPage(p); fetchStock(p); }}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1 mx-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let p;
+                    if (totalPages <= 5) {
+                      p = i + 1;
+                    } else if (page <= 3) {
+                      p = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      p = totalPages - 4 + i;
+                    } else {
+                      p = page - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => { setPage(p); fetchStock(p); }}
+                        className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                          p === page
+                            ? 'bg-[#cc9d37] text-black'
+                            : 'text-white/40 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => { const p = page + 1; setPage(p); fetchStock(p); }}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={14} />
+                </button>
+                <button
+                  onClick={() => { setPage(totalPages); fetchStock(totalPages); }}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
