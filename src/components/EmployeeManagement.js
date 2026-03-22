@@ -422,8 +422,18 @@ function Sparkline({ sales = [], color = '#00f5ff' }) {
     );
 }
 
-// ─── Mini Dashboard (rank + 6 metrics) ───────────────────────────────────────
-function MiniDashboard({ emp, linked, barColor }) {
+// ─── Mini Dashboard ───────────────────────────────────────────────────────────
+// Wrapper: watches isActive → increments animKey → forces full content remount
+// so every animation (count-up, arc, sparkline) replays on each card-swipe
+function MiniDashboard({ emp, linked, barColor, isActive }) {
+    const [animKey, setAnimKey] = useState(0);
+    useEffect(() => {
+        if (isActive) setAnimKey(k => k + 1);
+    }, [isActive]);
+    return <MiniDashboardContent key={animKey} emp={emp} linked={linked} barColor={barColor} />;
+}
+
+function MiniDashboardContent({ emp, linked, barColor }) {
     const domain     = getEmployeeDomain(emp);
     const { score, metrics } = calcEmployeeScore(linked, domain);
     const rankLetter = getRankLetter(score);
@@ -734,7 +744,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
                             {/* ── MINI DASHBOARD ── */}
                             <div className="mt-3 flex-1 min-h-0">
-                                <MiniDashboard key={emp?.id || 'none'} emp={emp} linked={linked} barColor={barColor} />
+                                <MiniDashboard emp={emp} linked={linked} barColor={barColor} isActive={isActive} />
                             </div>
 
                             {/* ── BOTTOM ROW: contacts+toggle left · priority bar right ── */}
