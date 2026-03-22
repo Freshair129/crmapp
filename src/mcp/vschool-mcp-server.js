@@ -18,6 +18,8 @@ import * as inventoryRepo from '../lib/repositories/inventoryRepo.js';
 import * as customerRepo from '../lib/repositories/customerRepo.js';
 import * as scheduleRepo from '../lib/repositories/scheduleRepo.js';
 import * as kitchenRepo from '../lib/repositories/kitchenRepo.js';
+import * as marketingRepo from '../lib/repositories/marketingRepo.js';
+import * as adsOptimizeRepo from '../lib/repositories/adsOptimizeRepo.js';
 import { logger } from '../lib/logger.js';
 
 const MODULE = 'V-School-MCP';
@@ -29,7 +31,7 @@ const MODULE = 'V-School-MCP';
 const server = new Server(
     {
         name: 'vschool-crm-server',
-        version: '1.6.0',
+        version: '1.8.0',
     },
     {
         capabilities: {
@@ -202,6 +204,126 @@ const TOOLS = [
             required: ['poId', 'approverId', 'action'],
         },
     },
+
+    // ─── Meta Ads Domain (Read) ──────────────────────────────────────────
+    {
+        name: 'ads.get_campaign_insights',
+        description: 'ดู performance ของ Meta Ads campaigns — spend, impressions, clicks, reach, revenue, ROAS, CTR',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                range: {
+                    type: 'string',
+                    enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'],
+                    description: 'ช่วงเวลา (default = all time)',
+                },
+                status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'],
+                    description: 'กรองตาม status (optional)',
+                },
+            },
+        },
+    },
+    {
+        name: 'ads.get_adset_insights',
+        description: 'ดู performance ของ Meta Ads adsets — spend, impressions, clicks, ROAS แยกตาม adset',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                range: {
+                    type: 'string',
+                    enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'],
+                    description: 'ช่วงเวลา (default = all time)',
+                },
+                status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'],
+                    description: 'กรองตาม status (optional)',
+                },
+            },
+        },
+    },
+    {
+        name: 'ads.get_ad_performance',
+        description: 'ดู performance ของ ads รายชิ้น — spend, clicks, CTR, CPC, ROAS แต่ละ creative',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                range: {
+                    type: 'string',
+                    enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'],
+                    description: 'ช่วงเวลา (default = all time)',
+                },
+                status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'],
+                    description: 'กรองตาม status (optional)',
+                },
+            },
+        },
+    },
+    {
+        name: 'ads.get_daily_metrics',
+        description: 'ดูเทรนด์ daily metrics ย้อนหลัง — spend, impressions, clicks, CTR, ROAS ต่อวัน (สำหรับ graph/trend analysis)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                since: {
+                    type: 'string',
+                    description: 'วันเริ่มต้น ISO format เช่น 2026-03-01 (default = 30 วันที่แล้ว)',
+                },
+            },
+        },
+    },
+    {
+        name: 'ads.get_marketing_summary',
+        description: 'ดูภาพรวม marketing performance — total spend/revenue/ROAS 30d + all-time, top campaigns, insights',
+        inputSchema: { type: 'object', properties: {} },
+    },
+
+    // ─── Meta Ads Domain (Write) ─────────────────────────────────────────
+    {
+        name: 'ads.pause_resume',
+        description: 'หยุดหรือเปิดใช้งาน campaign / adset / ad บน Meta — ⚠️ write operation (เปลี่ยน status จริงบน Meta)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                targetId: { type: 'string', description: 'Meta campaign/adset/ad ID เช่น 120213579937120185' },
+                targetType: {
+                    type: 'string',
+                    enum: ['campaign', 'adset', 'ad'],
+                    description: 'ประเภทของ target',
+                },
+                status: {
+                    type: 'string',
+                    enum: ['ACTIVE', 'PAUSED'],
+                    description: 'ACTIVE = เปิด, PAUSED = หยุด',
+                },
+                actorEmployeeId: {
+                    type: 'string',
+                    description: 'Employee ID ผู้ทำรายการ เช่น TVS-EMP-MKT-001 (สำหรับ audit log)',
+                },
+            },
+            required: ['targetId', 'targetType', 'status', 'actorEmployeeId'],
+        },
+    },
+    {
+        name: 'ads.set_daily_budget',
+        description: 'ปรับ daily budget ของ adset — ⚠️ write operation (เปลี่ยน budget จริงบน Meta)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                adsetId: { type: 'string', description: 'Meta adset ID' },
+                newBudget: { type: 'number', description: 'งบประมาณใหม่ (บาท) เช่น 500 หมายถึง ฿500/วัน' },
+                actorEmployeeId: {
+                    type: 'string',
+                    description: 'Employee ID ผู้ทำรายการ เช่น TVS-EMP-MKT-001 (สำหรับ audit log)',
+                },
+            },
+            required: ['adsetId', 'newBudget', 'actorEmployeeId'],
+        },
+    },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
@@ -371,6 +493,128 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 });
             }
 
+            // ─── Meta Ads (Read) ──────────────────────────────────────────
+            case 'ads.get_campaign_insights': {
+                const campaigns = await marketingRepo.getCampaignsWithAggregatedMetrics({
+                    range: args.range,
+                    status: args.status,
+                });
+                return textResult({
+                    count: campaigns.length,
+                    range: args.range || 'all_time',
+                    campaigns: campaigns.map(c => ({
+                        campaignId: c.campaignId,
+                        name: c.name,
+                        status: c.status,
+                        spend: c.spend,
+                        impressions: c.impressions,
+                        clicks: c.clicks,
+                        reach: c.reach,
+                        revenue: c.revenue,
+                        roas: c.roas,
+                        ctr: c.ctr,
+                        cpc: c.cpc,
+                    })),
+                });
+            }
+
+            case 'ads.get_adset_insights': {
+                const adsets = await marketingRepo.getAdSetsWithAggregatedMetrics({
+                    range: args.range,
+                    status: args.status,
+                });
+                return textResult({
+                    count: adsets.length,
+                    range: args.range || 'all_time',
+                    adsets: adsets.map(a => ({
+                        adsetId: a.adsetId,
+                        name: a.name,
+                        status: a.status,
+                        campaignName: a.campaignName,
+                        spend: a.spend,
+                        impressions: a.impressions,
+                        clicks: a.clicks,
+                        revenue: a.revenue,
+                        roas: a.roas,
+                        ctr: a.ctr,
+                        cpc: a.cpc,
+                    })),
+                });
+            }
+
+            case 'ads.get_ad_performance': {
+                const ads = await marketingRepo.getAdsWithMetrics({
+                    range: args.range,
+                    status: args.status,
+                });
+                return textResult({
+                    count: ads.length,
+                    range: args.range || 'all_time',
+                    ads: ads.map(a => ({
+                        adId: a.adId,
+                        name: a.name,
+                        status: a.status,
+                        adsetName: a.adsetName,
+                        spend: a.spend,
+                        impressions: a.impressions,
+                        clicks: a.clicks,
+                        revenue: a.revenue,
+                        roas: a.roas,
+                        ctr: a.ctr,
+                        cpc: a.cpc,
+                    })),
+                });
+            }
+
+            case 'ads.get_daily_metrics': {
+                // Default to 30 days ago if no since provided
+                const sinceDate = args.since
+                    ? new Date(args.since)
+                    : new Date(Date.now() - 30 * 86400000);
+                const daily = await marketingRepo.getDailyAggregatedMetrics(sinceDate);
+                return textResult({
+                    since: sinceDate.toISOString().split('T')[0],
+                    count: daily.length,
+                    daily,
+                });
+            }
+
+            case 'ads.get_marketing_summary': {
+                const summary = await marketingRepo.getMarketingInsights();
+                return textResult(summary);
+            }
+
+            // ─── Meta Ads (Write) ─────────────────────────────────────────
+            case 'ads.pause_resume': {
+                const result = await adsOptimizeRepo.pauseResume(
+                    args.targetId,
+                    args.targetType,
+                    args.status,
+                    args.actorEmployeeId,
+                );
+                return textResult({
+                    message: args.status === 'ACTIVE'
+                        ? `เปิดใช้งาน ${args.targetType} ${args.targetId} สำเร็จ`
+                        : `หยุด ${args.targetType} ${args.targetId} สำเร็จ`,
+                    newStatus: args.status,
+                    metaResponse: result,
+                });
+            }
+
+            case 'ads.set_daily_budget': {
+                const result = await adsOptimizeRepo.updateDailyBudget(
+                    args.adsetId,
+                    args.newBudget,
+                    args.actorEmployeeId,
+                );
+                return textResult({
+                    message: `อัปเดต daily budget adset ${args.adsetId} → ฿${args.newBudget}/วัน สำเร็จ`,
+                    adsetId: args.adsetId,
+                    newBudget: args.newBudget,
+                    metaResponse: result,
+                });
+            }
+
             default:
                 return errorResult(`Unknown tool: ${name}`);
         }
@@ -387,7 +631,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function run() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    logger.info(MODULE, 'MCP Server started via stdio — 15 tools ready');
+    logger.info(MODULE, 'MCP Server started via stdio — 22 tools ready');
 }
 
 run().catch((error) => {

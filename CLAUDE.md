@@ -46,7 +46,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.5.3` | Synchronized PRD & API Reference Audit | ✅ released |
 | `v1.6.0` | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
 | `v1.6.1` | Employee Card UX + Interactive Permissions + jobTitle | ✅ released |
-| `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released ← HEAD |
+| `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
+| `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released ← HEAD |
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
@@ -66,6 +67,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > ⚠️ **Known Gotcha — Local stdio**: ต้องใช้ `npx tsx --tsconfig tsconfig.json` เสมอ — ไม่งั้น `@/` aliases resolve ไม่ได้
 > ⚠️ **Known Gotcha — module boundary**: อย่าสร้าง `src/mcp/package.json` ที่มี `"type":"module"` — CJS/ESM boundary แตก
 > 📍 **Production health check**: `curl https://crmapp-pi.vercel.app/api/mcp`
+
+### v1.8.0 — สิ่งที่ทำแล้ว (Phase 32 — Meta Ads MCP) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/lib/repositories/adsOptimizeRepo.js` | ✅ fixed | Bug fix: `@/lib/prisma` → `@/lib/db` + `await getPrisma()` ทุก 9 functions |
+| `src/mcp/vschool-mcp-server.js` | ✅ updated | +2 imports, +7 tools (ads domain), +7 handlers — tools 15→22, version 1.8.0 |
+| `src/app/api/mcp/route.js` | ✅ updated | +2 imports, +7 tools compact, +7 handlers, version 1.8.0 |
+| `changelog/CL-20260322-006.md` | ✅ new | changelog entry |
+
+> ⚠️ **Known Gotcha — ads write tools**: `ads.pause_resume` + `ads.set_daily_budget` เรียก Meta API จริง — ไม่มี dry-run
+> ⚠️ **Known Gotcha — range parameter**: ใช้ `last_7d` / `last_30d` (underscore) ไม่ใช่ `7d` / `30d`
+> ⚠️ **Known Gotcha — actorEmployeeId**: write tools ต้องส่ง Employee ID มาด้วย — ใช้สำหรับ audit log เท่านั้น ไม่ใช่ Meta auth
+> 📍 **Production health check**: `curl https://crmapp-pi.vercel.app/api/mcp` → tools ควรเป็น 22
 
 ### v1.5.0-pre — สิ่งที่ทำแล้ว (Phase 30) ✅ — by Claude
 | ไฟล์ | สถานะ | หมายเหตุ |

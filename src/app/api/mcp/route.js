@@ -18,6 +18,8 @@ import * as inventoryRepo from '@/lib/repositories/inventoryRepo';
 import * as customerRepo from '@/lib/repositories/customerRepo';
 import * as scheduleRepo from '@/lib/repositories/scheduleRepo';
 import * as kitchenRepo from '@/lib/repositories/kitchenRepo';
+import * as marketingRepo from '@/lib/repositories/marketingRepo';
+import * as adsOptimizeRepo from '@/lib/repositories/adsOptimizeRepo';
 import { logger } from '@/lib/logger';
 
 const MODULE = 'MCP-HTTP';
@@ -40,6 +42,15 @@ const TOOLS = [
     { name: 'procurement.list_suppliers', description: 'รายการซัพพลายเออร์', inputSchema: { type: 'object', properties: { search: { type: 'string' } } } },
     { name: 'procurement.pending_advances', description: 'เงินทดรองจ่ายรอเบิกคืน', inputSchema: { type: 'object', properties: {} } },
     { name: 'procurement.approve_po', description: 'อนุมัติ/ตีกลับ PO ⚠️ write', inputSchema: { type: 'object', properties: { poId: { type: 'string' }, approverId: { type: 'string' }, action: { type: 'string', enum: ['APPROVED', 'REJECTED'] }, reason: { type: 'string' } }, required: ['poId', 'approverId', 'action'] } },
+    // Meta Ads (Read)
+    { name: 'ads.get_campaign_insights', description: 'Performance ของ campaigns — spend/impressions/clicks/ROAS', inputSchema: { type: 'object', properties: { range: { type: 'string', enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'] }, status: { type: 'string', enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'] } } } },
+    { name: 'ads.get_adset_insights', description: 'Performance ของ adsets — spend/ROAS/CTR แยก adset', inputSchema: { type: 'object', properties: { range: { type: 'string', enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'] }, status: { type: 'string', enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'] } } } },
+    { name: 'ads.get_ad_performance', description: 'Performance ของ ads รายชิ้น — spend/clicks/CTR/CPC/ROAS', inputSchema: { type: 'object', properties: { range: { type: 'string', enum: ['today', 'last_7d', 'last_30d', 'this_month', 'last_month'] }, status: { type: 'string', enum: ['ACTIVE', 'PAUSED', 'ARCHIVED'] } } } },
+    { name: 'ads.get_daily_metrics', description: 'Daily trend metrics ย้อนหลัง — spend/CTR/ROAS ต่อวัน', inputSchema: { type: 'object', properties: { since: { type: 'string', description: 'ISO date เช่น 2026-03-01' } } } },
+    { name: 'ads.get_marketing_summary', description: 'ภาพรวม marketing — total spend/revenue/ROAS 30d + all-time', inputSchema: { type: 'object', properties: {} } },
+    // Meta Ads (Write)
+    { name: 'ads.pause_resume', description: 'หยุด/เปิด campaign/adset/ad ⚠️ write', inputSchema: { type: 'object', properties: { targetId: { type: 'string' }, targetType: { type: 'string', enum: ['campaign', 'adset', 'ad'] }, status: { type: 'string', enum: ['ACTIVE', 'PAUSED'] }, actorEmployeeId: { type: 'string' } }, required: ['targetId', 'targetType', 'status', 'actorEmployeeId'] } },
+    { name: 'ads.set_daily_budget', description: 'ปรับ daily budget adset (บาท) ⚠️ write', inputSchema: { type: 'object', properties: { adsetId: { type: 'string' }, newBudget: { type: 'number' }, actorEmployeeId: { type: 'string' } }, required: ['adsetId', 'newBudget', 'actorEmployeeId'] } },
 ];
 
 // ─── Tool execution (shared logic) ───────────────────────────────────────────
@@ -77,6 +88,34 @@ async function executeTool(name, args) {
             if (args.action === 'REJECTED' && !args.reason) return { isError: true, content: [{ type: 'text', text: 'ต้องระบุเหตุผล' }] };
             const r = await procurementRepo.approvePO(args.poId, args.approverId, args.action, args.reason);
             return text({ message: args.action === 'APPROVED' ? 'อนุมัติสำเร็จ' : 'ตีกลับสำเร็จ', approvalId: r.approvalId });
+        }
+        // Meta Ads (Read)
+        case 'ads.get_campaign_insights': {
+            const campaigns = await marketingRepo.getCampaignsWithAggregatedMetrics({ range: args.range, status: args.status });
+            return text({ count: campaigns.length, range: args.range || 'all_time', campaigns: campaigns.map(c => ({ campaignId: c.campaignId, name: c.name, status: c.status, spend: c.spend, impressions: c.impressions, clicks: c.clicks, revenue: c.revenue, roas: c.roas, ctr: c.ctr, cpc: c.cpc })) });
+        }
+        case 'ads.get_adset_insights': {
+            const adsets = await marketingRepo.getAdSetsWithAggregatedMetrics({ range: args.range, status: args.status });
+            return text({ count: adsets.length, range: args.range || 'all_time', adsets: adsets.map(a => ({ adsetId: a.adsetId, name: a.name, status: a.status, campaignName: a.campaignName, spend: a.spend, impressions: a.impressions, clicks: a.clicks, revenue: a.revenue, roas: a.roas, ctr: a.ctr, cpc: a.cpc })) });
+        }
+        case 'ads.get_ad_performance': {
+            const ads = await marketingRepo.getAdsWithMetrics({ range: args.range, status: args.status });
+            return text({ count: ads.length, range: args.range || 'all_time', ads: ads.map(a => ({ adId: a.adId, name: a.name, status: a.status, adsetName: a.adsetName, spend: a.spend, impressions: a.impressions, clicks: a.clicks, revenue: a.revenue, roas: a.roas, ctr: a.ctr, cpc: a.cpc })) });
+        }
+        case 'ads.get_daily_metrics': {
+            const sinceDate = args.since ? new Date(args.since) : new Date(Date.now() - 30 * 86400000);
+            const daily = await marketingRepo.getDailyAggregatedMetrics(sinceDate);
+            return text({ since: sinceDate.toISOString().split('T')[0], count: daily.length, daily });
+        }
+        case 'ads.get_marketing_summary': return text(await marketingRepo.getMarketingInsights());
+        // Meta Ads (Write)
+        case 'ads.pause_resume': {
+            const result = await adsOptimizeRepo.pauseResume(args.targetId, args.targetType, args.status, args.actorEmployeeId);
+            return text({ message: args.status === 'ACTIVE' ? `เปิด ${args.targetType} ${args.targetId} สำเร็จ` : `หยุด ${args.targetType} ${args.targetId} สำเร็จ`, newStatus: args.status, metaResponse: result });
+        }
+        case 'ads.set_daily_budget': {
+            const result = await adsOptimizeRepo.updateDailyBudget(args.adsetId, args.newBudget, args.actorEmployeeId);
+            return text({ message: `Budget adset ${args.adsetId} → ฿${args.newBudget}/วัน สำเร็จ`, newBudget: args.newBudget, metaResponse: result });
         }
         default: return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${name}` }] };
     }
@@ -120,7 +159,7 @@ export async function POST(req) {
                 result: {
                     protocolVersion: '2024-11-05',
                     capabilities: { tools: {} },
-                    serverInfo: { name: 'vschool-crm-server', version: '1.6.0' },
+                    serverInfo: { name: 'vschool-crm-server', version: '1.8.0' },
                 },
             });
         }
@@ -138,7 +177,7 @@ export async function GET() {
     return Response.json({
         status: 'ok',
         server: 'vschool-crm-mcp',
-        version: '1.6.0',
+        version: '1.8.0',
         tools: TOOLS.length,
         transport: 'streamable-http',
     });

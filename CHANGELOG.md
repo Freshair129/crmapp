@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-005 | v1.7.0 | 2026-03-22
+**LATEST:** CL-20260322-006 | v1.8.0 | 2026-03-22
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260322-006 | Meta Ads Domain in MCP (v1.8.0) + adsOptimizeRepo Bug Fix | v1.8.0 | 2026-03-22 | MINOR | #mcp #ads #marketing #bugfix |
 | CL-20260322-005 | MCP Server v1.7.0 — Dual Transport stdio + Streamable HTTP (ADR-050) | v1.7.0 | 2026-03-22 | MINOR | #mcp #api #infrastructure #auth #middleware |
 | CL-20260321-006 | V Point Loyalty + UI Overhaul (TopBar slim, Sidebar 3-mode) | v1.5.0-pre | 2026-03-21 | MINOR | #pos #loyalty #ui #sidebar #topbar |
 | CL-20260322-003 | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | v1.6.0 | 2026-03-22 | MAJOR | #inventory #procurement #po #bom #warehouse #supplier |
@@ -33,6 +34,22 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260322-006] v1.8.0 — Meta Ads Domain in MCP + adsOptimizeRepo Bug Fix
+**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #mcp #ads #marketing #bugfix #adsOptimize
+
+#### Changes
+- **`adsOptimizeRepo.js` bug fix (Critical)**: `@/lib/prisma` → `@/lib/db` import + `await getPrisma()` ทุก 9 functions (missing await ทำให้ crash ทุก DB operation)
+- **`src/mcp/vschool-mcp-server.js`**: +7 tools (ads domain) — `ads.get_campaign_insights`, `ads.get_adset_insights`, `ads.get_ad_performance`, `ads.get_daily_metrics`, `ads.get_marketing_summary`, `ads.pause_resume`, `ads.set_daily_budget` — tools 15→22, version 1.6.0→1.8.0
+- **`src/app/api/mcp/route.js`**: +7 tools (compact format), version 1.6.0→1.8.0
+
+#### Verification
+```bash
+curl https://crmapp-pi.vercel.app/api/mcp
+# → {"status":"ok","server":"vschool-crm-mcp","version":"1.8.0","tools":22,"transport":"streamable-http"}
+```
+
+---
 
 ### [CL-20260322-005] v1.7.0 — MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050)
 **Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #mcp #api #infrastructure #auth #middleware
@@ -107,22 +124,6 @@ curl https://crmapp-pi.vercel.app/api/mcp
 - `src/lib/authOptions.js` — JWT 5-min refresh
 - `src/app/api/employees/route.js` — serial parser (last segment)
 - `src/components/AdminPerformance.js` — EMP ID placeholder fix
-
----
-
-### [CL-20260321-007] v1.5.1 — Employee ID v3 Format (ADR-047)
-**Date:** 2026-03-21 | **Severity:** MINOR | **Tags:** #employee #id-format #breaking-change
-
-Employee ID format เปลี่ยนเป็น `TVS-[TYPE]-[DEPT]-[NNN]` per ADR-047 — เพิ่ม DEPT segment เพื่อ grouping และ readability ที่ดีขึ้น
-
-#### Format
-- ก่อน: `TVS-EMP-[NNN]` (after removing year in same session)
-- หลัง: `TVS-[TYPE]-[DEPT]-[NNN]` e.g. `TVS-EMP-MKT-001`, `TVS-EMP-OPS-002`
-
-#### Files Changed
-- `src/app/api/employees/route.js` — generateEmployeeId() ใหม่
-- `id_standards.yaml` — employee ID format updated
-- `docs/adr/047-employee-id-v3.md` — NEW
 
 ---
 

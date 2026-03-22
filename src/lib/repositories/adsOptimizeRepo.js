@@ -4,7 +4,7 @@
  * All operations write audit logs via AuditLog model
  */
 
-import { getPrisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { generateLogId, generateRequestId } from '@/lib/idGenerators'
 
@@ -73,7 +73,7 @@ async function _makeRequest(url, options) {
  * @param {string} actorEmployeeId - Employee ID performing action
  */
 export async function pauseResume(targetId, targetType, status, actorEmployeeId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const response = await callMetaAPI('PATCH', `/${targetId}`, {
@@ -117,7 +117,7 @@ export async function pauseResume(targetId, targetType, status, actorEmployeeId)
  * @param {string} actorEmployeeId - Employee ID
  */
 export async function updateDailyBudget(adsetId, newBudget, actorEmployeeId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const budgetInCents = Math.round(newBudget * 100)
@@ -161,7 +161,7 @@ export async function updateDailyBudget(adsetId, newBudget, actorEmployeeId) {
  * @param {string} actorEmployeeId - Employee ID
  */
 export async function updateBid(adsetId, bidAmount, actorEmployeeId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const bidInCents = Math.round(bidAmount * 100)
@@ -205,7 +205,7 @@ export async function updateBid(adsetId, bidAmount, actorEmployeeId) {
  * @param {string} actorEmployeeId - Employee ID
  */
 export async function duplicateCampaign(campaignId, newName, actorEmployeeId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     if (!AD_ACCOUNT_ID) {
@@ -254,7 +254,7 @@ export async function duplicateCampaign(campaignId, newName, actorEmployeeId) {
  * @param {number} proposedVal - Proposed lifetime budget (THB)
  */
 export async function createLifetimeBudgetRequest(requestedBy, targetId, targetName, currentVal, proposedVal) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const requestId = generateRequestId()
@@ -295,7 +295,7 @@ export async function createLifetimeBudgetRequest(requestedBy, targetId, targetN
  * @param {string} reviewerEmployeeId - Employee ID approving
  */
 export async function approveLifetimeBudgetRequest(requestId, reviewerEmployeeId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const request = await prisma.adsOptimizeRequest.findUnique({
@@ -366,7 +366,7 @@ export async function approveLifetimeBudgetRequest(requestId, reviewerEmployeeId
  * @param {string} notes - Rejection reason (optional)
  */
 export async function rejectLifetimeBudgetRequest(requestId, reviewerEmployeeId, notes = null) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const request = await prisma.adsOptimizeRequest.findUnique({
@@ -428,7 +428,7 @@ export async function rejectLifetimeBudgetRequest(requestId, reviewerEmployeeId,
  * @returns {array} PENDING requests
  */
 export async function getPendingRequests() {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const requests = await prisma.adsOptimizeRequest.findMany({
@@ -448,7 +448,7 @@ export async function getPendingRequests() {
  * @param {string} requestId - OPT-YYYYMMDD-NNN format
  */
 export async function getRequestById(requestId) {
-  const prisma = getPrisma()
+  const prisma = await getPrisma()
 
   try {
     const request = await prisma.adsOptimizeRequest.findUnique({
