@@ -101,7 +101,8 @@ export default function Home() {
 
     const mainScrollRef = useRef(null);
 
-    const [activeView, setActiveView] = useState("dashboard");
+    // Default to role-specific dashboard (RoleDashboard) as landing page for all roles
+    const [activeView, setActiveView] = useState("executive-analytics");
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customers, setCustomers] = useState([]);
     const [employees, setEmployees] = useState([]);

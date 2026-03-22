@@ -23,19 +23,29 @@ const NAVY = '#0c1a2f';
 const NAVY2 = '#0c1a2f';
 const TEXT = '#f5f8fb';
 
-// ─── Role Meta ──────────────────────────────────────────────────────────────
+// ─── Role Meta (v2.0.0 — 12 new role codes) ─────────────────────────────────
 const ROLE_META = {
-    ADMIN:      { label: 'Admin',      icon: Shield,    color: '#ef4444', bg: 'bg-red-500/10',     border: 'border-red-500/30',     tab: 'text-red-400',      ring: 'ring-red-500' },
-    MANAGER:    { label: 'Manager',    icon: BarChart2, color: '#3b82f6', bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    tab: 'text-blue-400',     ring: 'ring-blue-500' },
-    MARKETING:  { label: 'Marketing',  icon: Facebook,  color: '#ec4899', bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    tab: 'text-pink-400',     ring: 'ring-pink-500' },
-    HEAD_CHEF:  { label: 'Head Chef',  icon: ChefHat,   color: '#f97316', bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  tab: 'text-orange-400',   ring: 'ring-orange-500' },
-    EMPLOYEE:   { label: 'Employee',   icon: UserCheck,  color: '#10b981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', tab: 'text-emerald-400',  ring: 'ring-emerald-500' },
-    AGENT:      { label: 'Agent',      icon: MessageCircle, color: '#06b6d4', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30',  tab: 'text-cyan-400',     ring: 'ring-cyan-500' },
-    GUEST:      { label: 'Guest',      icon: Eye,       color: '#eab308', bg: 'bg-yellow-500/10',  border: 'border-yellow-500/30',  tab: 'text-yellow-400',   ring: 'ring-yellow-500' },
-    DEVELOPER:  { label: 'Developer',  icon: Cpu,       color: '#a855f7', bg: 'bg-purple-500/10',  border: 'border-purple-500/30',  tab: 'text-purple-400',   ring: 'ring-purple-500' },
+    DEV: { label: 'Developer',  icon: Cpu,          color: '#a855f7', bg: 'bg-purple-500/10',  border: 'border-purple-500/30',  tab: 'text-purple-400',   ring: 'ring-purple-500' },
+    TEC: { label: 'Technician', icon: Settings,     color: '#06b6d4', bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30',    tab: 'text-cyan-400',     ring: 'ring-cyan-500' },
+    MGR: { label: 'Manager',    icon: BarChart2,    color: '#3b82f6', bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    tab: 'text-blue-400',     ring: 'ring-blue-500' },
+    MKT: { label: 'Marketing',  icon: Facebook,     color: '#ec4899', bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    tab: 'text-pink-400',     ring: 'ring-pink-500' },
+    HR:  { label: 'HR',         icon: UserCheck,    color: '#6366f1', bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  tab: 'text-indigo-400',   ring: 'ring-indigo-500' },
+    PUR: { label: 'Purchasing', icon: ShoppingCart, color: '#f59e0b', bg: 'bg-amber-500/10',   border: 'border-amber-500/30',   tab: 'text-amber-400',    ring: 'ring-amber-500' },
+    PD:  { label: 'Head Chef',  icon: ChefHat,      color: '#f97316', bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  tab: 'text-orange-400',   ring: 'ring-orange-500' },
+    ADM: { label: 'Admin',      icon: Shield,       color: '#14b8a6', bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    tab: 'text-teal-400',     ring: 'ring-teal-500' },
+    ACC: { label: 'Accounting', icon: DollarSign,   color: '#10b981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', tab: 'text-emerald-400',  ring: 'ring-emerald-500' },
+    SLS: { label: 'Sales',      icon: TrendingUp,   color: '#ef4444', bg: 'bg-red-500/10',     border: 'border-red-500/30',     tab: 'text-red-400',      ring: 'ring-red-500' },
+    AGT: { label: 'Agent',      icon: MessageCircle,color: '#fb7185', bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    tab: 'text-rose-400',     ring: 'ring-rose-500' },
+    STF: { label: 'Staff',      icon: Users,        color: '#64748b', bg: 'bg-slate-500/10',   border: 'border-slate-500/30',   tab: 'text-slate-400',    ring: 'ring-slate-500' },
+    // Legacy fallback
+    GUEST: { label: 'Guest',    icon: Eye,          color: '#eab308', bg: 'bg-yellow-500/10',  border: 'border-yellow-500/30',  tab: 'text-yellow-400',   ring: 'ring-yellow-500' },
 };
 
-const DEV_TABS = ['ADMIN', 'MANAGER', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
+// Roles that can see full executive/financial data
+const EXEC_ROLES = new Set(['DEV', 'TEC', 'MGR', 'ACC']);
+
+// Tab list for DEV preview mode
+const DEV_TABS = ['MGR', 'TEC', 'ACC', 'MKT', 'HR', 'PUR', 'PD', 'ADM', 'SLS', 'AGT', 'STF'];
 
 // ─── Shared Helpers ──────────────────────────────────────────────────────────
 function fmtMoney(v) { return v !== undefined && v !== null ? '฿' + Math.round(v).toLocaleString() : '—'; }
@@ -803,15 +813,28 @@ function GuestDash({ language }) {
     );
 }
 
-// ─── Component Map ────────────────────────────────────────────────────────────
+// ─── Component Map (v2.0.0 — 12 new role codes) ──────────────────────────────
 const DASH_MAP = {
-    ADMIN:     AdminDash,
-    MANAGER:   ManagerDash,
-    MARKETING: MarketingDash,
-    HEAD_CHEF: HeadChefDash,
-    EMPLOYEE:  EmployeeDash,
-    AGENT:     AgentDash,
-    GUEST:     GuestDash,
+    // Exec / financial access
+    DEV:  ManagerDash,   // DEV uses tab switcher but fallback shows full exec view
+    TEC:  ManagerDash,   // Tech sees full operational + system data
+    MGR:  ManagerDash,   // Manager — full revenue + operational
+    ACC:  AdminDash,     // Accounting — financial overview + enrollments
+
+    // Operational domains (no broad revenue)
+    MKT:  MarketingDash, // Marketing — ads + campaigns + chat
+    PD:   HeadChefDash,  // Head Chef / Production — kitchen + recipes + schedule
+    PUR:  HeadChefDash,  // Purchasing — same kitchen/stock view as PD
+
+    // People / service roles
+    HR:   EmployeeDash,  // HR — employee-focused tasks + schedule
+    ADM:  EmployeeDash,  // Admin — enrollment + tasks + schedule
+    SLS:  AgentDash,     // Sales — customers + inbox + own orders
+    AGT:  AgentDash,     // Agent — inbox + assigned customers
+    STF:  EmployeeDash,  // Staff — tasks + schedule (no customer/revenue data)
+
+    // Legacy
+    GUEST: GuestDash,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -823,9 +846,9 @@ function DevTabBar({ activeTab, onTabChange }) {
             {/* Header Banner */}
             <div className="flex items-center gap-3 p-3 px-5 mb-5 bg-purple-500/10 border border-purple-500/30 rounded-2xl">
                 <Cpu size={14} className="text-purple-400 shrink-0" />
-                <p className="text-[11px] font-black text-purple-400 uppercase tracking-widest">Developer Mode — Viewing as role:</p>
+                <p className="text-[11px] font-black text-purple-400 uppercase tracking-widest">Developer Mode — Previewing dashboard as:</p>
                 <span className="ml-auto px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    {activeTab.replace('_', ' ')}
+                    {ROLE_META[activeTab]?.label || activeTab}
                 </span>
             </div>
 
@@ -856,16 +879,35 @@ function DevTabBar({ activeTab, onTabChange }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN EXPORT: RoleDashboard
 // ═══════════════════════════════════════════════════════════════════════════
+// ─── Dashboard title per role ─────────────────────────────────────────────────
+const DASH_TITLE = {
+    DEV: 'Developer Overview',
+    TEC: 'System Dashboard',
+    MGR: 'Executive Dashboard',
+    ACC: 'Finance Dashboard',
+    MKT: 'Marketing Dashboard',
+    PD:  'Kitchen Dashboard',
+    PUR: 'Procurement Dashboard',
+    HR:  'HR Dashboard',
+    ADM: 'Admin Dashboard',
+    SLS: 'Sales Dashboard',
+    AGT: 'Agent Dashboard',
+    STF: 'My Dashboard',
+};
+
 export default function RoleDashboard({ language = 'TH' }) {
     const { data: session } = useSession();
     const userRole = session?.user?.role || 'GUEST';
-    const isDeveloper = userRole === 'DEVELOPER';
+    const isDev = userRole === 'DEV';
+    const isExec = EXEC_ROLES.has(userRole);
 
-    const [devTab, setDevTab] = useState('ADMIN');
+    const [devTab, setDevTab] = useState('MGR');
 
-    // Effective role: DEVELOPER sees the selected tab's dashboard
-    const effectiveRole = isDeveloper ? devTab : userRole;
+    // Effective role: DEV sees the selected tab's dashboard; others see their own
+    const effectiveRole = isDev ? devTab : userRole;
     const DashComponent = DASH_MAP[effectiveRole] || GuestDash;
+    const meta = ROLE_META[userRole] || ROLE_META.GUEST;
+    const pageTitle = isDev ? 'Developer Preview' : (DASH_TITLE[userRole] || 'My Dashboard');
 
     return (
         <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-0">
@@ -873,27 +915,27 @@ export default function RoleDashboard({ language = 'TH' }) {
             <div className="flex items-end justify-between mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-[#f5f8fb] tracking-tight italic uppercase leading-none">
-                        Executive Dashboard
+                        {pageTitle}
                     </h1>
                     <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-[0.3em] mt-2">
-                        Role-Based Business Intelligence
-                        {isDeveloper && <span className="ml-3 text-purple-400">· Developer Preview Mode</span>}
+                        {isExec ? 'Business Intelligence · Full Access' : 'Role-Based View · Personalized for you'}
+                        {isDev && <span className="ml-3 text-purple-400">· Viewing as: {devTab}</span>}
                     </p>
                 </div>
                 {/* Role badge */}
                 <div className="flex items-center gap-2 px-4 py-2 rounded-2xl border"
                     style={{
-                        background: ROLE_META[userRole]?.color + '15' || '#ffffff08',
-                        borderColor: ROLE_META[userRole]?.color + '40' || '#ffffff15',
-                        color: ROLE_META[userRole]?.color || '#ffffff',
+                        background: meta.color + '15',
+                        borderColor: meta.color + '40',
+                        color: meta.color,
                     }}>
-                    {ROLE_META[userRole] && React.createElement(ROLE_META[userRole].icon, { size: 13 })}
-                    <span className="text-[10px] font-black uppercase tracking-widest">{userRole.replace('_', ' ')}</span>
+                    {React.createElement(meta.icon, { size: 13 })}
+                    <span className="text-[10px] font-black uppercase tracking-widest">{meta.label}</span>
                 </div>
             </div>
 
-            {/* DEVELOPER: Tab Switcher */}
-            {isDeveloper && <DevTabBar activeTab={devTab} onTabChange={setDevTab} />}
+            {/* DEV only: Tab Switcher to preview other role dashboards */}
+            {isDev && <DevTabBar activeTab={devTab} onTabChange={setDevTab} />}
 
             {/* Dashboard Content */}
             <DashComponent language={language} userRole={effectiveRole} />

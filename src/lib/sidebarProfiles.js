@@ -40,8 +40,9 @@ export const SIDEBAR_PROFILES = {
   ],
 
   // ── R3: Marketing — ads + chat + courses + sales ────────────────────────
+  // NOTE: no 'executive-analytics' — marketing sees their own dashboard only
   MKT: [
-    'dashboard',
+    'executive-analytics',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
     'courses', 'schedules', 'packages',
@@ -50,21 +51,21 @@ export const SIDEBAR_PROFILES = {
 
   // ── R4: Human Resource — employee management ────────────────────────────
   HR: [
-    'dashboard',
+    'executive-analytics',
     'employees', 'team-kpi', 'admin-performance', 'audit-trail',
     'tasks',
   ],
 
   // ── R5: Purchasing — PO + kitchen procurement ───────────────────────────
   PUR: [
-    'dashboard',
+    'executive-analytics',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'inventory-manager',
   ],
 
   // ── R6: Warehouse / Production — kitchen + catalog + recipes ────────────
   PD: [
-    'dashboard',
+    'executive-analytics',
     'courses', 'schedules', 'recipes', 'packages',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'inventory-manager',
@@ -72,16 +73,16 @@ export const SIDEBAR_PROFILES = {
 
   // ── R7: Admin / Doc — enrollment + documents ────────────────────────────
   ADM: [
-    'dashboard',
+    'executive-analytics',
     'pos-system',
     'customers', 'facebook-chat',
     'courses', 'schedules', 'packages',
     'tasks',
   ],
 
-  // ── R8: Accounting — financial overview + reports ───────────────────────
+  // ── R8: Accounting — financial overview + reports (exec-level access) ───
   ACC: [
-    'dashboard', 'executive-analytics',
+    'executive-analytics',
     'pos-system', 'inventory-manager',
     'customers',
     'facebook-ads', 'analytics',
@@ -90,7 +91,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── R9: Sales — POS + customers + inbox ─────────────────────────────────
   SLS: [
-    'dashboard',
+    'executive-analytics',
     'pos-system',
     'customers', 'facebook-chat', 'line-connect',
     'courses', 'schedules', 'packages',
@@ -99,13 +100,13 @@ export const SIDEBAR_PROFILES = {
 
   // ── R10: Agent — inbox + own customers ──────────────────────────────────
   AGT: [
-    'dashboard',
+    'executive-analytics',
     'customers', 'facebook-chat', 'line-connect',
   ],
 
   // ── R11: Staff — POS + basic tasks ──────────────────────────────────────
   STF: [
-    'dashboard',
+    'executive-analytics',
     'pos-system',
     'tasks',
   ],
