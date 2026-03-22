@@ -120,6 +120,102 @@ function CustomTooltip({ active, payload, label }) {
     );
 }
 
+// ─── TaskWidget — shared across ALL role dashboards ─────────────────────────
+// isManager=true → shows ALL team tasks + assignee names (for supervisor roles)
+// isManager=false → shows tasks assigned to the current user only
+const PRIORITY_STYLE = {
+    L0: { dot: 'bg-red-500',    label: 'CRITICAL', ring: 'border-red-500/30 bg-red-500/5', text: 'text-red-400' },
+    L1: { dot: 'bg-orange-500', label: 'HIGH',     ring: 'border-orange-500/20',           text: 'text-orange-400' },
+    L2: { dot: 'bg-yellow-400', label: 'MEDIUM',   ring: 'border-white/5',                 text: 'text-yellow-400' },
+    L3: { dot: 'bg-white/30',   label: 'NORMAL',   ring: 'border-white/5',                 text: 'text-white/30' },
+    L4: { dot: 'bg-white/20',   label: 'LOW',      ring: 'border-white/5',                 text: 'text-white/20' },
+    L5: { dot: 'bg-white/10',   label: 'OPTIONAL', ring: 'border-white/5',                 text: 'text-white/10' },
+};
+
+function TaskWidget({ isManager = false, accentColor = GOLD }) {
+    const { data: session } = useSession();
+    const [tasks, setTasks]           = useState([]);
+    const [urgentCount, setUrgentCount] = useState(0);
+    const [loading, setLoading]       = useState(true);
+
+    useEffect(() => {
+        const assigneeParam = (!isManager && session?.user?.id)
+            ? `&assigneeId=${session.user.id}` : '';
+        fetch(`/api/tasks?limit=8&status=PENDING${assigneeParam}`)
+            .then(r => r.json())
+            .then(d => {
+                setTasks(Array.isArray(d?.data) ? d.data : []);
+                setUrgentCount(d?.urgentCount || 0);
+            })
+            .catch(e => console.error('[TaskWidget]:', e))
+            .finally(() => setLoading(false));
+    }, [isManager, session?.user?.id]);
+
+    return (
+        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                    <ClipboardList size={13} style={{ color: accentColor }} />
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                        {isManager ? 'Team Tasks' : 'My Tasks'}
+                    </p>
+                </div>
+                {urgentCount > 0 && (
+                    <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-red-500/15 text-red-400 border border-red-500/30 animate-pulse">
+                        ⚠ {urgentCount} URGENT
+                    </span>
+                )}
+            </div>
+
+            {loading ? (
+                <div className="h-20 flex items-center justify-center"><Spinner /></div>
+            ) : tasks.length === 0 ? (
+                <div className="flex flex-col items-center py-6 gap-2">
+                    <CheckCircle size={24} className="text-emerald-400" />
+                    <p className="text-emerald-400 text-xs font-bold">
+                        {isManager ? 'No pending team tasks' : 'All caught up!'}
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {tasks.map((t, i) => {
+                        const ps = PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.L3;
+                        const isOverdue = t.dueDate && new Date(t.dueDate) < new Date();
+                        const assigneeName = t.assignee
+                            ? (t.assignee.nickName || t.assignee.firstName || '—')
+                            : 'Unassigned';
+                        return (
+                            <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                                isOverdue ? 'border-red-500/30 bg-red-500/5' : `${ps.ring} bg-white/3 hover:bg-white/8`
+                            }`}>
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${ps.dot}`} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-bold text-white truncate">{t.title}</p>
+                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                        <span className={`text-[9px] font-black uppercase ${ps.text}`}>{ps.label}</span>
+                                        {isManager && (
+                                            <span className="text-[9px] text-white/30 font-bold">→ {assigneeName}</span>
+                                        )}
+                                        {t.dueDate && (
+                                            <span className={`text-[9px] font-bold ${isOverdue ? 'text-red-400' : 'text-white/20'}`}>
+                                                {isOverdue ? '⚠ OVERDUE' : new Date(t.dueDate).toLocaleDateString('th-TH', { day:'numeric', month:'short' })}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg shrink-0 ${
+                                    t.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-white/30'
+                                }`}>{t.status?.replace('_', ' ')}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── useExecData hook ────────────────────────────────────────────────────────
 function useExecData(timeframe = 'this_week') {
     const [data, setData] = useState(null);
@@ -294,6 +390,9 @@ function AdminDash({ language }) {
                             <p className="text-[10px] text-white/30 mt-1 font-bold uppercase">All systems normal</p>
                         </div>
                     </div>
+
+                    {/* Team Tasks */}
+                    <TaskWidget isManager={true} accentColor="#14b8a6" />
                 </>
             )}
         </div>
@@ -367,6 +466,9 @@ function ManagerDash({ language }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Team Tasks — always visible for manager */}
+                    <TaskWidget isManager={true} accentColor="#3b82f6" />
                 </>
             )}
         </div>
@@ -494,6 +596,9 @@ function MarketingDash({ language, userRole }) {
                     currentUserRole={role}
                 />
             )}
+
+            {/* My Tasks */}
+            <TaskWidget isManager={false} accentColor="#ec4899" />
         </div>
     );
 }
@@ -621,6 +726,9 @@ function HeadChefDash({ language }) {
                     )}
                 </div>
             </div>
+
+            {/* My Tasks */}
+            <TaskWidget isManager={false} accentColor="#f97316" />
         </div>
     );
 }
@@ -629,20 +737,16 @@ function HeadChefDash({ language }) {
 // DASHBOARD: EMPLOYEE
 // ═══════════════════════════════════════════════════════════════════════════
 function EmployeeDash({ language }) {
-    const [tasks, setTasks] = useState([]);
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const { data: session } = useSession();
 
     useEffect(() => {
-        Promise.all([
-            fetch('/api/tasks?limit=5').then(r => r.json()),
-            fetch('/api/schedules?upcoming=true&limit=3').then(r => r.json()),
-        ]).then(([t, s]) => {
-            setTasks(Array.isArray(t?.data) ? t.data : Array.isArray(t) ? t : []);
-            setSchedules(Array.isArray(s) ? s : s.data || []);
-        }).catch(e => console.error('[EmployeeDash]:', e))
-          .finally(() => setLoading(false));
+        fetch('/api/schedules?upcoming=true&limit=3')
+            .then(r => r.json())
+            .then(s => setSchedules(Array.isArray(s) ? s : s.data || []))
+            .catch(e => console.error('[EmployeeDash]:', e))
+            .finally(() => setLoading(false));
     }, []);
 
     const now = new Date();
@@ -664,35 +768,8 @@ function EmployeeDash({ language }) {
                 <div className="h-40 flex items-center justify-center"><Spinner /></div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* My Tasks */}
-                    <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <ClipboardList size={13} className="text-emerald-400" />
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">My Tasks</p>
-                        </div>
-                        {tasks.length === 0 ? (
-                            <div className="flex flex-col items-center py-8 gap-2">
-                                <CheckCircle size={28} className="text-emerald-400" />
-                                <p className="text-emerald-400 text-sm font-bold">All caught up!</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {tasks.map((t, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                        <div className={`w-2 h-2 rounded-full shrink-0 ${
-                                            t.priority === 'URGENT' ? 'bg-red-500' :
-                                            t.priority === 'HIGH' ? 'bg-orange-500' :
-                                            t.priority === 'MEDIUM' ? 'bg-yellow-500' : 'bg-white/20'
-                                        }`} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-white truncate">{t.title}</p>
-                                            <p className="text-[10px] text-white/30 uppercase font-bold">{t.status}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {/* My Tasks — via shared TaskWidget */}
+                    <TaskWidget isManager={false} accentColor="#10b981" />
 
                     {/* Today's Schedule */}
                     <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
@@ -783,6 +860,9 @@ function AgentDash({ language }) {
                             </div>
                         ))}
                     </div>
+
+                    {/* My Tasks */}
+                    <TaskWidget isManager={false} accentColor="#fb7185" />
                 </>
             )}
         </div>
