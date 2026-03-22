@@ -42,7 +42,8 @@ const ROLE_META = {
 };
 
 // Roles that can see full executive/financial data
-const EXEC_ROLES = new Set(['DEV', 'TEC', 'MGR', 'ACC']);
+// MKT included — needs revenue data to calculate ROAS and campaign ROI
+const EXEC_ROLES = new Set(['DEV', 'TEC', 'MGR', 'ACC', 'MKT']);
 
 // Tab list for DEV preview mode
 const DEV_TABS = ['MGR', 'TEC', 'ACC', 'MKT', 'HR', 'PUR', 'PD', 'ADM', 'SLS', 'AGT', 'STF'];
@@ -821,8 +822,10 @@ const DASH_MAP = {
     MGR:  ManagerDash,   // Manager — full revenue + operational
     ACC:  AdminDash,     // Accounting — financial overview + enrollments
 
+    // Marketing — sees revenue (for ROAS) + ads/campaign data
+    MKT:  ManagerDash,   // Marketing — full revenue view + ads performance
+
     // Operational domains (no broad revenue)
-    MKT:  MarketingDash, // Marketing — ads + campaigns + chat
     PD:   HeadChefDash,  // Head Chef / Production — kitchen + recipes + schedule
     PUR:  HeadChefDash,  // Purchasing — same kitchen/stock view as PD
 
