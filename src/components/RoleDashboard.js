@@ -328,8 +328,7 @@ function AdminDash({ language }) {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <SectionTitle title="Admin Overview" subtitle="Business Health & Operations" icon={Shield} color="#ef4444" />
+            <div className="flex justify-end">
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
                     {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([k, l]) => (
                         <button key={k} onClick={() => setTimeframe(k)}
@@ -410,8 +409,7 @@ function ManagerDash({ language }) {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <SectionTitle title="Manager Dashboard" subtitle="Full Business & Team Overview" icon={BarChart2} color="#3b82f6" />
+            <div className="flex justify-end">
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
                     {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([k, l]) => (
                         <button key={k} onClick={() => setTimeframe(k)}
@@ -501,8 +499,7 @@ function MarketingDash({ language, userRole }) {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <SectionTitle title="Marketing Intelligence" subtitle="Ads Performance & Campaign Analytics" icon={Facebook} color="#ec4899" />
+            <div className="flex justify-end">
                 <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl">
                     {[['today', 'Today'], ['this_week', 'Week'], ['this_month', 'Month']].map(([k, l]) => (
                         <button key={k} onClick={() => setTimeframe(k)}
@@ -628,7 +625,6 @@ function HeadChefDash({ language }) {
 
     return (
         <div className="space-y-8">
-            <SectionTitle title="Kitchen Command Center" subtitle="Stock Alerts & Class Schedule" icon={ChefHat} color="#f97316" />
 
             {/* Status Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -833,7 +829,6 @@ function AgentDash({ language }) {
 
     return (
         <div className="space-y-8">
-            <SectionTitle title="Agent Dashboard" subtitle="My Conversations & Customers" icon={MessageCircle} color="#06b6d4" />
 
             {loading && !execData ? (
                 <div className="h-40 flex items-center justify-center"><Spinner /></div>
@@ -880,7 +875,6 @@ function GuestDash({ language }) {
                 <Eye size={14} className="text-yellow-400 shrink-0" />
                 <p className="text-[11px] font-black text-yellow-400 uppercase tracking-widest">Demo Mode — Read Only View</p>
             </div>
-            <SectionTitle title="Business Overview" subtitle="Read-only Summary" icon={Eye} color="#eab308" />
             {loading ? (
                 <div className="h-40 flex items-center justify-center"><Spinner /></div>
             ) : (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-    PieChart, LayoutDashboard, ShoppingCart, Package, History,
+    PieChart, ShoppingCart, Package, History,
     Users, MessageCircle, MessageSquare, Megaphone,
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
@@ -15,7 +15,7 @@ const menuGroups = [
     {
         label: 'OVERVIEW',
         items: [
-            { id: 'executive-analytics', icon: LayoutDashboard,   label: 'Dashboard' },
+            { id: 'executive-analytics', icon: PieChart,           label: 'Dashboard' },
         ],
     },
     {
