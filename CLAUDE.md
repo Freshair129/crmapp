@@ -49,7 +49,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
 | `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
 | `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree + MCP tool | ✅ released |
-| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released ← HEAD |
+| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released |
+| `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released ← HEAD |
+
+
+### v1.9.2 — สิ่งที่ทำแล้ว (Phase 34.5 — Audit Log) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → AuditLog | ✅ updated | actorId, actorEmail, approverId, approvedAt, action, entity, entityId, before, after, status, note, ip, userAgent |
+| `src/lib/repositories/auditRepo.js` | ✅ new | logAction, getPendingApprovals, approveAction, rejectAction, getAuditTrail, getActorHistory, getAuditLogs |
+| `src/lib/authOptions.js` | ✅ updated | LOGIN_SUCCESS + LOGIN_FAILED (3 cases) |
+| `src/app/api/employees/[id]/route.js` | ✅ updated | ROLE_CHANGE + EMPLOYEE_DEACTIVATE hooks |
+| `src/app/api/audit/route.js` | ✅ new | GET list + pending filter |
+| `src/app/api/audit/[auditId]/route.js` | ✅ new | GET single + POST approve/reject |
+| `src/middleware.js` | ✅ updated | /api/audit → ADMIN+ |
+| `src/lib/idGenerators.js` | ✅ updated | generateAuditId() AUD-YYYYMMDD-NNNN |
+| `id_standards.yaml` | ✅ updated | auditId AUD-YYYYMMDD-SERIAL |
+
+> ⚠️ **Known Gotcha — Audit non-blocking**: logAction errors ไม่ bubble up — caller ไม่รู้ว่า audit fail
+> ⚠️ **Known Gotcha — IP capture**: ยังไม่ได้ capture ip/userAgent ใน LOGIN events (NextAuth authorize() ไม่มี req access โดยตรง)
+> ⚠️ **Known Gotcha — PENDING_APPROVAL advisory**: Phase 34.5 log เท่านั้น — enforcement (block action จนกว่าจะ approve) ทำใน Phase 35
+> ⚠️ **Known Gotcha — AUD- format**: generateLogId() deprecated → ชี้ไปที่ generateAuditId() แล้ว
 
 
 ### v1.9.1 — สิ่งที่ทำแล้ว (Phase 34 — Multi-Role RBAC + Employee Cleanup) ✅ — by Claude

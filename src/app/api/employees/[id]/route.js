@@ -1,7 +1,10 @@
-import { logger } from '@/lib/logger';
+import { logger }     from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/db';
-import bcrypt from 'bcryptjs';
+import { getPrisma }    from '@/lib/db';
+import bcrypt           from 'bcryptjs';
+import { logAction }    from '@/lib/repositories/auditRepo';
+import { getServerSession } from 'next-auth';
+import { authOptions }  from '@/lib/authOptions';
 
 /**
  * PATCH /api/employees/[id]
@@ -10,9 +13,16 @@ import bcrypt from 'bcryptjs';
  */
 export async function PATCH(req, { params }) {
     try {
-        const prisma = await getPrisma();
-        const { id } = params;
-        const body = await req.json();
+        const prisma  = await getPrisma();
+        const session = await getServerSession(authOptions);
+        const { id }  = params;
+        const body    = await req.json();
+
+        // ─── Snapshot before for audit ───────────────────────────
+        const before = await prisma.employee.findUnique({
+            where:  { id },
+            select: { role: true, roles: true, status: true },
+        });
 
         const updateData = {};
         const allowed = [
@@ -43,7 +53,7 @@ export async function PATCH(req, { params }) {
 
         const employee = await prisma.employee.update({
             where: { id },
-            data: updateData,
+            data:  updateData,
             select: {
                 id: true,
                 employeeId: true,
@@ -63,6 +73,39 @@ export async function PATCH(req, { params }) {
             },
         });
 
+        // ─── Audit: ROLE_CHANGE ───────────────────────────────────
+        const roleChanged = before && (
+            updateData.role  !== undefined && updateData.role  !== before.role ||
+            updateData.roles !== undefined && JSON.stringify(updateData.roles) !== JSON.stringify(before.roles)
+        );
+        if (roleChanged) {
+            logAction({
+                actorId:   session?.user?.id ?? null,
+                actorEmail: session?.user?.email ?? null,
+                action:    'ROLE_CHANGE',
+                entity:    'Employee',
+                entityId:  id,
+                before:    { role: before.role, roles: before.roles },
+                after:     { role: employee.role, roles: employee.roles },
+                note:      body.note ?? null,
+            }).catch(err => logger.error('EmployeeAPI', 'Audit ROLE_CHANGE failed', err));
+        }
+
+        // ─── Audit: EMPLOYEE_DEACTIVATE ───────────────────────────
+        const deactivated = before?.status === 'ACTIVE' && updateData.status === 'INACTIVE';
+        if (deactivated) {
+            logAction({
+                actorId:    session?.user?.id ?? null,
+                actorEmail: session?.user?.email ?? null,
+                action:     'EMPLOYEE_DEACTIVATE',
+                entity:     'Employee',
+                entityId:   id,
+                before:     { status: 'ACTIVE' },
+                after:      { status: 'INACTIVE' },
+                note:       body.note ?? null,
+            }).catch(err => logger.error('EmployeeAPI', 'Audit EMPLOYEE_DEACTIVATE failed', err));
+        }
+
         return NextResponse.json({ success: true, data: employee });
     } catch (error) {
         logger.error('EmployeeAPI', 'PATCH error', error);
@@ -76,13 +119,28 @@ export async function PATCH(req, { params }) {
  */
 export async function DELETE(req, { params }) {
     try {
-        const prisma = await getPrisma();
-        const { id } = params;
+        const prisma   = await getPrisma();
+        const session  = await getServerSession(authOptions);
+        const { id }   = params;
+
+        const target = await prisma.employee.findUnique({
+            where: { id }, select: { email: true, role: true }
+        });
 
         await prisma.employee.update({
             where: { id },
-            data: { status: 'INACTIVE' },
+            data:  { status: 'INACTIVE' },
         });
+
+        logAction({
+            actorId:    session?.user?.id ?? null,
+            actorEmail: session?.user?.email ?? null,
+            action:     'EMPLOYEE_DEACTIVATE',
+            entity:     'Employee',
+            entityId:   id,
+            before:     { status: 'ACTIVE', email: target?.email, role: target?.role },
+            after:      { status: 'INACTIVE' },
+        }).catch(err => logger.error('EmployeeAPI', 'Audit DELETE failed', err));
 
         return NextResponse.json({ success: true });
     } catch (error) {

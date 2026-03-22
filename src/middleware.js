@@ -27,6 +27,7 @@ const ROUTE_ROLES = [
   { prefix: '/api/health',           role: null },   // public — health check
   { prefix: '/api/products',         role: 'AGENT' },
   { prefix: '/api/employees',        role: 'ADMIN' },
+  { prefix: '/api/audit',            role: 'ADMIN' },  // audit log — ADMIN+ only
   { prefix: '/api/marketing',        role: 'MARKETING' },
   { prefix: '/api/analytics',        role: 'MARKETING' },
   { prefix: '/api/customers',        role: 'AGENT' },

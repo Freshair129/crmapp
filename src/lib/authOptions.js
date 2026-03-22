@@ -11,7 +11,7 @@ import { getPrisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { cache as redis } from "@/lib/redis";
 import { VALID_ROLES, isValidRole } from "@/lib/rbac";
-import { generateLogId } from '@/lib/idGenerators';
+import { logAction } from '@/lib/repositories/auditRepo';
 
 export const authOptions = {
     providers: [
@@ -50,12 +50,23 @@ export const authOptions = {
 
                     if (!employee || employee.status !== "ACTIVE") {
                         logger.warn('NEXTAUTH', 'Auth failed: User not found or inactive', { email: credentials.email });
+                        logAction({
+                            actorEmail: credentials.email,
+                            action:     'LOGIN_FAILED',
+                            note:       'User not found or inactive',
+                        }).catch(() => {});
                         return null;
                     }
 
                     // Validate role is in VALID_ROLES (Phase 29 — ADR-045)
                     if (!isValidRole(employee.role)) {
                         logger.warn('NEXTAUTH', 'Auth failed: Invalid role', { email: credentials.email, role: employee.role });
+                        logAction({
+                            actorId:    employee.id,
+                            actorEmail: employee.email,
+                            action:     'LOGIN_FAILED',
+                            note:       `Invalid role: ${employee.role}`,
+                        }).catch(() => {});
                         return null;
                     }
 
@@ -63,6 +74,12 @@ export const authOptions = {
 
                     if (!isValid) {
                         logger.warn('NEXTAUTH', 'Auth failed: Invalid password', { email: credentials.email });
+                        logAction({
+                            actorId:    employee.id,
+                            actorEmail: employee.email,
+                            action:     'LOGIN_FAILED',
+                            note:       'Invalid password',
+                        }).catch(() => {});
                         return null;
                     }
 
@@ -71,26 +88,18 @@ export const authOptions = {
 
                     // ─── Login Audit Log + lastLoginAt ───────────────────────
                     const now = new Date();
-                    const logId = await generateLogId().catch(() => `LOG-${Date.now()}`);
                     await Promise.all([
-                        prisma.auditLog.create({
-                            data: {
-                                logId,
-                                action: 'LOGIN',
-                                actor: employee.employeeId,
-                                target: employee.email,
-                                status: 'SUCCESS',
-                                details: {
-                                    role: employee.role,
-                                    firstName: employee.firstName,
-                                    lastName: employee.lastName,
-                                    loginAt: now.toISOString(),
-                                },
-                            },
+                        logAction({
+                            actorId:    employee.id,
+                            actorEmail: employee.email,
+                            action:     'LOGIN_SUCCESS',
+                            entity:     'Employee',
+                            entityId:   employee.id,
+                            after:      { role: employee.role, roles: employee.roles },
                         }),
                         prisma.employee.update({
                             where: { id: employee.id },
-                            data: { lastLoginAt: now },
+                            data:  { lastLoginAt: now },
                         }),
                     ]).catch(err => {
                         // Non-blocking — login still succeeds even if audit write fails

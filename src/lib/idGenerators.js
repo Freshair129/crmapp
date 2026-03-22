@@ -186,10 +186,15 @@ export async function generateTaskId() {
 
 // ─── Audit / Notification / Ads Optimize ──────────────────────────────────────
 
-/** LOG-[YYYYMMDD]-[NNN] (by count) */
+/** AUD-[YYYYMMDD]-[NNNN] (by count) — v1.9.2: renamed from LOG- */
+export async function generateAuditId() {
+    const serial = await nextSerialByCount('auditLog', 4);
+    return `AUD-${yyyymmdd()}-${serial}`;
+}
+
+/** @deprecated use generateAuditId() */
 export async function generateLogId() {
-    const serial = await nextSerialByCount('auditLog', 3);
-    return `LOG-${yyyymmdd()}-${serial}`;
+    return generateAuditId();
 }
 
 /** NOT-[YYYYMMDD]-[NNN] (by count) */

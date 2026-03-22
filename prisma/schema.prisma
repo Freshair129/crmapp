@@ -658,19 +658,42 @@ model Task {
 // ─────────────────────────────────────────────
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  logId     String   @unique @map("log_id")          // LOG-YYYYMMDD-SERIAL — human-readable audit ID
-  action    String
-  actor     String
-  target    String?
-  status    String   @default("PENDING")
-  traceId   String?  @map("trace_id")
-  details   Json?    @default("{}")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String    @id @default(uuid())
+  auditId     String    @unique @map("audit_id")      // AUD-YYYYMMDD-SERIAL
 
-  @@index([logId])
+  // Who performed the action
+  actorId     String?   @map("actor_id")              // Employee.id (null if LOGIN_FAILED)
+  actorEmail  String?   @map("actor_email")           // snapshot — survives employee deletion
+
+  // Who approved (null = no approval required)
+  approverId  String?   @map("approver_id")           // Employee.id
+  approvedAt  DateTime? @map("approved_at")
+
+  // What happened
+  action      String                                   // LOGIN_SUCCESS | LOGIN_FAILED | LOGOUT | ROLE_CHANGE | EMPLOYEE_DEACTIVATE | CANCEL_ORDER | MANUAL_STOCK_ADJUST | PAYMENT_REFUND | VERIFY_PAYMENT | ...
+  entity      String?                                  // "Employee" | "Order" | "Transaction" | "Ingredient"
+  entityId    String?   @map("entity_id")             // UUID or human ID of affected record
+
+  // Snapshot
+  before      Json?                                    // state before change
+  after       Json?                                    // state after change
+
+  // Workflow status
+  status      String    @default("DONE")              // DONE | PENDING_APPROVAL | APPROVED | REJECTED
+
+  note        String?                                  // reason / comment
+
+  // Request context
+  ip          String?
+  userAgent   String?   @map("user_agent")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([auditId])
+  @@index([actorId, createdAt])
   @@index([action, createdAt])
-  @@index([target])
+  @@index([entity, entityId])
+  @@index([status])
   @@map("audit_logs")
 }
 
