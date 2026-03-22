@@ -287,6 +287,7 @@ model Employee {
   settings     Json?     @default("{}")
   permissions  Json?     @default("[]") // granular overrides, e.g. ["edit_orders"]
   lastLoginAt  DateTime? @map("last_login_at")
+  hiredAt      DateTime? @map("hired_at")   // วันที่เริ่มงานจริง (ต่างจาก createdAt ที่เป็นวันลงระบบ)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 

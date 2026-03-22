@@ -26,10 +26,12 @@ export async function GET(req) {
                 department: true,
                 jobTitle: true,
                 role: true,
+                roles: true,
                 status: true,
                 facebookName: true,
                 facebookUrl: true,
                 identities: true,
+                hiredAt: true,
                 createdAt: true,
             },
             where: statusFilter ? { status: statusFilter } : {},
@@ -50,7 +52,7 @@ export async function POST(req) {
     try {
         const prisma = await getPrisma();
         const body = await req.json();
-        const { firstName, lastName, nickName, email, phone, department, jobTitle, role, password, facebookName, facebookUrl, employmentType, agentCode, agentType } = body;
+        const { firstName, lastName, nickName, email, phone, department, jobTitle, role, password, facebookName, facebookUrl, employmentType, agentCode, agentType, hiredAt } = body;
 
         if (!firstName || !lastName || !email || !password) {
             return NextResponse.json(
@@ -97,6 +99,7 @@ export async function POST(req) {
                 passwordHash,
                 facebookName: facebookName || null,
                 facebookUrl: facebookUrl || null,
+                hiredAt: hiredAt ? new Date(hiredAt) : null,
             },
             select: {
                 id: true,
@@ -114,6 +117,7 @@ export async function POST(req) {
                 status: true,
                 facebookName: true,
                 facebookUrl: true,
+                hiredAt: true,
                 createdAt: true,
             },
         });

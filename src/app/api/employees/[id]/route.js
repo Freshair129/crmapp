@@ -32,6 +32,11 @@ export async function PATCH(req, { params }) {
             }
         }
 
+        // hiredAt — date field, handled separately (null = clear, string = parse)
+        if ('hiredAt' in body) {
+            updateData.hiredAt = body.hiredAt ? new Date(body.hiredAt) : null;
+        }
+
         if (body.password) {
             updateData.passwordHash = await bcrypt.hash(body.password, 10);
         }
@@ -54,6 +59,7 @@ export async function PATCH(req, { params }) {
                 status: true,
                 facebookName: true,
                 facebookUrl: true,
+                hiredAt: true,
             },
         });
 

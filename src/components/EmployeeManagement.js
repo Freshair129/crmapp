@@ -121,9 +121,11 @@ function calcEmployeeScore(linked) {
 }
 
 // ─── Tenure calculator ───────────────────────────────────────────────────────
-function calcTenure(createdAt) {
-    if (!createdAt) return null;
-    const start = new Date(createdAt);
+// Prefers hiredAt (actual start date); falls back to createdAt (system registration date)
+function calcTenure(hiredAt, createdAt) {
+    const raw = hiredAt || createdAt;
+    if (!raw) return null;
+    const start = new Date(raw);
     const now   = new Date();
     let years  = now.getFullYear() - start.getFullYear();
     let months = now.getMonth()    - start.getMonth();
@@ -591,7 +593,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                                     )}
                                     {/* Tenure badge */}
                                     {(() => {
-                                        const tenure = calcTenure(emp.createdAt);
+                                        const tenure = calcTenure(emp.hiredAt, emp.createdAt);
                                         if (!tenure) return null;
                                         return (
                                             <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest"
@@ -835,7 +837,7 @@ function StatCard({ icon: Icon, label, value, sub, accent = false }) {
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '', hiredAt: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -952,6 +954,19 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <option key={r} value={r}>{ROLE_META[r].label} ({ROLE_META[r].level})</option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* วันที่เริ่มงาน */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">วันที่เริ่มงาน</label>
+                        <input
+                            type="date"
+                            value={form.hiredAt || ''}
+                            onChange={e => setForm(f => ({ ...f, hiredAt: e.target.value }))}
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
+                            style={{ colorScheme: 'dark' }}
+                        />
+                        <p className="text-[9px] text-white/20 mt-1 ml-1">ใช้คำนวณอายุงาน — ถ้าไม่ใส่จะใช้วันที่ลงระบบแทน</p>
                     </div>
 
                     {/* Facebook fields */}
@@ -1189,7 +1204,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     <StatCard icon={Receipt} label="Orders" value={sales.length} />
                                     <StatCard icon={Coins} label="Revenue" value={`฿${totalRevenue.toLocaleString()}`} accent />
                                     <StatCard icon={Star} label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
-                                    {(() => { const t = calcTenure(emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
+                                    {(() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
                                 </div>
 
                                 {/* Info card */}
@@ -1205,7 +1220,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                         { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
                                         { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
-                                        { icon: ArrowUpRight, label: 'อายุงาน', val: (() => { const t = calcTenure(emp.createdAt); return t ? t.label : '—'; })() },
+                                        { icon: ArrowUpRight, label: 'อายุงาน', val: (() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? t.label : '—'; })() },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
@@ -1394,6 +1409,19 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     onChange={e => setEditForm(f => ({ ...f, jobTitle: e.target.value }))}
                                     className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
                                 />
+                            </div>
+
+                            {/* วันที่เริ่มงาน */}
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">วันที่เริ่มงาน</label>
+                                <input
+                                    type="date"
+                                    value={editForm.hiredAt ? editForm.hiredAt.slice(0, 10) : ''}
+                                    onChange={e => setEditForm(f => ({ ...f, hiredAt: e.target.value || null }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                                <p className="text-[9px] text-white/20 mt-1 ml-1">ใช้คำนวณอายุงาน — ถ้าไม่ใส่จะใช้วันที่ลงระบบแทน</p>
                             </div>
 
                             {/* Facebook fields */}
