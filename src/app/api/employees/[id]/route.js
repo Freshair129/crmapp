@@ -29,8 +29,22 @@ export async function PATCH(req, { params }) {
             'firstName', 'lastName', 'nickName', 'phone', 'department', 'jobTitle',
             'role', 'status', 'facebookName', 'facebookUrl', 'profilePicture', 'grade',
         ];
+        // Nullable fields — empty string → null is safe (String? in schema)
+        const NULLABLE_FIELDS = new Set([
+            'nickName', 'phone', 'department', 'jobTitle',
+            'facebookName', 'facebookUrl', 'profilePicture', 'grade',
+        ]);
         for (const key of allowed) {
-            if (key in body) updateData[key] = body[key] || null;
+            if (key in body) {
+                if (NULLABLE_FIELDS.has(key)) {
+                    // Optional fields: coerce empty string → null
+                    updateData[key] = body[key] || null;
+                } else if (body[key]) {
+                    // Required fields (firstName, lastName, role, status):
+                    // only update if value is truthy — never set to null
+                    updateData[key] = body[key];
+                }
+            }
         }
 
         // roles[] — TEXT[] array field, handled separately
