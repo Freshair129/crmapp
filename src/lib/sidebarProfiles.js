@@ -22,7 +22,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── S2: Tech / IT — system + read all ───────────────────────────────────
   TEC: [
-    'dashboard', 'executive-analytics', 'audit-trail',
+    'executive-analytics', 'audit-trail',
     'customers',
     'employees', 'team-kpi', 'admin-performance',
     'ai-config', 'system-config', 'settings',
@@ -30,7 +30,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── R2: Management — all operational views, approve, reports ────────────
   MGR: [
-    'dashboard', 'executive-analytics', 'audit-trail',
+    'executive-analytics', 'audit-trail',
     'pos-system', 'inventory-manager',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',

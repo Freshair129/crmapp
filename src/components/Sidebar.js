@@ -15,7 +15,6 @@ const menuGroups = [
     {
         label: 'OVERVIEW',
         items: [
-            { id: 'dashboard',           icon: PieChart,          label: 'Dashboard' },
             { id: 'executive-analytics', icon: Brain,             label: 'Dashboard' },
         ],
     },
