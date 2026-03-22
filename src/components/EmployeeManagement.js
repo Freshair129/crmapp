@@ -29,6 +29,8 @@ import {
     Lock,
     ArrowUpRight,
     Briefcase,
+    Camera,
+    Cake,
 } from 'lucide-react';
 import PermissionMatrix from './PermissionMatrix';
 import { can } from '@/lib/permissionMatrix';
@@ -219,6 +221,29 @@ function calcTenure(hiredAt, createdAt) {
     if (years === 0) return { label: `${months} เดือน`, short: `${months}m` };
     if (months === 0) return { label: `${years} ปี`, short: `${years}y` };
     return { label: `${years} ปี ${months} เดือน`, short: `${years}y ${months}m` };
+}
+
+// Age calculator from dateOfBirth — returns null if no value
+function calcAge(dateOfBirth) {
+    if (!dateOfBirth) return null;
+    const birth = new Date(dateOfBirth);
+    const now   = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+}
+
+// Format dateOfBirth to CE display string: "1 มกราคม 1990 (อายุ 34 ปี)"
+const MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function formatDOB(dateOfBirth) {
+    if (!dateOfBirth) return null;
+    const d   = new Date(dateOfBirth);
+    const day = d.getDate();
+    const mon = MONTHS_TH[d.getMonth()];
+    const yr  = d.getFullYear();
+    const age = calcAge(dateOfBirth);
+    return { short: `${day} ${mon} ${yr}`, full: `${day} ${mon} ${yr}${age !== null ? ` (${age} ปี)` : ''}` };
 }
 
 // Circular SVG score ring — animated arc draw
@@ -976,7 +1001,7 @@ function StatCard({ icon: Icon, label, value, rawValue, format, sub, accent = fa
 
 // ─── Add Employee Modal ───────────────────────────────────────────────────────
 function AddEmployeeModal({ onClose, onSaved }) {
-    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '', hiredAt: '' });
+    const [form, setForm] = useState({ firstName: '', lastName: '', nickName: '', email: '', phone: '', department: '', jobTitle: '', employmentType: 'employee', agentCode: '', role: 'AGENT', password: '', facebookName: '', facebookUrl: '', hiredAt: '', dateOfBirth: '' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -1108,6 +1133,22 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         <p className="text-[9px] text-white/20 mt-1 ml-1">ใช้คำนวณอายุงาน — ถ้าไม่ใส่จะใช้วันที่ลงระบบแทน</p>
                     </div>
 
+                    {/* วันเดือนปีเกิด (Add Modal) */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">วันเดือนปีเกิด (ค.ศ.)</label>
+                        <input
+                            type="date"
+                            value={form.dateOfBirth || ''}
+                            onChange={e => setForm(f => ({ ...f, dateOfBirth: e.target.value }))}
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
+                            style={{ colorScheme: 'dark' }}
+                        />
+                        {form.dateOfBirth && (() => {
+                            const d = formatDOB(form.dateOfBirth);
+                            return d ? <p className="text-[9px] text-[#cc9d37]/60 mt-1 ml-1">{d.full}</p> : null;
+                        })()}
+                    </div>
+
                     {/* Facebook fields */}
                     <div className="border-t border-white/8 pt-4">
                         <p className="text-[9px] text-[#1877F2]/60 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -1163,6 +1204,19 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const [isAdding, setIsAdding] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+    const avatarInputRef = useRef(null);
+
+    // ── Profile picture upload: convert file → base64 → editForm.profilePicture ──
+    const handleAvatarChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setEditForm(f => ({ ...f, profilePicture: ev.target.result }));
+        };
+        reader.readAsDataURL(file);
+    };
 
     // ── RBAC: เฉพาะ DEVELOPER / ADMIN / MANAGER (L3+) จัดการพนักงานได้ ──────
     // can(role, 'system', 'view') = true สำหรับ DEVELOPER, ADMIN, MANAGER เท่านั้น
@@ -1390,6 +1444,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         { icon: Phone,     label: 'Phone',       val: emp.phone || '—' },
                                         { icon: Building2, label: 'แผนก',        val: emp.department || '—' },
                                         { icon: Briefcase, label: 'ตำแหน่ง',     val: emp.jobTitle || '—' },
+                                        { icon: Cake,      label: 'วันเกิด',     val: (() => { const d = formatDOB(emp.dateOfBirth); return d ? d.full : '—'; })() },
                                         { icon: BadgeCheck,label: 'Employee ID', val: emp.employeeId },
                                         { icon: IdCard,    label: 'Agent ID',    val: emp.agentId || '—' },
                                         { icon: Star,      label: 'Agent Code',  val: emp.agentCode || '—' },
@@ -1529,6 +1584,42 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 <X size={14} />
                             </button>
                         </div>
+
+                        {/* ── Profile Picture Upload ── */}
+                        <div className="flex flex-col items-center mb-6">
+                            <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-3">รูปโปรไฟล์</p>
+                            <div
+                                className="relative cursor-pointer group"
+                                onClick={() => avatarInputRef.current?.click()}
+                                title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์"
+                            >
+                                {/* Avatar circle */}
+                                <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${(ROLE_AVATAR[emp?.role] || ROLE_AVATAR.GUEST)[0]}, ${(ROLE_AVATAR[emp?.role] || ROLE_AVATAR.GUEST)[1]})`,
+                                        boxShadow: `0 4px 20px ${(ROLE_AVATAR[emp?.role] || ROLE_AVATAR.GUEST)[0]}55, 0 0 0 2px rgba(255,255,255,0.12)`,
+                                    }}>
+                                    {editForm.profilePicture
+                                        ? <img src={editForm.profilePicture} alt="" className="w-full h-full object-cover" />
+                                        : <span className="text-white font-black text-3xl select-none leading-none">{(emp?.firstName || 'E').charAt(0)}</span>
+                                    }
+                                </div>
+                                {/* Camera overlay on hover */}
+                                <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                    <Camera size={20} className="text-white" />
+                                </div>
+                            </div>
+                            <p className="text-[9px] text-white/20 mt-2">คลิกรูปเพื่อเปลี่ยน · รองรับ JPG, PNG, WebP</p>
+                            {/* Hidden file input */}
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleAvatarChange}
+                            />
+                        </div>
+
                         <div className="space-y-4">
                             {[
                                 { key: 'firstName', label: 'ชื่อ' },
@@ -1595,6 +1686,22 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     style={{ colorScheme: 'dark' }}
                                 />
                                 <p className="text-[9px] text-white/20 mt-1 ml-1">ใช้คำนวณอายุงาน — ถ้าไม่ใส่จะใช้วันที่ลงระบบแทน</p>
+                            </div>
+
+                            {/* วันเดือนปีเกิด */}
+                            <div>
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">วันเดือนปีเกิด (ค.ศ.)</label>
+                                <input
+                                    type="date"
+                                    value={editForm.dateOfBirth ? new Date(editForm.dateOfBirth).toISOString().slice(0, 10) : ''}
+                                    onChange={e => setEditForm(f => ({ ...f, dateOfBirth: e.target.value || null }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                                {editForm.dateOfBirth && (() => {
+                                    const d = formatDOB(editForm.dateOfBirth);
+                                    return d ? <p className="text-[9px] text-[#cc9d37]/60 mt-1 ml-1">{d.full}</p> : null;
+                                })()}
                             </div>
 
                             {/* Facebook fields */}

@@ -27,7 +27,7 @@ export async function PATCH(req, { params }) {
         const updateData = {};
         const allowed = [
             'firstName', 'lastName', 'nickName', 'phone', 'department', 'jobTitle',
-            'role', 'status', 'facebookName', 'facebookUrl',
+            'role', 'status', 'facebookName', 'facebookUrl', 'profilePicture',
         ];
         for (const key of allowed) {
             if (key in body) updateData[key] = body[key] || null;
@@ -45,6 +45,11 @@ export async function PATCH(req, { params }) {
         // hiredAt — date field, handled separately (null = clear, string = parse)
         if ('hiredAt' in body) {
             updateData.hiredAt = body.hiredAt ? new Date(body.hiredAt) : null;
+        }
+
+        // dateOfBirth — date field, same pattern as hiredAt
+        if ('dateOfBirth' in body) {
+            updateData.dateOfBirth = body.dateOfBirth ? new Date(body.dateOfBirth) : null;
         }
 
         if (body.password) {
@@ -69,7 +74,9 @@ export async function PATCH(req, { params }) {
                 status: true,
                 facebookName: true,
                 facebookUrl: true,
+                profilePicture: true,
                 hiredAt: true,
+                dateOfBirth: true,
             },
         });
 
