@@ -1,7 +1,7 @@
 # Domain Architecture — V School CRM v2
 
 > **Lead Architect:** Claude
-> **Last updated:** 2026-03-21 — v1.3.0
+> **Last updated:** 2026-03-23 — v1.9.1
 > **รวมจาก:** `domain-boundaries.md` + `domain-flows.md` (ไฟล์เดิมถูก deprecated — อ่านที่นี่แทน)
 > **อ่านร่วมกับ:** [`arc42-main.md`](./arc42-main.md) · [`database-erd/high-level.md`](./database-erd/high-level.md) · [`../adr/`](../adr/)
 
@@ -165,8 +165,15 @@
 | **Queue** | Upstash QStash + `/api/workers/notification` (serverless) — ADR-040 |
 | **Cache** | Upstash Redis REST (`@upstash/redis`) — ADR-040 |
 | **Push** | `web-push` npm package, VAPID keys, `pushNotifier.js` — ADR-044 |
-| **Auth** | NextAuth.js, RBAC (`src/lib/rbac.js`, `src/lib/authGuard.js`) |
-| **ADR** | ADR-026 (RBAC), ADR-034 (Redis Caching), ADR-040 (Upstash Migration) |
+| **Auth** | NextAuth.js, RBAC (`src/lib/rbac.js`, `src/lib/authGuard.js`), `src/lib/permissionMatrix.js` |
+| **Employee** | `src/lib/repositories/` (employeeRepo via API routes), roles[], hiredAt, OWNER role |
+| **ADR** | ADR-026 (RBAC), ADR-034 (Redis Caching), ADR-040 (Upstash Migration), ADR-045 (RBAC Redesign) |
+
+**RBAC Role Hierarchy (v1.9.1):**
+- DEVELOPER (L5) · OWNER (L4.5 — executive read-only) · MANAGER (L4)
+- ADMIN (L2) · MARKETING / HEAD_CHEF (L2.5 — domain specialist)
+- EMPLOYEE (L1.5) · AGENT (L1) · GUEST (L0)
+- Multi-role: `roles[]` array — permission = union, `role` primary string (backward compat)
 
 ---
 
@@ -473,6 +480,13 @@ flowchart LR
 | v1.2.0 | OPERATIONS: equipment spec fields (hand/material/specs) | ADR-043 — Equipment Domain POS ✅ |
 | v1.3.0 | INBOX: ลบ SSE+polling → Web Push VAPID | ADR-044 — Zero Polling ✅ |
 | v1.3.0 | INFRA: เพิ่ม pushNotifier.js + web-push | ADR-044 ✅ |
+| v1.4.0 | INFRA: RBAC redesign — 8 roles, permissionMatrix.js, Ads Optimize write | ADR-045 ✅ |
+| v1.5.1 | INFRA: Employee ID v3 — TVS-[TYPE]-[DEPT]-[NNN] | ADR-047 ✅ |
+| v1.6.0 | OPERATIONS: Inventory multi-warehouse + Procurement PO lifecycle | ADR-048, ADR-049 ✅ |
+| v1.7.0 | INFRA: MCP Server dual transport (stdio + HTTP), 15 tools | ADR-050 ✅ |
+| v1.8.0 | INFRA: Meta Ads domain in MCP (22→23 tools) | ADR-050 updated ✅ |
+| v1.9.0 | ANALYTICS: ConversationIntelligence — daily summary + knowledge tree | Phase 33 ✅ |
+| v1.9.1 | INFRA: Multi-role RBAC (roles[]), OWNER role (L4.5), Employee hiredAt field | Phase 34 ✅ |
 
 ---
 

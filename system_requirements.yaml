@@ -1,10 +1,10 @@
 # V SCHOOL CRM v2 — SYSTEM REQUIREMENTS
 # โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ
-# Last updated: 2026-03-22 (v1.5.3)
+# Last updated: 2026-03-23 (v1.9.1)
 # ─────────────────────────────────────────────────────────
 
 system_name: "The V School CRM v2"
-version: "1.9.0"
+version: "1.9.1"
 description: |
   Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
   รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,

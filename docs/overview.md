@@ -151,8 +151,14 @@ NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
 | v1.1.0 | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
 | v1.2.0 | Equipment Domain POS — hand/material/specs + shipping (ADR-043) | ✅ released |
 | v1.3.0 | Web Push Inbox Real-time — VAPID, ลบ SSE+polling (ADR-044) | ✅ released |
-| v1.4.0 | RBAC Redesign — 8 roles + permissionMatrix + Ads Optimize (ADR-045) | ✅ HEAD |
-| v1.5.0 | POS Receipt & Printer Integration (ADR-046) | 📋 planned |
+| v1.4.0 | RBAC Redesign — 8 roles + permissionMatrix + Ads Optimize (ADR-045) | ✅ released |
+| v1.5.x | POS Receipt & Printer + Employee ID v3 + V Point Loyalty (ADR-046, 047) | ✅ released |
+| v1.6.0 | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
+| v1.7.0 | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
+| v1.8.0 | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
+| v1.9.0 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree | ✅ released |
+| v1.9.1 | Multi-Role RBAC + OWNER role + Employee DB Cleanup + hiredAt | ✅ HEAD |
+| v2.0.0 | Visual Calendar + Class Attendance (Phase 35) | 📋 next |
 
 ### 4. Key Non-Functional Requirements
 | NFR | Requirement |
@@ -192,7 +198,11 @@ Major technical choices and their rationale.
 | **043** | Equipment Domain POS | hand/material/specs/shipping fields, ORIGIN_COUNTRIES dropdown (v1.2.0) |
 | **044** | Web Push Inbox | VAPID Service Worker, ลบ SSE+polling ออกทั้งหมด (v1.3.0) |
 | **045** | RBAC Redesign | 8 roles, permissionMatrix.js, Ads Optimize write via Meta API (v1.4.0) |
-| **046** | POS Receipt & Printer | Receipt model, thermal 80mm ESC/POS, LINE send, history (v1.5.0 planned) |
+| **046** | POS Receipt & Printer | Receipt model, thermal 80mm ESC/POS, LINE send, history (v1.5.2) |
+| **047** | Employee ID v3 | TVS-[TYPE]-[DEPT]-[NNN] — employment type + department in ID (v1.5.1) |
+| **048** | Inventory Control | Multi-warehouse, stock movement, barcode/QR (v1.6.0) |
+| **049** | Procurement PO Lifecycle | Chef approval, PO flow, GRN, returns, advances (v1.6.0) |
+| **050** | MCP Server Dual Transport | stdio + Streamable HTTP, 23 tools, Bearer auth (v1.7.0–v1.9.0) |
 
 ### v1 Reference ADRs
 | ADR | Title | Summary |
