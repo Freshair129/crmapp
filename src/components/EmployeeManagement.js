@@ -79,24 +79,55 @@ function getRankLetter(score) {
 }
 
 /**
- * calcEmployeeScore — composite 100-pt score
- * Real data: customers, revenue, close rate (from linked DB orders)
- * Placeholder (needs HR integration): attendance, jobDone, teamwork
+/**
+ * getEmployeeDomain — classify by role + department
+ * 'kitchen' : HEAD_CHEF or department contains kitchen/chef/culinary/cook
+ * 'admin'   : OWNER/MANAGER/DEVELOPER/ADMIN
+ * 'sales'   : everything else (AGENT, EMPLOYEE, MARKETING, etc.)
  */
-function calcEmployeeScore(linked) {
-    const custCount  = linked.assignedCustomers.length;
-    const revenue    = linked.totalRevenue;
-    const validSales = linked.sales.filter(s => s.status !== 'CANCELLED').length;
-    const closeRate  = custCount > 0 ? Math.round((validSales / custCount) * 100) : 0;
+function getEmployeeDomain(emp) {
+    if (!emp) return 'sales';
+    const role = (emp.role || '').toUpperCase();
+    const dept = (emp.department || '').toLowerCase();
+    if (role === 'HEAD_CHEF' || /kitchen|chef|culinary|cook|ครัว/.test(dept)) return 'kitchen';
+    if (['OWNER','MANAGER','DEVELOPER','ADMIN'].includes(role))                return 'admin';
+    return 'sales';
+}
 
-    const custNorm  = Math.min(Math.round((custCount / 15) * 100), 100);
-    const revNorm   = Math.min(Math.round((revenue  / 80000) * 100), 100);
-    const closeNorm = closeRate;
-
+/**
+ * calcEmployeeScore — composite 100-pt score
+ * Metrics differ by domain so kitchen staff don't see irrelevant REVENUE/CUSTOMERS
+ */
+function calcEmployeeScore(linked, domain = 'sales') {
     // HR placeholders — replace with real values when HR table is integrated
     const attendance = 80;
     const jobDone    = 72;
     const teamwork   = 78;
+
+    if (domain === 'kitchen') {
+        // Kitchen: score is purely HR metrics (no customer/revenue data)
+        const score = Math.round(jobDone * 0.35 + teamwork * 0.30 + attendance * 0.35);
+        return {
+            score: Math.min(score, 100),
+            metrics: [
+                { label: 'Job Done',  value: `${jobDone}%`,    norm: jobDone,    note: 'placeholder' },
+                { label: 'Teamwork',  value: `${teamwork}%`,   norm: teamwork,   note: 'placeholder' },
+                { label: 'Attend',    value: `${attendance}%`, norm: attendance, note: 'placeholder' },
+                { label: 'Job Done',  value: `${jobDone}%`,    norm: jobDone,    note: 'placeholder' },
+                { label: 'Teamwork',  value: `${teamwork}%`,   norm: teamwork,   note: 'placeholder' },
+                { label: 'Attend',    value: `${attendance}%`, norm: attendance, note: 'placeholder' },
+            ],
+        };
+    }
+
+    // Sales / Admin domain: include customer & revenue metrics
+    const custCount  = linked.assignedCustomers.length;
+    const revenue    = linked.totalRevenue;
+    const validSales = linked.sales.filter(s => s.status !== 'CANCELLED').length;
+    const closeRate  = custCount > 0 ? Math.round((validSales / custCount) * 100) : 0;
+    const custNorm   = Math.min(Math.round((custCount / 15) * 100), 100);
+    const revNorm    = Math.min(Math.round((revenue  / 80000) * 100), 100);
+    const closeNorm  = closeRate;
 
     const score = Math.round(
         custNorm   * 0.15 +
@@ -110,12 +141,12 @@ function calcEmployeeScore(linked) {
     return {
         score: Math.min(score, 100),
         metrics: [
-            { label: 'ลูกค้า',    value: `${custCount}`,              norm: custNorm,  note: 'customers' },
-            { label: 'ยอดขาย',   value: revenue >= 1000 ? `฿${Math.round(revenue/1000)}k` : `฿${revenue}`, norm: revNorm,  note: 'revenue' },
-            { label: 'Close%',    value: `${closeRate}%`,             norm: closeNorm, note: 'close rate' },
-            { label: 'Job Done',  value: `${jobDone}%`,               norm: jobDone,   note: 'placeholder' },
-            { label: 'Teamwork',  value: `${teamwork}%`,              norm: teamwork,  note: 'placeholder' },
-            { label: 'Attend',    value: `${attendance}%`,            norm: attendance,note: 'placeholder' },
+            { label: 'ลูกค้า',  value: `${custCount}`,              norm: custNorm,  note: 'customers' },
+            { label: 'ยอดขาย', value: revenue >= 1000 ? `฿${Math.round(revenue/1000)}k` : `฿${revenue}`, norm: revNorm, note: 'revenue' },
+            { label: 'Close%',  value: `${closeRate}%`,             norm: closeNorm, note: 'close rate' },
+            { label: 'Job Done',value: `${jobDone}%`,               norm: jobDone,   note: 'placeholder' },
+            { label: 'Teamwork',value: `${teamwork}%`,              norm: teamwork,  note: 'placeholder' },
+            { label: 'Attend',  value: `${attendance}%`,            norm: attendance,note: 'placeholder' },
         ],
     };
 }
@@ -315,7 +346,8 @@ function Sparkline({ sales = [], color = '#00f5ff' }) {
 
 // ─── Mini Dashboard (rank + 6 metrics) ───────────────────────────────────────
 function MiniDashboard({ emp, linked, barColor }) {
-    const { score, metrics } = calcEmployeeScore(linked);
+    const domain     = getEmployeeDomain(emp);
+    const { score, metrics } = calcEmployeeScore(linked, domain);
     const rankLetter = getRankLetter(score);
     const rank       = RANK_CONFIG[rankLetter];
 
@@ -374,12 +406,21 @@ function MiniDashboard({ emp, linked, barColor }) {
                 ))}
             </div>
 
-            {/* ── Sparkline ── */}
-            <div className="rounded-xl overflow-hidden px-2 pt-1 pb-0.5"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-white/18 text-[7px] uppercase tracking-widest mb-0.5">6-month revenue</p>
-                <Sparkline sales={linked.sales} color={barColor} />
-            </div>
+            {/* ── Sparkline — sales/admin only ── */}
+            {domain !== 'kitchen' && (
+                <div className="rounded-xl overflow-hidden px-2 pt-1 pb-0.5"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <p className="text-white/18 text-[7px] uppercase tracking-widest mb-0.5">6-month revenue</p>
+                    <Sparkline sales={linked.sales} color={barColor} />
+                </div>
+            )}
+            {domain === 'kitchen' && (
+                <div className="rounded-xl px-3 py-2 flex items-center gap-2"
+                    style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.15)' }}>
+                    <span style={{ fontSize: 14 }}>👨‍🍳</span>
+                    <span className="text-[9px] text-orange-300/60 uppercase tracking-widest">Kitchen Staff — HR metrics only</span>
+                </div>
+            )}
         </div>
     );
 }
@@ -1038,6 +1079,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const safeIndex = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
     const emp = filtered[safeIndex] || null;
     const { assignedCustomers, sales, totalRevenue } = getLinkedData(emp, customers);
+    const empDomain = getEmployeeDomain(emp);
 
     const goNext = () => setActiveIndex(i => (i + 1) % filtered.length);
     const goPrev = () => setActiveIndex(i => (i - 1 + filtered.length) % filtered.length);
@@ -1169,8 +1211,10 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 {[
                                     { id: 'overview', icon: IdCard, label: 'Overview' },
                                     ...(can(currentUser?.role, 'system', 'view') ? [{ id: 'permissions', icon: Shield, label: 'Permissions' }] : []),
-                                    { id: 'customers', icon: Users, label: `Customers (${assignedCustomers.length})` },
-                                    { id: 'sales', icon: Receipt, label: `Sales (${sales.length})` },
+                                    ...(empDomain !== 'kitchen' ? [
+                                        { id: 'customers', icon: Users,   label: `Customers (${assignedCustomers.length})` },
+                                        { id: 'sales',     icon: Receipt, label: `Sales (${sales.length})` },
+                                    ] : []),
                                 ].map(tab => (
                                     <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id
@@ -1198,13 +1242,24 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                         {/* TAB: Overview */}
                         {activeTab === 'overview' && (
                             <div className="space-y-5">
-                                {/* Stat grid */}
+                                {/* Stat grid — metrics differ by domain */}
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <StatCard icon={Users} label="Customers" value={assignedCustomers.length} />
-                                    <StatCard icon={Receipt} label="Orders" value={sales.length} />
-                                    <StatCard icon={Coins} label="Revenue" value={`฿${totalRevenue.toLocaleString()}`} accent />
-                                    <StatCard icon={Star} label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
-                                    {(() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
+                                    {empDomain === 'kitchen' ? (
+                                        <>
+                                            <StatCard icon={Star}         label="Role"      value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
+                                            <StatCard icon={Building2}    label="แผนก"      value={emp.department || '—'} />
+                                            <StatCard icon={Briefcase}    label="ตำแหน่ง"  value={emp.jobTitle || '—'} />
+                                            {(() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <StatCard icon={Users}        label="Customers" value={assignedCustomers.length} />
+                                            <StatCard icon={Receipt}      label="Orders"    value={sales.length} />
+                                            <StatCard icon={Coins}        label="Revenue"   value={`฿${totalRevenue.toLocaleString()}`} accent />
+                                            <StatCard icon={Star}         label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
+                                            {(() => { const t = calcTenure(emp.hiredAt, emp.createdAt); return t ? <StatCard icon={ArrowUpRight} label="อายุงาน" value={t.label} /> : null; })()}
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* Info card */}
