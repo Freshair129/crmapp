@@ -133,6 +133,15 @@ export const authOptions = {
 
     secret: process.env.NEXTAUTH_SECRET,
 
+    // ─── Session lifetime ────────────────────────────────────────────────────
+    // maxAge: session expires after 8 hours (one workday). Users must re-login.
+    // updateAge: refresh the session cookie at most every 1 hour (reduces writes).
+    session: {
+        strategy: 'jwt',
+        maxAge:    8 * 60 * 60,  // 8 hours
+        updateAge: 60 * 60,       // re-issue cookie every 1 hour
+    },
+
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
@@ -145,10 +154,10 @@ export const authOptions = {
                 token.nickName    = user.nickName;
                 token.lastLoginAt = user.lastLoginAt;
                 token.refreshedAt = Date.now();
+                token.error       = null; // clear any previous error
             } else {
                 // ── Subsequent requests: refresh from DB every 5 minutes ──
-                // This ensures name/role changes in the Employee table are
-                // reflected without requiring the user to log out.
+                // Detects role/permission changes and account deactivation.
                 const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
                 const stale = !token.refreshedAt || (Date.now() - token.refreshedAt) > REFRESH_MS;
                 if (stale) {
@@ -157,23 +166,46 @@ export const authOptions = {
                         const emp = await prisma.employee.findUnique({
                             where: { id: token.sub },
                             select: {
-                                role: true,
-                                roles: true,
-                                firstName: true,
-                                lastName: true,
-                                nickName: true,
-                                employeeId: true,
-                                status: true,
+                                role: true, roles: true,
+                                firstName: true, lastName: true, nickName: true,
+                                employeeId: true, status: true,
                             },
                         });
-                        if (emp && emp.status === 'ACTIVE' && isValidRole(emp.role)) {
-                            token.role        = emp.role;
-                            token.roles       = (emp.roles && emp.roles.length > 0) ? emp.roles : [emp.role];
-                            token.firstName   = emp.firstName;
-                            token.lastName    = emp.lastName;
-                            token.nickName    = emp.nickName;
-                            token.employeeId  = emp.employeeId;
+
+                        if (!emp || emp.status !== 'ACTIVE') {
+                            // Account disabled or deleted — force sign-out immediately
+                            logger.warn('NEXTAUTH', 'Session invalidated: account inactive', { sub: token.sub });
+                            token.error = 'AccountDisabled';
+                        } else if (!isValidRole(emp.role)) {
+                            // Role became invalid — force re-login to pick up correct role
+                            token.error = 'InvalidRole';
+                        } else {
+                            // Check if role or roles array changed since JWT was issued
+                            const newRoles = (emp.roles && emp.roles.length > 0) ? emp.roles : [emp.role];
+                            const roleChanged  = token.role !== emp.role;
+                            const rolesChanged = JSON.stringify([...(token.roles || [])].sort()) !==
+                                                 JSON.stringify([...newRoles].sort());
+
+                            if (roleChanged || rolesChanged) {
+                                // Permissions changed — force re-login so new permissions take effect
+                                logger.info('NEXTAUTH', 'Permissions changed — forcing re-login', {
+                                    sub:      token.sub,
+                                    oldRole:  token.role,
+                                    newRole:  emp.role,
+                                });
+                                token.error = 'PermissionsChanged';
+                            } else {
+                                // No change — refresh profile data normally
+                                token.role       = emp.role;
+                                token.roles      = newRoles;
+                                token.firstName  = emp.firstName;
+                                token.lastName   = emp.lastName;
+                                token.nickName   = emp.nickName;
+                                token.employeeId = emp.employeeId;
+                                token.error      = null;
+                            }
                         }
+
                         token.refreshedAt = Date.now();
                     } catch (err) {
                         logger.error('NEXTAUTH', 'JWT refresh from DB failed', err);
@@ -186,8 +218,6 @@ export const authOptions = {
 
         async session({ session, token }) {
             if (session.user) {
-                // Normalize role to UPPERCASE — guards against stale JWTs that stored
-                // Title-case roles (e.g. 'Admin' → 'ADMIN') from older login sessions
                 const primaryRole = token.role ? String(token.role).toUpperCase() : undefined;
                 session.user.role        = primaryRole;
                 session.user.roles       = Array.isArray(token.roles)
@@ -199,6 +229,8 @@ export const authOptions = {
                 session.user.nickName    = token.nickName;
                 session.user.lastLoginAt = token.lastLoginAt;
             }
+            // Expose error to client so the app can react (force sign-out)
+            session.error = token.error || null;
             return session;
         }
     },

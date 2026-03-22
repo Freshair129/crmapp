@@ -99,6 +99,20 @@ export default function Home() {
         setCurrentUser(null);
     };
 
+    // ── Session error guard — force re-login on permission change / account disable ──
+    useEffect(() => {
+        if (!session?.error) return;
+        const ERR = session.error;
+        const messages = {
+            PermissionsChanged: 'สิทธิ์การใช้งานของคุณถูกเปลี่ยนแปลง กรุณาเข้าสู่ระบบใหม่',
+            AccountDisabled:    'บัญชีของคุณถูกระงับ กรุณาติดต่อผู้ดูแลระบบ',
+            InvalidRole:        'Role ไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่',
+        };
+        const msg = messages[ERR] || 'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่';
+        alert(msg); // simple native alert — user acknowledges before redirect
+        signOut({ callbackUrl: `/auth/signin?reason=${ERR}` });
+    }, [session?.error]);
+
     const mainScrollRef = useRef(null);
 
     // Default to role-specific dashboard (RoleDashboard) as landing page for all roles

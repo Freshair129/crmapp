@@ -13,10 +13,18 @@ function SignInForm() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const reason = searchParams.get("reason");
+    const REASON_MESSAGES: Record<string, string> = {
+        PermissionsChanged: '⚠️ สิทธิ์การใช้งานของคุณถูกอัปเดต — กรุณาเข้าสู่ระบบใหม่เพื่อรับสิทธิ์ใหม่',
+        AccountDisabled:    '🚫 บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ',
+        InvalidRole:        '⚠️ Role ของบัญชีนี้ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ',
+    };
     const [error, setError] = useState(
-        searchParams.get("error") === "NotRegistered"
-            ? "ไม่พบบัญชีในระบบ กรุณาติดต่อ Admin"
-            : ""
+        reason && REASON_MESSAGES[reason]
+            ? REASON_MESSAGES[reason]
+            : searchParams.get("error") === "NotRegistered"
+                ? "ไม่พบบัญชีในระบบ กรุณาติดต่อ Admin"
+                : ""
     );
     const [isLoading, setIsLoading] = useState(false);
 
