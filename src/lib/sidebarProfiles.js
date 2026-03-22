@@ -22,7 +22,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── S2: Tech / IT — system + read all ───────────────────────────────────
   TEC: [
-    'executive-analytics', 'audit-trail',
+    'executive-analytics', 'tasks', 'audit-trail',
     'customers',
     'employees', 'team-kpi', 'admin-performance',
     'ai-config', 'system-config', 'settings',
@@ -40,9 +40,8 @@ export const SIDEBAR_PROFILES = {
   ],
 
   // ── R3: Marketing — ads + chat + courses + sales ────────────────────────
-  // NOTE: no 'executive-analytics' — marketing sees their own dashboard only
   MKT: [
-    'executive-analytics',
+    'executive-analytics', 'tasks',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
     'courses', 'schedules', 'packages',
@@ -58,14 +57,14 @@ export const SIDEBAR_PROFILES = {
 
   // ── R5: Purchasing — PO + kitchen procurement ───────────────────────────
   PUR: [
-    'executive-analytics',
+    'executive-analytics', 'tasks',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'inventory-manager',
   ],
 
   // ── R6: Warehouse / Production — kitchen + catalog + recipes ────────────
   PD: [
-    'executive-analytics',
+    'executive-analytics', 'tasks',
     'courses', 'schedules', 'recipes', 'packages',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'inventory-manager',
@@ -82,7 +81,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── R8: Accounting — financial overview + reports (exec-level access) ───
   ACC: [
-    'executive-analytics',
+    'executive-analytics', 'tasks',
     'pos-system', 'inventory-manager',
     'customers',
     'facebook-ads', 'analytics',
@@ -100,7 +99,7 @@ export const SIDEBAR_PROFILES = {
 
   // ── R10: Agent — inbox + own customers ──────────────────────────────────
   AGT: [
-    'executive-analytics',
+    'executive-analytics', 'tasks',
     'customers', 'facebook-chat', 'line-connect',
   ],
 

@@ -6,7 +6,7 @@ import {
     AlertTriangle, Zap, TrendingUp, Clock,
     MinusCircle, Archive,
     User, Calendar, Tag, CheckCircle2, Circle, RotateCcw,
-    Trash2, Pen,
+    Trash2, Pen, List, CalendarDays, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { can } from '@/lib/permissionMatrix';
 
@@ -367,6 +367,256 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
     );
 }
 
+// ─── Helper: format date key YYYY-MM-DD ──────────────────────────────────────
+function dateKey(d) {
+    return d.toISOString().slice(0, 10);
+}
+
+// ─── Weekly View ─────────────────────────────────────────────────────────────
+function WeeklyView({ tasks, onEdit, canManage }) {
+    const [weekOffset, setWeekOffset] = useState(0);
+
+    // Build Mon–Sun of target week
+    const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        const dow = d.getDay() === 0 ? 6 : d.getDay() - 1; // Mon=0
+        d.setDate(d.getDate() - dow + i + weekOffset * 7);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    });
+
+    const DAY_TH = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+    const today = dateKey(new Date());
+
+    // Group tasks by due date key; tasks with no dueDate go to 'none'
+    const byDay = {};
+    tasks.forEach(t => {
+        const k = t.dueDate ? dateKey(new Date(t.dueDate)) : 'none';
+        if (!byDay[k]) byDay[k] = [];
+        byDay[k].push(t);
+    });
+
+    const weekLabel = `${days[0].toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} – ${days[6].toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`;
+
+    return (
+        <div className="space-y-4">
+            {/* Week nav */}
+            <div className="flex items-center justify-between">
+                <button onClick={() => setWeekOffset(o => o - 1)}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                    <ChevronLeft size={14} />
+                </button>
+                <div className="text-center">
+                    <p className="text-xs font-black text-white/60 uppercase tracking-widest">{weekLabel}</p>
+                    {weekOffset !== 0 && (
+                        <button onClick={() => setWeekOffset(0)}
+                            className="text-[9px] font-black text-[#cc9d37] hover:text-amber-300 uppercase tracking-widest mt-0.5">
+                            กลับสัปดาห์นี้
+                        </button>
+                    )}
+                </div>
+                <button onClick={() => setWeekOffset(o => o + 1)}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                    <ChevronRight size={14} />
+                </button>
+            </div>
+
+            {/* 7-day columns */}
+            <div className="grid grid-cols-7 gap-2">
+                {days.map((d, i) => {
+                    const k = dateKey(d);
+                    const isToday = k === today;
+                    const dayTasks = byDay[k] || [];
+                    return (
+                        <div key={k} className={`rounded-2xl border p-2 min-h-[120px] flex flex-col gap-1.5 transition-all ${
+                            isToday ? 'border-[#cc9d37]/50 bg-[#cc9d37]/5' : 'border-white/8 bg-white/3'
+                        }`}>
+                            {/* Day header */}
+                            <div className={`text-center mb-1 ${isToday ? 'text-[#cc9d37]' : 'text-white/40'}`}>
+                                <p className="text-[9px] font-black uppercase tracking-widest">{DAY_TH[i]}</p>
+                                <p className={`text-base font-black leading-none ${isToday ? 'text-[#cc9d37]' : 'text-white/60'}`}>
+                                    {d.getDate()}
+                                </p>
+                            </div>
+                            {/* Tasks */}
+                            {dayTasks.map(t => {
+                                const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                                const isOverdue = t.dueDate && new Date(t.dueDate) < new Date() && k !== today;
+                                return (
+                                    <button key={t.id} onClick={() => canManage && onEdit(t)}
+                                        className={`w-full text-left px-2 py-1.5 rounded-lg border text-[10px] font-bold leading-tight truncate transition-all hover:scale-[1.02] ${
+                                            isOverdue ? 'border-red-500/40 bg-red-500/10 text-red-300' : `${cfg.border} bg-white/5 text-white/80`
+                                        }`}>
+                                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${cfg.dot}`} />
+                                        {t.title}
+                                    </button>
+                                );
+                            })}
+                            {dayTasks.length === 0 && (
+                                <p className="text-[9px] text-white/15 text-center mt-auto">—</p>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* No-date tasks */}
+            {(byDay['none'] || []).length > 0 && (
+                <div className="bg-white/3 border border-white/8 rounded-2xl p-4">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-2">ไม่มีกำหนด</p>
+                    <div className="flex flex-wrap gap-2">
+                        {byDay['none'].map(t => {
+                            const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                            return (
+                                <button key={t.id} onClick={() => canManage && onEdit(t)}
+                                    className={`px-3 py-1.5 rounded-xl border text-[10px] font-bold ${cfg.border} bg-white/5 text-white/70 hover:text-white transition-all`}>
+                                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle ${cfg.dot}`} />
+                                    {t.title}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Calendar View ────────────────────────────────────────────────────────────
+function CalendarView({ tasks, onEdit, canManage }) {
+    const [monthOffset, setMonthOffset] = useState(0);
+    const [selectedDay, setSelectedDay] = useState(null);
+
+    const now = new Date();
+    const year  = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1).getFullYear();
+    const month = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1).getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay  = new Date(year, month + 1, 0);
+    const startDow = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Mon=0
+    const today    = dateKey(new Date());
+
+    const DAY_HEADERS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+    const MONTH_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+    // Group tasks by date key
+    const byDay = {};
+    tasks.forEach(t => {
+        if (!t.dueDate) return;
+        const k = dateKey(new Date(t.dueDate));
+        if (!byDay[k]) byDay[k] = [];
+        byDay[k].push(t);
+    });
+
+    // Build grid cells (nulls for padding)
+    const cells = [
+        ...Array(startDow).fill(null),
+        ...Array.from({ length: lastDay.getDate() }, (_, i) => i + 1),
+    ];
+    // Pad to complete last row
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const selKey = selectedDay ? dateKey(new Date(year, month, selectedDay)) : null;
+    const selTasks = selKey ? (byDay[selKey] || []) : [];
+
+    return (
+        <div className="space-y-4">
+            {/* Month nav */}
+            <div className="flex items-center justify-between">
+                <button onClick={() => { setMonthOffset(o => o - 1); setSelectedDay(null); }}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                    <ChevronLeft size={14} />
+                </button>
+                <div className="text-center">
+                    <p className="text-sm font-black text-white uppercase tracking-widest">
+                        {MONTH_TH[month]} {year}
+                    </p>
+                    {monthOffset !== 0 && (
+                        <button onClick={() => { setMonthOffset(0); setSelectedDay(null); }}
+                            className="text-[9px] font-black text-[#cc9d37] hover:text-amber-300 uppercase tracking-widest">
+                            กลับเดือนนี้
+                        </button>
+                    )}
+                </div>
+                <button onClick={() => { setMonthOffset(o => o + 1); setSelectedDay(null); }}
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                    <ChevronRight size={14} />
+                </button>
+            </div>
+
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+                {DAY_HEADERS.map(d => (
+                    <p key={d} className="text-center text-[9px] font-black text-white/25 uppercase tracking-widest py-1">{d}</p>
+                ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1">
+                {cells.map((day, idx) => {
+                    if (!day) return <div key={`pad-${idx}`} />;
+                    const k = dateKey(new Date(year, month, day));
+                    const dayTasks = byDay[k] || [];
+                    const isToday   = k === today;
+                    const isSel     = day === selectedDay;
+                    const hasOverdue = dayTasks.some(t => t.dueDate && new Date(t.dueDate) < new Date() && !isToday);
+                    return (
+                        <button key={k} onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                            className={`relative rounded-xl p-1.5 min-h-[52px] flex flex-col items-center transition-all border text-left ${
+                                isSel    ? 'border-[#cc9d37] bg-[#cc9d37]/10' :
+                                isToday  ? 'border-[#cc9d37]/40 bg-[#cc9d37]/5' :
+                                'border-white/5 bg-white/3 hover:bg-white/8 hover:border-white/15'
+                            }`}>
+                            <span className={`text-[11px] font-black mb-1 ${
+                                isSel ? 'text-[#cc9d37]' : isToday ? 'text-[#cc9d37]' : 'text-white/60'
+                            }`}>{day}</span>
+                            {/* Task dots */}
+                            <div className="flex flex-wrap gap-0.5 justify-center">
+                                {dayTasks.slice(0, 4).map((t, i) => {
+                                    const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                                    return <span key={i} className={`w-1.5 h-1.5 rounded-full ${hasOverdue && t.dueDate ? 'bg-red-500' : cfg.dot}`} />;
+                                })}
+                                {dayTasks.length > 4 && (
+                                    <span className="text-[8px] font-black text-white/40">+{dayTasks.length - 4}</span>
+                                )}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Selected day task list */}
+            {selectedDay && (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">
+                        {selectedDay} {MONTH_TH[month]} — {selTasks.length} งาน
+                    </p>
+                    {selTasks.length === 0 ? (
+                        <p className="text-xs text-white/20 text-center py-4">ไม่มีงานวันนี้</p>
+                    ) : selTasks.map(t => {
+                        const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                        return (
+                            <button key={t.id} onClick={() => canManage && onEdit(t)}
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:bg-white/8 ${cfg.border} bg-white/3`}>
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-white truncate">{t.title}</p>
+                                    {t.assignee && (
+                                        <p className="text-[9px] text-white/30 font-bold mt-0.5">
+                                            → {t.assignee.nickName || t.assignee.firstName || '—'}
+                                        </p>
+                                    )}
+                                </div>
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg shrink-0 ${cfg.badge}`}>{t.priority}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function TaskPanel({ employees = [], customers = [], currentUser }) {
     const [tasks, setTasks]             = useState([]);
@@ -376,6 +626,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
     const [filterStatus, setFilterStatus]     = useState('ACTIVE'); // ACTIVE = PENDING+IN_PROGRESS
     const [showModal, setShowModal]     = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [viewMode, setViewMode]       = useState('list'); // 'list' | 'weekly' | 'calendar'
 
     const canManage = can(currentUser?.role, 'sales', 'create')
         || can(currentUser?.role, 'system', 'view');
@@ -440,7 +691,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
     return (
         <div className="animate-fade-in space-y-6">
             {/* Header */}
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
                 <div>
                     <h2 className="text-3xl font-black text-[#f5f8fb] tracking-tight mb-1">Task Board</h2>
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -450,15 +701,32 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                         )}
                     </p>
                 </div>
-                <div className="flex gap-3">
-                    {/* Search */}
-                    <div className="relative">
-                        <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
-                        <input
-                            type="text" placeholder="ค้นหา..." value={search} onChange={e => setSearch(e.target.value)}
-                            className="bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 w-40 transition-all"
-                        />
+                <div className="flex gap-2 flex-wrap items-center">
+                    {/* View switcher */}
+                    <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
+                        {[
+                            { v: 'list',     icon: List,        label: 'List' },
+                            { v: 'weekly',   icon: CalendarDays, label: 'Week' },
+                            { v: 'calendar', icon: Calendar,    label: 'Month' },
+                        ].map(({ v, icon: Icon, label }) => (
+                            <button key={v} onClick={() => setViewMode(v)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                    viewMode === v ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white'
+                                }`}>
+                                <Icon size={11} />{label}
+                            </button>
+                        ))}
                     </div>
+                    {/* Search — list mode only */}
+                    {viewMode === 'list' && (
+                        <div className="relative">
+                            <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+                            <input
+                                type="text" placeholder="ค้นหา..." value={search} onChange={e => setSearch(e.target.value)}
+                                className="bg-white/5 border border-white/10 text-white pl-9 pr-4 py-2 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 w-40 transition-all"
+                            />
+                        </div>
+                    )}
                     {canManage && (
                         <button
                             onClick={() => { setEditingTask(null); setShowModal(true); }}
@@ -469,7 +737,8 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                 </div>
             </div>
 
-            {/* Filter bar */}
+            {/* Filter bar — list mode only */}
+            {viewMode === 'list' && (
             <div className="flex gap-2 flex-wrap">
                 {/* Status filter */}
                 <div className="flex gap-1 bg-white/5 border border-white/8 rounded-xl p-1">
@@ -505,9 +774,18 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                     })}
                 </div>
             </div>
+            )}
 
-            {/* Task list — grouped by priority */}
-            {loading ? (
+            {/* Weekly / Calendar views */}
+            {viewMode === 'weekly' && !loading && (
+                <WeeklyView tasks={tasks} onEdit={(t) => { setEditingTask(t); setShowModal(true); }} canManage={canManage} />
+            )}
+            {viewMode === 'calendar' && !loading && (
+                <CalendarView tasks={tasks} onEdit={(t) => { setEditingTask(t); setShowModal(true); }} canManage={canManage} />
+            )}
+
+            {/* Task list — grouped by priority (list mode) */}
+            {viewMode === 'list' && (loading ? (
                 <div className="flex items-center justify-center h-48 text-white/20">
                     <Loader2 className="animate-spin" size={24} />
                 </div>
@@ -551,7 +829,7 @@ export default function TaskPanel({ employees = [], customers = [], currentUser 
                         );
                     })}
                 </div>
-            )}
+            ))}
 
             {/* Create / Edit Modal */}
             {showModal && (

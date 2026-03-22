@@ -16,6 +16,7 @@ const menuGroups = [
         label: 'OVERVIEW',
         items: [
             { id: 'executive-analytics', icon: PieChart,           label: 'Dashboard' },
+            { id: 'tasks',               icon: ClipboardList,      label: 'Task Board' },
         ],
     },
     {
@@ -60,7 +61,6 @@ const menuGroups = [
         label: 'HR',
         items: [
             { id: 'employees',           icon: UserCircle,        label: 'Employees' },
-            { id: 'tasks',               icon: ClipboardList,     label: 'Task Board' },
             { id: 'team-kpi',            icon: Settings2,         label: 'Team KPI' },
             { id: 'admin-performance',   icon: Timer,             label: 'Admin Perf.' },
         ],
