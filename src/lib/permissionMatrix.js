@@ -12,8 +12,9 @@
 
 export const ROLES = [
   'DEVELOPER',
-  'ADMIN',
+  'OWNER',
   'MANAGER',
+  'ADMIN',
   'MARKETING',
   'HEAD_CHEF',
   'EMPLOYEE',
@@ -51,6 +52,17 @@ export const ACTIONS = [
  * - 'request'  = can initiate request (needs approver review)
  */
 export const PERMISSIONS = {
+  OWNER: {
+    // Executive read-only view — ไม่มี write/approve ใดๆ (ADR-045)
+    business:  { view: true },
+    sales:     { view: true },
+    inbox:     { view: true },
+    marketing: { view: true },
+    kitchen:   { view: true },
+    catalog:   { view: true },
+    system:    { view: true },
+  },
+
   DEVELOPER: {
     business: {
       view: true,

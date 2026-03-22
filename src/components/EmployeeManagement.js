@@ -1183,7 +1183,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
                                 <input
                                     type="text"
-                                    autoComplete="nope"
+                                    autoComplete="off"
+                                    readOnly
+                                    onFocus={e => e.target.removeAttribute('readonly')}
                                     placeholder="เช่น สมชาย ใจดี"
                                     value={form.facebookName || ''}
                                     onChange={e => setForm(f => ({ ...f, facebookName: e.target.value }))}
@@ -1194,7 +1196,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
                                 <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
                                 <input
                                     type="text"
-                                    autoComplete="nope"
+                                    autoComplete="off"
+                                    readOnly
+                                    onFocus={e => e.target.removeAttribute('readonly')}
                                     placeholder="facebook.com/username"
                                     value={form.facebookUrl || ''}
                                     onChange={e => setForm(f => ({ ...f, facebookUrl: e.target.value }))}
@@ -1229,6 +1233,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const [isSaving, setIsSaving] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     const [togglingStatus, setTogglingStatus] = useState(false);
+    const [saveError, setSaveError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const avatarInputRef = useRef(null);
 
@@ -1271,6 +1276,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
         if (!emp) return;
         const body = payload || editForm;
         setIsSaving(true);
+        setSaveError(null);
         try {
             const res = await fetch(`/api/employees/${emp.id}`, {
                 method: 'PATCH',
@@ -1278,9 +1284,15 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                 body: JSON.stringify(body),
             });
             const result = await res.json();
-            if (result.success) { onRefresh?.(); setIsEditing(false); }
+            if (result.success) {
+                onRefresh?.();
+                setIsEditing(false);
+            } else {
+                setSaveError(result.error || 'บันทึกไม่สำเร็จ กรุณาลองใหม่');
+            }
         } catch (err) {
             console.error('[EmployeeManagement] save failed', err);
+            setSaveError('เกิดข้อผิดพลาด กรุณาลองใหม่');
         } finally { setIsSaving(false); }
     };
 
@@ -1741,7 +1753,9 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่อ Facebook</label>
                                         <input
                                             type="text"
-                                            autoComplete="nope"
+                                            autoComplete="off"
+                                            readOnly
+                                            onFocus={e => e.target.removeAttribute('readonly')}
                                             placeholder="เช่น สมชาย ใจดี"
                                             value={editForm.facebookName || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookName: e.target.value }))}
@@ -1752,7 +1766,9 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Facebook URL / โปรไฟล์</label>
                                         <input
                                             type="text"
-                                            autoComplete="nope"
+                                            autoComplete="off"
+                                            readOnly
+                                            onFocus={e => e.target.removeAttribute('readonly')}
                                             placeholder="facebook.com/username หรือ https://..."
                                             value={editForm.facebookUrl || ''}
                                             onChange={e => setEditForm(f => ({ ...f, facebookUrl: e.target.value }))}
@@ -1875,8 +1891,13 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-3 mt-6">
-                            <button onClick={() => setIsEditing(false)}
+                        {saveError && (
+                            <div className="mt-4 px-4 py-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-[11px] font-bold">
+                                ⚠️ {saveError}
+                            </div>
+                        )}
+                        <div className="flex gap-3 mt-4">
+                            <button onClick={() => { setIsEditing(false); setSaveError(null); }}
                                 className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 text-xs font-black uppercase hover:bg-white/10 transition-all">
                                 Cancel
                             </button>

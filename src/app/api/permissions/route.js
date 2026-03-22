@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/authOptions'
-import { getPrisma } from '@/lib/prisma'
+import { getPrisma } from '@/lib/db'
 import { PERMISSIONS, can } from '@/lib/permissionMatrix'
 
 const CONFIG_KEY = 'permission_matrix'
