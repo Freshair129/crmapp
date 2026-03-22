@@ -36,20 +36,24 @@ import {
 import PermissionMatrix from './PermissionMatrix';
 import { can } from '@/lib/permissionMatrix';
 
-// ─── Role config ──────────────────────────────────────────────────────────────
+// ─── Role config (Phase 36 — S/R role redesign) ───────────────────────────────
+// levelNum ใช้คำนวณ priority bar (0–5), level ใช้แสดงผล (S1, R2, ...)
 const ROLE_META = {
-    DEVELOPER: { label: 'Developer', level: 'L5',   bg: 'from-violet-600 to-purple-800',   badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
-    OWNER:     { label: 'Owner',     level: 'L4.5', bg: 'from-[#cc9d37] to-yellow-700',    badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-    MANAGER:   { label: 'Manager',   level: 'L4',   bg: 'from-blue-600 to-blue-900',        badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    ADMIN:     { label: 'Admin',     level: 'L3',   bg: 'from-[#cc9d37] to-amber-700',      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-    MARKETING: { label: 'Marketing', level: 'L2.5', bg: 'from-pink-600 to-rose-800',        badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
-    HEAD_CHEF: { label: 'Head Chef', level: 'L2.5', bg: 'from-orange-500 to-orange-800',    badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-    EMPLOYEE:  { label: 'Employee',  level: 'L1.5', bg: 'from-teal-500 to-teal-800',        badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
-    AGENT:     { label: 'Agent',     level: 'L1',   bg: 'from-red-500 to-rose-800',          badge: 'bg-red-500/20 text-red-300 border-red-500/30' },
-    GUEST:     { label: 'Guest',     level: 'L0',   bg: 'from-slate-500 to-slate-700',       badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
+    DEV: { label: 'Developer',   level: 'S1',  levelNum: 5,   bg: 'from-violet-600 to-purple-800',   badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+    TEC: { label: 'Tech / IT',   level: 'S2',  levelNum: 3.5, bg: 'from-cyan-500 to-cyan-800',       badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+    MGR: { label: 'Management',  level: 'R2',  levelNum: 4,   bg: 'from-blue-600 to-blue-900',       badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+    MKT: { label: 'Marketing',   level: 'R3',  levelNum: 2.5, bg: 'from-pink-600 to-rose-800',       badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+    HR:  { label: 'HR',          level: 'R4',  levelNum: 3,   bg: 'from-indigo-500 to-indigo-800',   badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
+    PUR: { label: 'Purchasing',  level: 'R5',  levelNum: 2.5, bg: 'from-amber-500 to-amber-800',     badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    PD:  { label: 'Warehouse',   level: 'R6',  levelNum: 2.5, bg: 'from-orange-500 to-orange-800',   badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+    ADM: { label: 'Admin / Doc', level: 'R7',  levelNum: 2,   bg: 'from-teal-500 to-teal-800',       badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+    ACC: { label: 'Accounting',  level: 'R8',  levelNum: 3,   bg: 'from-emerald-500 to-emerald-800', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+    SLS: { label: 'Sales',       level: 'R9',  levelNum: 1.5, bg: 'from-red-500 to-rose-800',        badge: 'bg-red-500/20 text-red-300 border-red-500/30' },
+    AGT: { label: 'Agent',       level: 'R10', levelNum: 1,   bg: 'from-rose-400 to-rose-700',       badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+    STF: { label: 'Staff',       level: 'R11', levelNum: 0.5, bg: 'from-slate-500 to-slate-700',     badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
 };
 
-const ALL_ROLES = ['DEVELOPER','OWNER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOYEE','AGENT','GUEST'];
+const ALL_ROLES = ['DEV','TEC','MGR','MKT','HR','PUR','PD','ADM','ACC','SLS','AGT','STF'];
 
 // ─── Grade config ──────────────────────────────────────────────────────────────
 // S = Special (food plating specialist / chef competition winner)
@@ -63,15 +67,18 @@ const GRADE_META = {
 
 // Avatar gradient colors (for card dark-bg design)
 const ROLE_AVATAR = {
-    DEVELOPER: ['#7c3aed','#4c1d95'],
-    OWNER:     ['#cc9d37','#78350f'],
-    MANAGER:   ['#2563eb','#1e3a8a'],
-    ADMIN:     ['#cc9d37','#92400e'],
-    MARKETING: ['#db2777','#831843'],
-    HEAD_CHEF: ['#f97316','#9a3412'],
-    EMPLOYEE:  ['#14b8a6','#134e4a'],
-    AGENT:     ['#ef4444','#7f1d1d'],
-    GUEST:     ['#64748b','#19273a'],
+    DEV: ['#7c3aed','#4c1d95'],
+    TEC: ['#06b6d4','#164e63'],
+    MGR: ['#2563eb','#1e3a8a'],
+    MKT: ['#db2777','#831843'],
+    HR:  ['#6366f1','#312e81'],
+    PUR: ['#f59e0b','#92400e'],
+    PD:  ['#f97316','#9a3412'],
+    ADM: ['#14b8a6','#134e4a'],
+    ACC: ['#10b981','#064e3b'],
+    SLS: ['#ef4444','#7f1d1d'],
+    AGT: ['#fb7185','#881337'],
+    STF: ['#64748b','#1e293b'],
 };
 
 // ─── Rank / Score system ──────────────────────────────────────────────────────
@@ -602,9 +609,9 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
                     emp.facebookName && { icon: Facebook, label: emp.facebookName },
                 ].filter(Boolean);
 
-                // Permission level bar
-                const levelStr  = meta.level; // e.g. 'L5', 'L2.5'
-                const levelNum  = parseFloat(levelStr.replace('L', ''));
+                // Permission level bar — use levelNum from ROLE_META (not parsed string)
+                const levelStr  = meta.level;    // e.g. 'S1', 'R2', 'R11'
+                const levelNum  = meta.levelNum ?? 1;
                 const fillPct   = Math.round((levelNum / 5) * 100);
                 const barColor  = avatarColors[0];
 

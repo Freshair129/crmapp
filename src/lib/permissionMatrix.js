@@ -1,35 +1,42 @@
 /**
- * Central Permission Matrix for V School CRM v1.4.0 (Phase 29b)
- * ADR-045: RBAC Redesign — Domain Roles + Central Config
+ * Central Permission Matrix — V School CRM (Phase 36, ADR-045 rev2)
+ * Role structure redesign: S-prefix = Special, R-prefix = Regular
  *
- * Defines 8 roles × 7 domains × 6 actions with special values:
- * - true        = allowed (basic permission)
- * - false/undef = denied (no access)
- * - 'own'       = restricted to own records only
- * - 'log'       = allowed but audit log required
- * - 'request'   = allowed to request (needs approval by higher role)
+ * 12 roles: DEV, TEC, MGR, MKT, HR, PUR, PD, ADM, ACC, SLS, AGT, STF
+ *
+ * Permission levels:
+ * - [F] true       = Full CRUD (view + create + edit + delete)
+ * - [A] 'approve'  = view + approve only
+ * - [R] view:true  = Read only
+ * - [N] {}         = No access
+ * - 'own'          = Restricted to own records only
+ * - 'log'          = Allowed + audit log required
+ * - 'request'      = Allowed to request (needs approval)
  */
 
 export const ROLES = [
-  'DEVELOPER',
-  'OWNER',
-  'MANAGER',
-  'ADMIN',
-  'MARKETING',
-  'HEAD_CHEF',
-  'EMPLOYEE',
-  'AGENT',
-  'GUEST',
+  'DEV',  // S1 — Developer
+  'TEC',  // S2 — Tech / IT
+  'MGR',  // R2 — Management
+  'MKT',  // R3 — Marketing
+  'HR',   // R4 — Human Resource
+  'PUR',  // R5 — Purchasing
+  'PD',   // R6 — Warehouse / Production
+  'ADM',  // R7 — Admin / Doc
+  'ACC',  // R8 — Accounting
+  'SLS',  // R9 — Sales
+  'AGT',  // R10 — Agent (freelance/representative)
+  'STF',  // R11 — Staff (general/cashier)
 ]
 
 export const DOMAINS = [
-  'business',   // Dashboard, Reports
+  'business',   // Dashboard, BI Reports, Financial Overview
   'sales',      // POS, Orders, Customers, Enrollments
-  'inbox',      // Chat, Conversations
-  'marketing',  // Ads Analytics, Sync, Pause/Resume, Budget, Bid
-  'kitchen',    // Stock, Lots, PR, Recipe
+  'inbox',      // Chat, Conversations (FB + LINE)
+  'marketing',  // Ads Analytics, Sync, Campaigns, Notification Rules
+  'kitchen',    // Stock, Lots, PR, Recipe, Procurement
   'catalog',    // Products, Assets, Packages
-  'system',     // Employee Mgmt, Settings
+  'system',     // Employee Mgmt, Settings, User Accounts
 ]
 
 export const ACTIONS = [
@@ -41,443 +48,186 @@ export const ACTIONS = [
   'request',
 ]
 
-/**
- * Central Permission Matrix
- *
- * Access Control Rules:
- * - true       = user allowed to perform action
- * - false/null = denied (default)
- * - 'own'      = only on records where user is owner/assignee
- * - 'log'      = allowed + audit logging required
- * - 'request'  = can initiate request (needs approver review)
- */
 export const PERMISSIONS = {
-  OWNER: {
-    // Executive read-only view — ไม่มี write/approve ใดๆ (ADR-045)
+  // ── S1: Developer — Full access all domains ──────────────────────────────
+  DEV: {
+    business:  { view: true, create: true, edit: true, delete: true, approve: true },
+    sales:     { view: true, create: true, edit: true, delete: true, approve: true },
+    inbox:     { view: true, create: true, edit: true, delete: true },
+    marketing: { view: true, create: true, edit: true, delete: true, approve: true },
+    kitchen:   { view: true, create: true, edit: true, delete: true, approve: true },
+    catalog:   { view: true, create: true, edit: true, delete: true },
+    system:    { view: true, create: true, edit: true, delete: true },
+  },
+
+  // ── S2: Tech / IT — [F] system, [R] all others ───────────────────────────
+  TEC: {
     business:  { view: true },
     sales:     { view: true },
     inbox:     { view: true },
     marketing: { view: true },
     kitchen:   { view: true },
     catalog:   { view: true },
+    system:    { view: true, create: true, edit: true, delete: true },
+  },
+
+  // ── R2: Management — [A] approve all, [R] cross ──────────────────────────
+  MGR: {
+    business:  { view: true, approve: true },
+    sales:     { view: true, approve: true },
+    inbox:     { view: true },
+    marketing: { view: true, approve: true },
+    kitchen:   { view: true, approve: true },
+    catalog:   { view: true },
     system:    { view: true },
   },
 
-  DEVELOPER: {
-    business: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    sales: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    inbox: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    marketing: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    kitchen: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    catalog: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    system: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
+  // ── R3: Marketing — [F] marketing, cross R9/R10/R11 ──────────────────────
+  MKT: {
+    business:  { view: true },
+    sales:     { view: true, create: true, edit: true },
+    inbox:     { view: true, create: true, edit: true },
+    marketing: { view: true, create: true, edit: true, delete: true },
+    kitchen:   {},
+    catalog:   { view: true },
+    system:    {},
   },
 
-  ADMIN: {
-    business: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    sales: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    inbox: {
-      view: true,
-      create: true,
-      edit: true,
-      // delete: false (default deny)
-    },
-    marketing: {
-      // All actions denied for ADMIN (marketing is MARKETING's domain)
-    },
-    kitchen: {
-      view: true,
-      create: true,
-      edit: true,
-      // delete: false (default deny)
-      approve: true,
-    },
-    catalog: {
-      view: true,
-      create: true,
-      edit: true,
-      // delete: false (default deny)
-    },
-    system: {
-      view: true,
-      // create/edit/delete: false (system-level, restricted)
-    },
+  // ── R4: Human Resource — [F] system (HR domain) ──────────────────────────
+  HR: {
+    business:  { view: true },
+    sales:     {},
+    inbox:     {},
+    marketing: {},
+    kitchen:   {},
+    catalog:   {},
+    system:    { view: true, create: true, edit: true, delete: true },
   },
 
-  MANAGER: {
-    business: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    sales: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    inbox: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    marketing: {
-      view: true,
-      create: true,
-      edit: true,
-      // delete: false
-      approve: true,
-    },
-    kitchen: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true,
-    },
-    catalog: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-    },
-    system: {
-      view: true,
-      // create/edit/delete: false (system is dev-only)
-    },
+  // ── R5: Purchasing — [F] kitchen/PO, cross R6 ────────────────────────────
+  PUR: {
+    business:  { view: true },
+    sales:     {},
+    inbox:     {},
+    marketing: {},
+    kitchen:   { view: true, create: true, edit: true, approve: true },
+    catalog:   { view: true, create: true, edit: true },
+    system:    {},
   },
 
-  MARKETING: {
-    business: {
-      view: true,
-    },
-    sales: {
-      view: true,
-    },
-    inbox: {
-      view: true,
-      create: true,
-      edit: true,
-    },
-    marketing: {
-      view: true,
-      create: true,
-      edit: 'log',    // edits require audit log
-      approve: false, // cannot self-approve
-      request: true,  // can request lifetime budget (needs MANAGER approval)
-    },
-    kitchen: {
-      // No kitchen access
-    },
-    catalog: {
-      view: true,
-    },
-    system: {
-      // No system access
-    },
+  // ── R6: Warehouse / Production — [F] kitchen + catalog, cross R5 ─────────
+  PD: {
+    business:  { view: true },
+    sales:     {},
+    inbox:     {},
+    marketing: {},
+    kitchen:   { view: true, create: true, edit: true, delete: true },
+    catalog:   { view: true, create: true, edit: true, delete: true },
+    system:    {},
   },
 
-  HEAD_CHEF: {
-    business: {
-      view: true,
-    },
-    sales: {
-      view: true,
-      create: true,
-      edit: true,
-    },
-    inbox: {
-      // No inbox access
-    },
-    marketing: {
-      // No marketing access
-    },
-    kitchen: {
-      view: true,
-      create: true,
-      edit: true,
-      delete: true,
-      approve: true, // Can approve PRs, recipes
-    },
-    catalog: {
-      view: true,
-    },
-    system: {
-      // No system access
-    },
+  // ── R7: Admin / Doc — [F] enrollment, [R] cross ──────────────────────────
+  ADM: {
+    business:  { view: true },
+    sales:     { view: true, create: true, edit: true },
+    inbox:     { view: true },
+    marketing: { view: true },
+    kitchen:   {},
+    catalog:   { view: true },
+    system:    {},
   },
 
-  EMPLOYEE: {
-    business: {
-      view: true,
-    },
-    sales: {
-      view: true,
-      create: true,
-      edit: true,
-    },
-    inbox: {
-      view: true,
-      create: true,
-      edit: true,
-    },
-    marketing: {
-      // No marketing access
-    },
-    kitchen: {
-      view: true,
-      create: true,
-      edit: true,
-      // approve: false (cannot approve PR)
-      // delete: false (cannot delete stock)
-    },
-    catalog: {
-      view: true,
-    },
-    system: {
-      // No system access
-    },
+  // ── R8: Accounting — [F] business, [A] sales, [R] marketing ─────────────
+  ACC: {
+    business:  { view: true, create: true, edit: true, approve: true },
+    sales:     { view: true, approve: true },
+    inbox:     {},
+    marketing: { view: true },
+    kitchen:   {},
+    catalog:   {},
+    system:    {},
   },
 
-  AGENT: {
-    business: {
-      view: true,
-    },
-    sales: {
-      view: 'own',    // Only own customers
-      create: true,
-      edit: 'own',
-    },
-    inbox: {
-      view: 'own',    // Only own conversations
-      create: true,
-      edit: 'own',
-    },
-    marketing: {
-      // No marketing access
-    },
-    kitchen: {
-      // No kitchen access
-    },
-    catalog: {
-      view: true,
-    },
-    system: {
-      // No system access
-    },
+  // ── R9: Sales — [F] sales, [R] marketing, inbox own ─────────────────────
+  SLS: {
+    business:  { view: true },
+    sales:     { view: true, create: true, edit: true },
+    inbox:     { view: 'own', create: true, edit: 'own' },
+    marketing: { view: true },
+    kitchen:   {},
+    catalog:   { view: true },
+    system:    {},
   },
 
-  GUEST: {
-    business: {
-      view: true,
-    },
-    sales: {
-      view: true,
-    },
-    inbox: {
-      // No inbox access
-    },
-    marketing: {
-      // No marketing access
-    },
-    kitchen: {
-      // No kitchen access
-    },
-    catalog: {
-      view: true,
-    },
-    system: {
-      // No system access
-    },
+  // ── R10: Agent — sales own + inbox own ───────────────────────────────────
+  AGT: {
+    business:  {},
+    sales:     { view: 'own', create: true, edit: 'own' },
+    inbox:     { view: 'own', create: true, edit: 'own' },
+    marketing: {},
+    kitchen:   {},
+    catalog:   { view: true },
+    system:    {},
+  },
+
+  // ── R11: Staff — cashier + basic tasks ───────────────────────────────────
+  STF: {
+    business:  {},
+    sales:     { view: true, create: true },
+    inbox:     {},
+    marketing: {},
+    kitchen:   { view: true },
+    catalog:   { view: true },
+    system:    {},
   },
 }
 
 /**
- * Determines if a role can perform an action on a domain
- *
- * @param {string} role - User role (must be in ROLES)
- * @param {string} domain - Domain (must be in DOMAINS)
- * @param {string} action - Action (must be in ACTIONS)
- * @returns {boolean} true if allowed, false otherwise
- *
- * Note: Returns false for special values like 'own', 'log', 'request'
- * Use canWithMeta() if you need to distinguish permission types
+ * can(role, domain, action) → boolean
+ * Returns true if role can perform action on domain.
+ * Special values 'own', 'log', 'request' also return true (caller enforces restriction).
  */
 export function can(role, domain, action) {
   if (!ROLES.includes(role) || !DOMAINS.includes(domain) || !ACTIONS.includes(action)) {
     return false
   }
-
-  const domainPerms = PERMISSIONS[role]?.[domain]
-  if (!domainPerms) return false
-
-  const permission = domainPerms[action]
-  if (permission === true || permission === 'log' || permission === 'own') {
-    return true
-  }
-
-  return false
+  const perm = PERMISSIONS[role]?.[domain]?.[action]
+  return perm === true || perm === 'own' || perm === 'log' || perm === 'request'
 }
 
-/**
- * Enhanced permission check with metadata
- *
- * @param {string} role - User role
- * @param {string} domain - Domain
- * @param {string} action - Action
- * @returns {object} { allowed, requiresLog, ownOnly, requiresApproval }
- */
 export function canWithMeta(role, domain, action) {
   if (!ROLES.includes(role) || !DOMAINS.includes(domain) || !ACTIONS.includes(action)) {
-    return {
-      allowed: false,
-      requiresLog: false,
-      ownOnly: false,
-      requiresApproval: false,
-    }
+    return { allowed: false, requiresLog: false, ownOnly: false, requiresApproval: false }
   }
-
-  const domainPerms = PERMISSIONS[role]?.[domain]
-  if (!domainPerms) {
-    return {
-      allowed: false,
-      requiresLog: false,
-      ownOnly: false,
-      requiresApproval: false,
-    }
-  }
-
-  const permission = domainPerms[action]
-
-  const allowed = permission === true || permission === 'log' || permission === 'own' || permission === 'request'
+  const perm = PERMISSIONS[role]?.[domain]?.[action]
+  const allowed = perm === true || perm === 'own' || perm === 'log' || perm === 'request'
   return {
     allowed,
-    requiresLog: permission === 'log',
-    ownOnly: permission === 'own',
-    // requiresApproval when: permission value is 'request', OR action name is 'request' and it's allowed
-    requiresApproval: permission === 'request' || (action === 'request' && allowed),
+    requiresLog:     perm === 'log',
+    ownOnly:         perm === 'own',
+    requiresApproval: perm === 'request' || (action === 'request' && allowed),
   }
 }
 
-/**
- * Get all accessible domains for a role
- *
- * @param {string} role - User role
- * @returns {array} Domains where user has at least 'view' access
- */
 export function getAccessibleModules(role) {
   if (!ROLES.includes(role)) return []
-
   const rolePerms = PERMISSIONS[role]
-  return DOMAINS.filter(domain => {
-    const domainPerms = rolePerms?.[domain]
-    if (!domainPerms) return false
-    return domainPerms.view // Must have at least view permission
+  return DOMAINS.filter(d => {
+    const dp = rolePerms?.[d]
+    return dp && (dp.view === true || dp.view === 'own')
   })
 }
 
-/**
- * Validate role against allowlist
- *
- * @param {string} role - Role to validate
- * @returns {boolean} true if valid UPPERCASE role
- */
 export function isValidRole(role) {
   return ROLES.includes(role)
 }
 
-/**
- * Get all permissions for a role
- *
- * @param {string} role - User role
- * @returns {object} Full permission object for the role, or {} if invalid
- */
 export function getRolePermissions(role) {
   if (!ROLES.includes(role)) return {}
   return PERMISSIONS[role] || {}
 }
 
-/**
- * Check if a role has higher privileges than another
- *
- * @param {string} role1 - First role
- * @param {string} role2 - Second role
- * @returns {boolean} true if role1 >= role2 in privilege
- *
- * Hierarchy: DEVELOPER > ADMIN > MANAGER > MARKETING/HEAD_CHEF > EMPLOYEE > AGENT > GUEST
- * MARKETING and HEAD_CHEF are equal (domain specialists at same level)
- */
 export function hasHigherPrivilege(role1, role2) {
-  const hierarchy = ['DEVELOPER', 'ADMIN', 'MANAGER', ['MARKETING', 'HEAD_CHEF'], 'EMPLOYEE', 'AGENT', 'GUEST']
-  
-  // Normalize indices
-  let idx1 = -1
-  let idx2 = -1
-  
-  for (let i = 0; i < hierarchy.length; i++) {
-    const level = hierarchy[i]
-    if (Array.isArray(level)) {
-      if (level.includes(role1)) idx1 = i
-      if (level.includes(role2)) idx2 = i
-    } else {
-      if (level === role1) idx1 = i
-      if (level === role2) idx2 = i
-    }
-  }
-
-  if (idx1 === -1 || idx2 === -1) return false
-  return idx1 <= idx2
+  const levels = { DEV: 5, TEC: 3.5, MGR: 4, MKT: 2.5, HR: 3, PUR: 2.5, PD: 2.5, ADM: 2, ACC: 3, SLS: 1.5, AGT: 1, STF: 0.5 }
+  return (levels[role1] ?? 0) >= (levels[role2] ?? 0)
 }

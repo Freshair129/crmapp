@@ -1,26 +1,28 @@
 /**
- * Role-Based Access Control (Phase 29 — ADR-045, updated Phase 34)
- * Role hierarchy: DEVELOPER > OWNER > MANAGER > ADMIN > MARKETING (L2.5) > HEAD_CHEF (L2.5) > EMPLOYEE > AGENT > GUEST
- * MARKETING and HEAD_CHEF are domain specialists at L2.5 — full access within their domains.
- * OWNER = business owner (คุณวอเตอร์) — L4.5 executive read-only across all domains.
+ * Role-Based Access Control (Phase 36 — ADR-045 rev2)
+ * New role structure: S-prefix = Special, R-prefix = Regular
+ * DEV(S1) > MGR(R2) > TEC(S2) = HR(R4) = ACC(R8) > MKT(R3) = PUR(R5) = PD(R6) > ADM(R7) > SLS(R9) > AGT(R10) > STF(R11)
  * Multi-role: employees.roles[] (TEXT[]) — permissions are additive union of all assigned roles.
  */
 
 /** Numeric permission level per role. Higher = more access. */
 const ROLE_HIERARCHY = {
-  DEVELOPER:  5,
-  OWNER:      4.5,
-  MANAGER:    4,
-  ADMIN:      2,
-  MARKETING:  2.5,
-  HEAD_CHEF:  2.5,
-  EMPLOYEE:   1.5,
-  AGENT:      1,
-  GUEST:      0,
+  DEV: 5,
+  MGR: 4,
+  TEC: 3.5,
+  HR:  3,
+  ACC: 3,
+  MKT: 2.5,
+  PUR: 2.5,
+  PD:  2.5,
+  ADM: 2,
+  SLS: 1.5,
+  AGT: 1,
+  STF: 0.5,
 };
 
-/** Valid role names (all UPPERCASE). Used for role validation. Synced with permissionMatrix.js ROLES. */
-const VALID_ROLES = ['DEVELOPER', 'OWNER', 'ADMIN', 'MANAGER', 'MARKETING', 'HEAD_CHEF', 'EMPLOYEE', 'AGENT', 'GUEST'];
+/** Valid role names (all UPPERCASE). Synced with permissionMatrix.js ROLES. */
+const VALID_ROLES = ['DEV', 'TEC', 'MGR', 'MKT', 'HR', 'PUR', 'PD', 'ADM', 'ACC', 'SLS', 'AGT', 'STF'];
 
 /**
  * Returns the numeric level of a role. Unknown roles default to GUEST (0).

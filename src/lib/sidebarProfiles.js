@@ -17,24 +17,21 @@
  * [...]  = explicit whitelist of item IDs.
  */
 export const SIDEBAR_PROFILES = {
-  // ── Superusers — full access ────────────────────────────────────────────
-  DEVELOPER: null,
-  ADMIN:     null,
+  // ── S1: Developer — full access ─────────────────────────────────────────
+  DEV: null,
 
-  // ── Owner — executive read-only: dashboard + analytics + finance ────────
-  OWNER: [
-    'dashboard', 'executive-analytics',
+  // ── S2: Tech / IT — system + read all ───────────────────────────────────
+  TEC: [
+    'dashboard', 'executive-analytics', 'audit-trail',
     'customers',
-    'facebook-ads', 'campaign-tracking', 'analytics',
-    'courses', 'schedules', 'packages',
-    'inventory-control', 'procurement', 'assets',
-    'employees', 'team-kpi', 'admin-performance', 'audit-trail',
+    'employees', 'team-kpi', 'admin-performance',
+    'ai-config', 'system-config', 'settings',
   ],
 
-  // ── Manager — all operational views, no system configuration ───────────
-  MANAGER: [
-    'dashboard', 'executive-analytics',
-    'pos-system', 'inventory-manager', 'audit-trail',
+  // ── R2: Management — all operational views, approve, reports ────────────
+  MGR: [
+    'dashboard', 'executive-analytics', 'audit-trail',
+    'pos-system', 'inventory-manager',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
     'courses', 'schedules', 'recipes', 'packages',
@@ -42,38 +39,75 @@ export const SIDEBAR_PROFILES = {
     'employees', 'tasks', 'team-kpi', 'admin-performance',
   ],
 
-  // ── Marketing specialist — chat + ads + analytics ──────────────────────
-  MARKETING: [
+  // ── R3: Marketing — ads + chat + courses + sales ────────────────────────
+  MKT: [
     'dashboard',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
-  ],
-
-  // ── Head chef — kitchen + courses only ─────────────────────────────────
-  HEAD_CHEF: [
-    'dashboard',
-    'courses', 'schedules', 'recipes', 'packages',
-    'kitchen-stock', 'inventory-control', 'procurement', 'assets',
-  ],
-
-  // ── Employee — front-of-house operations ───────────────────────────────
-  EMPLOYEE: [
-    'dashboard',
+    'courses', 'schedules', 'packages',
     'pos-system',
-    'customers', 'facebook-chat', 'line-connect',
-    'courses', 'schedules',
+  ],
+
+  // ── R4: Human Resource — employee management ────────────────────────────
+  HR: [
+    'dashboard',
+    'employees', 'team-kpi', 'admin-performance', 'audit-trail',
     'tasks',
   ],
 
-  // ── Agent — inbox only ─────────────────────────────────────────────────
-  AGENT: [
+  // ── R5: Purchasing — PO + kitchen procurement ───────────────────────────
+  PUR: [
+    'dashboard',
+    'kitchen-stock', 'inventory-control', 'procurement', 'assets',
+    'inventory-manager',
+  ],
+
+  // ── R6: Warehouse / Production — kitchen + catalog + recipes ────────────
+  PD: [
+    'dashboard',
+    'courses', 'schedules', 'recipes', 'packages',
+    'kitchen-stock', 'inventory-control', 'procurement', 'assets',
+    'inventory-manager',
+  ],
+
+  // ── R7: Admin / Doc — enrollment + documents ────────────────────────────
+  ADM: [
+    'dashboard',
+    'pos-system',
+    'customers', 'facebook-chat',
+    'courses', 'schedules', 'packages',
+    'tasks',
+  ],
+
+  // ── R8: Accounting — financial overview + reports ───────────────────────
+  ACC: [
+    'dashboard', 'executive-analytics',
+    'pos-system', 'inventory-manager',
+    'customers',
+    'facebook-ads', 'analytics',
+    'audit-trail',
+  ],
+
+  // ── R9: Sales — POS + customers + inbox ─────────────────────────────────
+  SLS: [
+    'dashboard',
+    'pos-system',
+    'customers', 'facebook-chat', 'line-connect',
+    'courses', 'schedules', 'packages',
+    'tasks',
+  ],
+
+  // ── R10: Agent — inbox + own customers ──────────────────────────────────
+  AGT: [
     'dashboard',
     'customers', 'facebook-chat', 'line-connect',
   ],
 
-  // ── Guest — dashboard only ─────────────────────────────────────────────
-  GUEST: [
+  // ── R11: Staff — POS + basic tasks ──────────────────────────────────────
+  STF: [
     'dashboard',
+    'pos-system',
+    'tasks',
   ],
 };
 
