@@ -29,6 +29,7 @@ import PremiumPOS from "@/components/PremiumPOS";
 import LineConnect from "@/components/LineConnect";
 import NotificationCenter from "@/components/NotificationCenter";
 import ExecutiveAnalytics from "@/components/ExecutiveAnalytics";
+import RoleDashboard from "@/components/RoleDashboard";
 import InventoryManager from "@/components/InventoryManager";
 import AuditHistory from "@/components/AuditHistory";
 import SystemConfig from "@/components/SystemConfig";
@@ -256,7 +257,7 @@ export default function Home() {
                         )}
 
                         {activeView === "executive-analytics" && wrap("executive-analytics",
-                            <ExecutiveAnalytics language={language} />
+                            <RoleDashboard language={language} />
                         )}
 
                         {activeView === "pos-system" && wrap("pos-system",

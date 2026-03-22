@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-22 (Phase 1–30 ✅ ALL DONE | v1.5.2 HEAD)
+> Last updated: 2026-03-22 (Phase 1–33 complete | v1.9.0 HEAD | Phase 33–39 planned)
 
 ---
 
@@ -50,6 +50,16 @@
 | Phase 29 | RBAC Redesign + Ads Optimize Write (ADR-045) | ✅ Done | 10/10 |
 | Phase 30 (pre) | V Point Loyalty + UI Overhaul (ADR-046 plan) | ✅ Done | 7/7 |
 | Phase 30 (UI) | Employee Card Full Redesign + Task Board (v1.5.2) | ✅ Done | — |
+| Phase 31 | MCP Server — Dual Transport stdio + Streamable HTTP (v1.7.0) | ✅ Done | — |
+| Phase 32 | Meta Ads Domain in MCP — 22 tools (v1.8.0) | ✅ Done | — |
+| Phase 33 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree (v1.9.0) | ✅ Done | — |
+| **Phase 34** | **Visual Calendar + Class Attendance (v2.0.0)** | **⏳ Next** | 0/8 |
+| Phase 35 | Student Self-Service Portal (v2.1.0) | 🔲 Planned | 0/10 |
+| Phase 36 | Certificate PDF + Document Generation (v2.2.0) | 🔲 Planned | 0/8 |
+| Phase 37 | AI Smart Inbox — Reply Draft + Lead Score (v2.3.0) | 🔲 Planned | 0/10 |
+| Phase 38 | Procurement Full Lifecycle Completion (v2.4.0) | 🔲 Planned | 0/9 |
+| Phase 39 | Advanced BI + Reporting Export (v2.5.0) | 🔲 Planned | 0/9 |
+| Phase 40 | Mobile PWA + WhatsApp Channel (v3.0.0) | 🔲 Planned | 0/7 |
 
 ---
 
