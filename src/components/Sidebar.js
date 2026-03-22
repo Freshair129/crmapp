@@ -9,7 +9,7 @@ import {
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot,
     PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck,
 } from 'lucide-react';
-import { can } from '@/lib/permissionMatrix';
+import { canSeeItem } from '@/lib/sidebarProfiles';
 
 const menuGroups = [
     {
@@ -186,13 +186,13 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                         )}
 
                         {group.items.map((item) => {
+                            // Skip inactive items (toggled off in menu editor)
+                            if (item.active === false) return null;
+                            // Skip items not in this role's profile
+                            if (!canSeeItem(userRole, item.id)) return null;
+
                             const isActive = activeView === item.id;
                             const Icon = item.icon;
-                            const canAccess = item.id === 'analytics'
-                                ? can(currentUser?.role || 'GUEST', 'business', 'view')
-                                : true;
-
-                            if (!canAccess) return null;
 
                             return (
                                 <div key={item.id} className="relative group/item">

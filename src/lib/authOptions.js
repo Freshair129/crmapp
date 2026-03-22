@@ -97,6 +97,11 @@ export const authOptions = {
                         logger.error('NEXTAUTH', 'Audit log write failed', err);
                     });
 
+                    // Normalise roles array — fallback to [role] if roles[] is empty/missing
+                    const rolesArr = (employee.roles && employee.roles.length > 0)
+                        ? employee.roles
+                        : [employee.role];
+
                     return {
                         id: employee.id,
                         employeeId: employee.employeeId,
@@ -105,7 +110,8 @@ export const authOptions = {
                         lastName: employee.lastName,
                         nickName: employee.nickName,
                         email: employee.email,
-                        role: employee.role,
+                        role: employee.role,   // primary role (backward compat)
+                        roles: rolesArr,       // full multi-role array
                         lastLoginAt: now.toISOString(),
                     };
                 } catch (error) {
@@ -123,6 +129,7 @@ export const authOptions = {
             if (user) {
                 // ── First login: seed token from authorize() return value ──
                 token.role        = user.role;
+                token.roles       = user.roles;
                 token.employeeId  = user.employeeId;
                 token.firstName   = user.firstName;
                 token.lastName    = user.lastName;
@@ -142,6 +149,7 @@ export const authOptions = {
                             where: { id: token.sub },
                             select: {
                                 role: true,
+                                roles: true,
                                 firstName: true,
                                 lastName: true,
                                 nickName: true,
@@ -151,6 +159,7 @@ export const authOptions = {
                         });
                         if (emp && emp.status === 'ACTIVE' && isValidRole(emp.role)) {
                             token.role        = emp.role;
+                            token.roles       = (emp.roles && emp.roles.length > 0) ? emp.roles : [emp.role];
                             token.firstName   = emp.firstName;
                             token.lastName    = emp.lastName;
                             token.nickName    = emp.nickName;
@@ -170,7 +179,11 @@ export const authOptions = {
             if (session.user) {
                 // Normalize role to UPPERCASE — guards against stale JWTs that stored
                 // Title-case roles (e.g. 'Admin' → 'ADMIN') from older login sessions
-                session.user.role        = token.role ? String(token.role).toUpperCase() : undefined;
+                const primaryRole = token.role ? String(token.role).toUpperCase() : undefined;
+                session.user.role        = primaryRole;
+                session.user.roles       = Array.isArray(token.roles)
+                    ? token.roles.map(r => String(r).toUpperCase())
+                    : (primaryRole ? [primaryRole] : []);
                 session.user.employeeId  = token.employeeId;
                 session.user.firstName   = token.firstName;
                 session.user.lastName    = token.lastName;

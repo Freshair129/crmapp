@@ -277,7 +277,8 @@ model Employee {
   department   String?
   jobTitle     String?   @map("job_title") // ตำแหน่งงาน เช่น "Pastry Chef", "Marketing Officer"
   passwordHash String    @map("password_hash")
-  role         String    @default("AGENT") // ADR-026: Developer|Manager|Supervisor|Admin|Agent|Guest
+  role         String    @default("AGENT") // primary role (compat) — ADR-026
+  roles        String[]  @default([]) @map("roles") // multi-role array — ADR-045; union of permissions applied
   status       String    @default("ACTIVE")
   facebookSub  String?   @unique @map("facebook_sub") // Facebook App-Scoped User ID (ASID) จาก OAuth login
   facebookName String?   @map("facebook_name")        // ชื่อที่แสดงบน Facebook
