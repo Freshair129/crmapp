@@ -1,4 +1,4 @@
-**LATEST:** CL-20260322-008 | v1.9.0 | 2026-03-22
+**LATEST:** CL-20260323-001 | v1.9.1 | 2026-03-23
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260323-001 | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | v1.9.1 | 2026-03-23 | MINOR | #rbac #multi-role #employee #db-migration |
 | CL-20260322-008 | NotebookLM Chat Intelligence + Knowledge Tree | v1.9.0 | 2026-03-22 | MINOR | #ai #intelligence #notebooklm |
 | CL-20260322-007 | Audit & MCP Core Implementation | v1.8.1 | 2026-03-22 | MINOR | #docs #audit #mcp #procurement |
 | CL-20260322-006 | Meta Ads Domain in MCP (v1.8.0) + adsOptimizeRepo Bug Fix | v1.8.0 | 2026-03-22 | MINOR | #mcp #ads #marketing #bugfix |

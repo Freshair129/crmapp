@@ -47,7 +47,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.6.0` | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
 | `v1.6.1` | Employee Card UX + Interactive Permissions + jobTitle | ✅ released |
 | `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
-| `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released ← HEAD |
+| `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
+| `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree + MCP tool | ✅ released |
+| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released ← HEAD |
+
+
+### v1.9.1 — สิ่งที่ทำแล้ว (Phase 34 — Multi-Role RBAC + Employee Cleanup) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Employee.roles | ✅ updated | `String[] @default([])` — multi-role array |
+| `src/lib/rbac.js` | ✅ updated | +OWNER role (L4.5), +getMaxRoleLevel(), +hasMultiRolePermission() |
+| `src/lib/authOptions.js` | ✅ updated | JWT/session expose roles[], fallback [role] if empty |
+| `src/lib/sidebarProfiles.js` | ✅ updated | OWNER profile, canSeeItem(string|string[]), getAllowedItems() |
+| Supabase DB migration | ✅ done | ADD COLUMN roles TEXT[], migrate existing, fix IDs/emails/INACTIVE |
+
+> ⚠️ **Known Gotcha — OWNER role**: read-only executive view — ไม่มีสิทธิ์แก้ไข config, users, หรือ write operations ใดๆ
+> ⚠️ **Known Gotcha — Multi-role assign**: ยังไม่มี UI — ต้องใช้ SQL ตรงๆ: `UPDATE employees SET roles = ARRAY['EMPLOYEE','ADMIN'] WHERE employee_id = 'xxx'`
+> ⚠️ **Known Gotcha — roles[] backward compat**: `session.user.role` (primary string) ยังคงอยู่ — ไม่ break existing guards
+
+
+### v1.9.0 — สิ่งที่ทำแล้ว (Phase 33 — NotebookLM Chat Intelligence) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → ConversationIntelligence | ✅ new | dailySummary, mermaidTree, generatedAt, conversationId FK |
+| `src/lib/repositories/intelligenceRepo.js` | ✅ new | generateDailyIntelligence(), getIntelligenceByConversation(), getRecentIntelligence() |
+| `src/mcp/vschool-mcp-server.js` | ✅ updated | +1 tool: `intelligence.get_chat_tree` — tools 22→23, version 1.9.0 |
+| `src/app/api/mcp/route.js` | ✅ updated | +1 tool compact, version 1.9.0 |
+| `changelog/CL-20260322-008.md` | ✅ new | changelog entry |
+
+> ⚠️ **Known Gotcha — Gemini model**: ใช้ `gemini-2.0-flash` สำหรับ Mermaid generation — ถ้าเปลี่ยน model ต้อง test output format ใหม่
+> ⚠️ **Known Gotcha — ConversationIntelligence**: 1:1 กับ Conversation — ถ้า generate ซ้ำ → upsert by conversationId
+> 📍 **MCP tool**: `intelligence.get_chat_tree` — ส่ง conversationId หรือ customerId เพื่อดู Knowledge Tree
 
 **Branch:** `master` (งานประจำวัน) · `stable` → ชี้ที่ `v0.12.0`
 **รายละเอียด rollback:** `docs/guide/version-control-and-rollback.md`
