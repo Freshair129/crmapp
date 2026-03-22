@@ -4,14 +4,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Moon, Sun, Bell, LogOut, User, Shield, Clock, ChevronDown } from 'lucide-react';
 
 const ROLE_LABEL = {
-    DEVELOPER:  { th: 'Developer',   color: 'text-purple-400',  bg: 'bg-purple-500/10 border-purple-500/20' },
-    ADMIN:      { th: 'Admin',        color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
-    MANAGER:    { th: 'Manager',      color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20' },
-    MARKETING:  { th: 'Marketing',    color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/20' },
-    HEAD_CHEF:  { th: 'Head Chef',    color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20' },
-    EMPLOYEE:   { th: 'Employee',     color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-    AGENT:      { th: 'Agent',        color: 'text-green-400',   bg: 'bg-green-500/10 border-green-500/20' },
-    GUEST:      { th: 'Demo / Guest', color: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    // v2.0.0 — 12 new role codes (Phase 36)
+    DEV: { th: 'Developer',   color: 'text-purple-400',  bg: 'bg-purple-500/10 border-purple-500/20' },
+    TEC: { th: 'Technician',  color: 'text-cyan-400',    bg: 'bg-cyan-500/10 border-cyan-500/20' },
+    MGR: { th: 'Manager',     color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20' },
+    MKT: { th: 'Marketing',   color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/20' },
+    HR:  { th: 'HR',          color: 'text-indigo-400',  bg: 'bg-indigo-500/10 border-indigo-500/20' },
+    PUR: { th: 'Purchasing',  color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20' },
+    PD:  { th: 'Head Chef',   color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20' },
+    ADM: { th: 'Admin',       color: 'text-teal-400',    bg: 'bg-teal-500/10 border-teal-500/20' },
+    ACC: { th: 'Accounting',  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    SLS: { th: 'Sales',       color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
+    AGT: { th: 'Agent',       color: 'text-rose-400',    bg: 'bg-rose-500/10 border-rose-500/20' },
+    STF: { th: 'Staff',       color: 'text-slate-400',   bg: 'bg-slate-500/10 border-slate-500/20' },
+    // Legacy fallback
+    GUEST: { th: 'Demo / Guest', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
 };
 
 function formatLoginTime(iso) {
