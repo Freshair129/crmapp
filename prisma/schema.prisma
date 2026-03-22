@@ -846,6 +846,7 @@ model Ingredient {
   minStock     Float                 @default(0) @map("min_stock")
   category     String                @default("OTHER")
   costPerUnit  Float?                @map("cost_per_unit")
+  yieldPercent Float                 @default(100) @map("yield_percent")
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 

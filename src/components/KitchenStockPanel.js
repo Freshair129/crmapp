@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2, Plus, Layers, CalendarClock, Truck } from 'lucide-react';
+import { Package, AlertTriangle, Edit3, Check, X, Search, Loader2, Plus, Layers, CalendarClock, Truck, Percent } from 'lucide-react';
 
 export default function KitchenStockPanel({ language = 'TH' }) {
   const [loading, setLoading] = useState(true);
@@ -11,6 +11,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [editingYieldId, setEditingYieldId] = useState(null);
+  const [editYieldValue, setEditYieldValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -20,7 +22,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
     category: 'OTHER',
     currentStock: 0,
     minStock: 0,
-    costPerUnit: ''
+    costPerUnit: '',
+    yieldPercent: 100
   });
 
   const [activeTab, setActiveTab] = useState('ingredients');
@@ -182,6 +185,30 @@ export default function KitchenStockPanel({ language = 'TH' }) {
     }
   };
 
+  const handleUpdateYield = async (id) => {
+    const val = parseFloat(editYieldValue);
+    if (isNaN(val) || val <= 0 || val > 100) {
+      alert('Yield % ต้องอยู่ระหว่าง 1–100');
+      return;
+    }
+    try {
+      setSaving(true);
+      const res = await fetch(`/api/kitchen/ingredients/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ yieldPercent: val })
+      });
+      if (res.ok) {
+        setIngredients(ingredients.map(ing => ing.id === id ? { ...ing, yieldPercent: val } : ing));
+        setEditingYieldId(null);
+      }
+    } catch (err) {
+      alert('Error updating yield');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAddIngredient = async (e) => {
     e.preventDefault();
     try {
@@ -193,7 +220,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           ...addForm,
           currentStock: parseFloat(addForm.currentStock) || 0,
           minStock: parseFloat(addForm.minStock) || 0,
-          costPerUnit: addForm.costPerUnit ? parseFloat(addForm.costPerUnit) : undefined
+          costPerUnit: addForm.costPerUnit ? parseFloat(addForm.costPerUnit) : undefined,
+          yieldPercent: parseFloat(addForm.yieldPercent) || 100
         })
       });
 
@@ -208,7 +236,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           category: 'OTHER',
           currentStock: 0,
           minStock: 0,
-          costPerUnit: ''
+          costPerUnit: '',
+          yieldPercent: 100
         });
       }
     } catch (err) {
@@ -375,6 +404,7 @@ export default function KitchenStockPanel({ language = 'TH' }) {
               <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4">{t.name}</th>
               <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4">{t.category}</th>
               <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4">{t.stock}</th>
+              <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4 text-center">YIELD %</th>
               <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4 text-center">{t.status}</th>
               <th className="py-4 text-[10px] font-black text-white/40 uppercase tracking-widest px-4 text-right"></th>
             </tr>
@@ -410,6 +440,38 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                       <span className="text-[10px] text-white/40 font-bold uppercase">{ing.unit}</span>
                       <span className="text-[10px] text-white/20 ml-2">({t.min}: {ing.minStock})</span>
                     </div>
+                  )}
+                </td>
+                <td className="py-4 px-4 text-center">
+                  {editingYieldId === ing.id ? (
+                    <div className="flex items-center justify-center gap-1">
+                      <input
+                        autoFocus
+                        type="number"
+                        min="1" max="100" step="1"
+                        className="w-16 bg-black/50 border border-amber-500/50 rounded px-2 py-1 text-amber-400 font-black text-center"
+                        value={editYieldValue}
+                        onChange={e => setEditYieldValue(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleUpdateYield(ing.id)}
+                      />
+                      <button onClick={() => handleUpdateYield(ing.id)} disabled={saving} className="text-emerald-500"><Check size={14}/></button>
+                      <button onClick={() => setEditingYieldId(null)} className="text-red-500"><X size={14}/></button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingYieldId(ing.id); setEditYieldValue(String(ing.yieldPercent ?? 100)); }}
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black border transition-all hover:scale-105 ${
+                        (ing.yieldPercent ?? 100) < 70
+                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                          : (ing.yieldPercent ?? 100) < 90
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      }`}
+                      title="คลิกเพื่อแก้ไข Yield %"
+                    >
+                      <Percent size={9} />
+                      {ing.yieldPercent ?? 100}
+                    </button>
                   )}
                 </td>
                 <td className="py-4 px-4 text-center">
@@ -607,15 +669,33 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ต้นทุนต่อหน่วย (ถ้ามี)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
-                  value={addForm.costPerUnit}
-                  onChange={e => setAddForm({...addForm, costPerUnit: e.target.value})}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ต้นทุนต่อหน่วย (ถ้ามี)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                    value={addForm.costPerUnit}
+                    onChange={e => setAddForm({...addForm, costPerUnit: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">
+                    Yield % <span className="text-white/20 normal-case font-bold">(1–100)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1" max="100" step="1"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                      value={addForm.yieldPercent}
+                      onChange={e => setAddForm({...addForm, yieldPercent: e.target.value})}
+                    />
+                    <Percent size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20" />
+                  </div>
+                  <p className="text-[9px] text-white/20 mt-1">เช่น ปลา 80% = เสียไข่ 20%</p>
+                </div>
               </div>
 
               <button

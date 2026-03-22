@@ -32,13 +32,23 @@ export async function getAllIngredients(opts = {}) {
     }
 }
 
-export async function upsertIngredient({ ingredientId, name, unit, currentStock, minStock, category, costPerUnit }) {
+export async function upsertIngredient({ ingredientId, name, unit, currentStock, minStock, category, costPerUnit, yieldPercent }) {
     try {
         const prisma = await getPrisma();
         return prisma.ingredient.upsert({
             where: { ingredientId },
-            update: { name, unit, currentStock, minStock, category, costPerUnit },
-            create: { ingredientId, name, unit, currentStock: currentStock ?? 0, minStock: minStock ?? 0, category: category ?? 'OTHER', costPerUnit }
+            update: {
+                name, unit, currentStock, minStock, category, costPerUnit,
+                ...(yieldPercent !== undefined ? { yieldPercent } : {})
+            },
+            create: {
+                ingredientId, name, unit,
+                currentStock: currentStock ?? 0,
+                minStock: minStock ?? 0,
+                category: category ?? 'OTHER',
+                costPerUnit,
+                yieldPercent: yieldPercent ?? 100
+            }
         });
     } catch (error) {
         logger.error('[KitchenRepo]', 'Failed to upsert ingredient', error);
@@ -116,15 +126,19 @@ export async function calculateStockNeeded(scheduleId) {
         const studentCount = schedule.confirmedStudents || schedule.maxStudents || 1;
 
         return bom.map(item => {
-            const qtyNeeded = item.qtyPerPerson * studentCount;
+            const yieldPct   = item.ingredient.yieldPercent ?? 100;
+            // qtyNeededRaw = gross purchase qty accounting for prep waste
+            // e.g. yieldPercent=80 means we lose 20% → need 25% more
+            const qtyNeeded  = item.qtyPerPerson * studentCount * (100 / yieldPct);
             const qtyInStock = item.ingredient.currentStock;
-            const qtyToBuy = Math.max(0, qtyNeeded - qtyInStock);
+            const qtyToBuy   = Math.max(0, qtyNeeded - qtyInStock);
             return {
-                ingredient: item.ingredient,
-                unit: item.unit,
-                qtyNeeded,
+                ingredient:  item.ingredient,
+                unit:        item.unit,
+                yieldPercent: yieldPct,
+                qtyNeeded:   Math.round(qtyNeeded * 1000) / 1000,
                 qtyInStock,
-                qtyToBuy,
+                qtyToBuy:    Math.round(qtyToBuy * 1000) / 1000,
                 isSufficient: qtyInStock >= qtyNeeded
             };
         });

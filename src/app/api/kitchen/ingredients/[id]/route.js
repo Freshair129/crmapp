@@ -9,14 +9,29 @@ export async function PATCH(request, { params }) {
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();
-        const { currentStock, ...rest } = body;
+        const { currentStock, yieldPercent, ...rest } = body;
 
-        if (currentStock !== undefined) {
+        // Validate yieldPercent when provided
+        if (yieldPercent !== undefined) {
+            const yp = Number(yieldPercent);
+            if (isNaN(yp) || yp <= 0 || yp > 100) {
+                return NextResponse.json({ error: 'yieldPercent must be between 1 and 100' }, { status: 400 });
+            }
+        }
+
+        if (currentStock !== undefined && Object.keys(rest).length === 0 && yieldPercent === undefined) {
+            // Quick stock-only update path
             const result = await updateStock(params.id, Number(currentStock));
             return NextResponse.json(result);
         }
 
-        const result = await upsertIngredient({ ingredientId: params.id, ...rest });
+        // General update — includes yieldPercent and/or other fields
+        const result = await upsertIngredient({
+            ingredientId: params.id,
+            ...(currentStock !== undefined ? { currentStock: Number(currentStock) } : {}),
+            ...(yieldPercent !== undefined ? { yieldPercent: Number(yieldPercent) } : {}),
+            ...rest
+        });
         return NextResponse.json(result);
     } catch (error) {
         logger.error('[Ingredients]', 'PATCH failed', error);
