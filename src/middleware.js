@@ -25,24 +25,29 @@ const ROUTE_ROLES = [
   { prefix: '/api/mcp',              role: null },   // MCP server — Bearer token auth handled in route
   { prefix: '/api/members/register', role: null },   // public — customer self-registration
   { prefix: '/api/health',           role: null },   // public — health check
-  { prefix: '/api/products',         role: 'AGENT' },
-  { prefix: '/api/employees',        role: 'ADMIN' },
-  { prefix: '/api/audit',            role: 'ADMIN' },  // audit log — ADMIN+ only
-  { prefix: '/api/marketing',        role: 'MARKETING' },
-  { prefix: '/api/analytics',        role: 'MARKETING' },
-  { prefix: '/api/customers',        role: 'AGENT' },
-  { prefix: '/api',                  role: 'AGENT' }, // catch-all: any authenticated user
+  { prefix: '/api/products',         role: 'AGT' },
+  { prefix: '/api/employees',        role: 'ADM' },
+  { prefix: '/api/audit',            role: 'ADM' },  // audit log — ADM+ only
+  { prefix: '/api/marketing',        role: 'MKT' },
+  { prefix: '/api/analytics',        role: 'MKT' },
+  { prefix: '/api/customers',        role: 'AGT' },
+  { prefix: '/api',                  role: 'AGT' }, // catch-all: any authenticated user
 ];
 
+// Phase 36 — 12 new role codes (ADR-045 updated)
 const ROLE_LEVEL = {
-  DEVELOPER:  5,
-  MANAGER:    4,
-  ADMIN:      3,
-  MARKETING:  2.5,
-  HEAD_CHEF:  2.5,
-  EMPLOYEE:   1.5,
-  AGENT:      1,
-  GUEST:      0,
+  DEV: 5,
+  MGR: 4,
+  TEC: 3.5,
+  HR:  3,
+  ACC: 3,
+  MKT: 2.5,
+  PUR: 2.5,
+  PD:  2.5,
+  ADM: 2,
+  SLS: 1.5,
+  AGT: 1,
+  STF: 0.5,
 };
 
 /** HTTP methods that mutate state — blocked for GUEST role */
@@ -91,10 +96,10 @@ export async function middleware(request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // GUEST write-block — read-only enforcement at API layer
-  if (token.role === 'GUEST' && WRITE_METHODS.has(request.method)) {
+  // STF write-block — read-only enforcement at API layer (replaces old GUEST check)
+  if (token.role === 'STF' && WRITE_METHODS.has(request.method)) {
     return NextResponse.json(
-      { error: 'Forbidden', reason: 'Demo account is read-only' },
+      { error: 'Forbidden', reason: 'Staff account is read-only' },
       { status: 403 }
     );
   }
