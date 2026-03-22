@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 /**
  * PATCH /api/employees/[id]
  * Update employee fields (firstName, lastName, nickName, phone, department,
- *   role, status, password, facebookName, facebookUrl)
+ *   role, roles, status, password, facebookName, facebookUrl)
  */
 export async function PATCH(req, { params }) {
     try {
@@ -22,6 +22,16 @@ export async function PATCH(req, { params }) {
         for (const key of allowed) {
             if (key in body) updateData[key] = body[key] || null;
         }
+
+        // roles[] — TEXT[] array field, handled separately
+        if (Array.isArray(body.roles)) {
+            updateData.roles = body.roles.filter(Boolean);
+            // Keep primary role in sync: if roles[] is provided and role is not, derive from first element
+            if (!('role' in body) && body.roles.length > 0) {
+                updateData.role = body.roles[0];
+            }
+        }
+
         if (body.password) {
             updateData.passwordHash = await bcrypt.hash(body.password, 10);
         }
@@ -40,6 +50,7 @@ export async function PATCH(req, { params }) {
                 department: true,
                 jobTitle: true,
                 role: true,
+                roles: true,
                 status: true,
                 facebookName: true,
                 facebookUrl: true,

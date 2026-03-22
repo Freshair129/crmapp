@@ -35,17 +35,18 @@ import { can } from '@/lib/permissionMatrix';
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_META = {
-    DEVELOPER: { label: 'Developer', level: 'L5', bg: 'from-violet-600 to-purple-800', badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
-    MANAGER:   { label: 'Manager',   level: 'L4', bg: 'from-blue-600 to-blue-900',    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    ADMIN:     { label: 'Admin',     level: 'L3', bg: 'from-[#cc9d37] to-amber-700',  badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-    MARKETING: { label: 'Marketing', level: 'L2.5', bg: 'from-pink-600 to-rose-800', badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
-    HEAD_CHEF: { label: 'Head Chef', level: 'L2.5', bg: 'from-orange-500 to-orange-800', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-    EMPLOYEE:  { label: 'Employee',  level: 'L1.5', bg: 'from-teal-500 to-teal-800',  badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
-    AGENT:     { label: 'Agent',     level: 'L1', bg: 'from-red-500 to-rose-800',    badge: 'bg-red-500/20 text-red-300 border-red-500/30' },
-    GUEST:     { label: 'Guest',     level: 'L0', bg: 'from-slate-500 to-slate-700', badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
+    DEVELOPER: { label: 'Developer', level: 'L5',   bg: 'from-violet-600 to-purple-800',   badge: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
+    OWNER:     { label: 'Owner',     level: 'L4.5', bg: 'from-[#cc9d37] to-yellow-700',    badge: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+    MANAGER:   { label: 'Manager',   level: 'L4',   bg: 'from-blue-600 to-blue-900',        badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+    ADMIN:     { label: 'Admin',     level: 'L3',   bg: 'from-[#cc9d37] to-amber-700',      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+    MARKETING: { label: 'Marketing', level: 'L2.5', bg: 'from-pink-600 to-rose-800',        badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+    HEAD_CHEF: { label: 'Head Chef', level: 'L2.5', bg: 'from-orange-500 to-orange-800',    badge: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+    EMPLOYEE:  { label: 'Employee',  level: 'L1.5', bg: 'from-teal-500 to-teal-800',        badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+    AGENT:     { label: 'Agent',     level: 'L1',   bg: 'from-red-500 to-rose-800',          badge: 'bg-red-500/20 text-red-300 border-red-500/30' },
+    GUEST:     { label: 'Guest',     level: 'L0',   bg: 'from-slate-500 to-slate-700',       badge: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
 };
 
-const ALL_ROLES = ['DEVELOPER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOYEE','AGENT','GUEST'];
+const ALL_ROLES = ['DEVELOPER','OWNER','MANAGER','ADMIN','MARKETING','HEAD_CHEF','EMPLOYEE','AGENT','GUEST'];
 
 // Avatar gradient colors (for card dark-bg design)
 const ROLE_AVATAR = {
@@ -987,7 +988,8 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             onEditDirect={(targetEmp) => {
                                 const idx = filtered.findIndex(e => e.id === targetEmp.id);
                                 if (idx >= 0) setActiveIndex(idx);
-                                setEditForm({ ...targetEmp });
+                                const roles = (targetEmp.roles && targetEmp.roles.length > 0) ? targetEmp.roles : [targetEmp.role || 'AGENT'];
+                                setEditForm({ ...targetEmp, roles });
                                 setIsEditing(true);
                             }}
                             onOpenDetail={(targetEmp) => {
@@ -1031,7 +1033,11 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                             {/* Edit button — always visible when canManage */}
                             {canManage && (
                                 <button
-                                    onClick={() => { setEditForm({ ...emp }); setIsEditing(true); }}
+                                    onClick={() => {
+                                const roles = (emp.roles && emp.roles.length > 0) ? emp.roles : [emp.role || 'AGENT'];
+                                setEditForm({ ...emp, roles });
+                                setIsEditing(true);
+                            }}
                                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-[#cc9d37] hover:border-[#cc9d37]/30 text-[10px] font-black uppercase tracking-widest transition-all shrink-0">
                                     <Pen size={11} />แก้ไข
                                 </button>
@@ -1046,7 +1052,7 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     <StatCard icon={Users} label="Customers" value={assignedCustomers.length} />
                                     <StatCard icon={Receipt} label="Orders" value={sales.length} />
                                     <StatCard icon={Coins} label="Revenue" value={`฿${totalRevenue.toLocaleString()}`} accent />
-                                    <StatCard icon={Star} label="Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
+                                    <StatCard icon={Star} label="Primary Role" value={getRoleMeta(emp.role).label} sub={getRoleMeta(emp.role).level} />
                                 </div>
 
                                 {/* Info card */}
@@ -1073,6 +1079,25 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* Multi-role badges */}
+                                    {emp.roles && emp.roles.length > 1 && (
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <Shield size={13} className="text-[#cc9d37]/50" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[9px] text-white/30 font-black uppercase tracking-widest mb-1.5">Multi-Role</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {emp.roles.map(r => (
+                                                        <span key={r} className={`text-[9px] font-black px-2 py-0.5 rounded-lg border ${ROLE_META[r]?.badge || 'bg-white/5 text-white/40 border-white/10'}`}>
+                                                            {ROLE_META[r]?.label || r}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Facebook section */}
                                     <div className="flex items-start gap-4">
@@ -1262,21 +1287,76 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                 </div>
                             </div>
 
-                            {/* Role selector */}
-                            <div>
-                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Role / Permission Level</label>
-                                <select
-                                    value={editForm.role || 'AGENT'}
-                                    onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
-                                    className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
-                                >
-                                    {ALL_ROLES.map(r => (
-                                        <option key={r} value={r}>{ROLE_META[r].label} — {ROLE_META[r].level}</option>
-                                    ))}
-                                </select>
-                                <p className="text-[9px] text-white/25 mt-1.5 ml-1">
-                                    {getRoleMeta(editForm.role || 'AGENT').level} · การเปลี่ยน role จะมีผลทันทีหลัง user login ครั้งถัดไป
+                            {/* ── Role / Multi-role Assign ─────────────────────── */}
+                            <div className="border-t border-white/8 pt-4">
+                                <p className="text-[9px] text-[#cc9d37]/70 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                    <Shield size={10} /> Role &amp; Permissions
                                 </p>
+
+                                {/* Primary role select */}
+                                <div className="mb-3">
+                                    <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">Primary Role</label>
+                                    <select
+                                        value={editForm.role || 'AGENT'}
+                                        onChange={e => {
+                                            const newRole = e.target.value;
+                                            // Keep roles[] in sync: primary role must be in array
+                                            const currentRoles = Array.isArray(editForm.roles) ? editForm.roles : [editForm.role || 'AGENT'];
+                                            const withoutOldPrimary = currentRoles.filter(r => r !== editForm.role);
+                                            const newRoles = [newRole, ...withoutOldPrimary].filter(Boolean);
+                                            setEditForm(f => ({ ...f, role: newRole, roles: [...new Set(newRoles)] }));
+                                        }}
+                                        className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all appearance-none"
+                                    >
+                                        {ALL_ROLES.map(r => (
+                                            <option key={r} value={r}>{ROLE_META[r]?.label || r} — {ROLE_META[r]?.level || ''}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Additional roles — checkbox grid */}
+                                <div>
+                                    <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-2">Additional Roles (Multi-role)</label>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        {ALL_ROLES.filter(r => r !== (editForm.role || 'AGENT')).map(r => {
+                                            const currentRoles = Array.isArray(editForm.roles) ? editForm.roles : [];
+                                            const checked = currentRoles.includes(r);
+                                            const meta = ROLE_META[r] || {};
+                                            return (
+                                                <label key={r}
+                                                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border cursor-pointer transition-all select-none ${checked ? 'bg-white/8 border-[#cc9d37]/30' : 'bg-white/3 border-white/6 hover:border-white/15'}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={e => {
+                                                            const currentRoles = Array.isArray(editForm.roles) ? editForm.roles : [editForm.role || 'AGENT'];
+                                                            let newRoles;
+                                                            if (e.target.checked) {
+                                                                newRoles = [...new Set([...currentRoles, r])];
+                                                            } else {
+                                                                newRoles = currentRoles.filter(x => x !== r);
+                                                            }
+                                                            setEditForm(f => ({ ...f, roles: newRoles }));
+                                                        }}
+                                                        className="accent-[#cc9d37] w-3 h-3 flex-shrink-0"
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <p className="text-white/70 text-[10px] font-black truncate">{meta.label || r}</p>
+                                                        <p className="text-white/25 text-[9px]">{meta.level || ''}</p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[9px] text-white/20 mt-2 ml-0.5">
+                                        Active roles: {(() => {
+                                            const activeRoles = Array.isArray(editForm.roles) && editForm.roles.length > 0
+                                                ? editForm.roles
+                                                : [editForm.role || 'AGENT'];
+                                            return activeRoles.map(r => ROLE_META[r]?.label || r).join(', ');
+                                        })()} · มีผลหลัง login ครั้งถัดไป
+                                    </p>
+                                </div>
                             </div>
 
                             {/* New password (optional) */}
