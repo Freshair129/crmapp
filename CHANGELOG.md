@@ -1,4 +1,4 @@
-**LATEST:** CL-20260323-004 | v1.9.4 | 2026-03-23
+**LATEST:** CL-20260323-005 | v2.0.0 | 2026-03-23
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260323-005 | Phase 36 RBAC Redesign: 12 New Roles + Employee Grade | v2.0.0 | 2026-03-23 | BREAKING | #rbac #roles #permissions #employee #grade #breaking |
 | CL-20260323-004 | Employee Card Framer Motion Animations + Overview StatCards | v1.9.4 | 2026-03-23 | MINOR | #ui #employee #animation #framer-motion #overview #stats |
 | CL-20260322-008 | NotebookLM Chat Intelligence + Knowledge Tree | v1.9.0 | 2026-03-22 | MINOR | #ai #intelligence #notebooklm |
 | CL-20260322-007 | Audit & MCP Core Implementation | v1.8.1 | 2026-03-22 | MINOR | #docs #audit #mcp #procurement |
@@ -36,6 +37,25 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260323-005] v2.0.0 — Phase 36 RBAC Redesign: 12 New Roles + Employee Grade
+**Date:** 2026-03-23 | **Severity:** BREAKING | **Tags:** #rbac #roles #permissions #employee #grade #breaking
+
+#### Changes
+- **permissionMatrix.js**: Complete rewrite — 12 roles × 7 domains × 6 actions, F/A/R/N levels
+- **rbac.js**: New ROLE_HIERARCHY (DEV=5, MGR=4 … STF=0.5), VALID_ROLES 12 ตัว
+- **sidebarProfiles.js**: SIDEBAR_PROFILES mapping all 12 roles to sidebar items
+- **EmployeeManagement.js**: ROLE_META + levelNum field, GRADE_META S/A/B/C/D, grade picker, level bar fix
+- **PermissionMatrix.js**: targetRole prop + useEffect sync
+- **DB migration**: 32 employees → new role codes (DEVELOPER→DEV, HEAD_CHEF→PD ฯลฯ)
+- **DB corrections**: บอล→PUR, ประชัน/หลิว/แป้ง→STF, Fafah→SLS
+- **Bug fixes bundled**: profilePicture Prisma field, permissions route import, FB autofill, grade popup error
+
+#### Known Gotchas
+- ต้อง rotate NEXTAUTH_SECRET ใน Vercel เพื่อ invalidate session เก่า
+- Multi-role assign ยังต้องใช้ SQL ตรง — ไม่มี UI
+
+---
 
 ### [CL-20260323-004] v1.9.4 — Employee Card Framer Motion Animations + Overview StatCards
 **Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #ui #employee #animation #framer-motion #overview #stats

@@ -52,7 +52,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released |
 | `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released |
 | `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released |
-| `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released ← HEAD |
+| `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released |
+| `v1.9.5` | Profile Picture Upload + Date of Birth + Employee Grade (S/A/B/C/D) | ✅ released |
+| `v2.0.0` | Phase 36 RBAC Redesign — 12 new roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released ← HEAD |
+
+
+### v2.0.0 — สิ่งที่ทำแล้ว (Phase 36 — RBAC Redesign) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/lib/permissionMatrix.js` | ✅ rewrite | 12 roles × 7 domains × 6 actions, F/A/R/N levels, `can()` helper |
+| `src/lib/rbac.js` | ✅ updated | ROLE_HIERARCHY, VALID_ROLES — 12 new codes |
+| `src/lib/sidebarProfiles.js` | ✅ updated | SIDEBAR_PROFILES mapping all 12 roles to menu items |
+| `src/components/EmployeeManagement.js` | ✅ updated | ROLE_META with levelNum, GRADE_META S/A/B/C/D, grade picker, level bar fix |
+| `src/components/PermissionMatrix.js` | ✅ updated | targetRole prop + useEffect sync |
+| `src/app/api/permissions/route.js` | ✅ fixed | @/lib/prisma → @/lib/db |
+| `prisma/schema.prisma` + Supabase | ✅ done | grade, dateOfBirth, profilePicture, hiredAt fields |
+| DB migration (32 employees) | ✅ done | DEVELOPER→DEV, MANAGER→MGR, HEAD_CHEF→PD ฯลฯ |
+| DB role corrections | ✅ done | บอล→PUR, ประชัน/หลิว/แป้ง→STF, Fafah→SLS |
+
+> ⚠️ **Known Gotcha — NEXTAUTH_SECRET**: ต้อง rotate ใน Vercel เพื่อ force re-login ทุก session (JWT เก่ายังมี role code เก่า)
+> ⚠️ **Known Gotcha — Multi-role UI**: ยังไม่มี UI สำหรับ assign multi-role — ต้องใช้ SQL: `UPDATE employees SET roles = ARRAY['SLS','AGT'] WHERE employee_id='xxx'`
+> ⚠️ **Known Gotcha — Grade null**: existing employees ทั้งหมดมี grade=null — ให้ผู้จัดการ assign ทีละคนผ่าน UI
+> ⚠️ **Known Gotcha — levelNum**: ROLE_META ต้องมี `levelNum` field ทุกตัว — ห้ามใช้ `parseFloat(levelStr.replace('L',''))` กับ code แบบ S1/R2
+
+
+### v1.9.5 — สิ่งที่ทำแล้ว (Phase 35.6 — Employee Profile Enhancements) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Employee.profilePicture | ✅ done | `String? @map("profile_picture")` — base64 avatar |
+| `prisma/schema.prisma` → Employee.dateOfBirth | ✅ done | `DateTime? @map("date_of_birth")` — CE date |
+| `prisma/schema.prisma` → Employee.grade | ✅ done | `String?` — S/A/B/C/D performance tier |
+| `src/components/EmployeeManagement.js` | ✅ updated | Camera icon avatar upload, calcAge/formatDOB helpers, birthday row in profile tab |
+| `src/app/api/employees/route.js` + `[id]/route.js` | ✅ updated | expose grade/dateOfBirth/profilePicture in all operations |
+
+> ⚠️ **Known Gotcha — profilePicture size**: base64 encoding ใหญ่กว่า binary ~33% — ถ้า photo ใหญ่มากอาจกระทบ DB row size
+> ⚠️ **Known Gotcha — Browser autofill**: ใช้ `readOnly` + `onFocus={e => e.target.removeAttribute('readonly')}` สำหรับ Facebook fields — Chrome จะไม่ fill readonly inputs
 
 
 ### v1.9.4 — สิ่งที่ทำแล้ว (Phase 35.5 — Employee Card Animations) ✅ — by Claude
