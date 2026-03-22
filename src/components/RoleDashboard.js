@@ -966,7 +966,7 @@ function DevTabBar({ activeTab, onTabChange }) {
 const DASH_TITLE = {
     DEV: 'Developer Overview',
     TEC: 'System Dashboard',
-    MGR: 'Executive Dashboard',
+    MGR: 'Manager Dashboard',
     ACC: 'Finance Dashboard',
     MKT: 'Marketing Dashboard',
     PD:  'Kitchen Dashboard',
