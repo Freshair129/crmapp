@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
@@ -79,6 +79,56 @@ function getRankLetter(score) {
 }
 
 /**
+// ─── Animation helpers ────────────────────────────────────────────────────────
+/** Count up from 0 → target using rAF with ease-out cubic, resets when target changes */
+function useCountUp(target, duration = 900) {
+    const [val, setVal] = useState(0);
+    useEffect(() => {
+        setVal(0);
+        if (!target) return;
+        const startTime = performance.now();
+        let raf;
+        const tick = (now) => {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            setVal(Math.round(eased * target));
+            if (progress < 1) raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [target, duration]);
+    return val;
+}
+
+/** Renders an animated metric value string: "72%", "฿12k", "5", "฿500" */
+function AnimatedMetricValue({ value }) {
+    const isBaht = String(value).startsWith('฿');
+    const isK    = String(value).includes('k');
+    const isPct  = String(value).endsWith('%');
+    const raw    = parseFloat(String(value).replace(/[฿k%,]/g, ''));
+    const target = isNaN(raw) ? 0 : (isK ? raw * 1000 : raw);
+    const anim   = useCountUp(target);
+    if (isNaN(raw)) return <span>{value}</span>;
+    if (isBaht)     return <span>฿{anim >= 1000 ? Math.round(anim / 1000) + 'k' : anim}</span>;
+    if (isPct)      return <span>{anim}%</span>;
+    return <span>{anim}</span>;
+}
+
+/** Animated progress bar — framer-motion width 0 → norm% */
+function AnimatedBar({ norm, color, delay = 0 }) {
+    return (
+        <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <motion.div
+                className="h-full rounded-full"
+                style={{ background: color, boxShadow: `0 0 4px ${color}66` }}
+                initial={{ width: 0 }}
+                animate={{ width: `${norm}%` }}
+                transition={{ duration: 0.7, delay, ease: 'easeOut' }}
+            />
+        </div>
+    );
+}
+
 /**
  * getEmployeeDomain — classify by role + department
  * 'kitchen' : HEAD_CHEF or department contains kitchen/chef/culinary/cook
@@ -171,20 +221,21 @@ function calcTenure(hiredAt, createdAt) {
     return { label: `${years} ปี ${months} เดือน`, short: `${years}y ${months}m` };
 }
 
-// Circular SVG score ring
+// Circular SVG score ring — animated arc draw
 function ScoreRing({ score, color, size = 56 }) {
     const r    = (size - 7) / 2;
-    const circ = 2 * Math.PI * r;
-    const dash = (score / 100) * circ;
     return (
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
             style={{ transform: 'rotate(-90deg)', display: 'block' }}>
             <circle cx={size/2} cy={size/2} r={r}
                 fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4.5" />
-            <circle cx={size/2} cy={size/2} r={r}
+            <motion.circle
+                cx={size/2} cy={size/2} r={r}
                 fill="none" stroke={color} strokeWidth="4.5"
                 strokeLinecap="round"
-                strokeDasharray={`${dash} ${circ}`}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: score / 100 }}
+                transition={{ duration: 0.9, ease: 'easeOut' }}
                 style={{ filter: `drop-shadow(0 0 4px ${color}99)` }}
             />
         </svg>
@@ -306,9 +357,8 @@ function StatusToggle({ status, onChange, disabled, onCard = false, bare = false
     );
 }
 
-// ─── Sparkline SVG ────────────────────────────────────────────────────────────
+// ─── Sparkline SVG — animated line draw ──────────────────────────────────────
 function Sparkline({ sales = [], color = '#00f5ff' }) {
-    // Group totals into last 6 months
     const now = new Date();
     const buckets = Array.from({ length: 6 }, (_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -325,21 +375,49 @@ function Sparkline({ sales = [], color = '#00f5ff' }) {
     const max  = Math.max(...data, 1);
     const W = 100, H = 30;
     const cx = color.replace('#', '');
-    const pts = data
-        .map((v, i) => `${(i / (data.length - 1)) * W},${H - (v / max) * (H - 4) - 2}`)
-        .join(' ');
+
+    // Build SVG path from points
+    const points = data.map((v, i) => [
+        (i / (data.length - 1)) * W,
+        H - (v / max) * (H - 4) - 2
+    ]);
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
+    const areaPath = `${linePath} L${W},${H} L0,${H}Z`;
+
     return (
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full" style={{ height: H }}>
             <defs>
                 <linearGradient id={`spk-${cx}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+                    <stop offset="0%" stopColor={color} stopOpacity="0.30" />
                     <stop offset="100%" stopColor={color} stopOpacity="0.01" />
                 </linearGradient>
             </defs>
-            <polygon points={`0,${H} ${pts} ${W},${H}`} fill={`url(#spk-${cx})`} />
-            <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5"
+            {/* Area fill fades in */}
+            <motion.path
+                d={areaPath} fill={`url(#spk-${cx})`}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+            />
+            {/* Line draws left → right */}
+            <motion.path
+                d={linePath}
+                fill="none" stroke={color} strokeWidth="1.5"
                 strokeLinecap="round" strokeLinejoin="round"
-                style={{ filter: `drop-shadow(0 0 3px ${color}88)` }} />
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.1, ease: 'easeInOut' }}
+                style={{ filter: `drop-shadow(0 0 3px ${color}88)` }}
+            />
+            {/* Dot at end of line */}
+            <motion.circle
+                cx={points[points.length - 1][0]}
+                cy={points[points.length - 1][1]}
+                r={2} fill={color}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 1.1 }}
+                style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+            />
         </svg>
     );
 }
@@ -350,6 +428,7 @@ function MiniDashboard({ emp, linked, barColor }) {
     const { score, metrics } = calcEmployeeScore(linked, domain);
     const rankLetter = getRankLetter(score);
     const rank       = RANK_CONFIG[rankLetter];
+    const animScore  = useCountUp(score);
 
     return (
         <div className="flex flex-col gap-2 h-full">
@@ -364,45 +443,48 @@ function MiniDashboard({ emp, linked, barColor }) {
                     <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: rank.color, opacity: 0.7 }}>{rank.label.substring(0,4)}</span>
                 </div>
 
-                {/* Score ring */}
+                {/* Score ring — arc draws in, number counts up */}
                 <div className="relative shrink-0">
                     <ScoreRing score={score} color={rank.color} size={52} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="font-black text-[13px] leading-none" style={{ color: rank.color }}>{score}</span>
+                        <span className="font-black text-[13px] leading-none" style={{ color: rank.color }}>{animScore}</span>
                     </div>
                 </div>
 
-                {/* Score breakdown bars */}
+                {/* Score breakdown bars — animate width */}
                 <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    {metrics.slice(0, 3).map(m => (
+                    {metrics.slice(0, 3).map((m, idx) => (
                         <div key={m.label} className="flex items-center gap-1.5">
                             <span className="text-white/35 text-[8px] w-[38px] shrink-0 truncate">{m.label}</span>
-                            <div className="flex-1 h-[3px] rounded-full overflow-hidden"
-                                style={{ background: 'rgba(255,255,255,0.07)' }}>
-                                <div className="h-full rounded-full" style={{
-                                    width: `${m.norm}%`,
-                                    background: rank.color,
-                                    boxShadow: `0 0 4px ${rank.color}66`,
-                                    transition: 'width 0.6s ease',
-                                }} />
-                            </div>
-                            <span className="text-white/55 text-[8px] font-bold w-[24px] text-right shrink-0">{m.value}</span>
+                            <AnimatedBar norm={m.norm} color={rank.color} delay={idx * 0.12} />
+                            <span className="text-white/55 text-[8px] font-bold w-[24px] text-right shrink-0">
+                                <AnimatedMetricValue value={m.value} />
+                            </span>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* ── 3 bottom metrics row ── */}
+            {/* ── 3 bottom metrics row — values count up ── */}
             <div className="grid grid-cols-3 gap-1.5">
-                {metrics.slice(3).map(m => (
-                    <div key={m.label} className="flex flex-col items-center justify-center py-1.5 rounded-xl"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${m.note === 'placeholder' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}` }}>
-                        <span className="font-black text-[13px] leading-none" style={{ color: m.note === 'placeholder' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)' }}>{m.value}</span>
+                {metrics.slice(3).map((m, idx) => (
+                    <motion.div
+                        key={m.label}
+                        className="flex flex-col items-center justify-center py-1.5 rounded-xl"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${m.note === 'placeholder' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}` }}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 + idx * 0.08 }}
+                    >
+                        <span className="font-black text-[13px] leading-none"
+                            style={{ color: m.note === 'placeholder' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)' }}>
+                            <AnimatedMetricValue value={m.value} />
+                        </span>
                         <span className="text-white/25 text-[7px] uppercase tracking-widest mt-0.5">{m.label}</span>
                         {m.note === 'placeholder' && (
                             <span className="text-[6px] text-white/15 mt-0.5">HR pending</span>
                         )}
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
@@ -652,7 +734,7 @@ function EmployeeCardDeck({ employees, activeIndex, onNext, onPrev, onStatusTogg
 
                             {/* ── MINI DASHBOARD ── */}
                             <div className="mt-3 flex-1 min-h-0">
-                                <MiniDashboard emp={emp} linked={linked} barColor={barColor} />
+                                <MiniDashboard key={emp?.id || 'none'} emp={emp} linked={linked} barColor={barColor} />
                             </div>
 
                             {/* ── BOTTOM ROW: contacts+toggle left · priority bar right ── */}
