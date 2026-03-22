@@ -1,4 +1,4 @@
-**LATEST:** CL-20260323-003 | v1.9.3 | 2026-03-23
+**LATEST:** CL-20260323-004 | v1.9.4 | 2026-03-23
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260323-004 | Employee Card Framer Motion Animations + Overview StatCards | v1.9.4 | 2026-03-23 | MINOR | #ui #employee #animation #framer-motion #overview #stats |
 | CL-20260322-008 | NotebookLM Chat Intelligence + Knowledge Tree | v1.9.0 | 2026-03-22 | MINOR | #ai #intelligence #notebooklm |
 | CL-20260322-007 | Audit & MCP Core Implementation | v1.8.1 | 2026-03-22 | MINOR | #docs #audit #mcp #procurement |
 | CL-20260322-006 | Meta Ads Domain in MCP (v1.8.0) + adsOptimizeRepo Bug Fix | v1.8.0 | 2026-03-22 | MINOR | #mcp #ads #marketing #bugfix |
@@ -35,6 +36,21 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260323-004] v1.9.4 — Employee Card Framer Motion Animations + Overview StatCards
+**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #ui #employee #animation #framer-motion #overview #stats
+
+#### Changes
+- **`useCountUp(target, duration)`**: custom hook rAF + ease-out cubic — reset ทุกครั้งที่ target เปลี่ยน
+- **`AnimatedMetricValue`**: parse `฿12k / 72% / 5` → animate numeric part → re-format
+- **`AnimatedBar`**: `motion.div` width 0→`${norm}%` + glow + stagger delay
+- **ScoreRing**: `motion.circle` pathLength 0→`score/100`, duration 0.9s
+- **Sparkline**: `motion.path` pathLength 0→1 (line), area fade delay 0.8s, end-dot scale delay 1.1s
+- **Bug fix — animation retrigger**: `MiniDashboard` wrapper watches `isActive` → increments `animKey` → `MiniDashboardContent key={animKey}` remounts ทุกครั้งที่สลับการ์ด
+- **`StatCard`**: `rawValue` + `format` props ใหม่ — `useCountUp` internally สำหรับ count-up display
+- **Overview SALES/ADMIN**: ลูกค้าที่ดูแล + ยอดสะสม + %ปิดการขาย (validSales/assigned×100) พร้อม count-up
+
+---
 
 ### [CL-20260323-003] v1.9.3 — Ingredient Yield Percent — Kitchen Prep Waste Tracking
 **Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #schema #kitchen #repository #api #ui
@@ -81,17 +97,6 @@
 - **`intelligenceRepo.js`** (new): generateDailyIntelligence(), getIntelligenceByConversation(), getRecentIntelligence()
 - **`ConversationIntelligence` model**: dailySummary, mermaidTree, generatedAt, conversationId FK
 - **MCP Tool**: v1.9.0 + `intelligence.get_chat_tree` tool (tools 22→23)
-
----
-
-### [CL-20260322-007] v1.8.1 — Audit & MCP Core Implementation
-**Date:** 2026-03-22 | **Severity:** MINOR | **Tags:** #docs #audit #mcp #procurement
-
-#### Changes
-- **PRD Audit**: `system_requirements.yaml` อัปเดตเป็น v1.5.3 ครอบคลุม modules 18-24
-- **API Ref Sync**: เขียนใหม่ `docs/API_REFERENCE.md` ให้ตรงกับ repository-backed endpoints ปัจจุบัน
-- **MCP Server**: `src/mcp/vschool-mcp-server.js` เพิ่ม Procurement domain tools
-- **ADR-050**: Formalized AI-Native Operations via MCP
 
 ---
 

@@ -51,7 +51,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree + MCP tool | ✅ released |
 | `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released |
 | `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released |
-| `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released ← HEAD |
+| `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released |
+| `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released ← HEAD |
+
+
+### v1.9.4 — สิ่งที่ทำแล้ว (Phase 35.5 — Employee Card Animations) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `src/components/EmployeeManagement.js` | ✅ updated | useCountUp, AnimatedMetricValue, AnimatedBar; ScoreRing/Sparkline/Bar animations; MiniDashboard wrapper bug fix; StatCard rawValue/format; Overview SALES/ADMIN StatCards |
+
+> ⚠️ **Known Gotcha — Animation retrigger**: ทำงานผ่าน `MiniDashboard` wrapper pattern — `animKey` increment เมื่อ `isActive=true` → `MiniDashboardContent` remount ใหม่ทุกครั้ง
+> ⚠️ **Known Gotcha — AnimatedMetricValue zero**: target=0 → hook return 0 ทันที ไม่ animate (พฤติกรรมถูกต้อง)
+> ⚠️ **Known Gotcha — closeRate**: guard `assignedCustomers.length > 0` — return 0% ถ้าไม่มีลูกค้า
 
 
 ### v1.9.3 — สิ่งที่ทำแล้ว (Phase 35 — Ingredient Yield Percent) ✅ — by Claude
