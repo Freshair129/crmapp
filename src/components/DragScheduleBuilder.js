@@ -380,7 +380,7 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
             fetch('/api/schedules').then(r => r.json()),
         ]).then(([cData, eData, sData]) => {
             const cList = Array.isArray(cData) ? cData : (cData.data ?? []);
-            setCourses(cList.filter(c => c.category === 'course' || !c.category));
+            setCourses(cList); // /api/courses already filters by COURSE_CATEGORIES
 
             const eList = eData.data ?? eData;
             setEmployees(Array.isArray(eList) ? eList : []);
