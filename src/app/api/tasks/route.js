@@ -65,13 +65,15 @@ export async function GET(req) {
 
 /**
  * POST /api/tasks
- * Body: { title, description?, type?, priority?, assigneeId?, customerId?, dueDate? }
+ * Body: { title, description?, type?, priority?, assigneeId?, customerId?,
+ *         dueDate?, taskType?, startDate?, timeStart?, timeEnd?, milestones? }
  */
 export async function POST(req) {
     try {
         const prisma = await getPrisma();
         const body = await req.json();
-        const { title, description, type, priority, assigneeId, customerId, dueDate } = body;
+        const { title, description, type, priority, assigneeId, customerId,
+                dueDate, taskType, startDate, timeStart, timeEnd, milestones } = body;
 
         if (!title) {
             return NextResponse.json({ error: 'title is required' }, { status: 400 });
@@ -79,6 +81,7 @@ export async function POST(req) {
 
         const resolvedPriority = VALID_PRIORITIES.includes(priority) ? priority : 'L3';
         const resolvedType     = VALID_TYPES.includes(type)          ? type     : 'FOLLOW_UP';
+        const resolvedTaskType = ['SINGLE','RANGE','PROJECT'].includes(taskType) ? taskType : 'SINGLE';
 
         const taskId = await generateTaskId();
 
@@ -93,6 +96,11 @@ export async function POST(req) {
                 assigneeId:  assigneeId  || null,
                 customerId:  customerId  || null,
                 dueDate:     dueDate     ? new Date(dueDate) : null,
+                taskType:    resolvedTaskType,
+                startDate:   startDate   ? new Date(startDate) : null,
+                timeStart:   timeStart   || null,
+                timeEnd:     timeEnd     || null,
+                milestones:  milestones  || null,
             },
             include: {
                 assignee: { select: { id: true, firstName: true, lastName: true, nickName: true } },

@@ -18,8 +18,14 @@ export async function PATCH(req, { params }) {
         if ('description' in body) updateData.description = body.description;
         if ('assigneeId'  in body) updateData.assigneeId  = body.assigneeId;
         if ('customerId'  in body) updateData.customerId  = body.customerId;
-        if ('dueDate'     in body) updateData.dueDate     = body.dueDate ? new Date(body.dueDate) : null;
-
+        if ('dueDate'     in body) updateData.dueDate     = body.dueDate   ? new Date(body.dueDate)   : null;
+        if ('startDate'   in body) updateData.startDate   = body.startDate ? new Date(body.startDate) : null;
+        if ('timeStart'   in body) updateData.timeStart   = body.timeStart || null;
+        if ('timeEnd'     in body) updateData.timeEnd     = body.timeEnd   || null;
+        if ('milestones'  in body) updateData.milestones  = body.milestones ?? null;
+        if ('taskType'    in body) {
+            updateData.taskType = ['SINGLE','RANGE','PROJECT'].includes(body.taskType) ? body.taskType : undefined;
+        }
         if ('priority' in body) {
             updateData.priority = VALID_PRIORITIES.includes(body.priority) ? body.priority : undefined;
         }

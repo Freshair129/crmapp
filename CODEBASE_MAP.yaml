@@ -1,0 +1,392 @@
+# CODEBASE_MAP.yaml — V School CRM v2
+# Generated: 2026-03-23 | Version: v2.0.0
+# Purpose: Agent cold-start reference — domain → files → functions → MCP tools
+# Owner: Claude (Lead Architect)
+# Update: after every phase that adds/removes repos, routes, or components
+
+meta:
+  framework: "Next.js 14 App Router"
+  db: "PostgreSQL via Prisma ORM (Supabase project: qcxjallsoccqsgmrpqdz)"
+  cache: "Upstash Redis REST"
+  queue: "Upstash QStash"
+  ai: "Google Gemini (gemini-2.0-flash)"
+  deploy: "Vercel (crmapp-pi.vercel.app)"
+  repo: "git@github.com / local: /Users/ideab/Desktop/crm"
+  current_version: "v2.0.0"
+
+# ─────────────────────────────────────────────
+# KEY FILES (อ่านทุกครั้งที่เริ่ม session)
+# ─────────────────────────────────────────────
+session_start_files:
+  - CLAUDE.md          # version table, known gotchas, architecture decisions
+  - GOAL.md            # active phase + task checklist
+  - MEMORY.md          # what Antigravity did between Claude sessions
+  - CHANGELOG.md       # latest 5 releases
+
+source_of_truth:
+  requirements: system_requirements.yaml
+  id_naming:    id_standards.yaml
+  db_schema:    prisma/schema.prisma
+
+# ─────────────────────────────────────────────
+# AUTH & RBAC
+# ─────────────────────────────────────────────
+auth:
+  engine: "NextAuth.js (CredentialsProvider)"
+  config: src/lib/authOptions.js
+  middleware: src/middleware.js
+  roles_config: src/lib/rbac.js
+  permission_matrix: src/lib/permissionMatrix.js
+  sidebar_profiles: src/lib/sidebarProfiles.js
+  roles:
+    DEV:  { level: 5,   label: "Developer" }
+    MGR:  { level: 4,   label: "Manager" }
+    TEC:  { level: 3.5, label: "Tech/IT" }
+    HR:   { level: 3,   label: "Human Resource" }
+    ACC:  { level: 3,   label: "Accounting" }
+    MKT:  { level: 2.5, label: "Marketing" }
+    PUR:  { level: 2.5, label: "Purchasing" }
+    PD:   { level: 2.5, label: "Production/Kitchen" }
+    ADM:  { level: 2,   label: "Admin" }
+    SLS:  { level: 1.5, label: "Sales" }
+    AGT:  { level: 1,   label: "Agent (freelance)" }
+    STF:  { level: 0.5, label: "Staff/Cashier" }
+
+# ─────────────────────────────────────────────
+# DOMAINS
+# ─────────────────────────────────────────────
+domains:
+
+  # ── 1. MARKETING ──────────────────────────
+  marketing:
+    description: "Meta Ads sync, campaign insights, ad performance, ROAS"
+    adr: [ADR-024, ADR-045]
+    skill: .claude/skills/domain-marketing.md
+    repo: src/lib/repositories/marketingRepo.js
+    key_functions:
+      - getCampaignsWithAggregatedMetrics({ range, status })
+      - getAdSetsWithAggregatedMetrics({ range, status })
+      - getAdsWithMetrics({ range, status })
+      - getMarketingInsights()
+      - upsertCampaign / upsertAdSet / upsertAd
+      - bulkUpsertDailyMetrics(dailyRows)
+      - getSyncStatus / updateSyncStatus
+      - adsOptimizeRepo: pauseResumeAd, setDailyBudget, getAdOptimizeRequests
+    api_routes:
+      - marketing/campaigns        # GET list
+      - marketing/ads              # GET with metrics
+      - marketing/adsets
+      - marketing/insights         # GET aggregated ROAS
+      - marketing/sync             # POST Meta Graph API pull
+      - marketing/sync-hourly      # hourly cron
+      - marketing/sync-incremental
+      - marketing/daily / hourly   # time-series data
+      - marketing/ad-calendar      # campaign calendar view
+      - marketing/fatigue          # ad fatigue analysis
+      - marketing/ai-review        # Gemini ad copy review
+      - ads/sync                   # background sync trigger
+    components:
+      - Analytics.js               # main analytics dashboard
+      - FacebookAds.js             # ad management UI
+      - CampaignTracking.js        # campaign table
+      - CampaignCalendar.js        # calendar view
+      - AdsOptimizePanel.js        # Meta write operations
+      - AdsApprovalQueue.js        # lifetime budget approvals
+      - AdVisualReport.js          # visual ROAS report
+      - AdReviewPanel.js           # AI creative review
+    mcp_tools:
+      - ads.get_campaign_insights
+      - ads.get_adset_insights
+      - ads.get_ad_performance
+      - ads.get_daily_metrics
+      - ads.get_marketing_summary
+      - ads.pause_resume           # ⚠️ calls Meta API live
+      - ads.set_daily_budget       # ⚠️ calls Meta API live
+    env_vars:
+      - FB_PAGE_ACCESS_TOKEN
+      - FB_PAGE_ID
+      - META_APP_ID / META_APP_SECRET
+      - FACEBOOK_AD_ACCOUNT_ID
+
+  # ── 2. INBOX / CHAT ───────────────────────
+  inbox:
+    description: "Unified FB+LINE inbox, webhooks, push notifications"
+    adr: [ADR-028, ADR-033, ADR-044]
+    skill: .claude/skills/domain-inbox.md
+    repo: src/lib/repositories/inboxRepo.js
+    key_functions:
+      - getConversations({ channel, status, search, customerId, limit, page })
+      - getConversationMessages(conversationId, opts)
+      - postReply(conversationId, { text, responderId })
+      - upsertConversation / updateConversation
+      - getConversationByExternalId / upsertConversationByExternalId
+      - intelligenceRepo: generateDailyIntelligence, getIntelligenceByConversation
+    api_routes:
+      - inbox/conversations        # GET list + POST
+      - inbox/ai-reply             # AI reply suggestion
+      - inbox/sync-messages        # pull messages from FB/LINE
+      - webhooks/facebook          # FB Messenger inbound (<200ms NFR)
+      - webhooks/line              # LINE inbound
+      - push/subscribe             # Web Push VAPID subscribe/unsubscribe
+    components:
+      - UnifiedInbox.js            # main inbox UI (FB+LINE tabs, reply, customer panel)
+      - FacebookChat.js            # legacy FB chat (reference only)
+      - LineConnect.js             # LINE channel config
+      - IntelligencePanel.js       # NotebookLM daily summary
+    workers:
+      - workers/notification       # QStash worker — LINE push
+      - workers/notion-sync        # QStash worker — Notion pull every 15min
+    env_vars:
+      - FB_PAGE_ACCESS_TOKEN / FB_VERIFY_TOKEN / FB_APP_SECRET
+      - LINE_CHANNEL_ACCESS_TOKEN / LINE_CHANNEL_SECRET
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT
+    gotcha: "Webhook must reply <200ms — all heavy ops are fire-and-forget"
+
+  # ── 3. CUSTOMER ───────────────────────────
+  customer:
+    description: "Customer identity, V Points loyalty, orders, membership"
+    adr: [ADR-025, ADR-030]
+    skill: .claude/skills/domain-customer.md
+    repo: src/lib/repositories/customerRepo.js
+    key_functions:
+      - getAllCustomers(opts) / getCustomerById(id)
+      - upsertCustomerByPsid / upsertCustomerByPhone
+      - calculateTier(totalSpend, totalHours)  # Bronze/Silver/Gold/Diamond
+      - calcVPoints(amount)
+      - awardVPoints(customerId, orderAmount, totalHours)
+      - paymentRepo: createPendingFromSlip, verifyPayment, getMonthlyRevenue
+      - enrollmentRepo: createEnrollment, updateHours
+    api_routes:
+      - customers                  # GET list + POST
+      - customers/[id]             # GET + PATCH
+      - customers/sync             # identity merge
+      - customers/[id]/vpoints     # POST award VP
+      - orders / orders/[id]       # GET + POST + PATCH
+      - payments/ocr-slip          # Gemini Vision slip OCR
+      - payments/pending           # pending slips queue
+      - enrollments / enrollments/[id]
+      - members/register           # new member registration
+    components:
+      - CustomerList.js            # searchable customer table
+      - CustomerCard.js            # customer detail panel
+      - PremiumPOS.js              # POS with cart, enrollment on checkout
+      - CourseEnrollmentPanel.js   # hours bar, cert badge
+      - RegistrationModal.js       # new member form
+      - Orders.js                  # order history
+    env_vars:
+      - GEMINI_API_KEY             # for slip OCR
+
+  # ── 4. KITCHEN / OPERATIONS ───────────────
+  kitchen:
+    description: "Ingredients, BOM, lots (FEFO), stock deduction, recipes"
+    adr: [ADR-037, ADR-038]
+    repo: src/lib/repositories/kitchenRepo.js
+    key_functions:
+      - getAllIngredients / upsertIngredient (incl. yieldPercent)
+      - getBOMForProduct(productId)
+      - calculateStockNeeded(scheduleId)
+      - createPurchaseRequest(scheduleId, notes)
+      - createLot / getLotsByIngredient / getExpiringLots
+      - recipeRepo: upsertRecipe, getRecipesByProduct
+      - scheduleRepo: createSchedule, completeSessionWithStockDeduction
+    api_routes:
+      - kitchen/ingredients        # GET (lowStockOnly) + POST
+      - kitchen/ingredients/[id]   # PATCH yieldPercent
+      - kitchen/lots               # GET (status/expiring) + POST
+      - kitchen/lots/[id]          # GET + PATCH
+      - kitchen/purchase           # GET + POST auto-generate PR
+      - recipes / recipes/[id]
+      - schedules / schedules/[id]
+      - schedules/[id]/complete    # POST — deduct stock FEFO
+    components:
+      - KitchenStockPanel.js       # ingredient table, low-stock, YIELD% column
+      - RecipePage.js              # recipe + BOM management
+      - ScheduleCalendar.js        # class schedule list/week view
+    mcp_tools:
+      - kitchen.check_stock
+      - kitchen.get_expiring_lots
+      - schedule.list_upcoming
+      - schedule.get_by_class
+    id_formats:
+      lot: "LOT-YYYYMMDD-XXX"
+      class: "CLS-YYYYMM-XXX"
+      purchase_request: "PR-YYYYMMDD-SERIAL"
+
+  # ── 5. PROCUREMENT ────────────────────────
+  procurement:
+    description: "PO lifecycle: PR → Chef approval → PO → GRN → advances"
+    adr: [ADR-049]
+    repo: src/lib/repositories/procurementRepo.js
+    api_routes:
+      - procurement/po             # GET + POST
+      - procurement/suppliers      # GET + POST
+      - procurement/advances       # GET + POST
+    components:
+      - ProcurementPanel.js        # PO list, status flow
+    mcp_tools:
+      - procurement.calculate_bom
+      - procurement.create_po_from_bom
+      - procurement.get_po / list_pos
+      - procurement.list_suppliers
+      - procurement.pending_advances
+      - procurement.approve_po
+
+  # ── 6. INVENTORY ──────────────────────────
+  description: "Multi-warehouse stock, movements, barcode/QR, alerts"
+  inventory:
+    adr: [ADR-048]
+    repo: src/lib/repositories/inventoryRepo.js
+    api_routes:
+      - inventory/stock            # GET levels
+      - inventory/movements        # GET + POST
+      - inventory/warehouses       # GET + POST
+      - inventory/counts           # stock take
+      - inventory/barcodes         # barcode lookup
+      - inventory/alerts           # low-stock triggers
+    components:
+      - InventoryControlPanel.js
+      - InventoryManager.js
+    mcp_tools:
+      - inventory.stock_levels
+      - inventory.low_stock_alerts
+      - inventory.list_warehouses
+
+  # ── 7. HR / EMPLOYEES ─────────────────────
+  hr:
+    description: "Employee registry, RBAC, grade, profile picture, audit log"
+    adr: [ADR-029, ADR-047]
+    repo: src/lib/repositories/employeeRepo.js
+    key_functions:
+      - getAllEmployees / getEmployeeById
+      - createEmployee (auto TVS-[TYPE]-[DEPT]-[NNN] ID)
+      - updateEmployee / deactivateEmployee
+      - auditRepo: logAction, getPendingApprovals, approveAction
+    api_routes:
+      - employees / employees/[id] # CRUD
+      - audit / audit/[auditId]    # GET + POST approve/reject
+      - permissions                # GET + POST permission matrix
+    components:
+      - EmployeeManagement.js      # employee cards, grade picker, profile upload
+      - PermissionMatrix.js        # role permission editor
+      - AuditHistory.js            # audit log viewer
+    id_format: "TVS-[TYPE]-[DEPT]-[NNN]  e.g. TVS-EMP-MKT-001"
+    grades: [S, A, B, C, D]
+
+  # ── 8. SALES / POS ────────────────────────
+  sales:
+    description: "POS checkout, product catalog, packages, receipt printing"
+    adr: [ADR-036, ADR-037, ADR-042, ADR-046]
+    api_routes:
+      - products / products/[id]
+      - catalog                    # course catalog
+      - packages / packages/[id]
+      - packages/[id]/swap         # POST — swap course (1x per enrollment)
+      - packages/enrollments
+    components:
+      - PremiumPOS.js              # main POS: cart + customer + checkout
+      - StoreGrid.js               # product grid
+      - PackagePage.js             # package management
+      - ProductModal.js            # product detail / edit
+
+  # ── 9. ANALYTICS / REPORTING ──────────────
+  analytics:
+    description: "Executive KPI, team performance, revenue attribution"
+    adr: [ADR-030]
+    repo: src/lib/repositories/analyticsRepository.js
+    api_routes:
+      - analytics/executive        # executive dashboard data
+      - analytics/admin-performance
+      - analytics/team             # team KPI
+    components:
+      - ExecutiveAnalytics.js      # exec dashboard (Recharts neon charts)
+      - AdminPerformance.js        # admin monthly trend
+      - RoleDashboard.js           # role-specific dashboard (DASH_TITLE map)
+      - Dashboard.js               # generic dashboard
+      - DailyReport.js / WeeklyReport.js / MonthlyReport.js / YearlyReport.js
+      - TeamKPI.js
+      - HourlyReport.js
+
+  # ── 10. INFRASTRUCTURE ────────────────────
+  infra:
+    description: "DB, Redis, QStash, push notifications, MCP server, AI config"
+    adr: [ADR-026, ADR-034, ADR-050]
+    skill: .claude/skills/domain-infra.md
+    key_files:
+      db_client:     src/lib/db.js            # getPrisma() singleton
+      redis:         src/lib/redis.js          # Upstash REST client, getOrSet()
+      push_notifier: src/lib/pushNotifier.js   # VAPID web push
+      line_service:  src/lib/lineService.js    # LINE push + quota breaker
+      slip_parser:   src/lib/slipParser.js     # Gemini Vision OCR
+      id_generators: src/lib/idGenerators.js   # all generateXxxId() functions
+      date_filters:  src/lib/dateFilters.js    # getDateRange, getMarketingRangeFilter
+      notion_sync:   src/lib/repositories/notionRepo.js
+    mcp_server:
+      file:    src/mcp/vschool-mcp-server.js   # stdio transport
+      http:    src/app/api/mcp/route.js        # Vercel HTTP endpoint
+      version: "1.9.0"
+      tools_count: 23
+      health: "curl https://crmapp-pi.vercel.app/api/mcp"
+    notion_sync:
+      db_id_env: NOTION_TASK_DB_ID
+      schedule: "*/15 * * * * (QStash scd_86DMy2Nz67pFB8zMxDx4pPnnDrJj)"
+      worker: src/app/api/workers/notion-sync/route.js
+      sync_api: src/app/api/notion/sync/route.js
+    ai_config:
+      repo: src/lib/repositories/aiConfigRepo.js
+      api:  src/app/api/ai-config/
+      component: src/components/AIConfigPage.js
+
+  # ── 11. TASKS / NOTION ────────────────────
+  tasks:
+    description: "CRM task board with bidirectional Notion sync"
+    repo: src/lib/repositories/notionRepo.js
+    key_functions:
+      - pushTaskToNotion(task)
+      - pushAllTasksToNotion()
+      - pullTasksFromNotion()       # Notion → CRM upsert, write back CRM Task ID
+      - getNotionSyncStatus()
+    api_routes:
+      - tasks / tasks/[id]
+      - notion/sync               # GET status | POST push/pull
+      - workers/notion-sync       # QStash scheduled worker
+    components:
+      - TaskPanel.js              # List / Weekly / Calendar views + NotionSyncButton
+    id_format: "TSK-YYYYMMDD-SERIAL"
+    notion_db_id: "36767d01d85345fa97c0c6e5ed20c5e3"  # workspace: The V School OS (1)
+    env_vars:
+      - NOTION_TOKEN
+      - NOTION_TASK_DB_ID
+      - NEXT_PUBLIC_NOTION_TASK_DB_ID
+
+# ─────────────────────────────────────────────
+# ID FORMATS (quick reference — full spec: id_standards.yaml)
+# ─────────────────────────────────────────────
+id_formats:
+  employee:     "TVS-[TYPE]-[DEPT]-[NNN]       e.g. TVS-EMP-MKT-001"
+  customer:     "TVS-CUS-[CH]-[YYMM]-[XXXX]   e.g. TVS-CUS-FB-2603-0001"
+  task:         "TSK-YYYYMMDD-SERIAL"
+  lot:          "LOT-YYYYMMDD-XXX"
+  class:        "CLS-YYYYMM-XXX"
+  audit:        "AUD-YYYYMMDD-SERIAL"
+  conversation: "t_{15_digit_uid}"
+
+# ─────────────────────────────────────────────
+# ARCHITECTURE RULES (non-negotiable)
+# ─────────────────────────────────────────────
+rules:
+  db_access:       "ทุก DB operation ต้องผ่าน src/lib/repositories/ เท่านั้น — ห้าม import getPrisma() ใน API route โดยตรง"
+  webhook_latency: "Webhook FB/LINE ต้องตอบ <200ms — heavy ops ใช้ fire-and-forget"
+  error_handling:  "ห้าม catch(e) {} เงียบ — ต้อง console.error('[Module] msg', error) ทุกครั้ง"
+  naming_js:       "camelCase ใน JS/TS — ห้าม snake_case"
+  naming_db:       "snake_case ใน Prisma @map() เท่านั้น"
+  transactions:    "Identity upsert + stock deduction ต้องอยู่ใน prisma.$transaction"
+  icons:           "Lucide เท่านั้น — ห้าม FontAwesome CDN (ADR-031)"
+
+# ─────────────────────────────────────────────
+# CONFLICT RESOLUTION
+# ─────────────────────────────────────────────
+conflict_resolution:
+  naming_style:    "Agent แก้เองได้"
+  implementation:  "Claude review + อนุมัติ"
+  architecture:    "Claude ตัดสินใจ + เขียน ADR"
+  breaking_change: "Boss อนุมัติเท่านั้น"

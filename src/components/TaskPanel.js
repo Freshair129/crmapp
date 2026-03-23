@@ -7,7 +7,7 @@ import {
     MinusCircle, Archive,
     User, Calendar, Tag, CheckCircle2, Circle, RotateCcw,
     Trash2, Pen, List, CalendarDays, ChevronLeft, ChevronRight,
-    RefreshCw, ExternalLink,
+    RefreshCw, ExternalLink, Layers, ArrowRight, FolderKanban, Milestone,
 } from 'lucide-react';
 import { can } from '@/lib/permissionMatrix';
 
@@ -163,6 +163,31 @@ const TYPE_LABEL = {
     EMAIL: 'Email', PURCHASE: 'Purchase', REVIEW: 'Review', OTHER: 'Other',
 };
 
+// ─── Task Structure Types ─────────────────────────────────────────────────────
+const TASK_TYPE_CONFIG = {
+    SINGLE:  { label: 'งานวันเดียว',  icon: Calendar,     color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20'  },
+    RANGE:   { label: 'งานต่อเนื่อง', icon: Layers,       color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+    PROJECT: { label: 'โปรเจค',       icon: FolderKanban, color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20'  },
+};
+const MILESTONE_TYPES = {
+    brief:   { label: 'รับบรีฟ',   color: 'text-blue-400'   },
+    review:  { label: 'ตรวจงาน',   color: 'text-yellow-400' },
+    meeting: { label: 'ประชุม',     color: 'text-purple-400' },
+    submit:  { label: 'ส่งงาน',    color: 'text-green-400'  },
+    other:   { label: 'อื่นๆ',     color: 'text-white/40'   },
+};
+
+// Helper: does a RANGE/PROJECT task span a given date string 'YYYY-MM-DD'?
+function taskSpansDay(task, dk) {
+    if (!task.taskType || task.taskType === 'SINGLE') return false;
+    const start = task.startDate
+        ? new Date(task.startDate).toISOString().slice(0, 10)
+        : (task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : null);
+    const end = task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : null;
+    if (!start || !end) return false;
+    return dk >= start && dk <= end;
+}
+
 // ─── Priority Badge ───────────────────────────────────────────────────────────
 function PriorityBadge({ priority, size = 'md' }) {
     const cfg = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.L3;
@@ -282,11 +307,41 @@ function TaskCard({ task, onUpdatePriority, onUpdateStatus, onEdit, onDelete, ca
                             </span>
                         )}
 
-                        {/* Due date */}
-                        {task.dueDate && (
+                        {/* ── SINGLE: date + optional time ── */}
+                        {(!task.taskType || task.taskType === 'SINGLE') && task.dueDate && (
                             <span className={`flex items-center gap-1 text-[9px] font-bold ${isOverdue ? 'text-red-400' : 'text-white/30'}`}>
                                 <Calendar size={9} />
                                 {new Date(task.dueDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                                {task.timeStart && (
+                                    <span className="text-white/40">
+                                        {task.timeStart}{task.timeEnd ? `–${task.timeEnd}` : ''}
+                                    </span>
+                                )}
+                                {isOverdue && ' ⚠️'}
+                            </span>
+                        )}
+
+                        {/* ── RANGE: startDate → dueDate ── */}
+                        {task.taskType === 'RANGE' && (
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-purple-400/70">
+                                <Layers size={9} />
+                                {task.startDate && new Date(task.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                                <ArrowRight size={8} />
+                                {task.dueDate && new Date(task.dueDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                                {isOverdue && <span className="text-red-400"> ⚠️</span>}
+                            </span>
+                        )}
+
+                        {/* ── PROJECT: deadline + milestone count ── */}
+                        {task.taskType === 'PROJECT' && (
+                            <span className={`flex items-center gap-1 text-[9px] font-bold ${isOverdue ? 'text-red-400' : 'text-amber-400/70'}`}>
+                                <FolderKanban size={9} />
+                                ส่ง {task.dueDate && new Date(task.dueDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                                {Array.isArray(task.milestones) && task.milestones.length > 0 && (
+                                    <span className="ml-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400/80">
+                                        {task.milestones.length} checkpoint
+                                    </span>
+                                )}
                                 {isOverdue && ' ⚠️'}
                             </span>
                         )}
@@ -317,12 +372,40 @@ function TaskCard({ task, onUpdatePriority, onUpdateStatus, onEdit, onDelete, ca
 // ─── Create / Edit Modal ──────────────────────────────────────────────────────
 function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
     const isEdit = !!task;
-    const [form, setForm] = useState(task
-        ? { title: task.title, description: task.description || '', type: task.type, priority: task.priority, assigneeId: task.assigneeId || '', customerId: task.customerId || '', dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '' }
-        : { title: '', description: '', type: 'FOLLOW_UP', priority: 'L3', assigneeId: '', customerId: '', dueDate: '' }
-    );
+    const [form, setForm] = useState(() => {
+        if (task) return {
+            taskType:    task.taskType    || 'SINGLE',
+            title:       task.title       || '',
+            description: task.description || '',
+            type:        task.type        || 'FOLLOW_UP',
+            priority:    task.priority    || 'L3',
+            assigneeId:  task.assigneeId  || '',
+            customerId:  task.customerId  || '',
+            dueDate:     task.dueDate     ? task.dueDate.slice(0, 10)     : '',
+            startDate:   task.startDate   ? task.startDate.slice(0, 10)   : '',
+            timeStart:   task.timeStart   || '',
+            timeEnd:     task.timeEnd     || '',
+            milestones:  Array.isArray(task.milestones) ? task.milestones : [],
+        };
+        return {
+            taskType: 'SINGLE', title: '', description: '', type: 'FOLLOW_UP', priority: 'L3',
+            assigneeId: '', customerId: '', dueDate: '', startDate: '', timeStart: '', timeEnd: '',
+            milestones: [],
+        };
+    });
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError]   = useState('');
+
+    const addMilestone = () => setForm(f => ({
+        ...f,
+        milestones: [...f.milestones, { id: Date.now().toString(), title: '', date: '', type: 'meeting' }],
+    }));
+    const updateMilestone = (id, field, value) => setForm(f => ({
+        ...f, milestones: f.milestones.map(m => m.id === id ? { ...m, [field]: value } : m),
+    }));
+    const removeMilestone = (id) => setForm(f => ({
+        ...f, milestones: f.milestones.filter(m => m.id !== id),
+    }));
 
     const handleSubmit = async () => {
         if (!form.title.trim()) { setError('กรุณากรอกชื่องาน'); return; }
@@ -330,7 +413,16 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
         try {
             const url    = isEdit ? `/api/tasks/${task.id}` : '/api/tasks';
             const method = isEdit ? 'PATCH' : 'POST';
-            const body   = { ...form, assigneeId: form.assigneeId || null, customerId: form.customerId || null, dueDate: form.dueDate || null };
+            const body   = {
+                ...form,
+                assigneeId: form.assigneeId || null,
+                customerId: form.customerId || null,
+                dueDate:    form.dueDate    || null,
+                startDate:  form.taskType !== 'SINGLE' ? (form.startDate || null) : null,
+                timeStart:  form.taskType === 'SINGLE' ? (form.timeStart || null) : null,
+                timeEnd:    form.taskType === 'SINGLE' ? (form.timeEnd   || null) : null,
+                milestones: form.taskType === 'PROJECT' ? (form.milestones.length ? form.milestones : null) : null,
+            };
             const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const result = await res.json();
             if (result.success) { onSaved(); onClose(); }
@@ -351,66 +443,164 @@ function TaskModal({ task, employees = [], customers = [], onClose, onSaved }) {
                 </div>
                 {error && <p className="text-red-400 text-xs font-bold mb-4 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{error}</p>}
 
-                <div className="space-y-4">
-                    {/* Title */}
+                <div className="space-y-5">
+                    {/* ── Task Structure Type Selector ── */}
                     <div>
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่องาน *</label>
-                        <input
-                            type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                            placeholder="เช่น โทรติดตามลูกค้า คุณสมชาย"
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
-                        />
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-2">รูปแบบงาน</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {Object.entries(TASK_TYPE_CONFIG).map(([k, cfg]) => {
+                                const Icon   = cfg.icon;
+                                const active = form.taskType === k;
+                                return (
+                                    <button key={k} type="button" onClick={() => setForm(f => ({ ...f, taskType: k }))}
+                                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
+                                            active
+                                                ? `${cfg.bg} ${cfg.border} ${cfg.color}`
+                                                : 'bg-white/3 border-white/8 text-white/30 hover:bg-white/6 hover:text-white/60'
+                                        }`}>
+                                        <Icon size={16} />
+                                        <span className="text-[10px] font-black leading-tight">{cfg.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
-                    {/* Priority */}
+                    {/* ── Title ── */}
+                    <div>
+                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ชื่องาน *</label>
+                        <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                            placeholder="เช่น โทรติดตามลูกค้า คุณสมชาย"
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all" />
+                    </div>
+
+                    {/* ── Priority ── */}
                     <div>
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ระดับความสำคัญ</label>
                         <PrioritySelect value={form.priority} onChange={v => setForm(f => ({ ...f, priority: v }))} />
                         <p className="text-[9px] text-white/25 mt-1.5 ml-1">{PRIORITY_CONFIG[form.priority]?.desc}</p>
                     </div>
 
-                    {/* Type */}
+                    {/* ── Task Category Type ── */}
                     <div>
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">ประเภทงาน</label>
-                        <select
-                            value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none"
-                        >
+                        <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none">
                             {TASK_TYPES.map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
                         </select>
                     </div>
 
-                    {/* Description */}
+                    {/* ── SINGLE: date + optional time range ── */}
+                    {form.taskType === 'SINGLE' && (
+                        <div className="space-y-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/15">
+                            <div>
+                                <label className="text-[10px] text-blue-400/80 font-black uppercase tracking-widest block mb-1.5">วันที่</label>
+                                <input type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] text-blue-400/60 font-black uppercase tracking-widest block mb-1.5">เวลาเริ่ม (ไม่บังคับ)</label>
+                                    <input type="time" value={form.timeStart} onChange={e => setForm(f => ({ ...f, timeStart: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-blue-400/60 font-black uppercase tracking-widest block mb-1.5">เวลาสิ้นสุด</label>
+                                    <input type="time" value={form.timeEnd} onChange={e => setForm(f => ({ ...f, timeEnd: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all" />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── RANGE: start + end date ── */}
+                    {form.taskType === 'RANGE' && (
+                        <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/15">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] text-purple-400/80 font-black uppercase tracking-widest block mb-1.5">วันเริ่มต้น</label>
+                                    <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-purple-400/80 font-black uppercase tracking-widest block mb-1.5">วันสิ้นสุด</label>
+                                    <input type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all" />
+                                </div>
+                            </div>
+                            {form.startDate && form.dueDate && form.startDate <= form.dueDate && (
+                                <p className="text-[9px] text-purple-400/60 mt-2 font-bold">
+                                    ✦ {Math.round((new Date(form.dueDate) - new Date(form.startDate)) / 86400000) + 1} วัน
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── PROJECT: deadline + milestone editor ── */}
+                    {form.taskType === 'PROJECT' && (
+                        <div className="space-y-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+                            <div>
+                                <label className="text-[10px] text-amber-400/80 font-black uppercase tracking-widest block mb-1.5">กำหนดส่ง (Deadline)</label>
+                                <input type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
+                                    className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 transition-all" />
+                            </div>
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-[10px] text-amber-400/80 font-black uppercase tracking-widest">Milestones</label>
+                                    <button type="button" onClick={addMilestone}
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[9px] font-black uppercase hover:bg-amber-500/20 transition-all">
+                                        <Plus size={9} />เพิ่ม
+                                    </button>
+                                </div>
+                                {form.milestones.length === 0 ? (
+                                    <p className="text-[9px] text-white/20 text-center py-3 border border-dashed border-white/10 rounded-xl">
+                                        กด เพิ่ม เพื่อระบุ checkpoint ของโปรเจค
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {form.milestones.map((ms) => (
+                                            <div key={ms.id} className="flex items-center gap-2">
+                                                <select value={ms.type} onChange={e => updateMilestone(ms.id, 'type', e.target.value)}
+                                                    className="bg-[#0c1a2f] border border-white/10 text-white/70 px-2 py-1.5 rounded-lg text-[10px] focus:outline-none appearance-none flex-shrink-0 w-24">
+                                                    {Object.entries(MILESTONE_TYPES).map(([k, v]) => (
+                                                        <option key={k} value={k}>{v.label}</option>
+                                                    ))}
+                                                </select>
+                                                <input type="text" value={ms.title} onChange={e => updateMilestone(ms.id, 'title', e.target.value)}
+                                                    placeholder="ชื่อ checkpoint"
+                                                    className="flex-1 bg-white/5 border border-white/10 text-white px-3 py-1.5 rounded-lg text-[10px] focus:outline-none focus:ring-1 focus:ring-amber-500/40 transition-all" />
+                                                <input type="date" value={ms.date} onChange={e => updateMilestone(ms.id, 'date', e.target.value)}
+                                                    className="bg-white/5 border border-white/10 text-white/70 px-2 py-1.5 rounded-lg text-[10px] focus:outline-none flex-shrink-0 w-32" />
+                                                <button type="button" onClick={() => removeMilestone(ms.id)}
+                                                    className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400/60 hover:text-red-400 hover:bg-red-500/20 transition-all">
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Description ── */}
                     <div>
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">รายละเอียด</label>
-                        <textarea
-                            value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                        <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                             rows={3} placeholder="รายละเอียดเพิ่มเติม..."
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all resize-none"
-                        />
+                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all resize-none" />
                     </div>
 
-                    {/* Assignee */}
+                    {/* ── Assignee ── */}
                     <div>
                         <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">มอบหมายให้</label>
-                        <select
-                            value={form.assigneeId} onChange={e => setForm(f => ({ ...f, assigneeId: e.target.value }))}
-                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none"
-                        >
+                        <select value={form.assigneeId} onChange={e => setForm(f => ({ ...f, assigneeId: e.target.value }))}
+                            className="w-full bg-[#0c1a2f] border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 appearance-none">
                             <option value="">— ไม่ระบุ —</option>
                             {employees.map(emp => (
                                 <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} {emp.nickName ? `(${emp.nickName})` : ''}</option>
                             ))}
                         </select>
-                    </div>
-
-                    {/* Due date */}
-                    <div>
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest block mb-1.5">กำหนดเสร็จ</label>
-                        <input
-                            type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
-                            className="w-full bg-white/5 border border-white/10 text-white px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#cc9d37]/40 transition-all"
-                        />
                     </div>
                 </div>
 
@@ -450,15 +640,25 @@ function WeeklyView({ tasks, onEdit, canManage }) {
     const DAY_TH = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
     const today = dateKey(new Date());
 
-    // Group tasks by due date key; tasks with no dueDate go to 'none'
+    // SINGLE tasks: group by due date
     const byDay = {};
+    // RANGE/PROJECT tasks: appears in every day it spans within this week
     tasks.forEach(t => {
-        const k = t.dueDate ? dateKey(new Date(t.dueDate)) : 'none';
-        if (!byDay[k]) byDay[k] = [];
-        byDay[k].push(t);
+        if (!t.taskType || t.taskType === 'SINGLE') {
+            const k = t.dueDate ? dateKey(new Date(t.dueDate)) : 'none';
+            if (!byDay[k]) byDay[k] = [];
+            byDay[k].push(t);
+        }
     });
 
     const weekLabel = `${days[0].toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} – ${days[6].toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`;
+
+    // For each day, find RANGE/PROJECT tasks that span that day
+    const spanningByDay = {};
+    days.forEach(d => {
+        const k = dateKey(d);
+        spanningByDay[k] = tasks.filter(t => taskSpansDay(t, k));
+    });
 
     return (
         <div className="space-y-4">
@@ -487,8 +687,10 @@ function WeeklyView({ tasks, onEdit, canManage }) {
             <div className="grid grid-cols-7 gap-2">
                 {days.map((d, i) => {
                     const k = dateKey(d);
-                    const isToday = k === today;
-                    const dayTasks = byDay[k] || [];
+                    const isToday    = k === today;
+                    const dayTasks   = byDay[k] || [];
+                    const spanTasks  = spanningByDay[k] || [];
+                    const hasContent = dayTasks.length > 0 || spanTasks.length > 0;
                     return (
                         <div key={k} className={`rounded-2xl border p-2 min-h-[120px] flex flex-col gap-1.5 transition-all ${
                             isToday ? 'border-[#cc9d37]/50 bg-[#cc9d37]/5' : 'border-white/8 bg-white/3'
@@ -500,7 +702,36 @@ function WeeklyView({ tasks, onEdit, canManage }) {
                                     {d.getDate()}
                                 </p>
                             </div>
-                            {/* Tasks */}
+
+                            {/* RANGE/PROJECT spanning bars */}
+                            {spanTasks.map(t => {
+                                const priCfg  = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                                const typeCfg = TASK_TYPE_CONFIG[t.taskType] || TASK_TYPE_CONFIG.SINGLE;
+                                const startDk = t.startDate
+                                    ? new Date(t.startDate).toISOString().slice(0, 10)
+                                    : (t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : k);
+                                const endDk = t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : k;
+                                const isFirst = k === startDk;
+                                const isLast  = k === endDk;
+                                const isDone  = t.status === 'DONE' || t.status === 'CANCELLED';
+                                return (
+                                    <button key={t.id} onClick={() => canManage && onEdit(t)}
+                                        title={t.title}
+                                        className={`w-full text-left px-2 py-1 text-[9px] font-bold leading-tight transition-all hover:brightness-125 ${
+                                            isFirst ? 'rounded-l-lg' : 'rounded-l-none -ml-2 pl-2 w-[calc(100%+0.5rem)]'
+                                        } ${
+                                            isLast  ? 'rounded-r-lg' : 'rounded-r-none -mr-2 pr-2 w-[calc(100%+0.5rem)]'
+                                        } ${isDone ? 'opacity-40' : ''} ${typeCfg.bg} ${typeCfg.border} border ${typeCfg.color}`}>
+                                        {isFirst ? (
+                                            <span className="truncate block">{t.title}</span>
+                                        ) : (
+                                            <span className="opacity-0 select-none">·</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+
+                            {/* SINGLE tasks */}
                             {dayTasks.map(t => {
                                 const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
                                 const isOverdue = t.dueDate && new Date(t.dueDate) < new Date() && k !== today;
@@ -511,10 +742,12 @@ function WeeklyView({ tasks, onEdit, canManage }) {
                                         }`}>
                                         <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${cfg.dot}`} />
                                         {t.title}
+                                        {t.timeStart && <span className="ml-1 opacity-50">{t.timeStart}</span>}
                                     </button>
                                 );
                             })}
-                            {dayTasks.length === 0 && (
+
+                            {!hasContent && (
                                 <p className="text-[9px] text-white/15 text-center mt-auto">—</p>
                             )}
                         </div>
@@ -561,13 +794,26 @@ function CalendarView({ tasks, onEdit, canManage }) {
     const DAY_HEADERS = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
     const MONTH_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-    // Group tasks by date key
+    // Group SINGLE tasks by due date key
     const byDay = {};
     tasks.forEach(t => {
         if (!t.dueDate) return;
+        if (t.taskType && t.taskType !== 'SINGLE') return; // spanning tasks handled separately
         const k = dateKey(new Date(t.dueDate));
         if (!byDay[k]) byDay[k] = [];
         byDay[k].push(t);
+    });
+
+    // RANGE/PROJECT tasks that have a milestone on this day also get a marker
+    const milestoneByDay = {};
+    tasks.forEach(t => {
+        if (t.taskType !== 'PROJECT' || !Array.isArray(t.milestones)) return;
+        t.milestones.forEach(ms => {
+            if (!ms.date) return;
+            const k = ms.date.slice(0, 10);
+            if (!milestoneByDay[k]) milestoneByDay[k] = [];
+            milestoneByDay[k].push({ task: t, milestone: ms });
+        });
     });
 
     // Build grid cells (nulls for padding)
@@ -578,8 +824,11 @@ function CalendarView({ tasks, onEdit, canManage }) {
     // Pad to complete last row
     while (cells.length % 7 !== 0) cells.push(null);
 
-    const selKey = selectedDay ? dateKey(new Date(year, month, selectedDay)) : null;
-    const selTasks = selKey ? (byDay[selKey] || []) : [];
+    const selKey       = selectedDay ? dateKey(new Date(year, month, selectedDay)) : null;
+    const selSingle    = selKey ? (byDay[selKey] || []) : [];
+    const selSpanning  = selKey ? tasks.filter(t => taskSpansDay(t, selKey)) : [];
+    const selMilestone = selKey ? (milestoneByDay[selKey] || []) : [];
+    const selTasks     = [...selSingle, ...selSpanning];
 
     return (
         <div className="space-y-4">
@@ -617,14 +866,16 @@ function CalendarView({ tasks, onEdit, canManage }) {
             <div className="grid grid-cols-7 gap-1">
                 {cells.map((day, idx) => {
                     if (!day) return <div key={`pad-${idx}`} />;
-                    const k = dateKey(new Date(year, month, day));
-                    const dayTasks = byDay[k] || [];
-                    const isToday   = k === today;
-                    const isSel     = day === selectedDay;
+                    const k          = dateKey(new Date(year, month, day));
+                    const dayTasks   = byDay[k] || [];
+                    const spanTasks  = tasks.filter(t => taskSpansDay(t, k));
+                    const msMarkers  = milestoneByDay[k] || [];
+                    const isToday    = k === today;
+                    const isSel      = day === selectedDay;
                     const hasOverdue = dayTasks.some(t => t.dueDate && new Date(t.dueDate) < new Date() && !isToday);
                     return (
                         <button key={k} onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                            className={`relative rounded-xl p-1.5 min-h-[52px] flex flex-col items-center transition-all border text-left ${
+                            className={`relative rounded-xl p-1.5 min-h-[56px] flex flex-col items-center transition-all border text-left ${
                                 isSel    ? 'border-[#cc9d37] bg-[#cc9d37]/10' :
                                 isToday  ? 'border-[#cc9d37]/40 bg-[#cc9d37]/5' :
                                 'border-white/5 bg-white/3 hover:bg-white/8 hover:border-white/15'
@@ -632,14 +883,46 @@ function CalendarView({ tasks, onEdit, canManage }) {
                             <span className={`text-[11px] font-black mb-1 ${
                                 isSel ? 'text-[#cc9d37]' : isToday ? 'text-[#cc9d37]' : 'text-white/60'
                             }`}>{day}</span>
-                            {/* Task dots */}
-                            <div className="flex flex-wrap gap-0.5 justify-center">
-                                {dayTasks.slice(0, 4).map((t, i) => {
+
+                            {/* Spanning task bars (RANGE/PROJECT) */}
+                            {spanTasks.slice(0, 2).map(t => {
+                                const typeCfg = TASK_TYPE_CONFIG[t.taskType] || TASK_TYPE_CONFIG.SINGLE;
+                                const priCfg  = PRIORITY_CONFIG[t.priority]  || PRIORITY_CONFIG.L3;
+                                const startDk = t.startDate
+                                    ? new Date(t.startDate).toISOString().slice(0, 10)
+                                    : (t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : k);
+                                const endDk   = t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : k;
+                                const isFirst = k === startDk;
+                                const isLast  = k === endDk;
+                                return (
+                                    <div key={t.id} title={t.title}
+                                        className={`w-full h-1.5 mb-0.5 ${typeCfg.color.replace('text-', 'bg-').replace('-400', '-500/50').replace('-400/70', '-500/50')} ${
+                                            isFirst && isLast ? 'rounded-full' :
+                                            isFirst           ? 'rounded-l-full rounded-r-none' :
+                                            isLast            ? 'rounded-l-none rounded-r-full' :
+                                            'rounded-none'
+                                        }`}
+                                        style={{ background: t.taskType === 'RANGE' ? 'rgba(168,85,247,0.4)' : 'rgba(245,158,11,0.4)' }}
+                                    />
+                                );
+                            })}
+                            {spanTasks.length > 2 && (
+                                <span className="text-[7px] font-black text-white/30">+{spanTasks.length - 2}</span>
+                            )}
+
+                            {/* Milestone diamonds */}
+                            {msMarkers.length > 0 && (
+                                <span className="text-[8px] text-amber-400" title={msMarkers.map(m => m.milestone.title || MILESTONE_TYPES[m.milestone.type]?.label).join(', ')}>◆</span>
+                            )}
+
+                            {/* SINGLE task dots */}
+                            <div className="flex flex-wrap gap-0.5 justify-center mt-auto">
+                                {dayTasks.slice(0, 3).map((t, i) => {
                                     const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
                                     return <span key={i} className={`w-1.5 h-1.5 rounded-full ${hasOverdue && t.dueDate ? 'bg-red-500' : cfg.dot}`} />;
                                 })}
-                                {dayTasks.length > 4 && (
-                                    <span className="text-[8px] font-black text-white/40">+{dayTasks.length - 4}</span>
+                                {dayTasks.length > 3 && (
+                                    <span className="text-[8px] font-black text-white/40">+{dayTasks.length - 3}</span>
                                 )}
                             </div>
                         </button>
@@ -652,22 +935,54 @@ function CalendarView({ tasks, onEdit, canManage }) {
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">
                         {selectedDay} {MONTH_TH[month]} — {selTasks.length} งาน
+                        {selMilestone.length > 0 && <span className="ml-2 text-amber-400">· {selMilestone.length} checkpoint</span>}
                     </p>
-                    {selTasks.length === 0 ? (
+
+                    {/* Milestone markers for this day */}
+                    {selMilestone.map(({ task: t, milestone: ms }, mi) => {
+                        const msCfg = MILESTONE_TYPES[ms.type] || MILESTONE_TYPES.other;
+                        return (
+                            <div key={`ms-${mi}`} className="flex items-center gap-3 px-3 py-2 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                                <span className="text-amber-400 text-xs">◆</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-[9px] font-black uppercase tracking-widest ${msCfg.color}`}>{msCfg.label}</p>
+                                    <p className="text-xs font-bold text-white/80 truncate">{ms.title || t.title}</p>
+                                </div>
+                                <span className="text-[9px] text-white/30 font-bold shrink-0">{t.title}</span>
+                            </div>
+                        );
+                    })}
+
+                    {selTasks.length === 0 && selMilestone.length === 0 ? (
                         <p className="text-xs text-white/20 text-center py-4">ไม่มีงานวันนี้</p>
                     ) : selTasks.map(t => {
-                        const cfg = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                        const cfg     = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.L3;
+                        const typeCfg = TASK_TYPE_CONFIG[t.taskType] || TASK_TYPE_CONFIG.SINGLE;
+                        const TypeIcon = typeCfg.icon;
+                        const isSpanning = t.taskType === 'RANGE' || t.taskType === 'PROJECT';
                         return (
                             <button key={t.id} onClick={() => canManage && onEdit(t)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:bg-white/8 ${cfg.border} bg-white/3`}>
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:bg-white/8 ${
+                                    isSpanning ? `${typeCfg.border} ${typeCfg.bg}` : `${cfg.border} bg-white/3`
+                                }`}>
+                                <TypeIcon size={12} className={`shrink-0 ${isSpanning ? typeCfg.color : cfg.color}`} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold text-white truncate">{t.title}</p>
-                                    {t.assignee && (
-                                        <p className="text-[9px] text-white/30 font-bold mt-0.5">
-                                            → {t.assignee.nickName || t.assignee.firstName || '—'}
-                                        </p>
-                                    )}
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        {t.assignee && (
+                                            <p className="text-[9px] text-white/30 font-bold">
+                                                → {t.assignee.nickName || t.assignee.firstName || '—'}
+                                            </p>
+                                        )}
+                                        {t.taskType === 'SINGLE' && t.timeStart && (
+                                            <p className="text-[9px] text-blue-400/60 font-bold">
+                                                {t.timeStart}{t.timeEnd ? `–${t.timeEnd}` : ''}
+                                            </p>
+                                        )}
+                                        {t.taskType === 'PROJECT' && Array.isArray(t.milestones) && t.milestones.length > 0 && (
+                                            <p className="text-[9px] text-amber-400/60 font-bold">{t.milestones.length} checkpoint</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg shrink-0 ${cfg.badge}`}>{t.priority}</span>
                             </button>

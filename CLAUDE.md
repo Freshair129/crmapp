@@ -445,6 +445,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **อ่าน `MEMORY.md`** — ตรวจว่า Antigravity ทำอะไรไปบ้างระหว่างที่ Claude ไม่อยู่
 2. **อ่าน `GOAL.md` → Project Status table** — ดู Active Phase + Known Issues
 3. **อ่าน `CHANGELOG.md` → LATEST pointer** — รู้ว่า HEAD อยู่ที่ version ไหน; ถ้า LATEST ≠ CLAUDE.md version table → sync ก่อน
+4. **อ่าน `CODEBASE_MAP.yaml`** — domain → files → functions → MCP tools (ใช้แทนการ grep ทั่วโปรเจค)
 4. ถ้ามีการเปลี่ยนแปลงที่ Claude ไม่เห็นด้วย → บันทึกใน MEMORY.md + แจ้ง Boss
 5. ถ้าไม่มีอะไรเปลี่ยน → ข้ามได้ ทำงานต่อปกติ
 
@@ -650,6 +651,7 @@ echo "INTERFACE_SPEC" | gemini -p "implement, code only" -o text
 | ADR (v1, archived) | `docs/archive/adr-v1/` | Read-only | ADR 001-023 — ไม่แก้ไข |
 | Version history | `CHANGELOG.md` + `changelog/CL-*.md` | Claude | sliding window 5 entries |
 | Agent context | `CLAUDE.md`, `GEMINI.md`, `ANTIGRAVITY.md` | Claude | sync หลัง commit ทุกครั้ง |
+| Codebase map | `CODEBASE_MAP.yaml` | Claude | อัพเดทเมื่อ domain ใหม่ / repo ใหม่ / MCP tool เพิ่ม |
 | MCP user guide | `docs/guide/mcp-guide.md` | Claude | Claude Desktop config, 22 tools ref, example prompts |
 | MCP architecture decision | `docs/adr/050-mcp-server-dual-transport.md` | Claude | อัปเดตเมื่อ tools เพิ่ม/เปลี่ยน |
 

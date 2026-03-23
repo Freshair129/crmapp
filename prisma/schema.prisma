@@ -641,6 +641,11 @@ model Task {
   priority    String    @default("MEDIUM")
   status      String    @default("PENDING")
   dueDate     DateTime? @map("due_date")
+  startDate   DateTime? @map("start_date")
+  taskType    String    @default("SINGLE") @map("task_type")  // SINGLE | RANGE | PROJECT
+  timeStart   String?   @map("time_start")   // "HH:MM" for SINGLE tasks
+  timeEnd     String?   @map("time_end")     // "HH:MM" for SINGLE tasks
+  milestones  Json?                          // [{ id, title, date, type }] for PROJECT
   completedAt DateTime? @map("completed_at")
   notionId    String?   @map("notion_id")   // Notion page ID for bidirectional sync
   aiGenerated Boolean   @default(false) @map("ai_generated")
