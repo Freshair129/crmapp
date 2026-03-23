@@ -1,7 +1,7 @@
 # Domain Architecture — V School CRM v2
 
 > **Lead Architect:** Claude
-> **Last updated:** 2026-03-23 — v1.9.1
+> **Last updated:** 2026-03-23 — v2.1.0
 > **รวมจาก:** `domain-boundaries.md` + `domain-flows.md` (ไฟล์เดิมถูก deprecated — อ่านที่นี่แทน)
 > **อ่านร่วมกับ:** [`arc42-main.md`](./arc42-main.md) · [`database-erd/high-level.md`](./database-erd/high-level.md) · [`../adr/`](../adr/)
 
@@ -10,21 +10,21 @@
 ## ภาพรวม Domain ทั้งหมด
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        V School CRM v2                              │
-│                                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
-│  │   INBOX      │  │  MARKETING   │  │  CUSTOMER    │               │
-│  │  (แชท/DM)    │  │  (โฆษณา)     │  │  (ลูกค้า)    │               │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘               │
-│         │                 │                 │                       │
-│         └─────────────────┼─────────────────┘                       │
-│                           │                                         │
-│  ┌──────────────┐  ┌──────▼───────┐  ┌──────────────┐               │
-│  │  OPERATIONS  │  │  ANALYTICS   │  │    INFRA     │               │
-│  │ (ครัว/คอร์ส) │  │  (Dashboard) │  │ (DB/Cache/AI)│               │
-│  └──────────────┘  └──────────────┘  └──────────────┘               │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                          V School CRM v2.1.0                               │
+│                                                                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
+│  │   INBOX      │  │  MARKETING   │  │  CUSTOMER    │  │    TASKS     │   │
+│  │  (แชท/DM)    │  │  (โฆษณา)     │  │  (ลูกค้า)    │  │  (งาน/โปรเจค)│  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
+│         │                 │                 │                 │           │
+│         └─────────────────┼─────────────────┴─────────────────┘           │
+│                           │                                               │
+│  ┌──────────────┐  ┌──────▼───────┐  ┌──────────────┐                     │
+│  │  OPERATIONS  │  │  ANALYTICS   │  │    INFRA     │                     │
+│  │ (ครัว/คอร์ส) │  │  (Dashboard) │  │ (DB/Cache/AI)│                     │
+│  └──────────────┘  └──────────────┘  └──────────────┘                     │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -135,7 +135,42 @@
 
 ---
 
-## 1.5 🔴 ANALYTICS DOMAIN
+## 1.5 🟣 TASKS DOMAIN (v2.1.0 — Phase 37)
+
+**หน้าที่:** จัดการ Task ทุกประเภท — งานวันเดียว (SINGLE), งานต่อเนื่อง (RANGE), โปรเจค (PROJECT) — พร้อม Milestone editor และ Notion bidirectional sync
+
+| ประเภท | รายการ |
+|---|---|
+| **Owns (Models)** | `Task` |
+| **Owns (Repos)** | `notionRepo.js` (Notion sync), `taskRepo` (via API routes) |
+| **Owns (Routes)** | `/api/tasks`, `/api/tasks/[id]` |
+| **Owns (UI)** | `TaskPanel.js` (TaskModal, TaskCard, WeeklyView, CalendarView) |
+| **External Sync** | Notion DB `36767d01d85345fa97c0c6e5ed20c5e3` — bidirectional push/pull |
+| **ADR** | *(ไม่มี ADR แยก — อยู่ใน Phase 37 CLAUDE.md)* |
+
+**Task Type Schema:**
+
+| Type | Fields | Calendar Display |
+|---|---|---|
+| `SINGLE` | `dueDate`, `timeStart?`, `timeEnd?` | Single-day card + time badge |
+| `RANGE` | `startDate`, `dueDate` | Spanning bar สีม่วงข้ามวัน |
+| `PROJECT` | `startDate`, `dueDate`, `milestones?[]` | Spanning bar สีทอง + ◆ diamond markers |
+
+**Bounded Context:**
+- รู้จัก: Task, Employee (assignee), Customer (linked task), Notion page ID
+- ไม่รู้จัก: Ad spend, Kitchen stock, Enrollment hours
+- ส่งต่อ: `taskId`, `assigneeId`, `dueDate` สำหรับ employee view
+
+**Invariants (กฎที่ห้ามละเมิด):**
+- `RANGE` ต้องมีทั้ง `startDate` และ `dueDate` — `startDate <= dueDate`
+- `PROJECT` milestones ทุก item ต้องมี `date` อยู่ใน `[startDate, dueDate]`
+- Notion push milestone เป็น plain text เท่านั้น — pull กลับมาไม่ restore JSON (set null)
+- `taskSpansDay()` เปรียบเทียบ ISO string — ระวัง timezone offset (UTC vs local)
+- column names ใน Notion DB ต้องตรง exact: `Task`, `Assignee` (ไม่ใช่ `Task Name`, `Assigned To`)
+
+---
+
+## 1.6 🔴 ANALYTICS DOMAIN
 
 **หน้าที่:** รวบรวม KPI จากทุก domain มาแสดงใน Dashboard — read-only aggregation
 
@@ -154,7 +189,7 @@
 
 ---
 
-## 1.6 ⚙️ INFRA DOMAIN
+## 1.7 ⚙️ INFRA DOMAIN
 
 **หน้าที่:** Database, Cache, Authentication, AI services, Queue, Push Notifications
 
@@ -169,15 +204,17 @@
 | **Employee** | `src/lib/repositories/` (employeeRepo via API routes), roles[], hiredAt, OWNER role |
 | **ADR** | ADR-026 (RBAC), ADR-034 (Redis Caching), ADR-040 (Upstash Migration), ADR-045 (RBAC Redesign) |
 
-**RBAC Role Hierarchy (v1.9.1):**
-- DEVELOPER (L5) · OWNER (L4.5 — executive read-only) · MANAGER (L4)
-- ADMIN (L2) · MARKETING / HEAD_CHEF (L2.5 — domain specialist)
-- EMPLOYEE (L1.5) · AGENT (L1) · GUEST (L0)
+**RBAC Role Hierarchy (v2.0.0 — 12 roles):**
+- DEV (Developer L5) · OWNER (L4.5 — executive read-only) · MGR (Manager L4)
+- ADM (Admin L3) · MKT (Marketing L2.5) · PD (Head Chef L2.5) · TEC (Technician L2.5)
+- HR · PUR (Purchasing) · ACC (Accounting) · SLS (Sales) (all L2)
+- AGT (Agent L1.5) · STF (Staff L1) · GUEST (L0)
 - Multi-role: `roles[]` array — permission = union, `role` primary string (backward compat)
+- `permissionMatrix.js`: 12 roles × 7 domains × 6 actions, F/A/R/N levels, `can()` helper
 
 ---
 
-## 1.7 Inter-Domain Dependency Map
+## 1.8 Inter-Domain Dependency Map
 
 ```mermaid
 graph TD
@@ -185,12 +222,16 @@ graph TD
     MARKETING["🟠 MARKETING\nmarketingRepo\nadReviewRepo"]
     CUSTOMER["🟡 CUSTOMER\ncustomerRepo\npaymentRepo"]
     OPERATIONS["🟢 OPERATIONS\nkitchenRepo\nenrollmentRepo"]
+    TASKS["🟣 TASKS\nnotionRepo\nTaskPanel"]
     ANALYTICS["🔴 ANALYTICS\nanalyticsRepository"]
     INFRA["⚙️ INFRA\ndb / redis / auth / AI / push"]
 
     INBOX -->|customerId| CUSTOMER
     INBOX -->|firstTouchAdId REQ-07| MARKETING
     INBOX -->|slipImageUrl Phase 26| CUSTOMER
+
+    TASKS -->|assigneeId / customerId| CUSTOMER
+    TASKS -->|notionId sync| INFRA
 
     MARKETING -->|ad spend cost side| ANALYTICS
     CUSTOMER -->|verified revenue| ANALYTICS
@@ -200,6 +241,7 @@ graph TD
     MARKETING --> INFRA
     CUSTOMER --> INFRA
     OPERATIONS --> INFRA
+    TASKS --> INFRA
     ANALYTICS --> INFRA
 
     style INFRA fill:#6b7280,color:#fff
@@ -208,6 +250,7 @@ graph TD
     style MARKETING fill:#f97316,color:#fff
     style INBOX fill:#2563eb,color:#fff
     style OPERATIONS fill:#16a34a,color:#fff
+    style TASKS fill:#7c3aed,color:#fff
 ```
 
 **กฎ Anti-Corruption:**
@@ -217,7 +260,7 @@ graph TD
 
 ---
 
-## 1.8 External System Dependencies
+## 1.9 External System Dependencies
 
 | External System | ใช้โดย Domain | Protocol | Rate Limit | Fallback |
 |---|---|---|---|---|
@@ -229,10 +272,11 @@ graph TD
 | **Upstash QStash** | Infra (Queue) | HTTPS HTTP queue | 500 msg/day free | retry ≥ 5x built-in |
 | **Google/Mozilla Push Server** | Infra (Web Push) | HTTPS (web-push) | ไม่มี limit | ถ้าไม่ได้รับ → ไม่มี real-time |
 | **Google Sheets** | Operations | CSV URL | — | warn + skip |
+| **Notion API** | Tasks | REST (MCP) | — | sync fail → log เท่านั้น ไม่ block UI |
 
 ---
 
-## 1.9 What Each Domain Can Change Independently
+## 1.10 What Each Domain Can Change Independently
 
 | Domain | เปลี่ยนได้โดยไม่กระทบ domain อื่น | ต้องประสานงานก่อนเปลี่ยน |
 |---|---|---|
@@ -240,12 +284,13 @@ graph TD
 | **MARKETING** | Ad Review rules, sync schedule, cache keys | Revenue calculation method (กระทบ ANALYTICS) |
 | **CUSTOMER** | Phone normalize logic, ID format | Transaction model (กระทบ ANALYTICS revenue) |
 | **OPERATIONS** | FEFO logic, BOM structure, asset categories, equipment fields | ไม่มี downstream ที่ critical |
+| **TASKS** | Task UI layout, milestone types, calendar view logic | Notion DB column renames (กระทบ notionRepo mapping) |
 | **ANALYTICS** | UI charts, timeframe labels, KPI formulas | Revenue source switch (กระทบ Dashboard accuracy) |
 | **INFRA** | Redis TTL, Logger format, connection pool, VAPID keys | Auth/RBAC rules (กระทบทุก domain) |
 
 ---
 
-## 1.10 Bounded Context Anti-Patterns (ห้ามทำ)
+## 1.11 Bounded Context Anti-Patterns (ห้ามทำ)
 
 | Anti-Pattern | ตัวอย่าง | ทำไมห้าม |
 |---|---|---|
@@ -258,7 +303,7 @@ graph TD
 
 ---
 
-## 1.11 Repository Layer — Anti-Corruption Layer
+## 1.12 Repository Layer — Anti-Corruption Layer
 
 ```
 [API Route / Webhook]
@@ -465,6 +510,35 @@ flowchart LR
 
 ---
 
+## 2.8 Task Type System — SINGLE/RANGE/PROJECT + Notion Sync (v2.1.0)
+
+```mermaid
+flowchart TD
+    A(["Employee เปิด TaskPanel"]) --> B["TaskModal — เลือก Task Type"]
+    B --> C{taskType}
+
+    C -- SINGLE --> D1["กรอก dueDate + timeStart/timeEnd\n(time picker HH:MM)"]
+    C -- RANGE  --> D2["กรอก startDate + dueDate\n(spanning bar สีม่วง)"]
+    C -- PROJECT --> D3["กรอก startDate + dueDate\n+ Milestone Editor (brief/review/meeting/submit/other)"]
+
+    D1 & D2 & D3 --> E["POST /api/tasks\n{ taskType, startDate, timeStart, timeEnd, milestones }"]
+    E --> F[("PostgreSQL\nTask.taskType / startDate / timeStart / timeEnd / milestones Json")]
+
+    F --> G["TaskPanel CalendarView / WeeklyView"]
+    G --> H{taskType}
+    H -- SINGLE --> I["Single card + ⏰ time badge"]
+    H -- RANGE  --> J["Purple spanning bar ข้ามวัน"]
+    H -- PROJECT --> K["Amber spanning bar + ◆ milestone markers"]
+
+    F --> L["pushTaskToNotion()\nnotionRepo.js"]
+    L --> M[("Notion DB\nTask / Status / Priority / Task Type\nStart Date / Time / Milestones text")]
+
+    M --> N["pullTasksFromNotion()\nparse time HH:MM / HH:MM–HH:MM"]
+    N --> F
+```
+
+---
+
 # PART 3: Boundary Version History
 
 | Version | การเปลี่ยน Boundary | เหตุผล |
@@ -487,6 +561,13 @@ flowchart LR
 | v1.8.0 | INFRA: Meta Ads domain in MCP (22→23 tools) | ADR-050 updated ✅ |
 | v1.9.0 | ANALYTICS: ConversationIntelligence — daily summary + knowledge tree | Phase 33 ✅ |
 | v1.9.1 | INFRA: Multi-role RBAC (roles[]), OWNER role (L4.5), Employee hiredAt field | Phase 34 ✅ |
+| v1.9.2 | INFRA: Audit Log — logAction, AuditLog model, approval workflow | Phase 34.5 ✅ |
+| v1.9.3 | OPERATIONS: Ingredient.yieldPercent — kitchen prep waste tracking | Phase 35 ✅ |
+| v1.9.5 | INFRA: Employee profile — profilePicture (base64), dateOfBirth, grade (S/A/B/C/D) | Phase 35.6 ✅ |
+| v2.0.0 | INFRA: RBAC redesign — 12 roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF), permissionMatrix.js rewrite | Phase 36 ✅ |
+| v2.1.0 | **TASKS domain created** — Task.taskType (SINGLE/RANGE/PROJECT), startDate, timeStart/timeEnd, milestones Json, completedAt, notionId | Phase 37 ✅ |
+| v2.1.0 | TASKS: Notion bidirectional sync — pushTaskToNotion/pullTasksFromNotion (notionRepo.js), Notion DB schema updated | Phase 37 ✅ |
+| v2.1.0 | TASKS: Calendar/Weekly spanning bars — RANGE (purple), PROJECT (amber), ◆ milestone markers | Phase 37 ✅ |
 
 ---
 
