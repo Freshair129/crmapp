@@ -1,4 +1,4 @@
-**LATEST:** CL-20260323-007 | v2.1.0 | 2026-03-23
+**LATEST:** CL-20260323-008 | v2.2.0 | 2026-03-23
 
 ---
 
@@ -6,6 +6,7 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260323-008 | Package POS Integration + QR Attendance + POS UX | v2.2.0 | 2026-03-23 | MAJOR | #pos #package #enrollment #attendance #qr #vat #registration |
 | CL-20260323-007 | Notion DB Schema + notionRepo Full Sync (Task Type/Time/Milestones) | v2.1.0 | 2026-03-23 | MINOR | #notion #sync #task-type #schema |
 | CL-20260323-006 | Task Type System — SINGLE/RANGE/PROJECT + CODEBASE_MAP | v2.1.0 | 2026-03-23 | MINOR | #tasks #calendar #ui #codebase-map |
 | CL-20260323-005 | Phase 36 RBAC Redesign: 12 New Roles + Employee Grade | v2.0.0 | 2026-03-23 | BREAKING | #rbac #roles #permissions #employee #grade #breaking |
@@ -39,6 +40,25 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260323-008] v2.2.0 — Package POS Integration + QR Attendance + POS UX
+**Date:** 2026-03-23 | **Severity:** MAJOR | **Tags:** #pos #package #enrollment #attendance #qr #vat #registration
+
+#### Changes
+- **Package POS**: POS โหลดแพ็กเกจจาก `/api/packages/pos`, แสดง Package cards พร้อม discount %, ของแถม, swap badge; PackageSelectionModal สำหรับเลือกคอร์สตาม swap group; cart แสดง breakdown คอร์ส+ราคา+ส่วนลด+ของแถม
+- **Schema**: `qrToken` on PackageEnrollment, `enrollmentItemId` on PackageEnrollmentCourse, `packageEnrollmentId` on Enrollment
+- **`createPackageEnrollment()`**: single `$transaction` สร้าง 4 records (PackageEnrollment + Enrollment + EnrollmentItems + PackageEnrollmentCourse) + QR token
+- **AttendanceScanner**: สแกน QR → ดูข้อมูลนักเรียน → เลือกคอร์ส → บันทึกชม. → cert check
+- **Order Type dynamic**: คอร์ส → On Site/Online, อาหาร → Walk In/Take Away/Delivery
+- **Customer Registration**: ⚡ สมัครเร็ว (เบอร์อย่างเดียว) + 👤 สมัครปกติ แสดงตลอด
+- **VAT Toggle**: Inc. (ราคารวม VAT) / Exc. (บวก VAT 7% เพิ่ม)
+
+#### Known Gotchas
+- `qrToken` nullable — PackageEnrollment เก่าไม่มี
+- Product `hours` เป็น null หลายตัว — total hours อาจแสดง 0
+- Quick register ใส่ firstName = เบอร์โทร — ต้องแก้ทีหลัง
+
+---
 
 ### [CL-20260323-007] v2.1.0 — Notion DB Schema + notionRepo Full Sync (Task Type/Time/Milestones)
 **Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #notion #sync #task-type #schema #bugfix
@@ -102,28 +122,6 @@
 - **Overview SALES/ADMIN**: ลูกค้าที่ดูแล + ยอดสะสม + %ปิดการขาย (validSales/assigned×100) พร้อม count-up
 
 ---
-
-### [CL-20260323-003] v1.9.3 — Ingredient Yield Percent — Kitchen Prep Waste Tracking
-**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #schema #kitchen #repository #api #ui
-
-#### Changes
-- **Schema**: `yieldPercent Float @default(100)` บน `Ingredient` — Supabase migration applied
-- **`kitchenRepo.calculateStockNeeded`**: สูตรใหม่ `qtyNeeded = qtyPerPerson × students × (100 / yieldPercent)` — คิด gross purchase qty รวม prep waste
-- **API `PATCH /api/kitchen/ingredients/[id]`**: validate yieldPercent 1–100 (400 ถ้าออกนอกช่วง)
-- **`KitchenStockPanel`**: คอลัมน์ `YIELD %` ใหม่ — badge สี (🟢≥90 / 🟡70-89 / 🔴<70) + inline click-to-edit + field ในฟอร์ม Add Ingredient
-
----
-
-### [CL-20260323-002] v1.9.2 — Audit Log Full Implementation (Phase 34.5)
-**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #audit #security #login #approval
-
-#### Changes
-- **AuditLog model**: actorId, actorEmail, approverId, approvedAt, action, entity, entityId, before, after, status (DONE/PENDING_APPROVAL/APPROVED/REJECTED), note, ip, userAgent
-- **`auditRepo.js`** (new): logAction, getPendingApprovals, approveAction, rejectAction, getAuditTrail, getActorHistory, getAuditLogs
-- **`authOptions.js`**: LOGIN_SUCCESS + LOGIN_FAILED (3 cases) logged via logAction
-- **`employees/[id]/route.js`**: ROLE_CHANGE + EMPLOYEE_DEACTIVATE hooks
-- **`/api/audit` + `/api/audit/[auditId]`** (new): list, single, approve/reject endpoints
-- **`generateAuditId()`**: AUD-YYYYMMDD-NNNN format
 
 ---
 

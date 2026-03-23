@@ -26,13 +26,14 @@ This file provides guidance to Claude when working with code in this repository.
 | `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released |
 | `v1.9.5` | Profile Picture Upload + Date of Birth + Employee Grade (S/A/B/C/D) | ✅ released |
 | `v2.0.0` | Phase 36 RBAC Redesign — 12 new roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released |
-| `v2.1.0` | Task Type System — SINGLE/RANGE/PROJECT + Notion Sync + CODEBASE_MAP (Phase 37) | ✅ released ← HEAD |
+| `v2.1.0` | Task Type System — SINGLE/RANGE/PROJECT + Notion Sync + CODEBASE_MAP (Phase 37) | ✅ released |
+| `v2.2.0` | Package POS Integration + QR Attendance + POS UX (Phase 38) | ✅ released ← HEAD |
 
 > 📋 ประวัติ version เก่า (v0.9.0 – v1.5.3) ดูที่ `CHANGELOG.md`
 
 ---
 
-## HEAD: v2.1.0 (Phase 37 — Task Type System + Notion Sync) ✅
+## HEAD: v2.2.0 (Phase 38 — Package POS + Attendance Scanner) ✅
 
 | ไฟล์ | สถานะ | หมายเหตุ |
 |---|---|---|
