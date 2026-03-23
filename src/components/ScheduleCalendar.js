@@ -54,6 +54,18 @@ export default function ScheduleCalendar({ language = 'TH' }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [products, setProducts] = useState([]);
   const [instructors, setInstructors] = useState([]);
+  const CLASSROOMS = [
+    { value: 'SHOWROOM',     label: '🪟 ห้อง 1 — Showroom (กระจกใสขนาดใหญ่)' },
+    { value: 'LECTURE',      label: '📺 ห้อง 2 — ห้องกลาง (Lecture + จอ)' },
+    { value: 'MAIN_KITCHEN', label: '🔪 ห้อง 3 — ครัวหลัก (ใช้งานจริง)' },
+  ];
+
+  const CLASSROOM_LABELS = {
+    SHOWROOM:     '🪟 Showroom',
+    LECTURE:      '📺 ห้องกลาง',
+    MAIN_KITCHEN: '🔪 ครัวหลัก',
+  };
+
   const [addForm, setAddForm] = useState({
     productId: '',
     scheduledDate: '',
@@ -61,6 +73,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     endTime: '13:00',
     maxStudents: 10,
     instructorId: '',
+    classroom: '',
     notes: ''
   });
   const [saving, setSaving] = useState(false);
@@ -178,7 +191,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
         await fetchSchedules();
         if (view === 'CALENDAR') await fetchCalendarSchedules();
         setShowAddModal(false);
-        setAddForm({ productId: '', scheduledDate: '', startTime: '09:00', endTime: '13:00', maxStudents: 10, instructorId: '', notes: '' });
+        setAddForm({ productId: '', scheduledDate: '', startTime: '09:00', endTime: '13:00', maxStudents: 10, instructorId: '', classroom: '', notes: '' });
       }
     } catch (err) {
       alert('Error creating schedule');
@@ -334,7 +347,14 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                         </div>
                         <span className="text-xs font-black text-white/40 uppercase tracking-widest">{item.instructorName}</span>
                       </div>
-                      {item.status === 'COMPLETED' && <CheckCircle2 size={18} className="text-emerald-500" />}
+                      <div className="flex items-center gap-2">
+                        {item.classroom && (
+                          <span className="text-[10px] font-black text-white/30 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                            {CLASSROOM_LABELS[item.classroom] ?? item.classroom}
+                          </span>
+                        )}
+                        {item.status === 'COMPLETED' && <CheckCircle2 size={18} className="text-emerald-500" />}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -562,15 +582,32 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
                   {/* Course info banner — shown after selection */}
                   {selectedCourse && (
-                    <div className="mt-2 flex items-center gap-3 px-3 py-2 bg-[#cc9d37]/10 border border-[#cc9d37]/20 rounded-xl">
-                      <span className="text-[#cc9d37] text-xs font-black uppercase tracking-widest">
-                        {courseDays} วัน
-                      </span>
-                      <span className="w-px h-4 bg-[#cc9d37]/30" />
-                      <span className="text-white/60 text-xs font-bold">
-                        {selectedCourse.hours ? `${selectedCourse.hours} ชม.` : ''}
-                        {selectedCourse.sessionType ? ` · ${selectedCourse.sessionType.replace(',', ' + ')}` : ''}
-                      </span>
+                    <div className="mt-2 rounded-xl border border-[#cc9d37]/20 bg-[#cc9d37]/10 overflow-hidden">
+                      {/* Stats row */}
+                      <div className="flex items-center gap-0 divide-x divide-[#cc9d37]/20">
+                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                          <span className="text-[#cc9d37] text-lg font-black leading-none">{courseDays}</span>
+                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">วัน</span>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                          <span className="text-[#cc9d37] text-lg font-black leading-none">{selectedCourse.hours ?? '—'}</span>
+                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">ชั่วโมง</span>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                          <span className="text-white/60 text-xs font-black leading-none">
+                            {selectedCourse.sessionType ? selectedCourse.sessionType.replace(',', '/') : '—'}
+                          </span>
+                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">Session</span>
+                        </div>
+                      </div>
+                      {/* Menu stub row */}
+                      <div className="border-t border-[#cc9d37]/20 px-3 py-2 flex items-center gap-2">
+                        <span className="text-white/30 text-[10px] font-black uppercase tracking-widest">รายการเมนู</span>
+                        {selectedCourse.linkedMenuIds?.length > 0
+                          ? <span className="text-[#cc9d37] text-xs font-bold">{selectedCourse.linkedMenuIds.length} เมนู</span>
+                          : <span className="text-white/20 text-xs italic">ยังไม่มีรายละเอียด</span>
+                        }
+                      </div>
                     </div>
                   )}
                 </div>
@@ -623,18 +660,34 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">อาจารย์ผู้สอน (ถ้ามี)</label>
-                  <select
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
-                    value={addForm.instructorId}
-                    onChange={e => setAddForm({ ...addForm, instructorId: e.target.value })}
-                  >
-                    <option value="">ไม่ระบุ / ค่อยกำหนดภายหลัง</option>
-                    {instructors.map(e => (
-                      <option key={e.id} value={e.id}>{e.nickName || e.firstName} {e.lastName || ''}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">อาจารย์ผู้สอน</label>
+                    <select
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                      value={addForm.instructorId}
+                      onChange={e => setAddForm({ ...addForm, instructorId: e.target.value })}
+                    >
+                      <option value="">ยังไม่ระบุ</option>
+                      {instructors.map(e => (
+                        <option key={e.id} value={e.id}>{e.nickName || e.firstName} {e.lastName || ''}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ห้องเรียน</label>
+                    <select
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                      value={addForm.classroom}
+                      onChange={e => setAddForm({ ...addForm, classroom: e.target.value })}
+                    >
+                      <option value="">ยังไม่ระบุ</option>
+                      {CLASSROOMS.map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>

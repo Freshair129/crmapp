@@ -4,12 +4,12 @@ import { generateScheduleId, generateClassId } from '@/lib/idGenerators';
 
 // generateScheduleId, generateClassId — moved to @/lib/idGenerators
 
-export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId }) {
+export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId, classroom }) {
     try {
         const prisma = await getPrisma();
         const scheduleId = await generateScheduleId();
         return prisma.courseSchedule.create({
-            data: { scheduleId, productId, scheduledDate: new Date(scheduledDate), startTime, endTime, maxStudents, instructorId, notes, classId: classId ?? null, status: 'OPEN' },
+            data: { scheduleId, productId, scheduledDate: new Date(scheduledDate), startTime, endTime, maxStudents, instructorId, notes, classId: classId ?? null, classroom: classroom ?? null, status: 'OPEN' },
             include: {
                 product: true,
                 instructor: { select: { firstName: true, lastName: true, nickName: true } }
