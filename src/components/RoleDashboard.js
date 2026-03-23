@@ -1019,6 +1019,16 @@ function EmployeeDash({ language }) {
 function AgentDash({ language }) {
     const { data: session } = useSession();
     const { data: execData, loading } = useExecData('today');
+    const [schedules, setSchedules] = useState([]);
+    const [schedLoading, setSchedLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/schedules?upcoming=true&days=14')
+            .then(r => r.json())
+            .then(d => setSchedules(Array.isArray(d) ? d : []))
+            .catch(e => console.error('[AgentDash] schedules:', e))
+            .finally(() => setSchedLoading(false));
+    }, []);
 
     return (
         <div className="space-y-8">
@@ -1032,6 +1042,76 @@ function AgentDash({ language }) {
                         <KpiCard label="Orders Today" value={execData?.ordersCount !== undefined ? execData.ordersCount + ' orders' : '—'} icon={Receipt} color={GOLD} />
                         <KpiCard label="Revenue Today" value={fmtMoney(execData?.totalRevenue)} icon={DollarSign} color="#10b981" />
                         <KpiCard label="Avg. Ticket" value={fmtMoney(execData?.avgTicket)} icon={Tag} color="#a855f7" />
+                    </div>
+
+                    {/* Upcoming Schedules — SLS needs to see class availability */}
+                    <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Calendar size={14} className="text-cyan-400" />
+                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">ตารางเรียน 14 วันข้างหน้า</p>
+                            </div>
+                            <span className="text-[10px] font-black text-white/20">{schedules.length} คลาส</span>
+                        </div>
+                        {schedLoading ? (
+                            <div className="h-24 flex items-center justify-center"><Spinner /></div>
+                        ) : schedules.length === 0 ? (
+                            <div className="flex flex-col items-center py-8 gap-2">
+                                <Calendar size={28} className="text-white/10" />
+                                <p className="text-white/20 text-[10px] font-black uppercase">ไม่มีคลาสในช่วงนี้</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {schedules.slice(0, 8).map((s, i) => {
+                                    const date = s.scheduledDate ? new Date(s.scheduledDate) : null;
+                                    const isToday = date && new Date().toDateString() === date.toDateString();
+                                    const isFull = s.maxStudents && s.confirmedStudents >= s.maxStudents;
+                                    const studentPct = s.maxStudents ? Math.min(100, (s.confirmedStudents / s.maxStudents) * 100) : 0;
+                                    return (
+                                        <div key={s.id || i} className={`flex items-center gap-4 p-3 rounded-xl transition-all ${isToday ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-white/[0.03] border border-white/5'}`}>
+                                            {/* Date */}
+                                            <div className="w-12 text-center flex-shrink-0">
+                                                <p className={`text-lg font-black leading-none ${isToday ? 'text-cyan-400' : 'text-white/60'}`}>
+                                                    {date ? date.getDate() : '—'}
+                                                </p>
+                                                <p className="text-[9px] font-bold text-white/25 uppercase">
+                                                    {date ? date.toLocaleDateString('th-TH', { month: 'short' }) : ''}
+                                                </p>
+                                            </div>
+
+                                            {/* Course info */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-white/70 truncate">{s.productName || s.product?.name || 'คลาส'}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    {s.startTime && <span className="text-[9px] text-white/30 font-bold">{s.startTime}{s.endTime ? `–${s.endTime}` : ''}</span>}
+                                                    {s.sessionType && <span className="text-[9px] text-white/20 font-bold">{s.sessionType}</span>}
+                                                    {s.instructorName && <span className="text-[9px] text-white/20">· {s.instructorName}</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Student count */}
+                                            <div className="flex-shrink-0 text-right w-20">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Users size={10} className={isFull ? 'text-red-400' : 'text-emerald-400'} />
+                                                    <span className={`text-xs font-black ${isFull ? 'text-red-400' : 'text-white/60'}`}>
+                                                        {s.confirmedStudents || 0}{s.maxStudents ? `/${s.maxStudents}` : ''}
+                                                    </span>
+                                                </div>
+                                                {s.maxStudents && (
+                                                    <div className="h-1 bg-white/8 rounded-full overflow-hidden mt-1">
+                                                        <div className="h-full rounded-full" style={{
+                                                            width: `${studentPct}%`,
+                                                            background: isFull ? '#ef4444' : studentPct > 70 ? '#f59e0b' : '#10b981'
+                                                        }} />
+                                                    </div>
+                                                )}
+                                                {isFull && <span className="text-[8px] font-black text-red-400 uppercase">เต็ม</span>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* Tips */}
