@@ -756,23 +756,25 @@ model NotificationRule {
 // ─────────────────────────────────────────────
 
 model Enrollment {
-  id           String           @id @default(uuid())
-  enrollmentId String           @unique @map("enrollment_id")
-  customerId   String           @map("customer_id")
-  productId    String           @map("product_id")
-  soldById     String?          @map("sold_by_id")
-  totalPrice   Float            @map("total_price")
-  status       String           @default("ACTIVE")
-  enrolledAt   DateTime         @default(now()) @map("enrolled_at")
-  notes        String?
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  id                    String           @id @default(uuid())
+  enrollmentId          String           @unique @map("enrollment_id")
+  customerId            String           @map("customer_id")
+  productId             String           @map("product_id")
+  soldById              String?          @map("sold_by_id")
+  packageEnrollmentId   String?          @unique @map("package_enrollment_id")  // link to PackageEnrollment if created from package
+  totalPrice            Float            @map("total_price")
+  status                String           @default("ACTIVE")
+  enrolledAt            DateTime         @default(now()) @map("enrolled_at")
+  notes                 String?
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
 
-  customer     Customer         @relation(fields: [customerId], references: [id])
-  product      Product          @relation(fields: [productId], references: [id])
-  soldBy       Employee?        @relation("EnrollmentSeller", fields: [soldById], references: [id])
-  items        EnrollmentItem[]
-  certificates Certificate[]
+  customer            Customer           @relation(fields: [customerId], references: [id])
+  product             Product            @relation(fields: [productId], references: [id])
+  soldBy              Employee?          @relation("EnrollmentSeller", fields: [soldById], references: [id])
+  packageEnrollment   PackageEnrollment? @relation(fields: [packageEnrollmentId], references: [id])
+  items               EnrollmentItem[]
+  certificates        Certificate[]
 
   @@index([status])
   @@index([customerId])
@@ -791,9 +793,10 @@ model EnrollmentItem {
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
 
-  enrollment  Enrollment        @relation(fields: [enrollmentId], references: [id])
-  product     Product           @relation(fields: [productId], references: [id])
-  attendances ClassAttendance[]
+  enrollment              Enrollment              @relation(fields: [enrollmentId], references: [id])
+  product                 Product                 @relation(fields: [productId], references: [id])
+  attendances             ClassAttendance[]
+  packageEnrollmentCourse PackageEnrollmentCourse?
 
   @@unique([enrollmentId, productId])
   @@index([status])
@@ -1092,6 +1095,7 @@ model PackageEnrollment {
   totalPrice   Float     @map("total_price")
   status       String    @default("ACTIVE")              // ACTIVE|COMPLETED|CANCELLED
   swapUsedAt   DateTime? @map("swap_used_at")            // null = ยังไม่ได้ swap, non-null = ใช้สิทธิ์ไปแล้ว
+  qrToken      String?   @unique @map("qr_token")        // UUID token for QR attendance scanning
   enrolledAt   DateTime  @default(now()) @map("enrolled_at")
   notes        String?
   createdAt    DateTime  @default(now()) @map("created_at")
@@ -1101,6 +1105,7 @@ model PackageEnrollment {
   customer        Customer                  @relation(fields: [customerId], references: [id])
   soldBy          Employee?                 @relation("PackageEnrollmentSeller", fields: [soldById], references: [id])
   selectedCourses PackageEnrollmentCourse[]
+  enrollment      Enrollment?               // 1:1 back-ref to linked Enrollment
 
   @@index([status])
   @@index([customerId])
@@ -1168,10 +1173,12 @@ model PackageEnrollmentCourse {
   id                  String  @id @default(uuid())
   packageEnrollmentId String  @map("package_enrollment_id")
   productId           String  @map("product_id")
+  enrollmentItemId    String? @unique @map("enrollment_item_id")  // link to EnrollmentItem for hours tracking
   wasSwapped          Boolean @default(false) @map("was_swapped")  // true = course นี้เป็นผลจากการ swap
 
   packageEnrollment PackageEnrollment @relation(fields: [packageEnrollmentId], references: [id], onDelete: Cascade)
   product           Product           @relation(fields: [productId], references: [id])
+  enrollmentItem    EnrollmentItem?   @relation(fields: [enrollmentItemId], references: [id])
 
   @@unique([packageEnrollmentId, productId])
   @@map("package_enrollment_courses")

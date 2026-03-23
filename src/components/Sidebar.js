@@ -7,7 +7,7 @@ import {
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot,
-    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck,
+    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck, QrCode,
 } from 'lucide-react';
 import { canSeeItem } from '@/lib/sidebarProfiles';
 
@@ -55,6 +55,7 @@ const menuGroups = [
             { id: 'inventory-control',   icon: Warehouse,         label: 'คลังสินค้า' },
             { id: 'procurement',         icon: FileCheck,         label: 'จัดซื้อ' },
             { id: 'assets',              icon: Monitor,           label: 'อุปกรณ์' },
+            { id: 'attendance-scanner',  icon: QrCode,            label: 'สแกนเช็คชื่อ' },
         ],
     },
     {

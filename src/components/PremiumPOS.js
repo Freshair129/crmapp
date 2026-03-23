@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus, X, Clock, Users, GraduationCap, Tag, ImageOff, ShoppingBag, TrendingUp } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus, X, Clock, Users, GraduationCap, Tag, ImageOff, ShoppingBag, TrendingUp, Gift, ChevronDown, ChevronUp, Lock, Repeat } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 // ─── Product Placeholder ───────────────────────────────────────────────────
@@ -477,6 +477,11 @@ export default function PremiumPOS({ language = 'TH' }) {
     const [fetchError, setFetchError] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
+    // Package state
+    const [packages, setPackages] = useState([]);
+    const [showPackageModal, setShowPackageModal] = useState(null); // package obj or null
+    const [packageSwapSelections, setPackageSwapSelections] = useState({}); // { groupName: [productId, ...] }
+
     const [mainMode, setMainMode] = useState('course'); // 'course' | 'food'
 
     const [customerPhone, setCustomerPhone] = useState('');
@@ -553,19 +558,19 @@ export default function PremiumPOS({ language = 'TH' }) {
     }, []);
 
     useEffect(() => {
-        fetch('/api/products')
-            .then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status} — ${r.statusText}`);
-                return r.json();
-            })
-            .then(data => {
-                const list = Array.isArray(data) ? data : [];
-                console.log(`[POS] Loaded ${list.length} products`, list.slice(0, 3));
+        Promise.all([
+            fetch('/api/products').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+            fetch('/api/packages/pos').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }).catch(() => [])
+        ])
+            .then(([productsData, packagesData]) => {
+                const list = Array.isArray(productsData) ? productsData : [];
+                console.log(`[POS] Loaded ${list.length} products, ${packagesData.length} packages`);
                 setProducts(list);
+                setPackages(Array.isArray(packagesData) ? packagesData : []);
                 setLoading(false);
             })
             .catch(err => {
-                console.error('[POS] Product fetch failed:', err.message);
+                console.error('[POS] Fetch failed:', err.message);
                 setFetchError(err.message);
                 setLoading(false);
             });
@@ -651,6 +656,83 @@ export default function PremiumPOS({ language = 'TH' }) {
     };
 
     const removeItem = (id) => setCart(cart.filter(item => item.id !== id));
+
+    // ── Package helpers ──────────────────────────────────────────────
+    const getSwapGroups = (pkg) => {
+        const groups = {};
+        for (const c of pkg.courses) {
+            if (c.swapGroup) {
+                if (!groups[c.swapGroup]) groups[c.swapGroup] = { max: c.swapGroupMax || 1, courses: [] };
+                groups[c.swapGroup].courses.push(c);
+            }
+        }
+        return groups;
+    };
+
+    const hasSwapGroups = (pkg) => pkg.courses.some(c => c.swapGroup && !c.isLocked);
+
+    const openPackageModal = (pkg) => {
+        if (hasSwapGroups(pkg)) {
+            // Pre-select locked/required courses
+            const preSelected = {};
+            const groups = getSwapGroups(pkg);
+            for (const [gName, g] of Object.entries(groups)) {
+                preSelected[gName] = g.courses.filter(c => c.isLocked).map(c => c.productId);
+            }
+            setPackageSwapSelections(preSelected);
+            setShowPackageModal(pkg);
+        } else {
+            addPackageToCart(pkg, pkg.courses.map(c => c.productId));
+        }
+    };
+
+    const toggleSwapSelection = (groupName, productId, maxSelect) => {
+        setPackageSwapSelections(prev => {
+            const current = prev[groupName] || [];
+            if (current.includes(productId)) {
+                return { ...prev, [groupName]: current.filter(id => id !== productId) };
+            }
+            if (current.length >= maxSelect) return prev;
+            return { ...prev, [groupName]: [...current, productId] };
+        });
+    };
+
+    const confirmPackageSelection = () => {
+        if (!showPackageModal) return;
+        const pkg = showPackageModal;
+        const requiredIds = pkg.courses.filter(c => !c.swapGroup || c.isLocked).map(c => c.productId);
+        const swapIds = Object.values(packageSwapSelections).flat();
+        const allIds = [...new Set([...requiredIds, ...swapIds])];
+        addPackageToCart(pkg, allIds);
+        setShowPackageModal(null);
+        setPackageSwapSelections({});
+    };
+
+    const addPackageToCart = (pkg, selectedCourseIds) => {
+        const pkgCartId = `pkg_${pkg.id}`;
+        const existing = cart.find(i => i.id === pkgCartId);
+        if (existing) return; // Package can only be added once
+
+        const selectedCourses = pkg.courses.filter(c => selectedCourseIds.includes(c.productId));
+        const giftsValue = (pkg.gifts || []).reduce((sum, g) => sum + ((g.estimatedCost || 0) * (g.qty || 1)), 0);
+
+        setCart([...cart, {
+            id: pkgCartId,
+            isPackage: true,
+            packageId: pkg.id,
+            packageData: pkg,
+            name: pkg.name,
+            price: pkg.packagePrice,
+            originalPrice: pkg.originalPrice,
+            quantity: 1,
+            category: 'package',
+            courses: selectedCourses,
+            gifts: pkg.gifts || [],
+            giftsValue,
+            selectedCourseIds,
+            discount: pkg.originalPrice - pkg.packagePrice
+        }]);
+    };
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = subtotal * 0.07;
@@ -889,11 +971,35 @@ export default function PremiumPOS({ language = 'TH' }) {
 
             if (orderRes.ok) {
                 // UPGRADE 2: Enrollment Creation
+                const packageItems = cart.filter(item => item.isPackage);
                 const courseItems = cart.filter(item =>
-                    ['course', 'package', 'full_course', 'japanese_culinary', 'specialty', 'management'].includes(item.category)
+                    !item.isPackage && ['course', 'full_course', 'japanese_culinary', 'specialty', 'management'].includes(item.category)
                 );
 
                 let createdEnrollments = 0;
+
+                // Package enrollments
+                for (const pkg of packageItems) {
+                    try {
+                        await fetch('/api/packages/enrollments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                packageId: pkg.packageId,
+                                customerId: customer.id,
+                                soldById: session?.user?.employeeId || null,
+                                totalPrice: pkg.price,
+                                selectedCourseIds: pkg.selectedCourseIds,
+                                notes: 'POS checkout'
+                            })
+                        });
+                        createdEnrollments++;
+                    } catch (err) {
+                        console.error('[POS] Package enrollment failed', err);
+                    }
+                }
+
+                // Individual course enrollments (non-package)
                 for (const item of courseItems) {
                     try {
                         await fetch('/api/enrollments', {
@@ -1580,6 +1686,75 @@ export default function PremiumPOS({ language = 'TH' }) {
                                 >ลองใหม่</button>
                             )}
                         </div>
+                    ) : activeCategory === 'package' && mainMode === 'course' ? (
+                        /* ── Package Cards ── */
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {packages.length === 0 ? (
+                                <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3">
+                                    <Gift size={36} className="text-white/10" />
+                                    <p className="text-white/20 text-xs font-black uppercase tracking-[0.2em]">ยังไม่มีแพ็กเกจ</p>
+                                </div>
+                            ) : packages.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())).map(pkg => {
+                                const inCart = cart.find(i => i.id === `pkg_${pkg.id}`);
+                                const totalHours = pkg.courses.reduce((sum, c) => sum + (c.product?.hours || 0), 0);
+                                const discountPct = pkg.originalPrice > 0 ? Math.round(((pkg.originalPrice - pkg.packagePrice) / pkg.originalPrice) * 100) : 0;
+                                return (
+                                    <div
+                                        key={pkg.id}
+                                        onClick={() => openPackageModal(pkg)}
+                                        className="cursor-pointer group select-none"
+                                    >
+                                        <div className={`relative w-full aspect-square rounded-2xl overflow-hidden mb-3 transition-all duration-200 bg-gradient-to-br from-[#cc9d37]/20 via-[#19273a] to-[#0d1626] border ${
+                                            inCart ? 'ring-2 ring-[#cc9d37]/70 border-[#cc9d37]/30' : 'border-white/8 hover:ring-2 hover:ring-white/15'
+                                        }`}>
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                                                <Gift size={32} className="text-[#cc9d37]/60 mb-2" />
+                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">{pkg.courses.length} คอร์ส</span>
+                                                {totalHours > 0 && <span className="text-[9px] text-white/25 mt-0.5">{totalHours} ชม.</span>}
+                                            </div>
+
+                                            {/* Discount badge */}
+                                            {discountPct > 0 && (
+                                                <div className="absolute top-2 right-2 bg-red-500/90 text-white px-1.5 py-0.5 rounded-md text-[9px] font-black shadow-md">
+                                                    -{discountPct}%
+                                                </div>
+                                            )}
+
+                                            {/* In cart badge */}
+                                            {inCart && (
+                                                <div className="absolute top-2 left-2 bg-[#cc9d37] text-[#0c1a2f] min-w-[22px] h-[22px] px-1 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">
+                                                    <CheckCircle size={12} />
+                                                </div>
+                                            )}
+
+                                            {/* Gifts badge */}
+                                            {pkg.gifts?.length > 0 && (
+                                                <div className="absolute bottom-2 left-2 bg-emerald-500/80 text-white px-1.5 py-0.5 rounded-md text-[9px] font-black">
+                                                    🎁 +{pkg.gifts.length} ของแถม
+                                                </div>
+                                            )}
+
+                                            {/* Swap badge */}
+                                            {hasSwapGroups(pkg) && (
+                                                <div className="absolute bottom-2 right-2 bg-blue-500/80 text-white px-1.5 py-0.5 rounded-md text-[9px] font-black flex items-center gap-0.5">
+                                                    <Repeat size={8} /> เลือกคอร์ส
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="px-0.5">
+                                            <h4 className="text-white font-bold text-[12px] leading-snug line-clamp-2 mb-1">{pkg.name}</h4>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[#cc9d37] font-black text-sm">฿{Number(pkg.packagePrice).toLocaleString()}</span>
+                                                {pkg.originalPrice > pkg.packagePrice && (
+                                                    <span className="text-white/25 text-[10px] line-through">฿{Number(pkg.originalPrice).toLocaleString()}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                             {filteredProducts.map(product => {
@@ -1702,6 +1877,148 @@ export default function PremiumPOS({ language = 'TH' }) {
                 />
             )}
 
+            {/* ── Package Selection Modal (swap groups) ── */}
+            {showPackageModal && (() => {
+                const pkg = showPackageModal;
+                const groups = getSwapGroups(pkg);
+                const requiredCourses = pkg.courses.filter(c => !c.swapGroup || c.isLocked);
+                const allGroupsValid = Object.entries(groups).every(([gName, g]) => {
+                    const selected = packageSwapSelections[gName] || [];
+                    return selected.length === g.max;
+                });
+                const discountPct = pkg.originalPrice > 0 ? Math.round(((pkg.originalPrice - pkg.packagePrice) / pkg.originalPrice) * 100) : 0;
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPackageModal(null)}>
+                        <div className="bg-[#0d1626] border border-white/10 rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                            {/* Header */}
+                            <div className="px-6 pt-6 pb-4 border-b border-white/8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#cc9d37]/15 flex items-center justify-center">
+                                            <Gift size={20} className="text-[#cc9d37]" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-black text-lg">{pkg.name}</h3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[#cc9d37] font-black text-sm">฿{Number(pkg.packagePrice).toLocaleString()}</span>
+                                                {discountPct > 0 && (
+                                                    <>
+                                                        <span className="text-white/25 text-xs line-through">฿{Number(pkg.originalPrice).toLocaleString()}</span>
+                                                        <span className="text-red-400 text-[10px] font-black">-{discountPct}%</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowPackageModal(null)} className="text-white/30 hover:text-white/60"><X size={18} /></button>
+                                </div>
+                            </div>
+
+                            {/* Required courses */}
+                            {requiredCourses.length > 0 && (
+                                <div className="px-6 py-4 border-b border-white/5">
+                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-wider mb-2">คอร์สที่รวมอยู่</p>
+                                    <div className="space-y-2">
+                                        {requiredCourses.map(c => (
+                                            <div key={c.productId} className="flex items-center justify-between px-3 py-2 bg-white/[0.03] rounded-xl">
+                                                <div className="flex items-center gap-2">
+                                                    <Lock size={10} className="text-white/20" />
+                                                    <span className="text-white/70 text-xs font-bold">{c.product?.name}</span>
+                                                    {c.product?.hours && <span className="text-white/20 text-[9px]">({c.product.hours}ชม.)</span>}
+                                                </div>
+                                                <span className="text-white/30 text-[10px]">฿{Number(c.product?.price || 0).toLocaleString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Swap groups */}
+                            {Object.entries(groups).map(([gName, g]) => {
+                                const selected = packageSwapSelections[gName] || [];
+                                return (
+                                    <div key={gName} className="px-6 py-4 border-b border-white/5">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-white/50 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <Repeat size={10} /> เลือกคอร์ส — {gName}
+                                            </p>
+                                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                                selected.length === g.max ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                                            }`}>
+                                                {selected.length}/{g.max}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            {g.courses.map(c => {
+                                                const isSelected = selected.includes(c.productId);
+                                                const isDisabled = c.isLocked || (!isSelected && selected.length >= g.max);
+                                                return (
+                                                    <button
+                                                        key={c.productId}
+                                                        disabled={c.isLocked}
+                                                        onClick={() => !c.isLocked && toggleSwapSelection(gName, c.productId, g.max)}
+                                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                                                            c.isLocked ? 'bg-white/[0.03] cursor-not-allowed opacity-50'
+                                                            : isSelected ? 'bg-[#cc9d37]/15 border border-[#cc9d37]/30 ring-1 ring-[#cc9d37]/20'
+                                                            : isDisabled ? 'bg-white/[0.02] opacity-40 cursor-not-allowed'
+                                                            : 'bg-white/[0.03] hover:bg-white/[0.06] border border-transparent'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] ${
+                                                                isSelected ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/8'
+                                                            }`}>
+                                                                {isSelected ? <CheckCircle size={12} /> : null}
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-white/70 text-xs font-bold">{c.product?.name}</span>
+                                                                {c.product?.hours && <span className="text-white/20 text-[9px] ml-1">({c.product.hours}ชม.)</span>}
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-white/30 text-[10px]">฿{Number(c.product?.price || 0).toLocaleString()}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Gifts */}
+                            {pkg.gifts?.length > 0 && (
+                                <div className="px-6 py-4 border-b border-white/5">
+                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-wider mb-2">ของแถม</p>
+                                    <div className="space-y-1.5">
+                                        {pkg.gifts.map((g, gi) => (
+                                            <div key={gi} className="flex items-center justify-between px-3 py-2 bg-emerald-500/[0.05] rounded-xl">
+                                                <span className="text-emerald-400/70 text-xs font-bold">🎁 {g.name} {g.qty > 1 ? `x${g.qty}` : ''}</span>
+                                                {g.estimatedCost > 0 && <span className="text-white/20 text-[10px]">มูลค่า ฿{Number(g.estimatedCost * (g.qty || 1)).toLocaleString()}</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Footer */}
+                            <div className="px-6 py-5">
+                                <button
+                                    disabled={!allGroupsValid}
+                                    onClick={confirmPackageSelection}
+                                    className="w-full py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 disabled:bg-white/8 disabled:text-white/15 bg-[#cc9d37] hover:bg-amber-400 text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/20 active:scale-95"
+                                >
+                                    <ShoppingBasket size={16} />
+                                    เพิ่มแพ็กเกจลงตะกร้า
+                                </button>
+                                {!allGroupsValid && (
+                                    <p className="text-center text-amber-400/50 text-[10px] mt-2 font-bold">กรุณาเลือกคอร์สให้ครบตามเงื่อนไข</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* ── Order Panel (right) ── */}
             <div className="w-[300px] bg-[#19273a] border-l border-white/8 flex flex-col flex-shrink-0">
 
@@ -1820,6 +2137,71 @@ export default function PremiumPOS({ language = 'TH' }) {
                         </div>
                     ) : (
                         cart.map(item => {
+                            if (item.isPackage) {
+                                // ── Package Cart Item (expanded breakdown) ──
+                                return (
+                                    <div key={item.id} className="bg-white/[0.03] rounded-2xl p-3 border border-[#cc9d37]/15 space-y-2">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-10 h-10 rounded-xl bg-[#cc9d37]/15 flex items-center justify-center flex-shrink-0">
+                                                    <Gift size={16} className="text-[#cc9d37]" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-white text-[11px] font-black leading-snug">{item.name}</p>
+                                                    <p className="text-[#cc9d37]/60 text-[9px] font-bold">แพ็กเกจ</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeItem(item.id)} className="text-white/15 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
+                                        </div>
+
+                                        {/* Course list */}
+                                        <div className="space-y-1 pl-1">
+                                            {item.courses.map(c => (
+                                                <div key={c.product?.id || c.productId} className="flex items-center justify-between text-[10px]">
+                                                    <span className="text-white/50 truncate flex-1 mr-2">
+                                                        {c.isLocked && <Lock size={8} className="inline mr-0.5 text-white/25" />}
+                                                        {c.product?.name || 'คอร์ส'}
+                                                        {c.product?.hours ? <span className="text-white/20 ml-1">({c.product.hours}ชม.)</span> : null}
+                                                    </span>
+                                                    <span className="text-white/30 flex-shrink-0">฿{Number(c.product?.price || 0).toLocaleString()}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Gifts */}
+                                        {item.gifts.length > 0 && (
+                                            <div className="space-y-1 pl-1 border-t border-white/5 pt-1.5">
+                                                {item.gifts.map((g, gi) => (
+                                                    <div key={gi} className="flex items-center justify-between text-[10px]">
+                                                        <span className="text-emerald-400/60">🎁 {g.name} {g.qty > 1 ? `x${g.qty}` : ''}</span>
+                                                        {g.estimatedCost > 0 && <span className="text-white/20">฿{Number(g.estimatedCost * (g.qty || 1)).toLocaleString()}</span>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Price breakdown */}
+                                        <div className="border-t border-dashed border-white/8 pt-1.5 space-y-0.5">
+                                            <div className="flex justify-between text-[10px]">
+                                                <span className="text-white/30">มูลค่ารวม</span>
+                                                <span className="text-white/30">฿{Number(item.originalPrice + (item.giftsValue || 0)).toLocaleString()}</span>
+                                            </div>
+                                            {item.discount > 0 && (
+                                                <div className="flex justify-between text-[10px]">
+                                                    <span className="text-red-400/60">ส่วนลดแพ็กเกจ</span>
+                                                    <span className="text-red-400/60">-฿{Number(item.discount + (item.giftsValue || 0)).toLocaleString()}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between text-[11px] font-black">
+                                                <span className="text-white/60">ราคาแพ็กเกจ</span>
+                                                <span className="text-[#cc9d37]">฿{Number(item.price).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            // ── Regular Cart Item ──
                             const emoji = getEmoji(item.category, item.name);
                             return (
                                 <div key={item.id} className="flex items-start gap-3 group">

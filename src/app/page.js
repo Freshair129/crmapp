@@ -45,6 +45,7 @@ import CoursePage from "@/components/CoursePage";
 import TaskPanel from "@/components/TaskPanel";
 import InventoryControlPanel from "@/components/InventoryControlPanel";
 import ProcurementPanel from "@/components/ProcurementPanel";
+import AttendanceScanner from "@/components/AttendanceScanner";
 
 const pageVariants = {
     initial: { opacity: 0, y: 12 },
@@ -396,6 +397,10 @@ export default function Home() {
 
                         {activeView === "assets" && wrap("assets",
                             <AssetPanel language={language} />
+                        )}
+
+                        {activeView === "attendance-scanner" && wrap("attendance-scanner",
+                            <AttendanceScanner />
                         )}
 
                         {activeView === "tasks" && wrap("tasks",

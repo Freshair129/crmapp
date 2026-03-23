@@ -34,7 +34,7 @@ export const SIDEBAR_PROFILES = {
     'pos-system', 'inventory-manager',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
-    'courses', 'schedules', 'recipes', 'packages',
+    'courses', 'schedules', 'recipes', 'packages', 'attendance-scanner',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'employees', 'tasks', 'team-kpi', 'admin-performance',
   ],
@@ -44,7 +44,7 @@ export const SIDEBAR_PROFILES = {
     'executive-analytics', 'tasks',
     'customers', 'facebook-chat', 'line-connect',
     'facebook-ads', 'campaign-tracking', 'analytics', 'notification-rules',
-    'courses', 'schedules', 'packages',
+    'courses', 'schedules', 'packages', 'attendance-scanner',
     'pos-system',
   ],
 
@@ -65,7 +65,7 @@ export const SIDEBAR_PROFILES = {
   // ── R6: Warehouse / Production — kitchen + catalog + recipes ────────────
   PD: [
     'executive-analytics', 'tasks',
-    'courses', 'schedules', 'recipes', 'packages',
+    'courses', 'schedules', 'recipes', 'packages', 'attendance-scanner',
     'kitchen-stock', 'inventory-control', 'procurement', 'assets',
     'inventory-manager',
   ],
@@ -75,7 +75,7 @@ export const SIDEBAR_PROFILES = {
     'executive-analytics',
     'pos-system',
     'customers', 'facebook-chat',
-    'courses', 'schedules', 'packages',
+    'courses', 'schedules', 'packages', 'attendance-scanner',
     'tasks',
   ],
 
@@ -93,7 +93,7 @@ export const SIDEBAR_PROFILES = {
     'executive-analytics',
     'pos-system',
     'customers', 'facebook-chat', 'line-connect',
-    'courses', 'schedules', 'packages',
+    'courses', 'schedules', 'packages', 'attendance-scanner',
     'tasks',
   ],
 
