@@ -987,6 +987,9 @@ function EmployeeDash({ language }) {
                 </div>
             )}
 
+            {/* Inventory Overview (view only) */}
+            <InventoryWidget />
+
             {/* Quick Links */}
             <div>
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-4">Quick Access</p>
