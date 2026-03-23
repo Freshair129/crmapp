@@ -383,6 +383,10 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
     // Hover tooltip state
     const [hoveredSchedule, setHoveredSchedule] = useState(null); // { schedule, rect }
 
+    // Action menu state
+    const [actionMenu, setActionMenu] = useState(null); // { schedule, rect }
+    const [actionLoading, setActionLoading] = useState(false);
+
     // Modal state
     const [conflictModal, setConflictModal] = useState(null); // { conflicts, dateRange, course }
     const [roomModal, setRoomModal] = useState(null);         // { course, dateRange }
@@ -556,6 +560,48 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
         if (onCreated) onCreated(newSchedule);
     };
 
+    // ── Schedule action handlers ──────────────────────────────────────────────
+
+    const handleStatusChange = async (scheduleId, status) => {
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/schedules/${scheduleId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+            });
+            if (!res.ok) throw new Error('Failed');
+            // Update local state — keep schedule in list but change status
+            setSchedules(prev => prev.map(s =>
+                s.id === scheduleId ? { ...s, status } : s
+            ));
+            setActionMenu(null);
+            setSuccessMsg(status === 'CANCELLED' ? '❌ ยกเลิกคลาสเรียบร้อย' : '📅 เลื่อนคลาสเรียบร้อย');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (e) {
+            alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteSchedule = async (scheduleId) => {
+        if (!confirm('ยืนยันลบรอบเรียนนี้? ไม่สามารถกู้คืนได้')) return;
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/schedules/${scheduleId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed');
+            setSchedules(prev => prev.filter(s => s.id !== scheduleId));
+            setActionMenu(null);
+            setSuccessMsg('🗑 ลบรอบเรียนเรียบร้อย');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (e) {
+            alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const cells = buildCells();
     const dayMap = buildDayMap();
     const previewDays = getPreviewDays();
@@ -690,32 +736,53 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
                                             )}
 
                                             {/* Existing schedules */}
-                                            <div className="px-1 pb-1 space-y-0.5 mt-1">
+                                            <div className="px-0.5 pb-1 space-y-0.5 mt-1">
                                                 {items.slice(0, 3).map((s, si) => {
                                                     const isStart = s._offset === 0;
                                                     const isEnd = s._offset === s._total - 1;
-                                                    const color = courseColor(s.productId);
+                                                    const isCancelled = s.status === 'CANCELLED';
+                                                    const isPostponed = s.status === 'POSTPONED';
+                                                    const isInactive = isCancelled || isPostponed;
+                                                    const barColor = isInactive ? '#6b7280' : courseColor(s.productId);
+                                                    // Label: "ชื่อคอร์ส Day N" on every cell
+                                                    const dayLabel = s._total > 1 ? ` D${s._offset + 1}` : '';
+                                                    const statusBadge = isCancelled ? ' ❌' : isPostponed ? ' 📅' : '';
+                                                    const label = isStart
+                                                        ? `${s.productName}${dayLabel}${statusBadge}`
+                                                        : `${s.productName}${dayLabel}${statusBadge}`;
                                                     return (
                                                         <div
                                                             key={`${s.id}-${si}`}
-                                                            onMouseEnter={e => setHoveredSchedule({ schedule: s, rect: e.currentTarget.getBoundingClientRect() })}
+                                                            onMouseEnter={e => {
+                                                                setHoveredSchedule({ schedule: s, rect: e.currentTarget.getBoundingClientRect() });
+                                                            }}
                                                             onMouseLeave={() => setHoveredSchedule(null)}
-                                                            className="text-[9px] font-black truncate py-0.5 text-white cursor-default relative"
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                setHoveredSchedule(null);
+                                                                setActionMenu(prev =>
+                                                                    prev?.schedule?.id === s.id && prev?._offset === s._offset
+                                                                        ? null
+                                                                        : { schedule: s, rect: e.currentTarget.getBoundingClientRect() }
+                                                                );
+                                                            }}
+                                                            className="h-4 flex items-center text-[8px] font-black text-white cursor-pointer select-none overflow-hidden"
                                                             style={{
-                                                                background: color + 'cc',
-                                                                paddingLeft: isStart ? '6px' : '2px',
-                                                                paddingRight: isEnd ? '6px' : '2px',
-                                                                borderRadius: `${isStart ? '4px' : '0px'} ${isEnd ? '4px' : '0px'} ${isEnd ? '4px' : '0px'} ${isStart ? '4px' : '0px'}`,
-                                                                marginLeft: isStart ? '0' : '-2px',
-                                                                marginRight: isEnd ? '0' : '-2px',
+                                                                background: barColor + (isInactive ? '80' : 'cc'),
+                                                                paddingLeft: isStart ? '5px' : '2px',
+                                                                paddingRight: isEnd ? '5px' : '2px',
+                                                                borderRadius: `${isStart ? '3px' : '0'} ${isEnd ? '3px' : '0'} ${isEnd ? '3px' : '0'} ${isStart ? '3px' : '0'}`,
+                                                                marginLeft: isStart ? '0' : '-1px',
+                                                                marginRight: isEnd ? '0' : '-1px',
+                                                                opacity: isInactive ? 0.7 : 1,
                                                             }}
                                                         >
-                                                            {isStart ? s.productName : ''}
+                                                            <span className="truncate">{label}</span>
                                                         </div>
                                                     );
                                                 })}
                                                 {items.length > 3 && (
-                                                    <div className="text-[9px] text-white/30 font-bold px-1.5">+{items.length - 3}</div>
+                                                    <div className="text-[9px] text-white/30 font-bold px-1">+{items.length - 3}</div>
                                                 )}
                                             </div>
                                         </>
@@ -790,8 +857,79 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
                 />
             )}
 
+            {/* ── Action Menu ── */}
+            {actionMenu && (() => {
+                const { schedule: s, rect } = actionMenu;
+                const isCancelled = s.status === 'CANCELLED';
+                const isPostponed = s.status === 'POSTPONED';
+                const isActive = !isCancelled && !isPostponed;
+                const menuLeft = Math.min(rect.left, window.innerWidth - 200);
+                const menuTop = rect.bottom + 4;
+                return (
+                    <>
+                        {/* Click-outside overlay */}
+                        <div
+                            className="fixed inset-0 z-[140]"
+                            onClick={() => setActionMenu(null)}
+                        />
+                        <div
+                            className="fixed z-[150] bg-[#0c1a2f] border border-white/20 rounded-xl shadow-2xl overflow-hidden w-44"
+                            style={{ left: menuLeft, top: menuTop }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="px-3 py-2 border-b border-white/10">
+                                <p className="text-white font-black text-[10px] truncate" style={{ color: courseColor(s.productId) }}>
+                                    {s.productName}
+                                </p>
+                                <p className="text-white/30 text-[9px] font-bold mt-0.5">
+                                    {s.status === 'CANCELLED' ? '❌ ยกเลิกแล้ว' : s.status === 'POSTPONED' ? '📅 เลื่อนแล้ว' : `📌 ${s.status}`}
+                                </p>
+                            </div>
+                            <div className="py-1">
+                                {isActive && (
+                                    <button
+                                        disabled={actionLoading}
+                                        onClick={() => handleStatusChange(s.id, 'CANCELLED')}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-black text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                                    >
+                                        <X size={11} /> ยกเลิกคลาส
+                                    </button>
+                                )}
+                                {isActive && (
+                                    <button
+                                        disabled={actionLoading}
+                                        onClick={() => handleStatusChange(s.id, 'POSTPONED')}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-black text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
+                                    >
+                                        <Calendar size={11} /> เลื่อนคลาส
+                                    </button>
+                                )}
+                                {(isCancelled || isPostponed) && (
+                                    <button
+                                        disabled={actionLoading}
+                                        onClick={() => handleStatusChange(s.id, 'OPEN')}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-black text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+                                    >
+                                        <Check size={11} /> คืนสถานะ OPEN
+                                    </button>
+                                )}
+                                <div className="border-t border-white/10 my-1" />
+                                <button
+                                    disabled={actionLoading}
+                                    onClick={() => handleDeleteSchedule(s.id)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-black text-white/40 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-40"
+                                >
+                                    {actionLoading ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
+                                    ลบรอบเรียน
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                );
+            })()}
+
             {/* ── Hover Tooltip ── */}
-            {hoveredSchedule && (() => {
+            {hoveredSchedule && !actionMenu && (() => {
                 const { schedule: s, rect } = hoveredSchedule;
                 const startLocal = parseLocalDate(s.scheduledDate);
                 const endLocal = new Date(startLocal);

@@ -90,7 +90,7 @@ export async function getSchedulesByClass(classId) {
 
 export async function updateScheduleStatus(id, status) {
     try {
-        const VALID = ['OPEN', 'FULL', 'CANCELLED', 'COMPLETED'];
+        const VALID = ['OPEN', 'FULL', 'CANCELLED', 'COMPLETED', 'POSTPONED'];
         if (!VALID.includes(status)) throw new Error(`Invalid status: ${status}`);
         const prisma = await getPrisma();
         return prisma.courseSchedule.update({ where: { id }, data: { status } });
