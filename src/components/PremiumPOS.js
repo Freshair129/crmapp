@@ -1536,7 +1536,7 @@ export default function PremiumPOS({ language = 'TH' }) {
 
                         <div className="space-y-4">
                             {showRegisterForm === false ? (
-                                /* ── Step 1: Phone lookup ── */
+                                /* ── Step 1: Phone lookup + register options ── */
                                 <>
                                     <input
                                         type="text"
@@ -1546,30 +1546,37 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#cc9d37]/50 outline-none transition-all text-center text-xl"
                                     />
                                     {customerError && (
-                                        <div className="space-y-3">
-                                            <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>
-                                            <p className="text-white/30 text-[10px] font-bold text-center">ลงทะเบียนลูกค้าใหม่</p>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <button
-                                                    onClick={handleQuickRegister}
-                                                    disabled={customerLookupLoading}
-                                                    className="py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all bg-[#cc9d37] text-[#0c1a2f] hover:bg-amber-400 active:scale-95"
-                                                >
-                                                    <span className="text-xl">⚡</span>
-                                                    ลงทะเบียนเร็ว
-                                                    <span className="text-[8px] font-bold opacity-60 normal-case">ใส่แค่เบอร์โทร</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowRegisterForm(true)}
-                                                    className="py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all bg-white/5 text-white/60 hover:bg-white/10 border border-white/10"
-                                                >
-                                                    <UserPlus size={20} />
-                                                    ลงทะเบียนปกติ
-                                                    <span className="text-[8px] font-bold opacity-60 normal-case">ชื่อ-นามสกุล-เบอร์</span>
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>
                                     )}
+
+                                    {/* Register options — always visible */}
+                                    <div className="space-y-2 pt-1">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 h-px bg-white/8" />
+                                            <span className="text-white/20 text-[9px] font-black uppercase tracking-widest">ลูกค้าใหม่?</span>
+                                            <div className="flex-1 h-px bg-white/8" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={handleQuickRegister}
+                                                disabled={customerLookupLoading || !customerPhone.trim()}
+                                                className="py-3.5 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1 transition-all bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20 disabled:opacity-30 active:scale-95"
+                                            >
+                                                <span className="text-lg">⚡</span>
+                                                สมัครเร็ว
+                                                <span className="text-[8px] font-bold opacity-60 normal-case">ใส่แค่เบอร์โทร</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setShowRegisterForm(true)}
+                                                disabled={!customerPhone.trim()}
+                                                className="py-3.5 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1 transition-all bg-white/5 text-white/50 hover:bg-white/10 border border-white/10 disabled:opacity-30"
+                                            >
+                                                <UserPlus size={18} />
+                                                สมัครปกติ
+                                                <span className="text-[8px] font-bold opacity-60 normal-case">กรอกชื่อ-นามสกุล</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </>
                             ) : (
                                 /* ── Step 2: Full registration form ── */
