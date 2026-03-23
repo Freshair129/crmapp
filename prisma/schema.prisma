@@ -289,7 +289,8 @@ model Employee {
   lastLoginAt  DateTime? @map("last_login_at")
   profilePicture String?  @map("profile_picture") // รูปโปรไฟล์ (base64 หรือ URL)
   grade        String?   // เกรดพนักงาน: S / A / B / C / D (S = Special, food plating specialist)
-  isInstructor Boolean   @default(false) @map("is_instructor") // สามารถเป็นเชฟ/อาจารย์ผู้สอนได้
+  isInstructor       Boolean  @default(false) @map("is_instructor")        // สามารถเป็นเชฟ/อาจารย์ผู้สอนได้
+  teachableCourseIds String[] @default([])   @map("teachable_course_ids") // [] = สอนได้ทุกคอร์ส, มีค่า = เฉพาะคอร์สที่ระบุ
   hiredAt      DateTime? @map("hired_at")       // วันที่เริ่มงานจริง (ต่างจาก createdAt ที่เป็นวันลงระบบ)
   dateOfBirth  DateTime? @map("date_of_birth")  // วันเดือนปีเกิด ค.ศ.
   createdAt    DateTime  @default(now()) @map("created_at")

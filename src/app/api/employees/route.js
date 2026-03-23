@@ -11,15 +11,17 @@ export async function GET(req) {
     try {
         const prisma = await getPrisma();
         const { searchParams } = new URL(req.url);
-        const statusFilter = searchParams.get('status');
-        // ?instructor=true → filter only employees marked as instructor
+        const statusFilter    = searchParams.get('status');
         const instructorFilter = searchParams.get('instructor');
+        // ?courseId=xxx → return only instructors who can teach this course
+        // Logic: teachableCourseIds is empty (can teach all) OR contains the courseId
+        const courseIdFilter  = searchParams.get('courseId');
 
         let whereClause = {};
         if (statusFilter) whereClause.status = statusFilter;
         if (instructorFilter === 'true') whereClause.isInstructor = true;
 
-        const employees = await prisma.employee.findMany({
+        let employees = await prisma.employee.findMany({
             select: {
                 id: true,
                 employeeId: true,
@@ -36,6 +38,7 @@ export async function GET(req) {
                 roles: true,
                 status: true,
                 isInstructor: true,
+                teachableCourseIds: true,
                 facebookName: true,
                 facebookUrl: true,
                 profilePicture: true,
@@ -48,6 +51,14 @@ export async function GET(req) {
             where: whereClause,
             orderBy: { employeeId: 'asc' },
         });
+
+        // Filter by courseId: empty teachableCourseIds = can teach all, else must include courseId
+        if (courseIdFilter) {
+            employees = employees.filter(e =>
+                !e.teachableCourseIds || e.teachableCourseIds.length === 0 || e.teachableCourseIds.includes(courseIdFilter)
+            );
+        }
+
         return NextResponse.json({ success: true, data: employees });
     } catch (error) {
         logger.error('EmployeeAPI', 'GET error', error);

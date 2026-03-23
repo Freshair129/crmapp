@@ -1259,6 +1259,18 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
     const [saveError, setSaveError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const avatarInputRef = useRef(null);
+    const [allCourses, setAllCourses] = useState([]);
+
+    // Load courses for instructor assignment picker
+    useEffect(() => {
+        fetch('/api/courses?isActive=true')
+            .then(r => r.json())
+            .then(data => {
+                const list = Array.isArray(data) ? data : (data.data || []);
+                setAllCourses(list);
+            })
+            .catch(() => {});
+    }, []);
 
     // ── Profile picture upload: convert file → base64 → editForm.profilePicture ──
     const handleAvatarChange = (e) => {
@@ -1781,6 +1793,37 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     </div>
                                 </label>
                             </div>
+
+                            {/* teachableCourseIds picker — แสดงเมื่อเป็น instructor */}
+                            {editForm.isInstructor && (
+                                <div className="col-span-2">
+                                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2">
+                                        คอร์สที่สอนได้
+                                        <span className="ml-2 text-white/20 normal-case font-normal tracking-normal">
+                                            (ไม่เลือก = สอนได้ทุกคอร์ส)
+                                        </span>
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {allCourses.filter(c => c.category !== 'equipment' && c.category !== 'package').map(c => {
+                                            const selected = (editForm.teachableCourseIds || []).includes(c.id);
+                                            return (
+                                                <button key={c.id} type="button"
+                                                    onClick={() => setEditForm(f => {
+                                                        const cur = f.teachableCourseIds || [];
+                                                        return { ...f, teachableCourseIds: selected ? cur.filter(id => id !== c.id) : [...cur, c.id] };
+                                                    })}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${selected ? 'bg-[#cc9d37]/20 border-[#cc9d37]/60 text-[#cc9d37]' : 'border-white/10 text-white/30 hover:text-white/60'}`}
+                                                >
+                                                    {c.name}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {(editForm.teachableCourseIds || []).length === 0 && (
+                                        <p className="text-[9px] text-emerald-400/60 mt-2">✓ สอนได้ทุกคอร์ส</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Facebook fields */}
                             <div className="border-t border-white/8 pt-4">

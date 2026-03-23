@@ -160,20 +160,29 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
   useEffect(() => {
     if (!showAddModal) return;
-    // Fetch courses (has `days` field) instead of generic products
     fetch('/api/courses?isActive=true')
       .then(r => r.json())
       .then(data => {
         const list = Array.isArray(data) ? data : (data.data || []);
         setProducts(list);
       });
-    fetch('/api/employees?instructor=true')
+  }, [showAddModal]);
+
+  // Refetch instructors when course changes — only show those qualified for this course
+  useEffect(() => {
+    if (!showAddModal) return;
+    const courseParam = addForm.productId ? `&courseId=${addForm.productId}` : '';
+    fetch(`/api/employees?instructor=true${courseParam}`)
       .then(r => r.json())
       .then(data => {
         const list = data.data || data;
         setInstructors(Array.isArray(list) ? list : []);
+        // Reset instructor if current selection is no longer in the list
+        if (addForm.instructorId && !list.find(e => e.id === addForm.instructorId)) {
+          setAddForm(f => ({ ...f, instructorId: '' }));
+        }
       });
-  }, [showAddModal]);
+  }, [showAddModal, addForm.productId]);
 
   const handleCreateSchedule = async (e) => {
     e.preventDefault();

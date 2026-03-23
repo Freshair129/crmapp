@@ -500,13 +500,14 @@ function EditCourseModal({ course, onClose, onUpdated }) {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetch('/api/employees?instructor=true')
+        // Pass courseId so only instructors qualified for this course are shown
+        fetch(`/api/employees?instructor=true&courseId=${course.id}`)
             .then(r => r.json())
             .then(data => {
                 setEmployees(Array.isArray(data.data ?? data) ? (data.data ?? data) : []);
                 setDataLoading(false);
             });
-    }, []);
+    }, [course.id]);
 
     function toggleSession(key) {
         setSelectedSessions(prev => {

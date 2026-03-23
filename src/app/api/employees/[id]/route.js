@@ -71,6 +71,11 @@ export async function PATCH(req, { params }) {
             updateData.isInstructor = Boolean(body.isInstructor);
         }
 
+        // teachableCourseIds — TEXT[] list of course IDs; empty = can teach all
+        if (Array.isArray(body.teachableCourseIds)) {
+            updateData.teachableCourseIds = body.teachableCourseIds.filter(Boolean);
+        }
+
         if (body.password) {
             updateData.passwordHash = await bcrypt.hash(body.password, 10);
         }
@@ -96,6 +101,7 @@ export async function PATCH(req, { params }) {
                 profilePicture: true,
                 grade: true,
                 isInstructor: true,
+                teachableCourseIds: true,
                 hiredAt: true,
                 dateOfBirth: true,
             },

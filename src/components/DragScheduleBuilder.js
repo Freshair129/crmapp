@@ -198,6 +198,10 @@ function ConflictModal({ conflicts, dateRange, onClose }) {
 function RoomPickerModal({ course, dateRange, schedules, employees, onConfirm, onClose }) {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedInstructor, setSelectedInstructor] = useState('');
+    // Filter instructors: empty teachableCourseIds = all courses, else must include this course
+    const qualifiedInstructors = employees.filter(e =>
+        !e.teachableCourseIds || e.teachableCourseIds.length === 0 || e.teachableCourseIds.includes(course?.id)
+    );
     const [maxStudents, setMaxStudents] = useState(10);
     const [startTime, setStartTime] = useState('09:00');
     const [endTime, setEndTime] = useState('13:00');
@@ -273,7 +277,7 @@ function RoomPickerModal({ course, dateRange, schedules, employees, onConfirm, o
                             <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">เชฟ/อาจารย์</label>
                             <select className={inputCls} value={selectedInstructor} onChange={e => setSelectedInstructor(e.target.value)}>
                                 <option value="">ยังไม่ระบุ</option>
-                                {employees.map(e => (
+                                {qualifiedInstructors.map(e => (
                                     <option key={e.id} value={e.id}>{e.nickName || e.firstName} {e.lastName || ''}</option>
                                 ))}
                             </select>
