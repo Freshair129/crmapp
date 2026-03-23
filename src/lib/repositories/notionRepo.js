@@ -24,7 +24,8 @@ const PRIORITY_TO_NOTION = {
     L2: 'L2 · Important',
     L3: 'L3 · Routine',
     L4: 'L4 · Deferrable',
-    // CRM old format fallback
+    L5: 'L5 · Optional',
+    // legacy fallback
     CRITICAL: 'L0 · Critical',
     HIGH:     'L1 · Urgent',
     MEDIUM:   'L2 · Important',
@@ -32,11 +33,14 @@ const PRIORITY_TO_NOTION = {
 };
 
 const PRIORITY_FROM_NOTION = {
-    'L0 · Critical':    'L0',
-    'L1 · Urgent':      'L1',
-    'L2 · Important':   'L2',
-    'L3 · Routine':     'L3',
-    'L4 · Deferrable':  'L4',
+    'L0 · Critical':   'L0',
+    'L1 · Urgent':     'L1',
+    'L2 · Important':  'L2',
+    'L2 · Normal':     'L2', // legacy label
+    'L3 · Routine':    'L3',
+    'L3 · Low':        'L3', // legacy label
+    'L4 · Deferrable': 'L4',
+    'L5 · Optional':   'L5',
 };
 
 // ─── Status mapping CRM ↔ Notion ─────────────────────────────────────────────
@@ -48,12 +52,37 @@ const STATUS_TO_NOTION = {
 };
 
 const STATUS_FROM_NOTION = {
-    '🔴 Critical':   'PENDING',
-    '🟠 Urgent':     'PENDING',
+    '🔴 Blocked':     'PENDING',
+    '🟠 Urgent':      'PENDING',
+    '🟠 Pending':     'PENDING',     // legacy label
     '🟡 In Progress': 'IN_PROGRESS',
-    '✅ Done':        'DONE',
-    '⏸ On Hold':    'PENDING',
+    '✅ Done':         'DONE',
+    '⏸ On Hold':      'CANCELLED',
 };
+
+// ─── Task Type mapping CRM ↔ Notion ──────────────────────────────────────────
+const TASK_TYPE_TO_NOTION = {
+    SINGLE:  'งานวันเดียว',
+    RANGE:   'งานต่อเนื่อง',
+    PROJECT: 'โปรเจค',
+};
+
+const TASK_TYPE_FROM_NOTION = {
+    'งานวันเดียว':  'SINGLE',
+    'งานต่อเนื่อง': 'RANGE',
+    'โปรเจค':       'PROJECT',
+};
+
+// ─── Helper: format milestones as readable text for Notion ───────────────────
+function formatMilestonesForNotion(milestones) {
+    if (!Array.isArray(milestones) || milestones.length === 0) return '';
+    return milestones
+        .map(ms => {
+            const typeLabel = { brief: 'รับบรีฟ', review: 'ตรวจงาน', meeting: 'ประชุม', submit: 'ส่งงาน', other: 'อื่นๆ' }[ms.type] || ms.type;
+            return `[${typeLabel}] ${ms.title || ''}${ms.date ? ` — ${ms.date}` : ''}`;
+        })
+        .join('\n');
+}
 
 // ─── Push one CRM task → Notion ──────────────────────────────────────────────
 export async function pushTaskToNotion(task) {
@@ -66,19 +95,44 @@ export async function pushTaskToNotion(task) {
         ? (task.assignee.nickName || task.assignee.firstName || '')
         : '';
 
+    const taskType = task.taskType || 'SINGLE';
+
     const properties = {
-        'Task':       { title: [{ text: { content: task.title || 'Untitled' } }] },
-        'Status':     { select: { name: STATUS_TO_NOTION[task.status] || '🟡 In Progress' } },
-        'Priority':   { select: { name: PRIORITY_TO_NOTION[task.priority] || 'L3 · Routine' } },
-        'CRM Task ID':{ rich_text: [{ text: { content: task.taskId || task.id || '' } }] },
-        'Notes':      { rich_text: [{ text: { content: task.description || '' } }] },
-        'Assignee':   { rich_text: [{ text: { content: assigneeName } }] },
+        'Task':        { title: [{ text: { content: task.title || 'Untitled' } }] },
+        'Status':      { select: { name: STATUS_TO_NOTION[task.status] || '🟡 In Progress' } },
+        'Priority':    { select: { name: PRIORITY_TO_NOTION[task.priority] || 'L3 · Routine' } },
+        'Task Type':   { select: { name: TASK_TYPE_TO_NOTION[taskType] || 'งานวันเดียว' } },
+        'CRM Task ID': { rich_text: [{ text: { content: task.taskId || task.id || '' } }] },
+        'Notes':       { rich_text: [{ text: { content: task.description || '' } }] },
+        'Assignee':    { rich_text: [{ text: { content: assigneeName } }] },
     };
 
+    // Due Date (all types)
     if (task.dueDate) {
         properties['Due Date'] = {
             date: { start: new Date(task.dueDate).toISOString().slice(0, 10) },
         };
+    }
+
+    // Start Date (RANGE / PROJECT)
+    if ((taskType === 'RANGE' || taskType === 'PROJECT') && task.startDate) {
+        properties['Start Date'] = {
+            date: { start: new Date(task.startDate).toISOString().slice(0, 10) },
+        };
+    }
+
+    // Time (SINGLE with time)
+    if (taskType === 'SINGLE' && task.timeStart) {
+        const timeStr = task.timeEnd ? `${task.timeStart}–${task.timeEnd}` : task.timeStart;
+        properties['Time'] = { rich_text: [{ text: { content: timeStr } }] };
+    }
+
+    // Milestones (PROJECT)
+    if (taskType === 'PROJECT' && task.milestones) {
+        const msText = formatMilestonesForNotion(task.milestones);
+        if (msText) {
+            properties['Milestones'] = { rich_text: [{ text: { content: msText } }] };
+        }
     }
 
     // Update if already in Notion, otherwise create
@@ -119,7 +173,6 @@ export async function pushAllTasksToNotion() {
     for (const task of tasks) {
         try {
             const result = await pushTaskToNotion(task);
-            // Save notionId back to CRM if newly created
             if (result.action === 'created') {
                 await prisma.task.update({
                     where: { id: task.id },
@@ -165,20 +218,31 @@ export async function pullTasksFromNotion() {
 
     for (const page of data.results || []) {
         try {
-            const crmTaskId = page.properties['CRM Task ID']?.rich_text?.[0]?.text?.content || '';
-            const title     = page.properties['Task']?.title?.[0]?.text?.content || 'Untitled';
-            const status    = STATUS_FROM_NOTION[page.properties['Status']?.select?.name] || 'PENDING';
-            const priority  = PRIORITY_FROM_NOTION[page.properties['Priority']?.select?.name] || 'L3';
-            const notes     = page.properties['Notes']?.rich_text?.[0]?.text?.content || '';
-            const dueDateRaw = page.properties['Due Date']?.date?.start || null;
-            const dueDate   = dueDateRaw ? new Date(dueDateRaw) : null;
-            const notionId  = page.id;
+            const crmTaskId   = page.properties['CRM Task ID']?.rich_text?.[0]?.text?.content || '';
+            const title       = page.properties['Task']?.title?.[0]?.text?.content || 'Untitled';
+            const status      = STATUS_FROM_NOTION[page.properties['Status']?.select?.name] || 'PENDING';
+            const priority    = PRIORITY_FROM_NOTION[page.properties['Priority']?.select?.name] || 'L3';
+            const notes       = page.properties['Notes']?.rich_text?.[0]?.text?.content || '';
+            const dueDateRaw  = page.properties['Due Date']?.date?.start || null;
+            const dueDate     = dueDateRaw ? new Date(dueDateRaw) : null;
+            const startDateRaw = page.properties['Start Date']?.date?.start || null;
+            const startDate   = startDateRaw ? new Date(startDateRaw) : null;
+            const taskType    = TASK_TYPE_FROM_NOTION[page.properties['Task Type']?.select?.name] || 'SINGLE';
+            const timeStr     = page.properties['Time']?.rich_text?.[0]?.text?.content || '';
+            const timeStart   = timeStr ? timeStr.split('–')[0].trim() : null;
+            const timeEnd     = timeStr && timeStr.includes('–') ? timeStr.split('–')[1].trim() : null;
+            const notionId    = page.id;
 
             if (crmTaskId) {
-                // Task already linked to CRM — update status only
+                // Task already linked to CRM — update status + dates
                 await prisma.task.updateMany({
                     where: { OR: [{ taskId: crmTaskId }, { notionId }] },
-                    data: { status, notionId },
+                    data: {
+                        status,
+                        notionId,
+                        ...(dueDate   && { dueDate }),
+                        ...(startDate && { startDate }),
+                    },
                 });
                 skipped++;
             } else {
@@ -186,12 +250,16 @@ export async function pullTasksFromNotion() {
                 const newTaskId = await generateTaskId();
                 await prisma.task.create({
                     data: {
-                        taskId: newTaskId,
+                        taskId:    newTaskId,
                         title,
                         description: notes,
                         priority,
                         status,
+                        taskType,
                         dueDate,
+                        startDate,
+                        timeStart,
+                        timeEnd,
                         notionId,
                         type: 'FOLLOW_UP',
                     },
