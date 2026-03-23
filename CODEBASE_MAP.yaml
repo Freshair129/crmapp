@@ -1,5 +1,5 @@
 # CODEBASE_MAP.yaml — V School CRM v2
-# Generated: 2026-03-23 | Version: v2.0.0
+# Generated: 2026-03-23 | Version: v2.1.0
 # Purpose: Agent cold-start reference — domain → files → functions → MCP tools
 # Owner: Claude (Lead Architect)
 # Update: after every phase that adds/removes repos, routes, or components
@@ -12,7 +12,7 @@ meta:
   ai: "Google Gemini (gemini-2.0-flash)"
   deploy: "Vercel (crmapp-pi.vercel.app)"
   repo: "git@github.com / local: /Users/ideab/Desktop/crm"
-  current_version: "v2.0.0"
+  current_version: "v2.1.0"
 
 # ─────────────────────────────────────────────
 # KEY FILES (อ่านทุกครั้งที่เริ่ม session)
@@ -338,21 +338,40 @@ domains:
 
   # ── 11. TASKS / NOTION ────────────────────
   tasks:
-    description: "CRM task board with bidirectional Notion sync"
+    description: "CRM task board — 3 task types (SINGLE/RANGE/PROJECT) with bidirectional Notion sync"
     repo: src/lib/repositories/notionRepo.js
     key_functions:
-      - pushTaskToNotion(task)
+      - pushTaskToNotion(task)         # push all fields incl. taskType/startDate/time/milestones
       - pushAllTasksToNotion()
-      - pullTasksFromNotion()       # Notion → CRM upsert, write back CRM Task ID
+      - pullTasksFromNotion()          # Notion → CRM upsert; reads taskType/startDate/time
       - getNotionSyncStatus()
+    task_types:
+      SINGLE:  "งานวันเดียว — dueDate + optional timeStart/timeEnd (HH:MM)"
+      RANGE:   "งานต่อเนื่อง — startDate → dueDate (no time)"
+      PROJECT: "โปรเจค — dueDate (deadline) + milestones[] JSON {id,title,date,type}"
+    milestone_types: [brief, review, meeting, submit, other]
+    schema_fields:
+      - taskType     # SINGLE | RANGE | PROJECT (default SINGLE)
+      - startDate    # DateTime? — RANGE/PROJECT start
+      - timeStart    # String? HH:MM — SINGLE only
+      - timeEnd      # String? HH:MM — SINGLE only
+      - milestones   # Json? [{id,title,date,type}] — PROJECT only
+      - completedAt  # DateTime? — set when status→DONE
+      - notionId     # String? — Notion page ID for sync link
     api_routes:
       - tasks / tasks/[id]
       - notion/sync               # GET status | POST push/pull
-      - workers/notion-sync       # QStash scheduled worker
+      - workers/notion-sync       # QStash scheduled worker (every 15 min)
     components:
       - TaskPanel.js              # List / Weekly / Calendar views + NotionSyncButton
+        # WeeklyView: colored spanning bars for RANGE/PROJECT
+        # CalendarView: color bars + ◆ milestone markers + selected-day detail
+        # TaskModal: 3-type selector (card grid) + type-specific fields
     id_format: "TSK-YYYYMMDD-SERIAL"
     notion_db_id: "36767d01d85345fa97c0c6e5ed20c5e3"  # workspace: The V School OS (1)
+    notion_columns:
+      - Task (title), Status, Priority, CRM Task ID, Notes, Assignee
+      - Due Date (date), Start Date (date), Task Type (select), Time (text), Milestones (text)
     env_vars:
       - NOTION_TOKEN
       - NOTION_TASK_DB_ID

@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Version Status (อัพเดท: 2026-03-23)
+## Version Status (อัพเดท: 2026-03-23 | v2.1.0)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
@@ -54,7 +54,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released |
 | `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released |
 | `v1.9.5` | Profile Picture Upload + Date of Birth + Employee Grade (S/A/B/C/D) | ✅ released |
-| `v2.0.0` | Phase 36 RBAC Redesign — 12 new roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released ← HEAD |
+| `v2.0.0` | Phase 36 RBAC Redesign — 12 new roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released |
+| `v2.1.0` | Task Type System — SINGLE/RANGE/PROJECT + Notion Sync + CODEBASE_MAP (Phase 37) | ✅ released ← HEAD |
 
 
 ### v2.0.0 — สิ่งที่ทำแล้ว (Phase 36 — RBAC Redesign) ✅ — by Claude
@@ -74,6 +75,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > ⚠️ **Known Gotcha — Multi-role UI**: ยังไม่มี UI สำหรับ assign multi-role — ต้องใช้ SQL: `UPDATE employees SET roles = ARRAY['SLS','AGT'] WHERE employee_id='xxx'`
 > ⚠️ **Known Gotcha — Grade null**: existing employees ทั้งหมดมี grade=null — ให้ผู้จัดการ assign ทีละคนผ่าน UI
 > ⚠️ **Known Gotcha — levelNum**: ROLE_META ต้องมี `levelNum` field ทุกตัว — ห้ามใช้ `parseFloat(levelStr.replace('L',''))` กับ code แบบ S1/R2
+
+
+### v2.1.0 — สิ่งที่ทำแล้ว (Phase 37 — Task Type System + Notion Sync) ✅ — by Claude
+| ไฟล์ | สถานะ | หมายเหตุ |
+|---|---|---|
+| `prisma/schema.prisma` → Task model | ✅ updated | taskType (SINGLE/RANGE/PROJECT), startDate, timeStart, timeEnd, milestones (Json?), completedAt, notionId |
+| `src/app/api/tasks/route.js` | ✅ updated | POST รับ taskType/startDate/timeStart/timeEnd/milestones |
+| `src/app/api/tasks/[id]/route.js` | ✅ updated | PATCH รับ task type fields ทั้งหมด |
+| `src/components/TaskPanel.js` | ✅ rewrite | TASK_TYPE_CONFIG, MILESTONE_TYPES, taskSpansDay; TaskModal 3-type selector + time picker + milestone editor; CalendarView/WeeklyView spanning bars + ◆ markers |
+| `src/lib/repositories/notionRepo.js` | ✅ updated | push: Task Type, Start Date, Time, Milestones text; pull: taskType/startDate/timeStart/timeEnd from Notion; fix column name mismatches (Task Name→Task, Assigned To→Assignee); STATUS/PRIORITY/TASK_TYPE mapping updated |
+| Notion DB (`36767d01d85345fa97c0c6e5ed20c5e3`) | ✅ updated | Renamed columns, aligned Priority/Status options, added Task Type/Start Date/Time/Milestones columns via MCP |
+| `CODEBASE_MAP.yaml` | ✅ new | 11-domain agent cold-start map: domain→files→functions→API routes→components→env vars |
+| Supabase DB migration | ✅ done | ALTER TABLE tasks ADD COLUMN task_type/start_date/time_start/time_end/milestones/completed_at |
+
+> ⚠️ **Known Gotcha — taskSpansDay**: function ใช้ ISO string comparison `dk >= start && dk <= end` — ต้องระวัง timezone (UTC vs local) เมื่อ startDate มี time component
+> ⚠️ **Known Gotcha — Notion column mismatch**: Notion DB เดิมมี `Task Name` (ไม่ใช่ `Task`) และ `Assigned To` (ไม่ใช่ `Assignee`) — แก้แล้วผ่าน MCP; ถ้า migrate workspace ใหม่ต้องเช็ก column names ก่อนเสมอ
+> ⚠️ **Known Gotcha — milestones Notion**: milestones ถูก push เป็น plain text (1 milestone ต่อ 1 บรรทัด) ไม่ใช่ structured data — pull จาก Notion ไม่ restore milestones JSON กลับ (set null)
+> ⚠️ **Known Gotcha — WeeklyView spanning bar**: ใช้ CSS `-ml-2` trick เพื่อ bleed ข้าม cell gap — อาจเห็น gap เล็กน้อยระหว่างวัน เป็น visual limitation ของ CSS grid independent cells
 
 
 ### v1.9.5 — สิ่งที่ทำแล้ว (Phase 35.6 — Employee Profile Enhancements) ✅ — by Claude

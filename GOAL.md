@@ -1,7 +1,7 @@
 # GOAL.md — V School CRM v2 Project Dashboard
 
 > **Lead Architect:** Claude 🧠 | **Senior Agent:** Antigravity 🤖 | **Worker Sub-agent:** Gemini 🛠️
-> Last updated: 2026-03-23 (Phase 1–34 complete | v1.9.1 HEAD | Phase 35–40 planned)
+> Last updated: 2026-03-23 (Phase 1–37 complete | v2.1.0 HEAD | Phase 38+ planned)
 
 ---
 
@@ -54,13 +54,16 @@
 | Phase 32 | Meta Ads Domain in MCP — 22 tools (v1.8.0) | ✅ Done | — |
 | Phase 33 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree (v1.9.0) | ✅ Done | — |
 | Phase 34 | Multi-Role RBAC + OWNER Role + Employee DB Cleanup + hiredAt (v1.9.1) | ✅ Done | 8/8 |
-| **Phase 35** | **Visual Calendar + Class Attendance (v2.0.0)** | **⏳ Next** | 0/8 |
-| Phase 36 | Student Self-Service Portal (v2.1.0) | 🔲 Planned | 0/10 |
-| Phase 37 | Certificate PDF + Document Generation (v2.2.0) | 🔲 Planned | 0/8 |
-| Phase 38 | AI Smart Inbox — Reply Draft + Lead Score (v2.3.0) | 🔲 Planned | 0/10 |
-| Phase 39 | Procurement Full Lifecycle Completion (v2.4.0) | 🔲 Planned | 0/9 |
-| Phase 40 | Advanced BI + Reporting Export (v2.5.0) | 🔲 Planned | 0/9 |
-| Phase 41 | Mobile PWA + WhatsApp Channel (v3.0.0) | 🔲 Planned | 0/7 |
+| Phase 35 | Employee Enhancements — Profile Picture + Grade + Animations (v1.9.3–v1.9.5) | ✅ Done | done |
+| Phase 36 | RBAC Redesign — 12 Roles + permissionMatrix + sidebarProfiles (v2.0.0) | ✅ Done | done |
+| Phase 37 | Task Type System — SINGLE/RANGE/PROJECT + Notion Sync + CODEBASE_MAP (v2.1.0) | ✅ Done | done |
+| **Phase 38** | **Visual Calendar + Class Attendance** | **⏳ Next** | 0/8 |
+| Phase 39 | Student Self-Service Portal | 🔲 Planned | 0/10 |
+| Phase 40 | Certificate PDF + Document Generation | 🔲 Planned | 0/8 |
+| Phase 41 | AI Smart Inbox — Reply Draft + Lead Score | 🔲 Planned | 0/10 |
+| Phase 42 | Procurement Full Lifecycle Completion | 🔲 Planned | 0/9 |
+| Phase 43 | Advanced BI + Reporting Export | 🔲 Planned | 0/9 |
+| Phase 44 | Mobile PWA + WhatsApp Channel | 🔲 Planned | 0/7 |
 
 ---
 
@@ -558,3 +561,29 @@
 > ⚠️ **Known Gotcha — OWNER role**: read-only executive view — ไม่มีสิทธิ์แก้ไข config, users, หรือ write operations
 > ⚠️ **Known Gotcha — Multi-role assign UI**: roles[] ผ่าน Edit Modal checkbox grid — primary role ต้องอยู่ใน roles[] เสมอ
 > ⚠️ **Known Gotcha — hiredAt**: Optional — ถ้าไม่กรอก calcTenure จะ fallback ไปใช้ createdAt
+
+---
+
+## ✅ Phase 37: Task Type System + Notion Sync + CODEBASE_MAP (v2.1.0)
+> **Goal:** เพิ่ม task types 3 แบบ (งานวันเดียว/ต่อเนื่อง/โปรเจค) พร้อม time picker + milestone editor + spanning calendar bars + full Notion bidirectional sync
+> **Version:** v2.1.0 | **Implemented by:** Claude
+> **CL:** CL-20260323-006, CL-20260323-007
+
+| # | Task | Who | Status |
+|---|---|---|---|
+| 37.1 | `prisma/schema.prisma` — taskType/startDate/timeStart/timeEnd/milestones(Json)/completedAt/notionId | 🧠 Claude | ✅ |
+| 37.2 | Supabase DB migration — ALTER TABLE tasks ADD 6 new columns | 🧠 Claude | ✅ |
+| 37.3 | `TaskPanel.js` — TASK_TYPE_CONFIG + MILESTONE_TYPES + taskSpansDay() helper | 🧠 Claude | ✅ |
+| 37.4 | `TaskModal` rewrite — 3-type selector (card grid), time picker, range date, milestone editor (add/edit/remove rows) | 🧠 Claude | ✅ |
+| 37.5 | `TaskCard` update — show time badge, range arrow, PROJECT deadline + checkpoint count | 🧠 Claude | ✅ |
+| 37.6 | `WeeklyView` update — RANGE/PROJECT spanning colored bars across day columns | 🧠 Claude | ✅ |
+| 37.7 | `CalendarView` update — color bars per spanned cell, ◆ milestone diamonds, richer selected-day panel | 🧠 Claude | ✅ |
+| 37.8 | API routes (POST/PATCH) — handle all new task type fields | 🧠 Claude | ✅ |
+| 37.9 | `CODEBASE_MAP.yaml` — 11-domain cold-start map (new file) | 🧠 Claude | ✅ |
+| 37.10 | Notion DB schema — renamed columns, aligned options, added Task Type/Start Date/Time/Milestones (via MCP) | 🧠 Claude | ✅ |
+| 37.11 | `notionRepo.js` — push/pull Task Type, Start Date, Time, Milestones; fix column name mismatches; updated STATUS/PRIORITY mappings | 🧠 Claude | ✅ |
+
+> ⚠️ **Known Gotcha — taskSpansDay timezone**: เปรียบเทียบ ISO date string — timezone offset อาจทำให้ first/last day off-by-1 สำหรับ tasks ที่มี time component ใน startDate
+> ⚠️ **Known Gotcha — WeeklyView gap**: spanning bars ใช้ CSS `-ml-2` bleed ข้าม cell gap — เห็น gap เล็กน้อยระหว่างวัน เป็น CSS grid limitation
+> ⚠️ **Known Gotcha — Notion milestones**: milestones push เป็น plain text ใน Notion — pull กลับมาจะ set milestones=null (ไม่ restore JSON)
+> ⚠️ **Known Gotcha — Notion column names**: ต้องเช็ก column names ทุกครั้งที่ migrate Notion workspace ใหม่ — push จะ fail แบบ silent ถ้า column ไม่ตรง

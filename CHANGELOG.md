@@ -1,4 +1,4 @@
-**LATEST:** CL-20260323-005 | v2.0.0 | 2026-03-23
+**LATEST:** CL-20260323-007 | v2.1.0 | 2026-03-23
 
 ---
 
@@ -6,6 +6,8 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260323-007 | Notion DB Schema + notionRepo Full Sync (Task Type/Time/Milestones) | v2.1.0 | 2026-03-23 | MINOR | #notion #sync #task-type #schema |
+| CL-20260323-006 | Task Type System — SINGLE/RANGE/PROJECT + CODEBASE_MAP | v2.1.0 | 2026-03-23 | MINOR | #tasks #calendar #ui #codebase-map |
 | CL-20260323-005 | Phase 36 RBAC Redesign: 12 New Roles + Employee Grade | v2.0.0 | 2026-03-23 | BREAKING | #rbac #roles #permissions #employee #grade #breaking |
 | CL-20260323-004 | Employee Card Framer Motion Animations + Overview StatCards | v1.9.4 | 2026-03-23 | MINOR | #ui #employee #animation #framer-motion #overview #stats |
 | CL-20260322-008 | NotebookLM Chat Intelligence + Knowledge Tree | v1.9.0 | 2026-03-22 | MINOR | #ai #intelligence #notebooklm |
@@ -37,6 +39,35 @@
 ---
 
 ## 📝 Recent (last 5 — full content)
+
+### [CL-20260323-007] v2.1.0 — Notion DB Schema + notionRepo Full Sync (Task Type/Time/Milestones)
+**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #notion #sync #task-type #schema #bugfix
+
+#### Changes
+- **Notion DB** (via MCP): renamed `Task Name`→`Task`, `Assigned To`→`Assignee` (fix push mismatch); Priority options aligned (L2·Important, L3·Routine, L5·Optional); Status `🟠 Pending`→`🟠 Urgent`, added `⏸ On Hold`; new columns: Task Type (select), Start Date (date), Time (text), Milestones (text)
+- **notionRepo.js**: TASK_TYPE_TO/FROM_NOTION mapping; push taskType/startDate/timeStart/timeEnd/milestones text summary; pull reads taskType/startDate/timeStart/timeEnd; STATUS_FROM_NOTION `⏸ On Hold`→`CANCELLED`, legacy labels kept as fallback; PRIORITY_FROM_NOTION added L5 + legacy fallbacks
+
+#### Known Gotchas
+- Milestones push เป็น plain text ใน Notion — pull กลับมาจะไม่ restore milestones JSON (set null)
+- ต้องเช็ก column names ทุกครั้งที่ migrate Notion workspace ใหม่
+
+---
+
+### [CL-20260323-006] v2.1.0 — Task Type System: SINGLE/RANGE/PROJECT + CODEBASE_MAP
+**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #tasks #calendar #weekly #ui #notion #schema #codebase-map
+
+#### Changes
+- **prisma/schema.prisma**: Task model เพิ่ม taskType/startDate/timeStart/timeEnd/milestones(Json)/completedAt/notionId
+- **Supabase DB migration**: ALTER TABLE tasks ADD 6 new columns
+- **TaskPanel.js** (909→1225 lines): TASK_TYPE_CONFIG (SINGLE/RANGE/PROJECT), MILESTONE_TYPES (brief/review/meeting/submit/other), taskSpansDay(); TaskModal 3-type selector + time picker (HH:MM) + range date picker + milestone editor; TaskCard แสดง time badge/range arrows/milestone count; WeeklyView colored spanning bars; CalendarView color bars + ◆ milestone markers + richer selected-day panel
+- **API routes** (POST/PATCH): รับ taskType/startDate/timeStart/timeEnd/milestones fields
+- **CODEBASE_MAP.yaml**: 11-domain cold-start map ใหม่ สำหรับ agent orientation
+
+#### Known Gotchas
+- WeeklyView spanning bars ใช้ `-ml-2` bleed trick — เห็น gap เล็กน้อยระหว่าง cells เป็น CSS grid limitation
+- taskSpansDay() เปรียบเทียบ ISO date string — timezone offset อาจทำให้ first/last day off by 1
+
+---
 
 ### [CL-20260323-005] v2.0.0 — Phase 36 RBAC Redesign: 12 New Roles + Employee Grade
 **Date:** 2026-03-23 | **Severity:** BREAKING | **Tags:** #rbac #roles #permissions #employee #grade #breaking
@@ -93,19 +124,6 @@
 - **`employees/[id]/route.js`**: ROLE_CHANGE + EMPLOYEE_DEACTIVATE hooks
 - **`/api/audit` + `/api/audit/[auditId]`** (new): list, single, approve/reject endpoints
 - **`generateAuditId()`**: AUD-YYYYMMDD-NNNN format
-
----
-
-### [CL-20260323-001] v1.9.1 — Multi-Role RBAC + OWNER Role + Employee DB Cleanup (Phase 34)
-**Date:** 2026-03-23 | **Severity:** MINOR | **Tags:** #rbac #multi-role #employee #db-migration
-
-#### Changes
-- **`Employee.roles String[]`**: multi-role array, additive permission union
-- **`rbac.js`**: OWNER role (L4.5), `getMaxRoleLevel()`, `hasMultiRolePermission()`
-- **`authOptions.js`**: JWT/session expose `roles[]`, fallback `[role]` if empty
-- **`sidebarProfiles.js`**: OWNER executive profile, `canSeeItem(string|string[])`, `getAllowedItems()`
-- **Supabase**: ADD COLUMN roles TEXT[], migrate existing, fix employee IDs/emails/INACTIVE
-- **คุณวอเตอร์ (เชฟคานิ)**: name → วอลเตอร์ ลี, role → OWNER
 
 ---
 
