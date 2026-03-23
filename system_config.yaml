@@ -1,0 +1,506 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# SYSTEM_CONFIG.YAML — Master Configuration (Single Source of Truth)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# RULE: ทุกระบบต้องอ้างอิงค่าจากไฟล์นี้เท่านั้น
+#       ห้าม hardcode ค่าเหล่านี้ในไฟล์อื่น
+#
+# USAGE: import { getConfig } from '@/lib/systemConfig';
+#        const cfg = getConfig();
+#        cfg.vat.rate  // 0.07
+#
+# VERSION: 2.2.0
+# UPDATED: 2026-03-23
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ─── RBAC: Roles & Hierarchy ────────────────────────────────────────────────
+rbac:
+  roles:
+    - code: DEV
+      label: Developer
+      level: 5
+      tier: S1
+      description: Full system access + tab switcher
+    - code: TEC
+      label: Technician
+      level: 3.5
+      tier: S2
+      description: System + read all operational
+    - code: MGR
+      label: Manager
+      level: 4
+      tier: R2
+      description: All operational views, approve, reports
+    - code: MKT
+      label: Marketing
+      level: 2.5
+      tier: R3
+      description: Ads + chat + courses + sales + revenue (for ROAS)
+    - code: HR
+      label: Human Resource
+      level: 3
+      tier: R4
+      description: Employee management
+    - code: PUR
+      label: Purchasing
+      level: 2.5
+      tier: R5
+      description: PO + kitchen procurement
+    - code: PD
+      label: Head Chef / Production
+      level: 2.5
+      tier: R6
+      description: Kitchen + recipes + schedule
+    - code: ADM
+      label: Admin
+      level: 2
+      tier: R7
+      description: Enrollment + documents
+    - code: ACC
+      label: Accounting
+      level: 3
+      tier: R8
+      description: Financial overview + reports
+    - code: SLS
+      label: Sales
+      level: 1.5
+      tier: R9
+      description: POS + customers + inbox
+    - code: AGT
+      label: Agent
+      level: 1
+      tier: R10
+      description: Inbox + own customers
+    - code: STF
+      label: Staff
+      level: 0.5
+      tier: R11
+      description: Tasks + schedule (view only)
+
+  # Roles that can see financial/executive data
+  exec_roles: [DEV, TEC, MGR, ACC, MKT]
+
+  # Dashboard mapping (role → dashboard component)
+  dashboard_map:
+    DEV: ManagerDash
+    TEC: ManagerDash
+    MGR: ManagerDash
+    MKT: ManagerDash    # needs revenue for ROAS
+    ACC: AdminDash
+    PD: HeadChefDash
+    PUR: HeadChefDash
+    HR: EmployeeDash
+    ADM: EmployeeDash
+    STF: EmployeeDash
+    SLS: AgentDash
+    AGT: AgentDash
+
+# ─── Employee ────────────────────────────────────────────────────────────────
+employee:
+  grades:
+    - code: S
+      label: Outstanding
+      color: "#eab308"
+      min_score: 90
+    - code: A
+      label: Excellent
+      color: "#22c55e"
+      min_score: 75
+    - code: B
+      label: Good
+      color: "#3b82f6"
+      min_score: 55
+    - code: C
+      label: Fair
+      color: "#f97316"
+      min_score: 35
+    - code: D
+      label: Needs Improvement
+      color: "#ef4444"
+      min_score: 0
+
+  employment_types:
+    employee: EMP
+    freelance: FL
+    contract: CT
+
+  department_codes:
+    marketing: MKT
+    management: MGT
+    production: PD
+    sales: SLS
+    admin: AM
+    administration: ADM
+    graphic_design: GD
+    content: CG
+    multimedia: MM
+    motion_graphics: MGFX
+    education: ED
+    customer_care: CC
+    general: GEN
+
+# ─── VAT & Tax ───────────────────────────────────────────────────────────────
+vat:
+  rate: 0.07              # 7%
+  default_mode: included  # included | excluded
+
+# ─── Loyalty Program (V Point) ───────────────────────────────────────────────
+loyalty:
+  vp_rate:
+    points_per_unit: 300   # ได้ 300 VP
+    spend_per_unit: 150    # ต่อการใช้จ่ายทุก 150 บาท
+
+  tiers:
+    - code: TIER1
+      label: V Member
+      badge: "🥈"
+      color: "#9CA3AF"
+      min_spend: 0
+      min_hours: 0
+    - code: TIER2
+      label: V Silver
+      badge: "🥈"
+      color: "#C0C0C0"
+      min_spend: 20000
+      min_hours: 0
+    - code: TIER3
+      label: V Gold
+      badge: "🥇"
+      color: "#cc9d37"
+      min_spend: 50000
+      min_hours: 30
+    - code: TIER4
+      label: V Platinum
+      badge: "💎"
+      color: "#E5E4E2"
+      min_spend: 100000
+      min_hours: 111
+    - code: TIER5
+      label: V Black
+      badge: "⬛"
+      color: "#9b8cff"
+      min_spend: 200000
+      min_hours: 201
+
+# ─── Certificates ────────────────────────────────────────────────────────────
+certificates:
+  thresholds:
+    - level: 1
+      code: BASIC_30H
+      label: Basic Certificate
+      hours: 30
+    - level: 2
+      code: PRO_111H
+      label: Professional Certificate
+      hours: 111
+    - level: 3
+      code: MASTER_201H
+      label: Master Certificate
+      hours: 201
+
+  delivery_statuses: [PENDING, PRINTING, READY, SHIPPED, DELIVERED]
+
+# ─── Orders & Payment ────────────────────────────────────────────────────────
+orders:
+  types:
+    # สำหรับอาหาร
+    - code: DINE_IN
+      label: Walk In
+      icon: "🍽️"
+      applies_to: food
+    - code: TAKE_AWAY
+      label: Take Away
+      icon: "📦"
+      applies_to: food
+    - code: DELIVERY
+      label: Delivery
+      icon: "🛵"
+      applies_to: food
+    # สำหรับคอร์สเรียน
+    - code: ONSITE
+      label: On Site
+      icon: "🏫"
+      applies_to: course
+    - code: ONLINE
+      label: Online
+      icon: "💻"
+      applies_to: course
+
+  statuses: [PENDING, CLOSED, CANCELLED, REFUNDED]
+
+  default_delivery_gp_rate: 30  # % GP for delivery platforms
+
+payment:
+  methods: [CASH, TRANSFER, CARD, QR_CODE]
+  slip_confidence_threshold: 0.80
+  transaction_types: [INCOME, EXPENSE, REFUND]
+
+# ─── Product Categories ──────────────────────────────────────────────────────
+products:
+  course_categories:
+    - code: japanese_culinary
+      label: อาหารญี่ปุ่น
+      icon: "🍱"
+    - code: specialty
+      label: พิเศษ
+      icon: "🍣"
+    - code: management
+      label: การจัดการ
+      icon: "📋"
+    - code: arts
+      label: ศิลปะ
+      icon: "🎨"
+    - code: package
+      label: แพ็คเกจ
+      icon: "🎁"
+    - code: full_course
+      label: คอร์สเต็ม
+      icon: "👨‍🍳"
+    - code: course
+      label: คอร์สทั่วไป
+      icon: "📚"
+
+  food_categories:
+    - code: food
+      label: เมนูหลัก
+      icon: "🍜"
+    - code: side_dish
+      label: เครื่องเคียง
+      icon: "🥗"
+    - code: beverage
+      label: เครื่องดื่ม
+      icon: "🍵"
+    - code: snack
+      label: ของว่าง
+      icon: "🍘"
+    - code: dessert
+      label: ของหวาน
+      icon: "🍰"
+
+  equipment_categories:
+    - code: knife
+      label: มีด
+      icon: "🗡️"
+    - code: kitchen
+      label: อุปกรณ์ครัว
+      icon: "🍳"
+    - code: fish_tool
+      label: อุปกรณ์แล่ปลา
+      icon: "🐟"
+    - code: sushi
+      label: อุปกรณ์ซูชิ
+      icon: "🍣"
+    - code: sharpening
+      label: ลับมีด
+      icon: "⚙️"
+
+  origin_countries:
+    - code: JP
+      label: Japan
+      flag: "🇯🇵"
+    - code: CN
+      label: China
+      flag: "🇨🇳"
+    - code: KR
+      label: Korea
+      flag: "🇰🇷"
+    - code: TW
+      label: Taiwan
+      flag: "🇹🇼"
+    - code: TH
+      label: Thailand
+      flag: "🇹🇭"
+    - code: DE
+      label: Germany
+      flag: "🇩🇪"
+    - code: SE
+      label: Sweden
+      flag: "🇸🇪"
+    - code: FR
+      label: France
+      flag: "🇫🇷"
+    - code: IT
+      label: Italy
+      flag: "🇮🇹"
+    - code: US
+      label: USA
+      flag: "🇺🇸"
+    - code: VN
+      label: Vietnam
+      flag: "🇻🇳"
+    - code: ES
+      label: Spain
+      flag: "🇪🇸"
+
+# ─── Scheduling ──────────────────────────────────────────────────────────────
+scheduling:
+  session_types:
+    - code: MORNING
+      label: เช้า
+    - code: AFTERNOON
+      label: บ่าย
+    - code: EVENING
+      label: เย็น
+
+  statuses: [OPEN, FULL, CANCELLED, COMPLETED]
+
+# ─── Enrollment ──────────────────────────────────────────────────────────────
+enrollment:
+  statuses: [ACTIVE, COMPLETED, CANCELLED]
+  item_statuses: [PENDING, IN_PROGRESS, COMPLETED]
+
+  package_enrollment:
+    statuses: [ACTIVE, COMPLETED, CANCELLED]
+    swap_limit: 1  # จำนวนครั้งที่ swap ได้ต่อ enrollment
+
+# ─── Inventory & Kitchen ─────────────────────────────────────────────────────
+inventory:
+  ingredient:
+    default_yield_percent: 100
+    yield_min: 1
+    yield_max: 100
+
+  lot_statuses: [ACTIVE, CONSUMED, EXPIRED, RECALLED]
+
+  stock_movement_types: [RECEIVE, ISSUE, TRANSFER, ADJUSTMENT, RETURN]
+
+  abc_analysis:
+    a_threshold_pct: 80   # top 80% of value = Grade A
+    b_threshold_pct: 95   # next 15% = Grade B, remaining = Grade C
+
+  asset_categories:
+    MARKETING: MKT
+    KITCHEN: KTC
+    OFFICE: OFF
+    GENERAL: GEN
+
+# ─── Procurement (PO Lifecycle) ──────────────────────────────────────────────
+procurement:
+  po_statuses:
+    - DRAFT
+    - REQUEST_REVIEW
+    - APPROVED
+    - REJECTED
+    - ORDERING
+    - ORDERED
+    - RECEIVING
+    - RECEIVED
+    - PARTIAL
+    - CLOSED
+    - ISSUE
+
+  issue_types:
+    - OUT_OF_STOCK
+    - WRONG_ITEM
+    - PRICE_CHANGE
+    - LATE_DELIVERY
+    - QUALITY_ISSUE
+
+# ─── Tasks ───────────────────────────────────────────────────────────────────
+tasks:
+  priorities:
+    - code: L0
+      label: Critical
+      color: "#ef4444"
+    - code: L1
+      label: High
+      color: "#f97316"
+    - code: L2
+      label: Important
+      color: "#f59e0b"
+    - code: L3
+      label: Routine
+      color: "#3b82f6"
+    - code: L4
+      label: Low
+      color: "#6b7280"
+    - code: L5
+      label: Optional
+      color: "#9ca3af"
+
+  statuses: [PENDING, IN_PROGRESS, DONE, CANCELLED]
+
+  types:
+    - code: SINGLE
+      label: งานวันเดียว
+    - code: RANGE
+      label: งานต่อเนื่อง
+    - code: PROJECT
+      label: โปรเจค
+
+  action_types: [FOLLOW_UP, MEETING, CALL, EMAIL, PURCHASE, REVIEW, OTHER]
+
+  milestone_types: [brief, review, meeting, submit, other]
+
+# ─── Audit ───────────────────────────────────────────────────────────────────
+audit:
+  actions:
+    - LOGIN_SUCCESS
+    - LOGIN_FAILED
+    - ROLE_CHANGE
+    - EMPLOYEE_DEACTIVATE
+    - ORDER_CREATE
+    - PAYMENT_VERIFY
+    - ENROLLMENT_CREATE
+
+  statuses: [DONE, PENDING_APPROVAL, APPROVED, REJECTED]
+
+# ─── Notifications ───────────────────────────────────────────────────────────
+notifications:
+  channels: [LINE_PUSH, WEB_PUSH, IN_APP]
+
+# ─── Customer ────────────────────────────────────────────────────────────────
+customer:
+  channels:
+    - code: FB
+      label: Facebook
+    - code: LN
+      label: LINE
+    - code: WB
+      label: Walk-in
+    - code: PH
+      label: Phone
+
+  lifecycle_stages: [Lead, Prospect, Customer, Loyal, Inactive]
+
+  default_lifecycle_stage: Lead
+
+# ─── Caching & Performance ──────────────────────────────────────────────────
+cache:
+  default_ttl: 300          # seconds (5 min)
+  marketing_sync_ttl: 3600  # seconds (1 hour)
+  null_sentinel: "__NULL__"
+
+# ─── API Rate Limits ─────────────────────────────────────────────────────────
+rate_limits:
+  facebook:
+    error_codes: [4, 17, 32, 613]
+    backoff_delays_sec: [60, 120, 240, 480]
+    max_retries: 4
+    batch_size: 50
+
+  qstash:
+    free_tier_daily_messages: 500
+
+  upstash_redis:
+    free_tier_daily_requests: 10000
+
+# ─── UI Theme ────────────────────────────────────────────────────────────────
+theme:
+  colors:
+    gold: "#cc9d37"
+    navy: "#0c1a2f"
+    navy_secondary: "#19273a"
+    text_primary: "#f5f8fb"
+
+  pie_chart_palette:
+    - "#cc9d37"
+    - "#ef4444"
+    - "#3b82f6"
+    - "#10b981"
+    - "#a855f7"
+    - "#f97316"
+    - "#ec4899"
+    - "#06b6d4"
+    - "#6366f1"
+    - "#f59e0b"

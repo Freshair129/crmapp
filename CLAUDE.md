@@ -84,12 +84,15 @@ This file provides guidance to Claude when working with code in this repository.
 
 ---
 
-## Source of Truth (ยึดสองไฟล์นี้เหนือสิ่งอื่นใด)
+## Source of Truth (ยึดไฟล์เหล่านี้เหนือสิ่งอื่นใด)
 
 | ไฟล์ | หน้าที่ |
 |---|---|
 | `system_requirements.yaml` | WHAT to build — Functional & Non-Functional Requirements |
 | `id_standards.yaml` | HOW to name — ID formats, casing conventions |
+| `system_config.yaml` | HOW to configure — ค่า config ทุกตัว (roles, tiers, VAT, categories, statuses, thresholds) |
+
+**กฎ:** ห้าม hardcode ค่าที่อยู่ใน `system_config.yaml` ในไฟล์อื่น — ต้อง import จาก `@/lib/systemConfig` เท่านั้น
 
 > ⚠️ ถ้า code หรือ reference จาก `E:\data_hub` ขัดแย้ง → ยึดตาม spec เสมอ
 
