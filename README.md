@@ -91,14 +91,15 @@ scripts/          — Sync & maintenance scripts
 
 | Document | Purpose |
 |---|---|
-| [CLAUDE.md](CLAUDE.md) | AI agent context + coding rules |
-| [GEMINI.md](GEMINI.md) | Gemini CLI sub-agent protocol |
-| [system_requirements.yaml](system_requirements.yaml) | Functional & Non-Functional Requirements |
-| [id_standards.yaml](id_standards.yaml) | ID formats + naming conventions |
-| [CHANGELOG.md](CHANGELOG.md) | Version history |
-| [docs/architecture/arc42-main.md](docs/architecture/arc42-main.md) | System architecture |
-| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | API endpoint catalog |
-| [docs/guide/getting-started.md](docs/guide/getting-started.md) | Developer setup guide |
+| [CLAUDE.md](CLAUDE.md) | AI agent context + coding rules + Known Gotchas |
+| [system_requirements.yaml](system_requirements.yaml) | Functional requirements (SSOT) |
+| [id_standards.yaml](id_standards.yaml) | ID formats + naming conventions (SSOT) |
+| [CHANGELOG.md](CHANGELOG.md) | Version history (full phase log) |
+| [CODEBASE_MAP.yaml](CODEBASE_MAP.yaml) | Domain → files → functions (agent cold-start) |
+| [docs/architecture/arc42-main.md](docs/architecture/arc42-main.md) | System architecture (arc42 + C4) |
+| [docs/architecture/domain-architecture.md](docs/architecture/domain-architecture.md) | Domain boundaries + data flows |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | API endpoint catalog (15 sections) |
+| [docs/guide/mcp-guide.md](docs/guide/mcp-guide.md) | MCP Server — 23 tools reference |
 
 ---
 
