@@ -16,7 +16,7 @@ export async function getAllPackages(opts = {}) {
         const prisma = await getPrisma();
         const { isActive, search } = opts;
         const where = {};
-        if (isActive !== undefined) where.isActive = isActive === 'true' || isActive === true;
+        if (isActive !== undefined && isActive !== null) where.isActive = isActive === 'true' || isActive === true;
         if (search) where.name = { contains: search, mode: 'insensitive' };
 
         return prisma.package.findMany({
