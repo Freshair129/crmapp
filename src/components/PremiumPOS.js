@@ -735,8 +735,9 @@ export default function PremiumPOS({ language = 'TH' }) {
     };
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.07;
-    const total = subtotal + tax;
+    const [vatIncluded, setVatIncluded] = useState(true); // true = ราคารวม VAT แล้ว, false = บวก VAT เพิ่ม
+    const tax = vatIncluded ? subtotal - (subtotal / 1.07) : subtotal * 0.07;
+    const total = vatIncluded ? subtotal : subtotal + tax;
 
     // ── Cart customer search ──────────────────────────────────────────────
     const TIER_META = {
@@ -2328,13 +2329,28 @@ export default function PremiumPOS({ language = 'TH' }) {
 
                 {/* Totals + Checkout */}
                 <div className="px-6 pb-6 pt-4 border-t border-white/8 flex-shrink-0 space-y-2.5">
+                    {/* VAT toggle */}
+                    <div className="flex items-center justify-between">
+                        <span className="text-white/30 text-[10px] font-black uppercase tracking-wider">VAT 7%</span>
+                        <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/8">
+                            <button
+                                onClick={() => setVatIncluded(true)}
+                                className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${vatIncluded ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white/60'}`}
+                            >Inc.</button>
+                            <button
+                                onClick={() => setVatIncluded(false)}
+                                className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${!vatIncluded ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'text-white/40 hover:text-white/60'}`}
+                            >Exc.</button>
+                        </div>
+                    </div>
+
                     <div className="flex justify-between text-white/40 text-[11px] font-bold">
-                        <span>Sub Total</span>
+                        <span>{vatIncluded ? 'ราคารวม VAT' : 'Sub Total'}</span>
                         <span>฿{subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between text-white/40 text-[11px] font-bold">
-                        <span>Tax (7%)</span>
-                        <span>฿{tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                        <span>VAT (7%)</span>
+                        <span>{vatIncluded ? '(รวมแล้ว) ' : '+'}฿{tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="border-t border-dashed border-white/15 pt-3 flex justify-between items-center">
                         <span className="text-white font-black text-sm">Total</span>
