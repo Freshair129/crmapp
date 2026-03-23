@@ -3,8 +3,8 @@
 ### 📗 Technical Infrastructure (arc42/C4 Model)
 The Single Source of Truth for system architecture, data flow, and technical decisions.
 👉 [**Read the Architecture Documentation**](./architecture/arc42-main.md)
-👉 [**Domain Data Flow Diagrams**](./architecture/domain-flows.md) — Inbox · Marketing Sync · Notifications · Ad Review · Agent Attribution · Kitchen Stock
-👉 [**ID & Naming Standards**](./id_standards.yaml)
+👉 [**Domain Architecture + Data Flows**](./architecture/domain-architecture.md) — 7 domains · Inbox · Marketing · Customer · Tasks · Operations · Analytics · Infra
+👉 [**ID & Naming Standards**](../id_standards.yaml)
 
 ---
 
@@ -148,17 +148,13 @@ NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
 ### 3. Current Version Status
 | Version | Milestone | Status |
 |---|---|---|
-| v1.1.0 | POS ProductDetailModal + Sheet Auto-ID (ADR-042) | ✅ released |
-| v1.2.0 | Equipment Domain POS — hand/material/specs + shipping (ADR-043) | ✅ released |
-| v1.3.0 | Web Push Inbox Real-time — VAPID, ลบ SSE+polling (ADR-044) | ✅ released |
-| v1.4.0 | RBAC Redesign — 8 roles + permissionMatrix + Ads Optimize (ADR-045) | ✅ released |
-| v1.5.x | POS Receipt & Printer + Employee ID v3 + V Point Loyalty (ADR-046, 047) | ✅ released |
 | v1.6.0 | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
 | v1.7.0 | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
 | v1.8.0 | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
 | v1.9.0 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree | ✅ released |
-| v1.9.1 | Multi-Role RBAC + OWNER role + Employee DB Cleanup + hiredAt | ✅ HEAD |
-| v2.0.0 | Visual Calendar + Class Attendance (Phase 35) | 📋 next |
+| v1.9.5 | Employee Profile — profilePicture, dateOfBirth, grade (S/A/B/C/D) | ✅ released |
+| v2.0.0 | RBAC Redesign — 12 roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released |
+| v2.1.0 | Task Type System (SINGLE/RANGE/PROJECT) + Milestone Editor + Notion Sync | ✅ HEAD |
 
 ### 4. Key Non-Functional Requirements
 | NFR | Requirement |

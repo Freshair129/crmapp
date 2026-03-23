@@ -1,6 +1,6 @@
 # Revenue Attribution & Ad Analytics Model — V School CRM v2
 
-**Last Updated:** 2026-03-21 — v1.3.0
+**Last Updated:** 2026-03-23 — v2.1.0
 **Reference:** `Prisma Schema`, `paymentRepo.js`, `analyticsRepository.js`
 **อ่านร่วมกับ:** [`domain-architecture.md`](./domain-architecture.md) (section 2.5-2.6) · [`../adr/044`](../adr/)
 

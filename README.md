@@ -1,7 +1,7 @@
-# V School CRM v2
+# V School CRM v2.1.0
 
 ระบบ CRM สำหรับ **The V School** — โรงเรียนสอนทำอาหารญี่ปุ่น กรุงเทพฯ
-Greenfield rewrite · Next.js 14 · PostgreSQL · Redis · Gemini AI
+Greenfield rewrite · Next.js 14 · PostgreSQL · Upstash (Redis/QStash) · Gemini AI
 
 ---
 
@@ -9,8 +9,10 @@ Greenfield rewrite · Next.js 14 · PostgreSQL · Redis · Gemini AI
 
 | Version | Milestone | Status |
 |---|---|---|
-| `v0.13.0` | Unified Inbox + Redis Cache | ✅ current |
-| `v1.0.0` | Production Ready | 🔲 planned |
+| `v1.0.0` | Production Ready — Docs Hardening | ✅ released |
+| `v1.9.5` | Employee Profile — profilePicture, dateOfBirth, grade | ✅ released |
+| `v2.0.0` | RBAC Redesign — 12 roles, permissionMatrix rewrite | ✅ released |
+| `v2.1.0` | Task Type System (SINGLE/RANGE/PROJECT) + Notion Sync | ✅ current |
 
 ---
 
@@ -20,10 +22,12 @@ Greenfield rewrite · Next.js 14 · PostgreSQL · Redis · Gemini AI
 |---|---|
 | Framework | Next.js 14 App Router |
 | Database | PostgreSQL (Supabase) via Prisma ORM |
-| Queue | Redis + BullMQ |
-| AI | Google Gemini |
+| Queue | Upstash QStash (HTTP serverless — ADR-040) |
+| Cache | Upstash Redis REST (ADR-040) |
+| AI | Google Gemini 2.0 Flash |
 | Styling | TailwindCSS |
 | Marketing API | Meta Graph API v19.0 |
+| Task Sync | Notion API (bidirectional) |
 
 ---
 
@@ -41,8 +45,8 @@ npm install
 cp .env.example .env
 # แก้ไขค่าใน .env ตาม credentials จริง
 
-# 4. Start infrastructure
-docker compose up -d   # PostgreSQL (port 5433) + Redis
+# 4. Start infrastructure (PostgreSQL only — Redis/Queue ใช้ Upstash Cloud)
+docker compose up -d   # PostgreSQL port 5433
 
 # 5. Database setup
 npx prisma generate
@@ -52,8 +56,7 @@ npx prisma db seed     # (optional) seed ข้อมูลตัวอย่า
 # 6. Start dev server
 npm run dev            # http://localhost:3000
 
-# 7. Start BullMQ worker (terminal แยก)
-npm run worker
+# ❌ npm run worker — ไม่จำเป็นแล้ว (Phase 27: BullMQ → Upstash QStash serverless)
 ```
 
 **Node.js required:** v22 LTS (Iron) — ดู `.nvmrc`
@@ -73,11 +76,12 @@ src/
     redis.js      — Redis cache singleton
     logger.js     — Structured JSON logger
 prisma/
-  schema.prisma   — Database schema (23 models)
+  schema.prisma   — Database schema (47 models)
 docs/
-  adr/            — Architecture Decision Records (36 ADRs)
-  architecture/   — arc42 + ERD
+  adr/            — Architecture Decision Records (ADR-024–050)
+  architecture/   — arc42 + ERD + domain-architecture
   guide/          — Developer guides
+  API_REFERENCE.md — API endpoint catalog (15 sections)
 scripts/          — Sync & maintenance scripts
 ```
 
@@ -101,19 +105,19 @@ scripts/          — Sync & maintenance scripts
 ## Architecture Overview
 
 ```
-[Meta / LINE / Web]
-        │
-        ▼ Phase 1: Ingestion (< 200ms NFR1)
-[Next.js Webhook] ──► [Redis / BullMQ]
-                               │
-                               ▼ Phase 2: Identity Resolution
-                    [Identity Service + Prisma Transaction]
-                               │
-                               ▼ Phase 3: Intelligence
-                    [Python Worker — NumPy/Pandas Ad Calc]
-                               │
-                               ▼ Phase 4: Presentation
-                    [Redis Cache-Aside] ──► [CRM Dashboard UI]
+[Meta / LINE / Web]         [Notion API]
+        │                       ↕ (bidirectional task sync)
+        ▼ Ingestion (< 200ms NFR1)
+[Next.js Webhook] ──fire-and-forget──► [Upstash QStash]
+                                               │
+                                               ▼ HTTP POST
+                               [/api/workers/notification (Vercel serverless)]
+                                               │
+                                               ▼ Identity Resolution
+                               [customerRepo + prisma.$transaction (NFR5)]
+                                               │
+                                               ▼ Presentation
+                               [Upstash Redis Cache-Aside] ──► [CRM Dashboard]
 ```
 
 ---
@@ -121,9 +125,8 @@ scripts/          — Sync & maintenance scripts
 ## Development Commands
 
 ```bash
-docker compose up -d      # Start PostgreSQL + Redis
+docker compose up -d      # Start PostgreSQL only (Redis/Queue = Upstash Cloud)
 npm run dev               # Dev server (http://localhost:3000)
-npm run worker            # BullMQ worker
 npx prisma studio         # DB GUI
 npx prisma migrate dev    # Apply migrations
 ```

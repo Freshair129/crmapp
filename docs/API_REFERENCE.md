@@ -2,7 +2,7 @@
 
 > อ้างอิง API routes ทั้งหมดใน `crm-app/src/app/api/`
 > Base URL: `http://localhost:3000/api`
-> อัปเดตล่าสุด: 2026-03-22 (v1.5.3 — RBAC v2, Procurement, Inventory, Ads Optimize, V Point, AI Assistant)
+> อัปเดตล่าสุด: 2026-03-23 (v2.1.0 — Task Type System + Notion Sync + 12-role RBAC)
 
 ---
 
@@ -22,6 +22,7 @@
 12. [Payments & Slip OCR](#12-payments--slip-ocr)
 13. [Web Push & Notifications](#13-web-push--notifications)
 14. [Webhooks](#14-webhooks)
+15. [Tasks](#15-tasks)
 
 ---
 
@@ -31,7 +32,8 @@
 
 NextAuth.js authentication handler.
 
-- **Roles (v2):** `DEVELOPER`, `MANAGER`, `ADMIN`, `MARKETING`, `HEAD_CHEF`, `EMPLOYEE`, `AGENT`, `GUEST` (UPPERCASE).
+- **Roles (v2.0.0 — 12 roles):** `DEV`, `TEC`, `MGR`, `MKT`, `HR`, `PUR`, `PD`, `ADM`, `ACC`, `SLS`, `AGT`, `STF` + `OWNER` (executive read-only).
+- **Legacy role codes** ยังรองรับ backward compat: `DEVELOPER→DEV`, `MANAGER→MGR`, `HEAD_CHEF→PD` ฯลฯ
 - **Session:** JWT with 5-min auto-refresh from DB.
 
 ---
@@ -171,6 +173,56 @@ Meta Messenger webhook handler (Latency < 200ms).
 
 ### `POST /api/webhooks/line`
 LINE Messaging API webhook handler.
+
+---
+
+## 15. Tasks
+
+> **v2.1.0 (Phase 37)** — Task Type System: SINGLE / RANGE / PROJECT + Notion Bidirectional Sync
+
+### `GET /api/tasks`
+ดึงรายการ Task ทั้งหมด (หรือกรองตาม assignee / customer / status)
+- **Query:** `assigneeId`, `customerId`, `status`, `taskType`
+- **Response fields:** `taskType`, `startDate`, `timeStart`, `timeEnd`, `milestones[]`, `completedAt`, `notionId`
+
+### `POST /api/tasks`
+สร้าง Task ใหม่
+- **Body:**
+```json
+{
+  "title": "...",
+  "type": "FOLLOW_UP | CALL | EMAIL | MEETING | DEMO",
+  "taskType": "SINGLE | RANGE | PROJECT",
+  "priority": "L1·Critical | L2·Important | L3·Routine | L4·Deferrable | L5·Optional",
+  "dueDate": "2026-03-30",
+  "startDate": "2026-03-25",
+  "timeStart": "09:00",
+  "timeEnd": "10:30",
+  "milestones": [{ "id": "ms1", "title": "รับบรีฟ", "date": "2026-03-25", "type": "brief" }],
+  "assigneeId": "...",
+  "customerId": "..."
+}
+```
+- **Note:** `startDate` required for RANGE/PROJECT. `milestones` for PROJECT only. `timeStart/timeEnd` for SINGLE only.
+
+### `GET /api/tasks/[id]`
+ดึง Task เดี่ยวพร้อม milestones array.
+
+### `PATCH /api/tasks/[id]`
+แก้ไข Task — รองรับทุก field รวมถึง `status`, `taskType`, `milestones`, `completedAt`, `notionId`.
+
+### `DELETE /api/tasks/[id]`
+ลบ Task (soft delete ผ่าน status = CANCELLED หรือ hard delete ตาม policy).
+
+---
+
+### Task Type Reference
+
+| taskType | startDate | dueDate | timeStart/timeEnd | milestones | Calendar |
+|---|---|---|---|---|---|
+| `SINGLE` | — | ✅ required | optional (HH:MM) | — | Single card + ⏰ badge |
+| `RANGE` | ✅ required | ✅ required | — | — | Purple spanning bar |
+| `PROJECT` | ✅ required | ✅ required | — | optional | Amber bar + ◆ markers |
 
 ---
 
