@@ -876,9 +876,39 @@ export default function PremiumPOS({ language = 'TH' }) {
         setShowPaymentModal(true);
     };
 
+    // Quick register — phone only
+    const handleQuickRegister = async () => {
+        if (!customerPhone.trim()) return;
+        setCustomerLookupLoading(true);
+        setCustomerError('');
+        try {
+            const res = await fetch('/api/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    firstName: customerPhone.trim(),
+                    lastName: '',
+                    phonePrimary: customerPhone.trim(),
+                    channel: 'WALK_IN'
+                })
+            });
+            const customer = await res.json();
+            if (customer.id) {
+                openPaymentModal(customer);
+            } else {
+                setCustomerError('ไม่สามารถสร้างลูกค้าได้');
+            }
+        } catch (err) {
+            setCustomerError('เกิดข้อผิดพลาดในการสร้างลูกค้า');
+        } finally {
+            setCustomerLookupLoading(false);
+        }
+    };
+
+    // Full register — name + phone
     const handleRegisterCustomer = async () => {
-        if (!regForm.firstName || !regForm.lastName || !customerPhone) {
-            setCustomerError('กรุณากรอกข้อมูลให้ครบถ้วน');
+        if (!regForm.firstName || !customerPhone) {
+            setCustomerError('กรุณากรอกชื่อและเบอร์โทร');
             return;
         }
         setCustomerLookupLoading(true);
@@ -1504,7 +1534,8 @@ export default function PremiumPOS({ language = 'TH' }) {
                         </div>
 
                         <div className="space-y-4">
-                            {!showRegisterForm ? (
+                            {showRegisterForm === false ? (
+                                /* ── Step 1: Phone lookup ── */
                                 <>
                                     <input
                                         type="text"
@@ -1514,23 +1545,38 @@ export default function PremiumPOS({ language = 'TH' }) {
                                         className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder:text-white/20 focus:border-[#cc9d37]/50 outline-none transition-all text-center text-xl"
                                     />
                                     {customerError && (
-                                        <div className="flex flex-col items-center gap-3">
+                                        <div className="space-y-3">
                                             <p className="text-red-500 text-[10px] font-black text-center uppercase">{customerError}</p>
-                                            <button
-                                                onClick={() => setShowRegisterForm(true)}
-                                                className="text-[#cc9d37] flex items-center gap-2 font-black text-[10px] uppercase hover:underline"
-                                            >
-                                                <UserPlus size={14} /> สร้างลูกค้าใหม่
-                                            </button>
+                                            <p className="text-white/30 text-[10px] font-bold text-center">ลงทะเบียนลูกค้าใหม่</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    onClick={handleQuickRegister}
+                                                    disabled={customerLookupLoading}
+                                                    className="py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all bg-[#cc9d37] text-[#0c1a2f] hover:bg-amber-400 active:scale-95"
+                                                >
+                                                    <span className="text-xl">⚡</span>
+                                                    ลงทะเบียนเร็ว
+                                                    <span className="text-[8px] font-bold opacity-60 normal-case">ใส่แค่เบอร์โทร</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowRegisterForm(true)}
+                                                    className="py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all bg-white/5 text-white/60 hover:bg-white/10 border border-white/10"
+                                                >
+                                                    <UserPlus size={20} />
+                                                    ลงทะเบียนปกติ
+                                                    <span className="text-[8px] font-bold opacity-60 normal-case">ชื่อ-นามสกุล-เบอร์</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </>
                             ) : (
+                                /* ── Step 2: Full registration form ── */
                                 <div className="space-y-3">
                                     <div className="grid grid-cols-2 gap-3">
                                         <input
                                             type="text"
-                                            placeholder="ชื่อ"
+                                            placeholder="ชื่อ *"
                                             value={regForm.firstName}
                                             onChange={(e) => setRegForm({...regForm, firstName: e.target.value})}
                                             className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder:text-white/20 outline-none focus:border-[#cc9d37]/50"
@@ -1561,8 +1607,8 @@ export default function PremiumPOS({ language = 'TH' }) {
                             )}
                         </div>
 
-                        {/* Guest fallback — ลูกค้าไม่มีสมาชิก กดข้ามได้เลยตรงนี้ */}
-                        {!showRegisterForm && (
+                        {/* Guest fallback */}
+                        {!showRegisterForm && !customerError && (
                             <button
                                 onClick={() => {
                                     setIsGuestMode(true);
@@ -1583,17 +1629,20 @@ export default function PremiumPOS({ language = 'TH' }) {
 
                         <div className="flex gap-4">
                             <button
-                                onClick={() => { setShowCustomerModal(false); setShowRegisterForm(false); setCustomerError(''); }}
+                                onClick={() => {
+                                    if (showRegisterForm) { setShowRegisterForm(false); setCustomerError('ไม่พบลูกค้า'); }
+                                    else { setShowCustomerModal(false); setShowRegisterForm(false); setCustomerError(''); }
+                                }}
                                 className="flex-1 px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/10 text-white/40 hover:bg-white/5 transition-all"
                             >
-                                ยกเลิก
+                                {showRegisterForm ? '← กลับ' : 'ยกเลิก'}
                             </button>
                             <button
                                 onClick={showRegisterForm ? handleRegisterCustomer : handleConfirmCheckout}
                                 disabled={customerLookupLoading || !customerPhone.trim()}
                                 className="flex-1 bg-[#cc9d37] text-[#0c1a2f] px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             >
-                                {customerLookupLoading ? <Loader2 size={16} className="animate-spin" /> : 'ยืนยัน'}
+                                {customerLookupLoading ? <Loader2 size={16} className="animate-spin" /> : showRegisterForm ? 'ลงทะเบียน' : 'ค้นหา'}
                             </button>
                         </div>
                     </div>
