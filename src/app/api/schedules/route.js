@@ -29,7 +29,9 @@ export async function GET(request) {
 
         const data = rows.map(s => ({
             ...s,
-            productName: s.product?.name ?? '',
+            productName: s.eventType === 'CHEF_TABLE'
+                ? (s.eventTitle || '🍽️ Chef Table')
+                : (s.product?.name ?? ''),
             instructorName: s.instructor
                 ? (s.instructor.nickName || `${s.instructor.firstName ?? ''} ${s.instructor.lastName ?? ''}`.trim())
                 : '',

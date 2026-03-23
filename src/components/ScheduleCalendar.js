@@ -35,7 +35,10 @@ function hashColor(str) {
 
 // Normalise schedule row — works regardless of whether API returns flat or nested fields
 function normItem(s) {
-  const productName = s.product?.name || s.productName || '';
+  // Chef Table events have no product — use eventTitle as display name
+  const productName = s.eventType === 'CHEF_TABLE'
+    ? (s.eventTitle || '🍽️ Chef Table')
+    : (s.product?.name || s.productName || '');
   const instructorName = s.instructor
     ? (s.instructor.nickName || `${s.instructor.firstName ?? ''} ${s.instructor.lastName ?? ''}`.trim())
     : (s.instructorName || '');
@@ -69,6 +72,8 @@ export default function ScheduleCalendar({ language = 'TH' }) {
   };
 
   const [addForm, setAddForm] = useState({
+    eventType: 'COURSE',
+    eventTitle: '',
     productId: '',
     scheduledDate: '',
     startTime: '09:00',
@@ -188,12 +193,15 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     e.preventDefault();
     try {
       setSaving(true);
+      const isChefTable = addForm.eventType === 'CHEF_TABLE';
       const res = await fetch('/api/schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...addForm,
-          maxStudents: parseInt(addForm.maxStudents),
+          productId: addForm.productId || undefined,
+          eventTitle: addForm.eventTitle || undefined,
+          maxStudents: isChefTable ? undefined : parseInt(addForm.maxStudents),
           instructorId: addForm.instructorId || undefined,
           notes: addForm.notes || undefined,
         })
@@ -202,7 +210,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
         await fetchSchedules();
         if (view === 'CALENDAR') await fetchCalendarSchedules();
         setShowAddModal(false);
-        setAddForm({ productId: '', scheduledDate: '', startTime: '09:00', endTime: '13:00', maxStudents: 10, instructorId: '', classroom: '', notes: '' });
+        setAddForm({ eventType: 'COURSE', eventTitle: '', productId: '', scheduledDate: '', startTime: '09:00', endTime: '13:00', maxStudents: 10, instructorId: '', classroom: '', notes: '' });
       }
     } catch (err) {
       alert('Error creating schedule');
@@ -341,11 +349,24 @@ export default function ScheduleCalendar({ language = 'TH' }) {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {items.map(item => (
-                  <div key={item.id} className="bg-white/5 rounded-[2rem] border border-white/10 p-6 hover:border-[#cc9d37]/40 transition-all group">
+                  <div key={item.id} className={`bg-white/5 rounded-[2rem] border p-6 transition-all group ${
+                    item.eventType === 'CHEF_TABLE'
+                      ? 'border-fuchsia-500/20 hover:border-fuchsia-400/40'
+                      : 'border-white/10 hover:border-[#cc9d37]/40'
+                  }`}>
                     <div className="flex justify-between items-start mb-6">
                       <div className="space-y-1">
-                        <h4 className="text-xl font-black text-white uppercase tracking-tight leading-none group-hover:text-[#cc9d37] transition-colors">{item.productName}</h4>
-                        <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">{item.productId}</p>
+                        {item.eventType === 'CHEF_TABLE' && (
+                          <span className="text-[9px] font-black text-fuchsia-400 uppercase tracking-widest bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-full px-2 py-0.5">🍽️ Chef Table</span>
+                        )}
+                        <h4 className={`text-xl font-black uppercase tracking-tight leading-none transition-colors ${
+                          item.eventType === 'CHEF_TABLE'
+                            ? 'text-white group-hover:text-fuchsia-300'
+                            : 'text-white group-hover:text-[#cc9d37]'
+                        }`}>{item.productName}</h4>
+                        {item.eventType !== 'CHEF_TABLE' && (
+                          <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">{item.productId}</p>
+                        )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColors[item.status]}`}>
                         {t[item.status?.toLowerCase()]}
@@ -353,13 +374,15 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="flex items-center gap-3 text-white/60">
-                        <Clock size={16} className="text-[#cc9d37]" />
+                        <Clock size={16} className={item.eventType === 'CHEF_TABLE' ? 'text-fuchsia-400' : 'text-[#cc9d37]'} />
                         <span className="text-sm font-bold">{item.startTime} - {item.endTime}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-white/60">
-                        <Users size={16} className="text-[#cc9d37]" />
-                        <span className="text-sm font-bold">{item.confirmedStudents} / {item.maxStudents}</span>
-                      </div>
+                      {item.eventType !== 'CHEF_TABLE' && (
+                        <div className="flex items-center gap-3 text-white/60">
+                          <Users size={16} className="text-[#cc9d37]" />
+                          <span className="text-sm font-bold">{item.confirmedStudents} / {item.maxStudents}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
                       <div className="flex items-center gap-2">
@@ -488,11 +511,14 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                                 const isCancelled = s.status === 'CANCELLED';
                                 const isCompleted = s.status === 'COMPLETED';
                                 const isFull = s.status === 'FULL';
+                                const isChefTable = s.eventType === 'CHEF_TABLE';
                                 const colorClass = isCancelled
                                   ? 'bg-red-900/50 text-red-300'
                                   : isCompleted
                                     ? 'bg-white/10 text-white/40'
-                                    : hashColor(s.productId || s.productName || String(si));
+                                    : isChefTable
+                                      ? 'bg-fuchsia-700 text-white ring-1 ring-fuchsia-400/40'
+                                      : hashColor(s.productId || s.productName || String(si));
                                 const isFirstDay = s._offset === 0;
 
                                 return (
@@ -501,12 +527,15 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                                     className={`rounded-lg px-2 py-1.5 cursor-pointer hover:brightness-110 transition-all ${colorClass} ${isCancelled ? 'opacity-60' : ''}`}
                                     title={`${s.productName}\n${s.startTime}–${s.endTime}\nนักเรียน: ${s.confirmedStudents}/${s.maxStudents}\nสถานะ: ${s.status}`}
                                   >
-                                    {/* Row 1: Course name (large) + DAY indicator */}
+                                    {/* Row 1: Name + Chef Table badge / DAY indicator */}
                                     <div className="flex items-start justify-between gap-1 mb-0.5">
                                       <p className={`text-[20px] font-black leading-tight break-words flex-1 ${isCancelled ? 'line-through' : ''}`}>
                                         {s.productName}
                                       </p>
-                                      {s._totalDays > 1 && (
+                                      {isChefTable && isFirstDay && (
+                                        <span className="text-[7px] font-black bg-white/20 text-white rounded px-1 leading-4 whitespace-nowrap shrink-0">CHEF TABLE</span>
+                                      )}
+                                      {!isChefTable && s._totalDays > 1 && (
                                         <span className="text-[8px] font-black opacity-90 whitespace-nowrap shrink-0 mt-px">
                                           DAY {s._offset + 1}
                                         </span>
@@ -527,12 +556,15 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                                       </p>
                                     )}
 
-                                    {/* Row 4: Student count + status badges */}
+                                    {/* Row 4: Student count (COURSE only) + status badges */}
                                     {isFirstDay && (
                                       <div className="flex items-center justify-between mt-0.5">
-                                        <span className="text-[9px] opacity-80 font-bold">
-                                          {s.confirmedStudents}/{s.maxStudents}
-                                        </span>
+                                        {!isChefTable && (
+                                          <span className="text-[9px] opacity-80 font-bold">
+                                            {s.confirmedStudents}/{s.maxStudents}
+                                          </span>
+                                        )}
+                                        {isChefTable && <span />}
                                         {isFull && (
                                           <span className="text-[7px] font-black bg-amber-400 text-amber-900 rounded px-1 leading-4">เต็ม</span>
                                         )}
@@ -564,7 +596,11 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
             <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
               <h3 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                <Calendar className="text-[#cc9d37]" size={24} /> สร้างรอบเรียนใหม่
+                {addForm.eventType === 'CHEF_TABLE'
+                  ? <span className="text-fuchsia-400">🍽️</span>
+                  : <Calendar className="text-[#cc9d37]" size={24} />
+                }
+                {addForm.eventType === 'CHEF_TABLE' ? 'สร้าง Chef Table Event' : 'สร้างรอบเรียนใหม่'}
               </h3>
               <button onClick={() => setShowAddModal(false)} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors">
                 <X size={22} />
@@ -584,59 +620,107 @@ export default function ScheduleCalendar({ language = 'TH' }) {
 
                 return (
               <form onSubmit={handleCreateSchedule} className="space-y-6">
-                {/* Course selector */}
-                <div>
-                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
-                  <select
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
-                    value={addForm.productId}
-                    onChange={e => setAddForm({ ...addForm, productId: e.target.value })}
-                  >
-                    <option value="">เลือกหลักสูตร...</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}{p.days ? ` (${Math.ceil(p.days)} วัน)` : ''}
-                      </option>
-                    ))}
-                  </select>
 
-                  {/* Course info banner — shown after selection */}
-                  {selectedCourse && (
-                    <div className="mt-2 rounded-xl border border-[#cc9d37]/20 bg-[#cc9d37]/10 overflow-hidden">
-                      {/* Stats row */}
-                      <div className="flex items-center gap-0 divide-x divide-[#cc9d37]/20">
-                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
-                          <span className="text-[#cc9d37] text-lg font-black leading-none">{courseDays}</span>
-                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">วัน</span>
-                        </div>
-                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
-                          <span className="text-[#cc9d37] text-lg font-black leading-none">{selectedCourse.hours ?? '—'}</span>
-                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">ชั่วโมง</span>
-                        </div>
-                        <div className="flex-1 flex flex-col items-center py-2.5 px-3">
-                          <span className="text-white/60 text-xs font-black leading-none">
-                            {selectedCourse.sessionType ? selectedCourse.sessionType.replace(',', '/') : '—'}
-                          </span>
-                          <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">Session</span>
-                        </div>
-                      </div>
-                      {/* Menu stub row */}
-                      <div className="border-t border-[#cc9d37]/20 px-3 py-2 flex items-center gap-2">
-                        <span className="text-white/30 text-[10px] font-black uppercase tracking-widest">รายการเมนู</span>
-                        {selectedCourse.linkedMenuIds?.length > 0
-                          ? <span className="text-[#cc9d37] text-xs font-bold">{selectedCourse.linkedMenuIds.length} เมนู</span>
-                          : <span className="text-white/20 text-xs italic">ยังไม่มีรายละเอียด</span>
-                        }
-                      </div>
-                    </div>
-                  )}
+                {/* ── Event Type Toggle ── */}
+                <div>
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ประเภท Event</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: 'COURSE', label: '📚 คอร์สเรียน', desc: 'เปิดรับสมัครนักเรียน' },
+                      { value: 'CHEF_TABLE', label: '🍽️ Chef Table', desc: 'อีเวนต์พิเศษ จองห้อง' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setAddForm(f => ({ ...f, eventType: opt.value, productId: '', eventTitle: '' }))}
+                        className={`flex flex-col items-start px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                          addForm.eventType === opt.value
+                            ? opt.value === 'CHEF_TABLE'
+                              ? 'border-fuchsia-500 bg-fuchsia-500/10 text-white'
+                              : 'border-[#cc9d37] bg-[#cc9d37]/10 text-white'
+                            : 'border-white/10 bg-white/5 text-white/40 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="text-sm font-black">{opt.label}</span>
+                        <span className="text-[10px] opacity-70 font-bold mt-0.5">{opt.desc}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Date — start only, end auto-computed */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* ── COURSE mode: course selector ── */}
+                {addForm.eventType === 'COURSE' && (
                   <div>
-                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วันที่เริ่มสอน</label>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">หลักสูตร / คอร์ส</label>
+                    <select
+                      required
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                      value={addForm.productId}
+                      onChange={e => setAddForm({ ...addForm, productId: e.target.value })}
+                    >
+                      <option value="">เลือกหลักสูตร...</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}{p.days ? ` (${Math.ceil(p.days)} วัน)` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Course info banner — shown after selection */}
+                    {selectedCourse && (
+                      <div className="mt-2 rounded-xl border border-[#cc9d37]/20 bg-[#cc9d37]/10 overflow-hidden">
+                        <div className="flex items-center gap-0 divide-x divide-[#cc9d37]/20">
+                          <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                            <span className="text-[#cc9d37] text-lg font-black leading-none">{courseDays}</span>
+                            <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">วัน</span>
+                          </div>
+                          <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                            <span className="text-[#cc9d37] text-lg font-black leading-none">{selectedCourse.hours ?? '—'}</span>
+                            <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">ชั่วโมง</span>
+                          </div>
+                          <div className="flex-1 flex flex-col items-center py-2.5 px-3">
+                            <span className="text-white/60 text-xs font-black leading-none">
+                              {selectedCourse.sessionType ? selectedCourse.sessionType.replace(',', '/') : '—'}
+                            </span>
+                            <span className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">Session</span>
+                          </div>
+                        </div>
+                        <div className="border-t border-[#cc9d37]/20 px-3 py-2 flex items-center gap-2">
+                          <span className="text-white/30 text-[10px] font-black uppercase tracking-widest">รายการเมนู</span>
+                          {selectedCourse.linkedMenuIds?.length > 0
+                            ? <span className="text-[#cc9d37] text-xs font-bold">{selectedCourse.linkedMenuIds.length} เมนู</span>
+                            : <span className="text-white/20 text-xs italic">ยังไม่มีรายละเอียด</span>
+                          }
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── CHEF TABLE mode: event title ── */}
+                {addForm.eventType === 'CHEF_TABLE' && (
+                  <div>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชื่อ Event</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="เช่น Wagyu A5 Shabu Dinner, Omakase Night..."
+                      className="w-full bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-xl px-4 py-3 text-white font-bold placeholder-white/20 focus:outline-none focus:border-fuchsia-400/60"
+                      value={addForm.eventTitle}
+                      onChange={e => setAddForm({ ...addForm, eventTitle: e.target.value })}
+                    />
+                    <p className="mt-1.5 text-[10px] text-fuchsia-400/70 font-bold px-1">
+                      🍽️ Chef Table — จองห้องในปฏิทิน ไม่เปิดรับสมัครนักเรียน
+                    </p>
+                  </div>
+                )}
+
+                {/* Date — start only, end auto-computed */}
+                <div className={`grid gap-4 ${addForm.eventType === 'COURSE' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  <div>
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">
+                      {addForm.eventType === 'CHEF_TABLE' ? 'วันที่จัด' : 'วันที่เริ่มสอน'}
+                    </label>
                     <input
                       required type="date"
                       className="w-full bg-[#0c1a2f] border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 [color-scheme:dark]"
@@ -649,15 +733,17 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                       </p>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนนักเรียนสูงสุด</label>
-                    <input
-                      required type="number"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
-                      value={addForm.maxStudents}
-                      onChange={e => setAddForm({ ...addForm, maxStudents: e.target.value })}
-                    />
-                  </div>
+                  {addForm.eventType === 'COURSE' && (
+                    <div>
+                      <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">จำนวนนักเรียนสูงสุด</label>
+                      <input
+                        required type="number"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50"
+                        value={addForm.maxStudents}
+                        onChange={e => setAddForm({ ...addForm, maxStudents: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -724,9 +810,18 @@ export default function ScheduleCalendar({ language = 'TH' }) {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl shadow-amber-900/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                  className={`w-full font-black rounded-2xl py-4 uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 ${
+                    addForm.eventType === 'CHEF_TABLE'
+                      ? 'bg-fuchsia-500 text-white shadow-fuchsia-900/20'
+                      : 'bg-[#cc9d37] text-[#0c1a2f] shadow-amber-900/20'
+                  }`}
                 >
-                  {saving ? 'กำลังสร้าง...' : 'สร้างรอบเรียน'}
+                  {saving
+                    ? 'กำลังสร้าง...'
+                    : addForm.eventType === 'CHEF_TABLE'
+                      ? '🍽️ สร้าง Chef Table Event'
+                      : 'สร้างรอบเรียน'
+                  }
                 </button>
               </form>
                 );

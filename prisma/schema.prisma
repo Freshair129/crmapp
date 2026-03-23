@@ -809,7 +809,9 @@ model EnrollmentItem {
 model CourseSchedule {
   id                String            @id @default(uuid())
   scheduleId        String            @unique @map("schedule_id")
-  productId         String            @map("product_id")
+  eventType         String            @default("COURSE") @map("event_type") // COURSE | CHEF_TABLE
+  eventTitle        String?           @map("event_title")                   // ชื่อ event — ใช้สำหรับ CHEF_TABLE
+  productId         String?           @map("product_id")                    // null สำหรับ CHEF_TABLE
   scheduledDate     DateTime          @map("scheduled_date")
   startTime         String?           @map("start_time")
   endTime           String?           @map("end_time")
@@ -818,13 +820,13 @@ model CourseSchedule {
   confirmedStudents Int               @default(0) @map("confirmed_students")
   status            String            @default("OPEN")
   instructorId      String?           @map("instructor_id")
-  classId           String?           @map("class_id")             // Phase 20: CLS-YYYYMM-XXX — cohort grouping multi-day schedules
-  classroom         String?           @map("classroom")             // Phase 38: SHOWROOM | LECTURE | MAIN_KITCHEN
+  classId           String?           @map("class_id")             // Phase 20: CLS-YYYYMM-XXX
+  classroom         String?           @map("classroom")             // SHOWROOM | LECTURE | MAIN_KITCHEN
   notes             String?
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
 
-  product          Product           @relation(fields: [productId], references: [id])
+  product          Product?          @relation(fields: [productId], references: [id])
   instructor       Employee?         @relation("ScheduleInstructor", fields: [instructorId], references: [id])
   attendances      ClassAttendance[]
   purchaseRequests PurchaseRequest[]
@@ -833,6 +835,7 @@ model CourseSchedule {
   @@index([status])
   @@index([productId])
   @@index([classId])
+  @@index([eventType])
   @@map("course_schedules")
 }
 

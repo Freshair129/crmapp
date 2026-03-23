@@ -4,12 +4,25 @@ import { generateScheduleId, generateClassId } from '@/lib/idGenerators';
 
 // generateScheduleId, generateClassId — moved to @/lib/idGenerators
 
-export async function createSchedule({ productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId, classroom }) {
+export async function createSchedule({ eventType = 'COURSE', eventTitle, productId, scheduledDate, startTime, endTime, maxStudents, instructorId, notes, classId, classroom }) {
     try {
         const prisma = await getPrisma();
         const scheduleId = await generateScheduleId();
         return prisma.courseSchedule.create({
-            data: { scheduleId, productId, scheduledDate: new Date(scheduledDate), startTime, endTime, maxStudents, instructorId, notes, classId: classId ?? null, classroom: classroom ?? null, status: 'OPEN' },
+            data: {
+                scheduleId,
+                eventType,
+                eventTitle: eventTitle ?? null,
+                productId:  productId ?? null,
+                scheduledDate: new Date(scheduledDate),
+                startTime, endTime,
+                // Chef Table events have no student capacity — default to 0
+                maxStudents: maxStudents != null ? parseInt(maxStudents) : 0,
+                instructorId, notes,
+                classId:   classId   ?? null,
+                classroom: classroom ?? null,
+                status: 'OPEN'
+            },
             include: {
                 product: true,
                 instructor: { select: { firstName: true, lastName: true, nickName: true } }
