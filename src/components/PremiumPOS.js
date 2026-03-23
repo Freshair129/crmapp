@@ -496,7 +496,7 @@ export default function PremiumPOS({ language = 'TH' }) {
     // Order Type Modal (step 0)
     const [showOrderTypeModal, setShowOrderTypeModal] = useState(false);
     const [orderTypeForm, setOrderTypeForm] = useState({
-        type: 'DINE_IN', // DINE_IN | TAKE_AWAY | DELIVERY
+        type: 'DINE_IN', // DINE_IN | TAKE_AWAY | DELIVERY | ONSITE | ONLINE
         platform: '',
         platformOrderId: '',
         gpRate: '30', // default 30% GP for delivery
@@ -769,6 +769,15 @@ export default function PremiumPOS({ language = 'TH' }) {
         // ไม่ reset isGuestMode ที่นี่ — ให้ user set ได้จากตะกร้า
         setSlipFile(null);
         setSlipOcr(null);
+        // Auto-set default type based on cart contents
+        const COURSE_CATS = ['course','package','full_course','japanese_culinary','specialty','management','arts'];
+        const hasCourse = cart.some(i => i.isPackage || COURSE_CATS.includes(i.category));
+        const hasFood = cart.some(i => !i.isPackage && !COURSE_CATS.includes(i.category));
+        if (hasCourse && !hasFood) {
+            setOrderTypeForm(f => ({ ...f, type: 'ONSITE' }));
+        } else if (!hasCourse && hasFood) {
+            setOrderTypeForm(f => ({ ...f, type: 'DINE_IN' }));
+        }
         setShowOrderTypeModal(true);
     };
 
@@ -1231,16 +1240,28 @@ export default function PremiumPOS({ language = 'TH' }) {
                             <p className="text-[#cc9d37] text-[10px] font-black uppercase tracking-widest mt-1">Order Type</p>
                         </div>
                         <div className="px-8 py-6 space-y-5">
-                            {/* Order Type */}
-                            <div className="grid grid-cols-3 gap-2">
-                                {[['DINE_IN','🍽️','Walk In'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']].map(([val,icon,label]) => (
-                                    <button key={val} onClick={() => setOrderTypeForm(f => ({ ...f, type: val }))}
-                                        className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
-                                        <span className="text-2xl">{icon}</span>
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
+                            {/* Order Type — dynamic based on cart contents */}
+                            {(() => {
+                                const COURSE_CATS = ['course','package','full_course','japanese_culinary','specialty','management','arts'];
+                                const hasCourse = cart.some(i => i.isPackage || COURSE_CATS.includes(i.category));
+                                const hasFood = cart.some(i => !i.isPackage && !COURSE_CATS.includes(i.category));
+                                const courseOptions = [['ONSITE','🏫','On Site'],['ONLINE','💻','Online']];
+                                const foodOptions = [['DINE_IN','🍽️','Walk In'],['TAKE_AWAY','📦','Take Away'],['DELIVERY','🛵','Delivery']];
+                                const options = hasCourse && !hasFood ? courseOptions
+                                              : !hasCourse && hasFood ? foodOptions
+                                              : [...courseOptions, ...foodOptions];
+                                return (
+                                    <div className={`grid gap-2 ${options.length <= 3 ? 'grid-cols-3' : options.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                        {options.map(([val,icon,label]) => (
+                                            <button key={val} onClick={() => setOrderTypeForm(f => ({ ...f, type: val }))}
+                                                className={`py-4 rounded-xl font-black text-xs uppercase flex flex-col items-center gap-1.5 transition-all ${orderTypeForm.type === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                                                <span className="text-2xl">{icon}</span>
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Delivery fields */}
                             {orderTypeForm.type === 'DELIVERY' && (
