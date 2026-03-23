@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, CalendarDays, Clock, Users, Plus, ChevronLeft, ChevronRight, Grid, List, Loader2, CheckCircle2, X } from 'lucide-react';
+import DragScheduleBuilder from '@/components/DragScheduleBuilder';
 
 // Monday-first
 const DOW_TH = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'];
@@ -43,6 +44,7 @@ function normItem(s) {
 }
 
 export default function ScheduleCalendar({ language = 'TH' }) {
+  const [showBuilder, setShowBuilder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('LIST');
   const [schedules, setSchedules] = useState([]);
@@ -259,6 +261,16 @@ export default function ScheduleCalendar({ language = 'TH' }) {
     return groups;
   }, {});
 
+  // ── Drag Builder mode ──
+  if (showBuilder) {
+    return (
+      <DragScheduleBuilder
+        onBack={() => { setShowBuilder(false); fetchSchedules(); fetchCalendarSchedules(); }}
+        onCreated={() => { fetchSchedules(); if (view === 'CALENDAR') fetchCalendarSchedules(); }}
+      />
+    );
+  }
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 space-y-4">
       <Loader2 className="w-12 h-12 text-[#cc9d37] animate-spin" />
@@ -299,10 +311,10 @@ export default function ScheduleCalendar({ language = 'TH' }) {
           ))}
           <div className="w-px h-6 bg-white/10 mx-1" />
           <button
-            onClick={() => setShowAddModal(true)}
-            className="p-2.5 rounded-xl bg-emerald-500 text-[#0c1a2f] hover:bg-emerald-400 transition-all"
+            onClick={() => setShowBuilder(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-[#0c1a2f] text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-all"
           >
-            <Plus size={20} />
+            <Plus size={16} /> สร้างรอบใหม่
           </button>
         </div>
       </div>
