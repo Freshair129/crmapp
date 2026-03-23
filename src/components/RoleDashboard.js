@@ -132,6 +132,190 @@ const PRIORITY_STYLE = {
     L5: { dot: 'bg-white/10',   label: 'OPTIONAL', ring: 'border-white/5',                 text: 'text-white/10' },
 };
 
+// ─── Inventory Dashboard Widget ──────────────────────────────────────────────
+const CAT_LABELS = {
+    japanese_culinary: 'อาหารญี่ปุ่น', specialty: 'พิเศษ', management: 'การจัดการ', arts: 'ศิลปะ',
+    package: 'แพ็กเกจ', full_course: 'คอร์สเต็ม', course: 'คอร์สทั่วไป', food: 'อาหาร',
+    equipment: 'อุปกรณ์', side_dish: 'เครื่องเคียง', beverage: 'เครื่องดื่ม', snack: 'ของว่าง', dessert: 'ของหวาน',
+};
+const PIE_COLORS = ['#cc9d37', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#f97316', '#ec4899', '#06b6d4', '#6366f1', '#f59e0b'];
+const ABC_COLORS = { A: '#ef4444', B: '#f59e0b', C: '#10b981' };
+
+function InventoryWidget() {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/dashboard/inventory')
+            .then(r => r.json())
+            .then(d => { setData(d); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 h-40 flex items-center justify-center"><Spinner /></div>;
+    if (!data) return null;
+
+    return (
+        <div className="space-y-6">
+            {/* Row 1: KPI cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <KpiCard label="สินค้าทั้งหมด" value={`${data.totalProducts} รายการ`} icon={Package} color="#3b82f6" />
+                <KpiCard label="วัตถุดิบ Low Stock" value={`${data.lowStockCount} รายการ`} icon={AlertTriangle} color="#ef4444" />
+                <KpiCard label="PO กำลังมาส่ง" value={`${data.incomingPOs?.length || 0} รายการ`} icon={ShoppingCart} color="#f59e0b" />
+                <KpiCard label="รับเข้าวันนี้" value={`${data.arrivingToday?.length || 0} Lots`} icon={CheckCircle} color="#10b981" />
+            </div>
+
+            {/* Row 2: Pie chart + Low stock list */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Pie Chart — products by category */}
+                <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">สัดส่วนสินค้าตามหมวดหมู่</p>
+                    <div className="flex items-center gap-4">
+                        <div className="w-40 h-40 flex-shrink-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={data.categoryPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={2} strokeWidth={0}>
+                                        {data.categoryPie.map((_, i) => (
+                                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ background: '#19273a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+                                        formatter={(val, name) => [`${val} รายการ`, CAT_LABELS[name] || name]}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="flex-1 space-y-1.5 overflow-y-auto max-h-40">
+                            {data.categoryPie.map((c, i) => (
+                                <div key={c.name} className="flex items-center justify-between text-[10px]">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                                        <span className="text-white/60 font-bold truncate">{CAT_LABELS[c.name] || c.name}</span>
+                                    </div>
+                                    <span className="text-white/30 font-black ml-2">{c.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Low Stock Top 5 */}
+                <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">
+                        <span className="text-red-400">Low Stock</span> — 5 อันดับ
+                    </p>
+                    {data.lowStock.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-32 gap-2">
+                            <CheckCircle size={24} className="text-emerald-400/30" />
+                            <p className="text-white/20 text-[10px] font-black uppercase">สต็อกปกติ</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {data.lowStock.map((item, i) => {
+                                const pct = item.minStock > 0 ? Math.min(100, (item.currentStock / item.minStock) * 100) : 100;
+                                return (
+                                    <div key={item.id} className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white/70 text-xs font-bold truncate flex-1 mr-2">
+                                                <span className="text-white/25 mr-1">#{i + 1}</span>
+                                                {item.name}
+                                            </span>
+                                            <span className={`text-[10px] font-black ${pct < 30 ? 'text-red-400' : 'text-amber-400'}`}>
+                                                {item.currentStock} / {item.minStock} {item.unit}
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full transition-all" style={{
+                                                width: `${pct}%`,
+                                                background: pct < 30 ? '#ef4444' : pct < 70 ? '#f59e0b' : '#10b981'
+                                            }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Row 3: ABC Analysis + Incoming + Arriving Today */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ABC Analysis */}
+                <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">ABC Analysis</p>
+                    <div className="space-y-3">
+                        {['A', 'B', 'C'].map(grade => {
+                            const d = data.abcSummary?.[grade] || { count: 0, value: 0 };
+                            const totalItems = (data.abcSummary?.A?.count || 0) + (data.abcSummary?.B?.count || 0) + (data.abcSummary?.C?.count || 0);
+                            const pct = totalItems > 0 ? (d.count / totalItems * 100).toFixed(0) : 0;
+                            return (
+                                <div key={grade} className="flex items-center gap-3">
+                                    <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black" style={{ background: ABC_COLORS[grade] + '20', color: ABC_COLORS[grade] }}>{grade}</span>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-[10px] mb-0.5">
+                                            <span className="text-white/50 font-bold">{d.count} รายการ ({pct}%)</span>
+                                            <span className="text-white/30 font-bold">฿{Math.round(d.value).toLocaleString()}</span>
+                                        </div>
+                                        <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: ABC_COLORS[grade] }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <p className="text-white/20 text-[9px] font-bold pt-1">มูลค่าคงคลังรวม: ฿{Math.round(data.grandTotalValue || 0).toLocaleString()}</p>
+                    </div>
+                </div>
+
+                {/* Incoming POs */}
+                <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">
+                        <span className="text-amber-400">PO กำลังมาส่ง</span>
+                    </p>
+                    {(data.incomingPOs?.length || 0) === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-24 gap-2">
+                            <Package size={20} className="text-white/10" />
+                            <p className="text-white/20 text-[10px] font-black">ไม่มี PO ค้าง</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {data.incomingPOs.map(po => (
+                                <div key={po.id} className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2">
+                                    <span className="text-white/60 text-[10px] font-bold truncate">{po.requestId}</span>
+                                    <span className="text-amber-400/60 text-[9px] font-black">APPROVED</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Arriving Today */}
+                <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">
+                        <span className="text-emerald-400">รับเข้าวันนี้</span>
+                    </p>
+                    {(data.arrivingToday?.length || 0) === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-24 gap-2">
+                            <Calendar size={20} className="text-white/10" />
+                            <p className="text-white/20 text-[10px] font-black">ไม่มี Lot วันนี้</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {data.arrivingToday.map(lot => (
+                                <div key={lot.id} className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2">
+                                    <span className="text-white/60 text-[10px] font-bold truncate">{lot.ingredient?.name || lot.lotId}</span>
+                                    <span className="text-emerald-400/60 text-[10px] font-black">{lot.receivedQty} {lot.ingredient?.unit}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function TaskWidget({ isManager = false, accentColor = GOLD }) {
     const { data: session } = useSession();
     const [tasks, setTasks]           = useState([]);
@@ -465,6 +649,9 @@ function ManagerDash({ language }) {
                         </div>
                     </div>
 
+                    {/* Inventory Overview */}
+                    <InventoryWidget />
+
                     {/* Team Tasks — always visible for manager */}
                     <TaskWidget isManager={true} accentColor="#3b82f6" />
                 </>
@@ -722,6 +909,9 @@ function HeadChefDash({ language }) {
                     )}
                 </div>
             </div>
+
+            {/* Inventory Overview */}
+            <InventoryWidget />
 
             {/* My Tasks */}
             <TaskWidget isManager={false} accentColor="#f97316" />
