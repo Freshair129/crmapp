@@ -62,7 +62,7 @@ function AddCourseModal({ onClose, onCreated }) {
 
     useEffect(() => {
         Promise.all([
-            fetch('/api/employees?roles=PD,TEC').then(r => r.json()),
+            fetch('/api/employees?instructor=true').then(r => r.json()),
             fetch('/api/recipes').then(r => r.json())
         ]).then(([empData, recData]) => {
             setEmployees(Array.isArray(empData.data ?? empData) ? (empData.data ?? empData) : []);
@@ -500,7 +500,7 @@ function EditCourseModal({ course, onClose, onUpdated }) {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetch('/api/employees?roles=PD,TEC')
+        fetch('/api/employees?instructor=true')
             .then(r => r.json())
             .then(data => {
                 setEmployees(Array.isArray(data.data ?? data) ? (data.data ?? data) : []);

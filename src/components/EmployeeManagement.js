@@ -1180,6 +1180,22 @@ function AddEmployeeModal({ onClose, onSaved }) {
                         })()}
                     </div>
 
+                    {/* isInstructor toggle */}
+                    <div className="col-span-2">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                            <div
+                                onClick={() => setForm(f => ({ ...f, isInstructor: !f.isInstructor }))}
+                                className={`relative w-11 h-6 rounded-full transition-colors ${form.isInstructor ? 'bg-[#cc9d37]' : 'bg-white/10'}`}
+                            >
+                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.isInstructor ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-black text-white group-hover:text-[#cc9d37] transition-colors">เชฟ / อาจารย์ผู้สอน</p>
+                                <p className="text-[9px] text-white/30">เปิดเพื่อให้ปรากฏในรายชื่อผู้สอนเมื่อสร้างรอบเรียน</p>
+                            </div>
+                        </label>
+                    </div>
+
                     {/* Facebook fields */}
                     <div className="border-t border-white/8 pt-4">
                         <p className="text-[9px] text-[#1877F2]/60 font-black uppercase tracking-widest mb-3 flex items-center gap-1.5">
@@ -1748,6 +1764,22 @@ export default function EmployeeManagement({ employees = [], customers = [], onR
                                     const d = formatDOB(editForm.dateOfBirth);
                                     return d ? <p className="text-[9px] text-[#cc9d37]/60 mt-1 ml-1">{d.full}</p> : null;
                                 })()}
+                            </div>
+
+                            {/* isInstructor toggle */}
+                            <div className="col-span-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div
+                                        onClick={() => setEditForm(f => ({ ...f, isInstructor: !f.isInstructor }))}
+                                        className={`relative w-11 h-6 rounded-full transition-colors ${editForm.isInstructor ? 'bg-[#cc9d37]' : 'bg-white/10'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${editForm.isInstructor ? 'translate-x-6' : 'translate-x-1'}`} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-black text-white group-hover:text-[#cc9d37] transition-colors">เชฟ / อาจารย์ผู้สอน</p>
+                                        <p className="text-[9px] text-white/30">เปิดเพื่อให้ปรากฏในรายชื่อผู้สอนเมื่อสร้างรอบเรียน</p>
+                                    </div>
+                                </label>
                             </div>
 
                             {/* Facebook fields */}

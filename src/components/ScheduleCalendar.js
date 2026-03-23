@@ -167,7 +167,7 @@ export default function ScheduleCalendar({ language = 'TH' }) {
         const list = Array.isArray(data) ? data : (data.data || []);
         setProducts(list);
       });
-    fetch('/api/employees?roles=PD,TEC')
+    fetch('/api/employees?instructor=true')
       .then(r => r.json())
       .then(data => {
         const list = data.data || data;

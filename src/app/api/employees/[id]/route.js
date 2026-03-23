@@ -66,6 +66,11 @@ export async function PATCH(req, { params }) {
             updateData.dateOfBirth = body.dateOfBirth ? new Date(body.dateOfBirth) : null;
         }
 
+        // isInstructor — boolean flag (can teach courses)
+        if ('isInstructor' in body) {
+            updateData.isInstructor = Boolean(body.isInstructor);
+        }
+
         if (body.password) {
             updateData.passwordHash = await bcrypt.hash(body.password, 10);
         }
@@ -90,6 +95,7 @@ export async function PATCH(req, { params }) {
                 facebookUrl: true,
                 profilePicture: true,
                 grade: true,
+                isInstructor: true,
                 hiredAt: true,
                 dateOfBirth: true,
             },

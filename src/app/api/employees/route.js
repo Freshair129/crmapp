@@ -12,18 +12,12 @@ export async function GET(req) {
         const prisma = await getPrisma();
         const { searchParams } = new URL(req.url);
         const statusFilter = searchParams.get('status');
-        // roles=PD,TEC → filter employees whose primary role OR multi-roles includes any of these
-        const rolesFilter = searchParams.get('roles');
-        const roleList = rolesFilter ? rolesFilter.split(',').map(r => r.trim().toUpperCase()) : null;
+        // ?instructor=true → filter only employees marked as instructor
+        const instructorFilter = searchParams.get('instructor');
 
         let whereClause = {};
         if (statusFilter) whereClause.status = statusFilter;
-        if (roleList && roleList.length > 0) {
-            whereClause.OR = [
-                { role: { in: roleList } },
-                { roles: { hasSome: roleList } },
-            ];
-        }
+        if (instructorFilter === 'true') whereClause.isInstructor = true;
 
         const employees = await prisma.employee.findMany({
             select: {
@@ -41,6 +35,7 @@ export async function GET(req) {
                 role: true,
                 roles: true,
                 status: true,
+                isInstructor: true,
                 facebookName: true,
                 facebookUrl: true,
                 profilePicture: true,
