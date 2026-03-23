@@ -73,11 +73,25 @@ function fmt(date) {
     return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// ── Date helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Parse scheduledDate string to LOCAL midnight (no UTC offset shift).
+ * "2026-03-23T17:00:00.000Z" in UTC+7 = Mar 24 00:00 local → wrong.
+ * By splitting at 'T' and using Date(y,m,d) we always get local midnight.
+ */
+function parseLocalDate(dateVal) {
+    if (!dateVal) return new Date();
+    const str = typeof dateVal === 'string' ? dateVal : dateVal.toISOString();
+    const [datePart] = str.split('T');
+    const [y, m, d] = datePart.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
 // ── Conflict helpers ─────────────────────────────────────────────────────────
 
 function scheduleDateRange(s) {
-    const start = new Date(s.scheduledDate);
-    start.setHours(0, 0, 0, 0);
+    const start = parseLocalDate(s.scheduledDate);
     const end = new Date(start);
     end.setDate(end.getDate() + Math.max(1, Math.ceil(s.product?.days ?? s.courseDays ?? 1)) - 1);
     end.setHours(23, 59, 59, 0);
@@ -366,6 +380,9 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
     const [draggingId, setDraggingId] = useState(null);
     const [hoverDay, setHoverDay] = useState(null);
 
+    // Hover tooltip state
+    const [hoveredSchedule, setHoveredSchedule] = useState(null); // { schedule, rect }
+
     // Modal state
     const [conflictModal, setConflictModal] = useState(null); // { conflicts, dateRange, course }
     const [roomModal, setRoomModal] = useState(null);         // { course, dateRange }
@@ -416,11 +433,12 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
         const month = currentMonth.getMonth();
         const map = {};
         schedules.forEach(s => {
-            const startDate = new Date(s.scheduledDate);
+            // Use parseLocalDate to avoid UTC→local timezone shift (e.g. UTC+7 midnight stored as prev-day UTC)
+            const startDate = parseLocalDate(s.scheduledDate);
             const totalDays = Math.max(1, Math.ceil(s.courseDays || 1));
             for (let offset = 0; offset < totalDays; offset++) {
                 const d = new Date(startDate);
-                d.setDate(startDate.getDate() + offset);
+                d.setDate(d.getDate() + offset);   // use d's own getDate(), not startDate
                 if (d.getFullYear() === year && d.getMonth() === month) {
                     const day = d.getDate();
                     if (!map[day]) map[day] = [];
@@ -446,10 +464,11 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
         return result;
     };
 
-    // Drop handler
-    const handleDrop = (day) => {
-        if (!day || !draggingId) return;
-        const course = courses.find(c => c.id === draggingId);
+    // Drop handler — accepts explicit courseId to avoid stale-closure race
+    const handleDrop = (day, courseId) => {
+        const cid = courseId || draggingId;
+        if (!day || !cid) return;
+        const course = courses.find(c => c.id === cid);
         if (!course) return;
 
         const totalDays = Math.max(1, Math.ceil(course.days ?? 1));
@@ -636,10 +655,9 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
                                     onDrop={e => {
                                         e.preventDefault();
                                         const id = e.dataTransfer.getData('courseId');
-                                        if (id) {
-                                            setDraggingId(id);
-                                            handleDrop(day);
-                                        }
+                                        setHoverDay(null);
+                                        setDraggingId(null);
+                                        if (id && day) handleDrop(day, id);
                                     }}
                                     className={`min-h-[72px] rounded-xl border transition-all relative overflow-hidden
                                         ${!day ? 'border-transparent' : ''}
@@ -673,16 +691,29 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
 
                                             {/* Existing schedules */}
                                             <div className="px-1 pb-1 space-y-0.5 mt-1">
-                                                {items.slice(0, 3).map((s, si) => (
-                                                    <div
-                                                        key={`${s.id}-${si}`}
-                                                        title={`${s.productName}\n${s.instructorName ? `เชฟ ${s.instructorName}` : ''}`}
-                                                        className="text-[9px] font-black truncate px-1.5 py-0.5 rounded-md text-white"
-                                                        style={{ background: courseColor(s.productId) + 'cc' }}
-                                                    >
-                                                        {s._offset === 0 ? s.productName : ''}
-                                                    </div>
-                                                ))}
+                                                {items.slice(0, 3).map((s, si) => {
+                                                    const isStart = s._offset === 0;
+                                                    const isEnd = s._offset === s._total - 1;
+                                                    const color = courseColor(s.productId);
+                                                    return (
+                                                        <div
+                                                            key={`${s.id}-${si}`}
+                                                            onMouseEnter={e => setHoveredSchedule({ schedule: s, rect: e.currentTarget.getBoundingClientRect() })}
+                                                            onMouseLeave={() => setHoveredSchedule(null)}
+                                                            className="text-[9px] font-black truncate py-0.5 text-white cursor-default relative"
+                                                            style={{
+                                                                background: color + 'cc',
+                                                                paddingLeft: isStart ? '6px' : '2px',
+                                                                paddingRight: isEnd ? '6px' : '2px',
+                                                                borderRadius: `${isStart ? '4px' : '0px'} ${isEnd ? '4px' : '0px'} ${isEnd ? '4px' : '0px'} ${isStart ? '4px' : '0px'}`,
+                                                                marginLeft: isStart ? '0' : '-2px',
+                                                                marginRight: isEnd ? '0' : '-2px',
+                                                            }}
+                                                        >
+                                                            {isStart ? s.productName : ''}
+                                                        </div>
+                                                    );
+                                                })}
                                                 {items.length > 3 && (
                                                     <div className="text-[9px] text-white/30 font-bold px-1.5">+{items.length - 3}</div>
                                                 )}
@@ -758,6 +789,60 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
                     onClose={() => setRoomModal(null)}
                 />
             )}
+
+            {/* ── Hover Tooltip ── */}
+            {hoveredSchedule && (() => {
+                const { schedule: s, rect } = hoveredSchedule;
+                const startLocal = parseLocalDate(s.scheduledDate);
+                const endLocal = new Date(startLocal);
+                endLocal.setDate(endLocal.getDate() + Math.max(1, s._total ?? 1) - 1);
+                const fmtDate = (d) => d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                const roomLabel = ROOMS.find(r => r.id === s.classroom)?.label ?? s.classroom ?? '—';
+                return (
+                    <div
+                        className="fixed z-[200] pointer-events-none"
+                        style={{
+                            left: Math.min(rect.left + rect.width / 2, window.innerWidth - 220),
+                            top: rect.bottom + 6,
+                        }}
+                    >
+                        <div className="bg-[#0c1a2f] border border-white/20 rounded-xl shadow-2xl p-3 w-52 text-xs">
+                            <p className="text-white font-black truncate mb-1.5" style={{ color: courseColor(s.productId) }}>
+                                {s.productName}
+                            </p>
+                            <div className="space-y-1 text-white/50 font-bold">
+                                <div className="flex items-center gap-2">
+                                    <Calendar size={10} className="shrink-0" />
+                                    {s._total > 1
+                                        ? `${fmtDate(startLocal)} — ${fmtDate(endLocal)}`
+                                        : fmtDate(startLocal)
+                                    }
+                                </div>
+                                {s.startTime && (
+                                    <div className="flex items-center gap-2">
+                                        <Clock size={10} className="shrink-0" />
+                                        {s.startTime}{s.endTime ? ` — ${s.endTime}` : ''}
+                                    </div>
+                                )}
+                                {s.instructorName && (
+                                    <div className="flex items-center gap-2">
+                                        <Users size={10} className="shrink-0" />
+                                        {s.instructorName}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <BookMarked size={10} className="shrink-0" />
+                                    {roomLabel}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Users size={10} className="shrink-0" />
+                                    {s.enrollmentCount ?? 0} / {s.maxStudents ?? '—'} คน
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

@@ -7,8 +7,9 @@ import {
   Warehouse, Search, Loader2, Plus, X, Filter, ScanBarcode, ChevronDown,
   ChevronRight, AlertTriangle, CheckCircle2, XCircle, RefreshCw,
   MapPin, Hash, FileText, Truck, Calendar, Eye, ToggleLeft, ToggleRight,
-  ChevronLeft, ChevronsLeft, ChevronsRight
+  ChevronLeft, ChevronsLeft, ChevronsRight, ChefHat
 } from 'lucide-react';
+import KitchenStockPanel from '@/components/KitchenStockPanel';
 
 const TABS = [
   { key: 'overview', label: 'ภาพรวมสต็อก', icon: Package },
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'transfer', label: 'โอนย้าย', icon: ArrowLeftRight },
   { key: 'count', label: 'นับสต็อก', icon: ClipboardCheck },
   { key: 'warehouses', label: 'คลังสินค้า', icon: Warehouse },
+  { key: 'kitchen', label: 'วัตถุดิบครัว', icon: ChefHat },
 ];
 
 const MOVEMENT_REASONS = [
@@ -1392,6 +1394,7 @@ export default function InventoryControlPanel() {
             {activeTab === 'transfer' && <TransferTab warehouses={warehouses} />}
             {activeTab === 'count' && <StockCountTab warehouses={warehouses} />}
             {activeTab === 'warehouses' && <WarehousesTab warehouses={warehouses} onRefresh={fetchWarehouses} />}
+            {activeTab === 'kitchen' && <KitchenStockPanel />}
           </motion.div>
         </AnimatePresence>
       )}

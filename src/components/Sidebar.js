@@ -51,7 +51,6 @@ const menuGroups = [
             { id: 'schedules',           icon: CalendarDays,      label: 'ตารางคลาส' },
             { id: 'recipes',             icon: BookOpen,          label: 'เมนูสูตร' },
             { id: 'packages',            icon: Gift,              label: 'แพ็กเกจ' },
-            { id: 'kitchen-stock',       icon: ChefHat,           label: 'สต็อกครัว' },
             { id: 'inventory-control',   icon: Warehouse,         label: 'คลังสินค้า' },
             { id: 'procurement',         icon: FileCheck,         label: 'จัดซื้อ' },
             { id: 'assets',              icon: Monitor,           label: 'อุปกรณ์' },
