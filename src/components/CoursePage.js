@@ -477,12 +477,216 @@ function AddEquipmentModal({ courseId, onClose, onAdded }) {
     );
 }
 
+// ─── EditCourseModal ─────────────────────────────────────────────────────────
+
+function EditCourseModal({ course, onClose, onUpdated }) {
+    const [form, setForm] = useState({
+        name: course.name || '',
+        description: course.description || '',
+        price: course.price ?? '',
+        hours: course.hours ?? '',
+        days: course.days ?? '',
+        isActive: course.isActive ?? true,
+    });
+    const [selectedSessions, setSelectedSessions] = useState(
+        new Set(course.sessionType ? course.sessionType.split(',').map(s => s.trim()).filter(Boolean) : [])
+    );
+    const [selectedInstructors, setSelectedInstructors] = useState(
+        new Set(course.instructorIds || [])
+    );
+    const [employees, setEmployees] = useState([]);
+    const [dataLoading, setDataLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        fetch('/api/employees')
+            .then(r => r.json())
+            .then(data => {
+                setEmployees(Array.isArray(data.data ?? data) ? (data.data ?? data) : []);
+                setDataLoading(false);
+            });
+    }, []);
+
+    function toggleSession(key) {
+        setSelectedSessions(prev => {
+            const next = new Set(prev);
+            next.has(key) ? next.delete(key) : next.add(key);
+            return next;
+        });
+    }
+
+    function toggleInstructor(id) {
+        setSelectedInstructors(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setSaving(true);
+        setError('');
+        try {
+            const res = await fetch(`/api/courses/${course.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: form.name,
+                    description: form.description || null,
+                    price: parseFloat(form.price),
+                    hours: form.hours !== '' ? parseFloat(form.hours) : null,
+                    days: form.days !== '' ? parseFloat(form.days) : null,
+                    sessionType: selectedSessions.size > 0 ? [...selectedSessions].join(',') : null,
+                    isActive: form.isActive,
+                    instructorIds: [...selectedInstructors],
+                })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            onUpdated(await res.json());
+            onClose();
+        } catch {
+            setError('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    const inputCls = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-[#cc9d37]/50';
+
+    return createPortal(
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-[#0c1a2f] border border-white/10 rounded-[2rem] w-full max-w-xl flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/10 shrink-0">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                        <Edit2 size={20} className="text-[#cc9d37]" /> แก้ไขคอร์ส
+                    </h3>
+                    <button onClick={onClose} className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto px-8 py-6 flex-1 min-h-0">
+                    <form onSubmit={handleSubmit} id="edit-course-form" className="space-y-6">
+
+                        {/* ── Section 1: Basic info ── */}
+                        <div className="space-y-4">
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">ข้อมูลพื้นฐาน</p>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชื่อคอร์ส *</label>
+                                <input required className={inputCls}
+                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">คำอธิบาย</label>
+                                <textarea className={`${inputCls} h-16 resize-none`}
+                                    value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ราคา (฿) *</label>
+                                    <input required type="number" min="0" className={inputCls}
+                                        value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">ชั่วโมง</label>
+                                    <input type="number" min="0" step="0.5" className={inputCls}
+                                        value={form.hours} onChange={e => setForm({ ...form, hours: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">วัน</label>
+                                    <select className={inputCls} value={form.days} onChange={e => setForm({ ...form, days: e.target.value })}>
+                                        <option value="">-</option>
+                                        <option value="0.5">ครึ่งวัน</option>
+                                        <option value="1">1 วัน</option>
+                                        <option value="2">2 วัน</option>
+                                        <option value="3">3 วัน</option>
+                                        <option value="4">4 วัน</option>
+                                        <option value="5">5 วัน</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Section 2: Sessions ── */}
+                        <div>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">ช่วงเวลาที่สอน</p>
+                            <div className="flex gap-2">
+                                {Object.entries(SESSION_LABELS).map(([key, cfg]) => {
+                                    const Icon = cfg.icon;
+                                    const active = selectedSessions.has(key);
+                                    return (
+                                        <button key={key} type="button" onClick={() => toggleSession(key)}
+                                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1.5 border transition-all ${active ? `${cfg.color} border-current` : 'border-white/10 text-white/20 hover:text-white/60'}`}>
+                                            <Icon size={13} /> {cfg.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* ── Section 3: Instructors ── */}
+                        <div>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">เชฟ / อาจารย์ที่สอนได้</p>
+                            {dataLoading ? (
+                                <p className="text-white/20 text-xs">กำลังโหลด...</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {employees.map(emp => {
+                                        const active = selectedInstructors.has(emp.id);
+                                        const name = emp.nickName || emp.firstName || emp.employeeId;
+                                        return (
+                                            <button key={emp.id} type="button" onClick={() => toggleInstructor(emp.id)}
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${active ? 'bg-[#cc9d37]/20 border-[#cc9d37]/50 text-[#cc9d37]' : 'border-white/10 text-white/30 hover:text-white/60'}`}>
+                                                {name}
+                                            </button>
+                                        );
+                                    })}
+                                    {employees.length === 0 && <p className="text-white/20 text-xs italic">ไม่มีพนักงาน</p>}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Section 4: Status ── */}
+                        <div>
+                            <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-3">สถานะคอร์ส</p>
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => setForm({ ...form, isActive: true })}
+                                    className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase border transition-all ${form.isActive ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'border-white/10 text-white/20'}`}>
+                                    <Check size={12} className="inline mr-1" /> เปิดใช้งาน
+                                </button>
+                                <button type="button" onClick={() => setForm({ ...form, isActive: false })}
+                                    className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase border transition-all ${!form.isActive ? 'bg-red-500/20 border-red-500/50 text-red-400' : 'border-white/10 text-white/20'}`}>
+                                    <AlertTriangle size={12} className="inline mr-1" /> ปิดใช้งาน
+                                </button>
+                            </div>
+                        </div>
+
+                        {error && <p className="text-red-400 text-xs font-bold">{error}</p>}
+                    </form>
+                </div>
+
+                <div className="px-8 pb-7 pt-4 border-t border-white/10 shrink-0">
+                    <button type="submit" form="edit-course-form" disabled={saving}
+                        className="w-full bg-[#cc9d37] text-[#0c1a2f] font-black rounded-2xl py-4 uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+                        {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 // ─── CourseCard ──────────────────────────────────────────────────────────────
 
 function CourseCard({ course, onUpdated }) {
     const [expanded, setExpanded] = useState(false);
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [showEqModal, setShowEqModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [menus, setMenus] = useState(course.courseMenus || []);
     const [equipment, setEquipment] = useState(course.courseEquipment || []);
 
@@ -558,12 +762,21 @@ function CourseCard({ course, onUpdated }) {
                         )}
                     </div>
                 </div>
-                <button
-                    onClick={() => setExpanded(v => !v)}
-                    className="p-2 rounded-xl text-white/30 hover:text-white/70 hover:bg-white/10 transition-all shrink-0"
-                >
-                    {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={() => setShowEditModal(true)}
+                        className="p-2 rounded-xl text-white/30 hover:text-[#cc9d37] hover:bg-[#cc9d37]/10 transition-all"
+                        title="แก้ไขคอร์ส"
+                    >
+                        <Edit2 size={16} />
+                    </button>
+                    <button
+                        onClick={() => setExpanded(v => !v)}
+                        className="p-2 rounded-xl text-white/30 hover:text-white/70 hover:bg-white/10 transition-all"
+                    >
+                        {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                </div>
             </div>
 
             {/* Expanded detail */}
@@ -659,6 +872,16 @@ function CourseCard({ course, onUpdated }) {
                     courseId={course.id}
                     onClose={() => setShowEqModal(false)}
                     onAdded={eq => { setEquipment(prev => [...prev, eq]); setShowEqModal(false); }}
+                />
+            )}
+            {showEditModal && (
+                <EditCourseModal
+                    course={{ ...course, courseMenus: menus, courseEquipment: equipment }}
+                    onClose={() => setShowEditModal(false)}
+                    onUpdated={updated => {
+                        onUpdated(updated);
+                        setShowEditModal(false);
+                    }}
                 />
             )}
         </div>
