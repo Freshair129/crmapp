@@ -397,7 +397,7 @@ export default function DragScheduleBuilder({ onBack, onCreated }) {
     useEffect(() => {
         Promise.all([
             fetch('/api/courses?isActive=true').then(r => r.json()),
-            fetch('/api/employees').then(r => r.json()),
+            fetch('/api/employees?roles=PD,TEC').then(r => r.json()),
             fetch('/api/schedules').then(r => r.json()),
         ]).then(([cData, eData, sData]) => {
             const cList = Array.isArray(cData) ? cData : (cData.data ?? []);
