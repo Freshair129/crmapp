@@ -1,6 +1,6 @@
 # Database ERD — High-Level Overview
 
-**Last Updated:** 2026-03-23 — v1.9.1
+**Last Updated:** 2026-03-23 — v2.1.0
 **Reference:** `prisma/schema.prisma`
 
 ---
@@ -155,10 +155,10 @@ erDiagram
 | Recipe + Menu | Recipe, CourseMenu, RecipeIngredient, RecipeEquipment | 4 models |
 | Package | Package, PackageCourse, PackageGift, PackageEnrollment, PackageEnrollmentCourse | 5 models |
 | Notification | NotificationRule | 1 model |
-| Tasks | Task | 1 model |
+| Tasks | Task | 1 model — v2.1.0: +taskType/startDate/timeStart/timeEnd/milestones/completedAt/notionId |
 | Audit | AuditLog, StockDeductionLog | 2 models |
 | Web Push (ADR-044) | PushSubscription | 1 model |
-| **Total** | **47 models** | v1.3.0 |
+| **Total** | **47 models** | v2.1.0 |
 
 ---
 
@@ -172,3 +172,5 @@ erDiagram
 | v0.26.0 | ADR-039 | Conversation.firstTouchAdId (REQ-07), Transaction.slipStatus |
 | v1.2.0 | ADR-043 | Product equipment spec fields (hand, material, box dims, shipping) |
 | v1.3.0 | ADR-044 | PushSubscription — Employee browser push subscriptions |
+| v2.0.0 | — | Employee.grade/dateOfBirth/profilePicture — 12-role RBAC (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) |
+| v2.1.0 | — | Task.taskType/startDate/timeStart/timeEnd/milestones/completedAt/notionId — Task Type System + Notion Sync |

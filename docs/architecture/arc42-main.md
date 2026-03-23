@@ -1,6 +1,8 @@
 # System Architecture Documentation — V School CRM
 Documentation template based on **arc42** (v8.2) and visual representations using the **C4 Model**.
 
+**Current Version:** v2.1.0 (Phase 37) — 2026-03-23
+
 ---
 
 ## 1. Introduction and Goals
@@ -62,6 +64,7 @@ graph TB
     CRM -->|Read / Write data| Supabase
     CRM -->|Verify payment slip| SlipOK
     CRM -->|Sync tasks| Sheets
+    CRM -->|Bidirectional task sync| Notion[📓 Notion\nTask Board DB]
 ```
 
 ---
@@ -272,6 +275,12 @@ Detailed history of key architectural choices:
 - [ADR 033: Unified Inbox Implementation](../adr/033-unified-inbox-implementation.md)
 - [ADR 034: Redis Caching Layer](../adr/034-redis-caching-layer.md)
 - [ADR 040: Upstash Infrastructure Migration](../adr/040-upstash-infrastructure-migration.md)
+- [ADR 044: Web Push Inbox Real-time](../adr/044-web-push-inbox-realtime.md)
+- [ADR 045: RBAC Redesign + Ads Optimize Write](../adr/045-rbac-redesign-ads-optimize.md)
+- [ADR 047: Employee ID v3 Format](../adr/047-employee-id-v3.md)
+- [ADR 048: Inventory Control + Distribution](../adr/048-inventory-control.md)
+- [ADR 049: Procurement PO Lifecycle](../adr/049-procurement-po-lifecycle.md)
+- [ADR 050: MCP Server Dual Transport (stdio + HTTP)](../adr/050-mcp-server-dual-transport.md)
 
 ---
 
@@ -293,3 +302,28 @@ Detailed history of key architectural choices:
 - **RAG:** Retrieval-Augmented Generation (used in knowledge base).
 - **SSOT:** Single Source of Truth.
 - **QStash:** Serverless HTTP-based message queue by Upstash.
+- **SINGLE / RANGE / PROJECT:** Task Type taxonomy — งานวันเดียว / งานต่อเนื่อง / โปรเจค.
+- **Milestone:** จุดสำคัญภายใน PROJECT task (brief, review, meeting, submit, other) — stored as Json[].
+- **Notion Sync:** Bidirectional push/pull between CRM Task model and Notion database via MCP (notionRepo.js).
+- **FEFO:** First Expired First Out — stock deduction strategy for kitchen ingredients.
+- **RBAC:** Role-Based Access Control — 12 roles in v2.0.0: DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF.
+- **MCP:** Model Context Protocol — CRM exposes 23 tools via stdio + HTTP transport (ADR-050).
+
+---
+
+## 13. Phase History (Major Releases)
+
+| Version | Phase | Key Changes |
+|---|---|---|
+| v0.13.0 | 12 | Unified Inbox (FB+LINE), Redis cache (ADR-034) |
+| v0.27.0 | 27 | Upstash migration — BullMQ→QStash, ioredis→Upstash (ADR-040) |
+| v1.0.0 | 28 | Production ready — Docs hardening |
+| v1.3.0 | — | Web Push Inbox real-time — VAPID, ลบ SSE (ADR-044) |
+| v1.4.0 | 29 | RBAC redesign — permissionMatrix.js, 8 roles (ADR-045) |
+| v1.5.1 | 30 | Employee ID v3 — TVS-[TYPE]-[DEPT]-[NNN] (ADR-047) |
+| v1.6.0 | — | Inventory Control + Procurement PO lifecycle (ADR-048, ADR-049) |
+| v1.7.0 | 31 | MCP Server — 15→23 tools, stdio + HTTP (ADR-050) |
+| v1.9.0 | 33 | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree |
+| v1.9.2 | 34.5 | Audit Log — logAction, approval workflow |
+| v2.0.0 | 36 | RBAC redesign — 12 roles, permissionMatrix rewrite (BREAKING) |
+| v2.1.0 | 37 | Task Type System (SINGLE/RANGE/PROJECT) + Milestone Editor + Notion Sync |

@@ -1,6 +1,6 @@
 # Database Schema — Full Reference
 
-**Last Updated:** 2026-03-23 — v1.9.1
+**Last Updated:** 2026-03-23 — v2.1.0
 **Reference:** `prisma/schema.prisma`
 **Model Count:** 47 models
 
@@ -192,6 +192,41 @@ erDiagram
     }
 ```
 
+### DOMAIN: Tasks (Phase 37 — Task Type System)
+
+```mermaid
+erDiagram
+    Task {
+        String   id          PK  "UUID"
+        String   taskId      UK  "TSK-YYYYMMDD-SERIAL"
+        String   customerId  FK  "→ Customer (optional)"
+        String   assigneeId  FK  "→ Employee"
+        String   createdById FK  "→ Employee"
+        String   title
+        String   description
+        String   type            "FOLLOW_UP | CALL | EMAIL | MEETING | DEMO"
+        String   status          "PENDING | URGENT | IN_PROGRESS | COMPLETED | CANCELLED"
+        String   priority        "L1·Critical | L2·Important | L3·Routine | L4·Deferrable | L5·Optional"
+        String   taskType        "@default('SINGLE') — SINGLE | RANGE | PROJECT"
+        DateTime dueDate         "วันครบกำหนด"
+        DateTime startDate       "วันเริ่ม (RANGE/PROJECT เท่านั้น)"
+        String   timeStart       "HH:MM — เวลาเริ่ม (SINGLE เท่านั้น)"
+        String   timeEnd         "HH:MM — เวลาสิ้นสุด (SINGLE เท่านั้น)"
+        Json     milestones      "[{id,title,date,type}] — PROJECT เท่านั้น"
+        DateTime completedAt     "เวลาที่ mark เสร็จ"
+        String   notionId        "Notion page ID — สำหรับ bidirectional sync"
+        DateTime createdAt
+        DateTime updatedAt
+    }
+```
+
+> **Task Type Rules:**
+> - `SINGLE`: ระบุ `timeStart`/`timeEnd` ได้ — แสดงเป็น single-day card พร้อม time badge
+> - `RANGE`: ต้องมี `startDate` + `dueDate` — แสดงเป็น spanning bar สีม่วงใน Calendar/Weekly view
+> - `PROJECT`: ต้องมี `startDate` + `dueDate` + อาจมี `milestones[]` — spanning bar สีทอง + ◆ diamond markers
+
+---
+
 ### DOMAIN: Employee (Staff Registry)
 
 ```mermaid
@@ -297,5 +332,6 @@ Focus on the hierarchy of Packages → PackageCourse → Enrollment → Enrollme
 | 040 | Upstash Infra | Redis/QStash — no local Docker |
 | 043 | Equipment Domain POS | `Product.hand/material/boxDim*/shippingWeightG` |
 | 044 | Web Push Inbox | `PushSubscription` model — ลบ SSE+polling |
+| — | Task Type System (Phase 37) | `Task.taskType/startDate/timeStart/timeEnd/milestones/completedAt/notionId` — 7 new fields |
 
 ---

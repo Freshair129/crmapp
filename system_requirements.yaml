@@ -1,16 +1,18 @@
 # V SCHOOL CRM v2 — SYSTEM REQUIREMENTS
 # โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ
-# Last updated: 2026-03-23 (v1.9.1)
+# Last updated: 2026-03-23 (v2.1.0)
 # ─────────────────────────────────────────────────────────
 
 system_name: "The V School CRM v2"
-version: "1.9.1"
+version: "2.1.0"
 description: |
   Greenfield CRM สำหรับ The V School — เขียนใหม่ทั้งหมด (ไม่ใช่ refactor)
   รวม Meta Ads sync, Messenger/LINE inbox, AI (Gemini), Kitchen Ops,
   Course Enrollment, Asset Management, Recipe & Package management,
   Procurement, Inventory Control, Ads Optimization, V Point Loyalty,
-  Web Push Notifications, Automated Certification, and NotebookLM Intelligence.
+  Web Push Notifications, Automated Certification, NotebookLM Intelligence,
+  Task Type System (SINGLE/RANGE/PROJECT), Milestone Editor, Notion Sync,
+  and 12-role RBAC redesign.
 
 tech_stack:
   framework: "Next.js 14 App Router"
@@ -450,13 +452,97 @@ functional_requirements:
   # ── MODULE 17: TASK MANAGEMENT ────────────────────────
 
   - module: "Task Management"
+    ui_tab: "TaskPanel"
     status: "✅ Working"
+    version: "v2.1.0 (Phase 37)"
     features:
-      - name: "Task CRUD"
+      - name: "FR17.1: Task CRUD"
         status: "✅ Working"
-        description: "Follow-up, Call, Email, Meeting tasks — Assignee + Due Date"
+        description: "Follow-up, Call, Email, Meeting tasks — Assignee + Due Date + Priority"
         types: ["FOLLOW_UP", "CALL", "EMAIL", "MEETING", "DEMO"]
-        priorities: ["LOW", "MEDIUM", "HIGH", "URGENT"]
+        priorities:
+          - "L1 · Critical"
+          - "L2 · Important"
+          - "L3 · Routine"
+          - "L4 · Deferrable"
+          - "L5 · Optional"
+        statuses: ["PENDING", "URGENT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+        implementation: "src/components/TaskPanel.js, src/app/api/tasks/"
+
+      - name: "FR17.2: Task Type System (3 Types)"
+        status: "✅ Working"
+        description: |
+          งานวันเดียว (SINGLE) — มี time picker (timeStart/timeEnd HH:MM)
+          งานต่อเนื่อง (RANGE) — มี startDate → dueDate spanning
+          โปรเจค (PROJECT) — มี deadline + milestone editor
+        task_types:
+          SINGLE:
+            label: "งานวันเดียว"
+            fields: ["timeStart", "timeEnd"]
+            calendar: "แสดงเป็น single-day event พร้อม time badge"
+          RANGE:
+            label: "งานต่อเนื่อง"
+            fields: ["startDate", "dueDate"]
+            calendar: "แสดงเป็น spanning bar สีม่วงข้ามวัน (WeeklyView + CalendarView)"
+          PROJECT:
+            label: "โปรเจค"
+            fields: ["startDate", "dueDate", "milestones"]
+            calendar: "spanning bar สีทอง + ◆ milestone markers บนวันที่"
+        implementation: "src/components/TaskPanel.js (TaskModal, TaskCard, WeeklyView, CalendarView)"
+
+      - name: "FR17.3: Milestone Editor (PROJECT only)"
+        status: "✅ Working"
+        description: |
+          Add/remove milestone rows; แต่ละ milestone มี:
+          - type: brief | review | meeting | submit | other
+          - title: ชื่อ milestone
+          - date: ISO date string
+        storage: "Json milestones = [{id, title, date, type}] ใน DB"
+        calendar_display: "◆ diamond marker บน milestone dates + tooltip ใน selected-day panel"
+
+      - name: "FR17.4: Calendar / Weekly View Spanning"
+        status: "✅ Working"
+        description: |
+          WeeklyView: RANGE/PROJECT tasks แสดงเป็น colored spanning bars
+          CalendarView: colored bars ใน grid cells + selected-day panel แสดง detail
+          taskSpansDay() helper: เปรียบเทียบ ISO date string (dk >= startDate && dk <= dueDate)
+        known_gotchas:
+          - "WeeklyView ใช้ CSS -ml-2 bleed — เห็น gap เล็กน้อยระหว่าง cells (CSS grid limitation)"
+          - "timezone offset อาจทำให้ first/last day off-by-1 (ISO string comparison)"
+
+      - name: "FR17.5: Notion Sync (Bidirectional)"
+        status: "✅ Working"
+        description: |
+          pushTaskToNotion() — ส่ง taskType, startDate, timeStart/timeEnd, milestones text summary
+          pullTasksFromNotion() — อ่าน taskType, startDate, Time string → parse HH:MM / HH:MM–HH:MM
+        notion_columns:
+          - "Task (title)"
+          - "Status (select)"
+          - "Priority (select)"
+          - "Due Date (date)"
+          - "Assignee (person)"
+          - "Task Type (select) — งานวันเดียว | งานต่อเนื่อง | โปรเจค"
+          - "Start Date (date)"
+          - "Time (rich_text) — HH:MM หรือ HH:MM–HH:MM"
+          - "Milestones (rich_text) — plain text summary"
+        known_gotchas:
+          - "Milestones push เป็น plain text — pull กลับมาจะไม่ restore JSON (set null)"
+          - "column names ต้องตรง exact — push fail แบบ silent ถ้า column ไม่ตรง"
+        implementation: "src/lib/repositories/notionRepo.js"
+
+      - name: "FR17.6: Task API"
+        status: "✅ Working"
+        endpoints:
+          - "GET/POST /api/tasks — list + create (รับ taskType/startDate/timeStart/timeEnd/milestones)"
+          - "GET/PATCH/DELETE /api/tasks/[id]"
+        db_fields_added_v2_1_0:
+          - "taskType String @default('SINGLE') — SINGLE | RANGE | PROJECT"
+          - "startDate DateTime? — สำหรับ RANGE/PROJECT"
+          - "timeStart String? — HH:MM สำหรับ SINGLE"
+          - "timeEnd String? — HH:MM สำหรับ SINGLE"
+          - "milestones Json? — [{id,title,date,type}] สำหรับ PROJECT"
+          - "completedAt DateTime? — บันทึกเวลาเสร็จ"
+          - "notionId String? — link กับ Notion page"
 
   # ── MODULE 18: PROCUREMENT LIFECYCLE ─────────────────
 
