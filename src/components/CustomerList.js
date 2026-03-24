@@ -268,8 +268,8 @@ export default function CustomerList({ customers, onSelectCustomer, onGoToChat, 
         setCurrentPage(1);
     };
 
-    // ─── Lifecycle options ────────────────────────────────────
-    const lifecycleOptions = ['Lead', 'Prospect', 'Customer', 'VIP', 'Churned'];
+    // ─── Lifecycle options — sync กับ system_config.yaml → customer.lifecycle_stages ──
+    const lifecycleOptions = ['Lead', 'Prospect', 'Customer', 'Loyal', 'Inactive'];
 
     // ─── Render ───────────────────────────────────────────────
     return (

@@ -342,7 +342,7 @@ scheduling:
     - code: EVENING
       label: เย็น
 
-  statuses: [OPEN, FULL, CANCELLED, COMPLETED]
+  statuses: [OPEN, FULL, CANCELLED, COMPLETED, POSTPONED]
 
 # ─── Enrollment ──────────────────────────────────────────────────────────────
 enrollment:

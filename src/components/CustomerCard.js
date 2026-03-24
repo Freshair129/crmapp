@@ -22,6 +22,17 @@ import {
     Phone 
 } from 'lucide-react';
 import IntelligencePanel from './IntelligencePanel';
+import { calculateTier } from '@/lib/repositories/customerRepo';
+
+// UI-only tier display map — ต้องสอดคล้องกับ TIER_CONFIG ใน customerRepo
+// (ค่า threshold/hours อยู่ใน system_config.yaml ห้าม hardcode ที่นี่)
+const TIER_UI = {
+    TIER1: { color: 'bg-slate-400',  textColor: 'text-slate-100',  Icon: Award   },
+    TIER2: { color: 'bg-zinc-300',   textColor: 'text-zinc-800',   Icon: Medal   },
+    TIER3: { color: 'bg-amber-400',  textColor: 'text-amber-950',  Icon: Crown   },
+    TIER4: { color: 'bg-cyan-400',   textColor: 'text-cyan-950',   Icon: Gem     },
+    TIER5: { color: 'bg-rose-500',   textColor: 'text-white',      Icon: Flame   },
+};
 
 
 export default function CustomerCard({ customer, customers, onSelectCustomer, currentUser, onUpdateInventory, onGoToChat }) {
@@ -40,45 +51,19 @@ export default function CustomerCard({ customer, customers, onSelectCustomer, cu
     const contact = customer.contact_info || profile.contact_info || {};
     const timeline = customer.timeline || [];
 
-    const tierConfig = {
-        L1: { label: 'General Member (L1)', color: 'bg-slate-400', nextTier: 'L2', threshold: 15000, hourThreshold: 0, Icon: Award, textColor: 'text-slate-100' },
-        L2: { label: 'Silver (L2)', color: 'bg-zinc-300', nextTier: 'L3', threshold: 50000, hourThreshold: 0, Icon: Medal, textColor: 'text-zinc-800' },
-        L3: { label: 'Gold (L3)', color: 'bg-amber-400', nextTier: 'L4', threshold: 125000, hourThreshold: 30, Icon: Crown, textColor: 'text-amber-950' },
-        L4: { label: 'Platinum (L4)', color: 'bg-cyan-400', nextTier: 'L5', threshold: 250000, hourThreshold: 100, Icon: Gem, textColor: 'text-cyan-950' },
-        L5: { label: 'Elite (L5)', color: 'bg-rose-500', nextTier: null, threshold: Infinity, hourThreshold: Infinity, Icon: Flame, textColor: 'text-white' }
-    };
-
     const totalSpend = intel.metrics?.total_spend || 0;
     const learningHours = intel.metrics?.total_learning_hours || 0;
-    const internshipFlag = intel.metrics?.internship_completed || false;
 
-    // T14 Fix: Validate internship recency via inventory if available
-    let internship = internshipFlag;
-    if (internshipFlag) {
-        const courses = customer?.inventory?.learning_courses || [];
-        const internshipCourse = courses.find(course =>
-            (course.name || '').toLowerCase().match(/internship|ฝึกงาน/)
-        );
-        if (internshipCourse?.enrolled_at) {
-            const daysSince = (Date.now() - new Date(internshipCourse.enrolled_at).getTime()) / (1000 * 60 * 60 * 24);
-            internship = daysSince <= 730;
-        }
-    }
-
-    // Detect Current Tier based on spending AND hours
-    let currentTierKey = 'L1';
-    if (totalSpend >= 250000 && learningHours >= 100 && internship) currentTierKey = 'L5';
-    else if (totalSpend >= 125000 && learningHours >= 30) currentTierKey = 'L4';
-    else if (totalSpend >= 50000) currentTierKey = 'L3';
-    else if (totalSpend >= 15000) currentTierKey = 'L2';
-
-    const currentTier = tierConfig[currentTierKey];
-    const nextTierKey = currentTier.nextTier;
-    const nextTier = nextTierKey ? tierConfig[nextTierKey] : null;
-
-    // Progress calculation (Dominant by Spending, but checking both)
-    const spendProgress = nextTier ? Math.min(100, (totalSpend / nextTier.threshold) * 100) : 100;
-    const hourProgress = nextTier && nextTier.hourThreshold > 0 ? Math.min(100, (learningHours / nextTier.hourThreshold) * 100) : 100;
+    // คำนวณ tier จาก customerRepo.calculateTier — thresholds มาจาก system_config.yaml
+    const tierResult   = calculateTier(totalSpend, learningHours);
+    const tierUi       = TIER_UI[tierResult.tier] || TIER_UI.TIER1;
+    // ใช้ชื่อ currentTier / nextTier เพื่อ minimize diff กับ UI ด้านล่าง
+    const currentTier  = { ...tierResult, ...tierUi };
+    const nextTier     = tierResult.nextTier
+        ? { ...tierResult.nextTier, threshold: tierResult.nextTier.minSpend, hourThreshold: tierResult.nextTier.minHours }
+        : null;
+    const spendProgress = tierResult.progressSpend;
+    const hourProgress  = tierResult.progressHours;
 
     const handleSaveProfile = async () => {
         setIsSaving(true);
