@@ -4,6 +4,16 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { CheckCircle, Loader2, Search, Plus, ShoppingBasket, ShoppingCart, Trash2, Minus, ArrowRight, UserPlus, X, Clock, Users, GraduationCap, Tag, ImageOff, ShoppingBag, TrendingUp, Gift, ChevronDown, ChevronUp, Lock, Repeat } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
+// ─── Config constants (sync with system_config.yaml — ห้ามแก้ที่นี่ โปรด update ใน YAML ด้วย) ───
+const VAT_RATE = 0.07; // system_config.yaml → vat.rate
+// payment.methods: [CASH, TRANSFER, CARD, QR_CODE]
+const PAYMENT_METHODS = [
+    { val: 'CASH',     label: 'เงินสด',    icon: '💵' },
+    { val: 'TRANSFER', label: 'โอนเงิน',   icon: '🏦' },
+    { val: 'CARD',     label: 'บัตรเครดิต', icon: '💳' },
+    { val: 'QR_CODE',  label: 'QR Code',   icon: '📱' },
+];
+
 // ─── Product Placeholder ───────────────────────────────────────────────────
 const CATEGORY_EMOJI = {
     'ญี่ปุ่น': '🍱', 'japanese': '🍱',
@@ -736,7 +746,7 @@ export default function PremiumPOS({ language = 'TH' }) {
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const [vatIncluded, setVatIncluded] = useState(true); // true = ราคารวม VAT แล้ว, false = บวก VAT เพิ่ม
-    const tax = vatIncluded ? subtotal - (subtotal / 1.07) : subtotal * 0.07;
+    const tax = vatIncluded ? subtotal - (subtotal / (1 + VAT_RATE)) : subtotal * VAT_RATE;
     const total = vatIncluded ? subtotal : subtotal + tax;
 
     // ── Cart customer search ──────────────────────────────────────────────
@@ -1161,7 +1171,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             {/* Summary */}
                             <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
                                 <div className="flex justify-between text-white/60"><span>ยอดรวม</span><span>฿{(lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0).toLocaleString()}</span></div>
-                                <div className="flex justify-between text-white/60"><span>VAT 7%</span><span>฿{(((lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0)) * 0.07).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+                                <div className="flex justify-between text-white/60"><span>VAT {VAT_RATE * 100}%</span><span>฿{(((lastOrder.cartSnapshot || []).reduce((s,i) => s + i.price*i.quantity, 0)) * VAT_RATE).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
                                 {lastOrder.discountApplied > 0 && <div className="flex justify-between text-green-400"><span>ส่วนลด{lastOrder.pmtForm?.promoCode ? ` (${lastOrder.pmtForm.promoCode})` : ''}</span><span>-฿{lastOrder.discountApplied.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>}
                                 <div className="flex justify-between font-black text-[#cc9d37] text-base border-t border-white/10 pt-2"><span>ยอดสุทธิ</span><span>฿{(lastOrder.finalTotal || lastOrder.totalAmount || 0).toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
                             </div>
@@ -1169,7 +1179,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             {/* Payment Info */}
                             <div className="bg-white/5 rounded-xl px-4 py-3 space-y-1.5 text-sm">
                                 <div className="text-[10px] font-black uppercase text-[#cc9d37] tracking-widest mb-2">วิธีชำระเงิน</div>
-                                <div className="flex justify-between"><span className="text-white/60">ประเภท</span><span className="font-bold">{{ CASH: 'เงินสด', TRANSFER: 'โอนเงิน', CREDIT_CARD: 'บัตรเครดิต' }[lastOrder.pmtForm?.method] || '-'}</span></div>
+                                <div className="flex justify-between"><span className="text-white/60">ประเภท</span><span className="font-bold">{(PAYMENT_METHODS.find(m => m.val === lastOrder.pmtForm?.method)?.label) || '-'}</span></div>
                                 {lastOrder.pmtForm?.bankName && <div className="flex justify-between"><span className="text-white/60">ธนาคาร</span><span className="font-bold">{lastOrder.pmtForm.bankName}</span></div>}
                                 {lastOrder.pmtForm?.isDeposit && <div className="flex justify-between text-amber-400"><span>ชำระมัดจำ</span><span>฿{Number(lastOrder.pmtForm.depositAmount || 0).toLocaleString()}</span></div>}
                                 {lastOrder.pmtForm?.notes && <div className="flex justify-between"><span className="text-white/60">หมายเหตุ</span><span className="text-right max-w-[60%] text-white/80">{lastOrder.pmtForm.notes}</span></div>}
@@ -1375,7 +1385,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
                             {/* Summary */}
                             <div className="bg-[#cc9d37]/10 border border-[#cc9d37]/30 rounded-xl px-4 py-3 flex justify-between items-center">
-                                <span className="text-white/60 text-sm font-bold">ยอดรวม (incl. VAT 7%)</span>
+                                <span className="text-white/60 text-sm font-bold">ยอดรวม (incl. VAT {VAT_RATE * 100}%)</span>
                                 <span className="text-[#cc9d37] text-xl font-black">฿{total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
                             </div>
 
@@ -1383,7 +1393,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">วิธีชำระเงิน *</label>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {[['CASH','เงินสด','💵'],['TRANSFER','โอนเงิน','🏦'],['CREDIT_CARD','บัตรเครดิต','💳']].map(([val,label,icon]) => (
+                                    {PAYMENT_METHODS.map(({ val, label, icon }) => (
                                         <button key={val} onClick={() => setPaymentForm(f => ({ ...f, method: val }))}
                                             className={`py-3 rounded-xl font-black text-xs uppercase transition-all ${paymentForm.method === val ? 'bg-[#cc9d37] text-[#0c1a2f]' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
                                             {icon} {label}
@@ -2338,7 +2348,7 @@ export default function PremiumPOS({ language = 'TH' }) {
                 <div className="px-6 pb-6 pt-4 border-t border-white/8 flex-shrink-0 space-y-2.5">
                     {/* VAT toggle */}
                     <div className="flex items-center justify-between">
-                        <span className="text-white/30 text-[10px] font-black uppercase tracking-wider">VAT 7%</span>
+                        <span className="text-white/30 text-[10px] font-black uppercase tracking-wider">VAT {VAT_RATE * 100}%</span>
                         <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/8">
                             <button
                                 onClick={() => setVatIncluded(true)}
@@ -2352,11 +2362,11 @@ export default function PremiumPOS({ language = 'TH' }) {
                     </div>
 
                     <div className="flex justify-between text-white/40 text-[11px] font-bold">
-                        <span>{vatIncluded ? 'ราคารวม VAT' : 'Sub Total'}</span>
+                        <span>{vatIncluded ? `ราคารวม VAT ${VAT_RATE * 100}%` : 'Sub Total'}</span>
                         <span>฿{subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between text-white/40 text-[11px] font-bold">
-                        <span>VAT (7%)</span>
+                        <span>VAT ({VAT_RATE * 100}%)</span>
                         <span>{vatIncluded ? '(รวมแล้ว) ' : '+'}฿{tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="border-t border-dashed border-white/15 pt-3 flex justify-between items-center">

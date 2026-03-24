@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { generateScheduleId, generateClassId } from '@/lib/idGenerators';
+import { getScheduleStatuses } from '@/lib/systemConfig';
 
 // generateScheduleId, generateClassId — moved to @/lib/idGenerators
 
@@ -103,7 +104,7 @@ export async function getSchedulesByClass(classId) {
 
 export async function updateScheduleStatus(id, status) {
     try {
-        const VALID = ['OPEN', 'FULL', 'CANCELLED', 'COMPLETED', 'POSTPONED'];
+        const VALID = getScheduleStatuses(); // source: system_config.yaml → scheduling.statuses
         if (!VALID.includes(status)) throw new Error(`Invalid status: ${status}`);
         const prisma = await getPrisma();
         return prisma.courseSchedule.update({ where: { id }, data: { status } });

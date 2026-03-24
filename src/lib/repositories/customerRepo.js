@@ -1,6 +1,7 @@
 import { getPrisma } from '@/lib/db';
 import { generateCustomerId } from '@/lib/idGenerators';
 import { normalizeThai, bestMatchScore, rankByNameMatch } from '@/lib/thaiNameMatcher';
+import { getTiers, getVpRate } from '@/lib/systemConfig';
 
 /**
  * @param {{ limit?: number, offset?: number, search?: string, fuzzy?: boolean }} opts
@@ -127,19 +128,21 @@ export async function upsertCustomerByPhone(phone, data) {
 // ─── V Point & Loyalty Tier ────────────────────────────────────────────────
 
 /**
- * Tier config — Boss can edit thresholds here
- * Higher tiers (TIER3+) require both spending AND learning hours
+ * TIER_CONFIG — อ่านจาก system_config.yaml (SSOT) ผ่าน getTiers()
+ * ห้าม hardcode thresholds/labels ที่นี่ — แก้ใน system_config.yaml เท่านั้น
  */
-export const TIER_CONFIG = [
-    { tier: 'TIER1', label: 'V Member',   minSpend: 0,      minHours: 0,   color: '#9CA3AF', badge: '🥈' },
-    { tier: 'TIER2', label: 'V Silver',   minSpend: 20000,  minHours: 0,   color: '#C0C0C0', badge: '🥈' },
-    { tier: 'TIER3', label: 'V Gold',     minSpend: 50000,  minHours: 30,  color: '#cc9d37', badge: '🥇' },
-    { tier: 'TIER4', label: 'V Platinum', minSpend: 100000, minHours: 111, color: '#E5E4E2', badge: '💎' },
-    { tier: 'TIER5', label: 'V Black',    minSpend: 200000, minHours: 201, color: '#19273a', badge: '⬛' },
-];
+export const TIER_CONFIG = getTiers().map(t => ({
+    tier:     t.code,
+    label:    t.label,
+    minSpend: t.min_spend,
+    minHours: t.min_hours,
+    color:    t.color,
+    badge:    t.badge,
+}));
 
-/** 300 V Point ทุกๆ 150 THB */
-export const VP_RATE = { pointsPerUnit: 300, spendPerUnit: 150 };
+/** V Point rate — อ่านจาก system_config.yaml */
+const _vp = getVpRate();
+export const VP_RATE = { pointsPerUnit: _vp.points_per_unit, spendPerUnit: _vp.spend_per_unit };
 
 /**
  * คำนวณ tier จาก totalSpend + totalHours
