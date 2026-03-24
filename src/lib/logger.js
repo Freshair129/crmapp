@@ -78,5 +78,3 @@ export const logger = {
   /** @param {string} module @param {string} message @param {Error} [error] @param {object} [meta] */
   error: (module, message, error = null, meta = {}) => write('ERROR', module, message, error, meta),
 };
-
-export default logger;

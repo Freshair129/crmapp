@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
 import { eventBus } from '@/lib/eventBus';
 import { notificationEngine } from '@/lib/notificationEngine';
+import { generateCustomerId } from '@/utils/idGenerator';
 
 /**
  * Fire-and-forget: fetch sender name from FB Graph API and update customer record.
@@ -112,8 +113,7 @@ async function processEvent(event) {
         });
 
         if (!customer) {
-            const { randomUUID } = await import('crypto');
-            const customerId = `TVS-CUS-FB-26-${randomUUID().slice(-4).toUpperCase()}`;
+            const customerId = await generateCustomerId('FB');
             try {
                 customer = await tx.customer.create({
                     data: {

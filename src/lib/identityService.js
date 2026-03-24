@@ -7,6 +7,7 @@
 import { getPrisma } from './db.js';
 import { normalizePhone } from '../utils/phoneUtils.js';
 import { logger } from './logger.js';
+import { generateCustomerId } from '../utils/idGenerator.js';
 
 /**
  * Resolves an existing customer or creates a new one.
@@ -50,10 +51,8 @@ async function resolveOrCreateCustomer(payload) {
       return { customer, isNew: false, merged };
     }
 
-    // New customer — generate TVS-CUS-{CHANNEL}-{YY}-{SERIAL}
-    const year     = String(new Date().getFullYear()).slice(-2);
-    const serial   = String(Math.floor(Math.random() * 90000 + 10000));
-    const customerId = `TVS-CUS-${channel}-${year}-${serial}`;
+    // New customer — generate standardized ID via idGenerator
+    const customerId = await generateCustomerId(channel);
 
     const customer = await tx.customer.create({
       data: {
