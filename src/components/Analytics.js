@@ -149,11 +149,11 @@ export default function Analytics({ customers, products }) {
     const abcData = sortedCustomers.map(customer => {
         const spend = customer.intelligence?.metrics?.total_spend || 0;
         cumulativeRevenue += spend;
-        const cumulativePercent = (cumulativeRevenue / totalRevenue) * 100;
+        const cumulativePercent = totalRevenue > 0 ? (cumulativeRevenue / totalRevenue) * 100 : 0;
         let category = 'C';
         if (cumulativePercent <= 80) category = 'A';
         else if (cumulativePercent <= 95) category = 'B';
-        return { ...customer, category, spend, percent: (spend / totalRevenue) * 100 };
+        return { ...customer, category, spend, percent: totalRevenue > 0 ? (spend / totalRevenue) * 100 : 0 };
     });
 
     const segments = {
@@ -827,7 +827,7 @@ export default function Analytics({ customers, products }) {
                                             <div className="flex justify-between items-center text-[10px] font-bold">
                                                 <span className="text-white/60">{segmentStats[cat].count} Customers</span>
                                                 <span className={cat === 'A' ? 'text-[#cc9d37]' : 'text-white/40'}>
-                                                    {((segmentStats[cat].spend / totalRevenue) * 100).toFixed(1)}% Revenue
+                                                    {totalRevenue > 0 ? ((segmentStats[cat].spend / totalRevenue) * 100).toFixed(1) : '0.0'}% Revenue
                                                 </span>
                                             </div>
                                         </div>
@@ -841,7 +841,7 @@ export default function Analytics({ customers, products }) {
                                     </div>
                                     <div className="h-4 w-full flex rounded-full overflow-hidden ring-4 ring-white/5">
                                         {['A', 'B', 'C'].map(cat => {
-                                            const per = (segmentStats[cat].spend / totalRevenue) * 100;
+                                            const per = totalRevenue > 0 ? (segmentStats[cat].spend / totalRevenue) * 100 : 0;
                                             if (per === 0) return null;
                                             return (
                                                 <div
@@ -1138,8 +1138,8 @@ export default function Analytics({ customers, products }) {
                     <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[
                             { label: 'Total Revenue', val: totalRevenue, sub: '100%', color: 'text-white' },
-                            { label: 'COGS (Real Cost)', val: cogs, sub: `${((cogs / totalRevenue) * 100).toFixed(1)}%`, color: 'text-rose-400' },
-                            { label: 'Operating Expenses', val: totalOpex, sub: `${((totalOpex / totalRevenue) * 100).toFixed(1)}%`, color: 'text-orange-400' },
+                            { label: 'COGS (Real Cost)', val: cogs, sub: totalRevenue > 0 ? `${((cogs / totalRevenue) * 100).toFixed(1)}%` : '—', color: 'text-rose-400' },
+                            { label: 'Operating Expenses', val: totalOpex, sub: totalRevenue > 0 ? `${((totalOpex / totalRevenue) * 100).toFixed(1)}%` : '—', color: 'text-orange-400' },
                             { label: 'Net Profit', val: netProfit, sub: `${profitMargin.toFixed(1)}%`, color: 'text-emerald-400', highlight: true }
                         ].map((stat, i) => (
                             <div key={i} className={`p-6 rounded-[2rem] border border-white/10 ${stat.highlight ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border-emerald-500/30' : 'bg-[#0c1a2f]/50'}`}>
@@ -1167,7 +1167,7 @@ export default function Analytics({ customers, products }) {
                                     <span>- Cost of Goods (Dynamic)</span>
                                     <span>(฿{formatCurrency(cogs)})</span>
                                 </div>
-                                <div style={{ width: `${(cogs / totalRevenue) * 100}%` }} className="h-6 bg-rose-500/30 border border-rose-500 rounded-r-xl relative border-dashed"></div>
+                                <div style={{ width: `${totalRevenue > 0 ? (cogs / totalRevenue) * 100 : 0}%` }} className="h-6 bg-rose-500/30 border border-rose-500 rounded-r-xl relative border-dashed"></div>
                             </div>
 
                             {/* Expenses Deduction */}
@@ -1176,7 +1176,7 @@ export default function Analytics({ customers, products }) {
                                     <span>- Operating Expenses</span>
                                     <span>(฿{formatCurrency(totalOpex)})</span>
                                 </div>
-                                <div style={{ width: `${(totalOpex / totalRevenue) * 100}%` }} className="h-6 bg-orange-500/30 border border-orange-500 rounded-r-xl relative border-dashed"></div>
+                                <div style={{ width: `${totalRevenue > 0 ? (totalOpex / totalRevenue) * 100 : 0}%` }} className="h-6 bg-orange-500/30 border border-orange-500 rounded-r-xl relative border-dashed"></div>
                             </div>
 
                             {/* Net Profit Bar */}
