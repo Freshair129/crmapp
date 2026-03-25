@@ -32,7 +32,15 @@ const MAIN_FIELDS = [
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-const isPurchase = t => ['purchase', 'onsite_conversion.purchase'].includes(t);
+const isPurchase = t => [
+    'purchase',
+    'onsite_conversion.purchase',
+    'omni_purchase',
+    'onsite_app_purchase',
+    'onsite_web_purchase',
+    'onsite_web_app_purchase',
+    'offsite_conversion.fb_pixel_purchase',
+].includes(t);
 
 function extractConversions(row) {
     return {

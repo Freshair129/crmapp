@@ -22,7 +22,15 @@ const ACCESS_TOKEN  = process.env.FB_ACCESS_TOKEN;
 
 const BASE_FIELDS = 'ad_id,date_start,impressions,clicks,spend,reach,actions,action_values';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const isPurchase = t => ['purchase', 'onsite_conversion.purchase'].includes(t);
+const isPurchase = t => [
+    'purchase',
+    'onsite_conversion.purchase',
+    'omni_purchase',
+    'onsite_app_purchase',
+    'onsite_web_purchase',
+    'onsite_web_app_purchase',
+    'offsite_conversion.fb_pixel_purchase',
+].includes(t);
 
 function extractConversions(row) {
     return {

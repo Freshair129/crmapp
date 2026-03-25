@@ -71,11 +71,21 @@ function parseSlot(slot) {
     const clicks      = parseInt(slot.clicks || 0, 10);
     const reach       = parseInt(slot.reach || 0, 10);
 
-    const purchaseValue  = (slot.action_values || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
-    const purchaseAction = (slot.actions || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+    const isPurchase = t => [
+        'purchase',
+        'onsite_conversion.purchase',
+        'omni_purchase',
+        'onsite_app_purchase',
+        'onsite_web_purchase',
+        'onsite_web_app_purchase',
+        'offsite_conversion.fb_pixel_purchase',
+    ].includes(t);
+
+    const purchaseValue  = (slot.action_values || []).find(a => isPurchase(a.action_type));
+    const purchaseAction = (slot.actions || []).find(a => isPurchase(a.action_type));
     const leadAction     = (slot.actions || []).find(a => a.action_type === 'lead');
     const cpaLead        = (slot.cost_per_action_type || []).find(a => a.action_type === 'lead');
-    const cpaPurchase    = (slot.cost_per_action_type || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+    const cpaPurchase    = (slot.cost_per_action_type || []).find(a => isPurchase(a.action_type));
 
     const videoActions = (type) => parseInt((slot[type] || []).find(a => a.action_type === 'video_view')?.value || 0, 10);
 
