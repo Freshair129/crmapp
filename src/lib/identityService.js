@@ -7,7 +7,7 @@
 import { getPrisma } from './db.js';
 import { normalizePhone } from '../utils/phoneUtils.js';
 import { logger } from './logger.js';
-import { generateCustomerId } from '../utils/idGenerator.js';
+import { generateCustomerId } from './idGenerators.js';
 
 /**
  * Resolves an existing customer or creates a new one.
