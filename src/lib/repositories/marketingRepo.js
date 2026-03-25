@@ -30,6 +30,17 @@ export async function getCampaignByFBId(campaignId) {
 }
 
 /**
+ * Gets a map of all Campaign FB IDs to their local internal IDs.
+ */
+export async function getAllCampaignFBIds() {
+    const prisma = await getPrisma();
+    const rows = await prisma.campaign.findMany({
+        select: { id: true, campaignId: true }
+    });
+    return new Map(rows.map(r => [r.campaignId, r.id]));
+}
+
+/**
  * Gets a map of all AdSet FB IDs to their local internal IDs.
  */
 export async function getAllAdSetFBIds() {
@@ -261,14 +272,26 @@ export async function bulkUpsertDailyMetrics(dailyRows) {
         ...dailyRows.map(row => prisma.adDailyMetric.updateMany({
             where: { adId: row.adId, date: row.date },
             data: {
-                spend: row.spend,
-                impressions: row.impressions,
-                clicks: row.clicks,
-                reach: row.reach,
-                revenue: row.revenue,
-                leads: row.leads,
-                purchases: row.purchases,
-                roas: row.roas
+                spend:                 row.spend,
+                impressions:           row.impressions,
+                clicks:                row.clicks,
+                reach:                 row.reach,
+                revenue:               row.revenue,
+                leads:                 row.leads,
+                purchases:             row.purchases,
+                roas:                  row.roas,
+                cpm:                   row.cpm                   ?? undefined,
+                cpc:                   row.cpc                   ?? undefined,
+                frequency:             row.frequency             ?? undefined,
+                costPerLead:           row.costPerLead           ?? undefined,
+                costPerPurchase:       row.costPerPurchase       ?? undefined,
+                qualityRanking:        row.qualityRanking        ?? undefined,
+                engagementRateRanking: row.engagementRateRanking ?? undefined,
+                conversionRateRanking: row.conversionRateRanking ?? undefined,
+                videoP25:              row.videoP25              ?? undefined,
+                videoP50:              row.videoP50              ?? undefined,
+                videoP75:              row.videoP75              ?? undefined,
+                videoP100:             row.videoP100             ?? undefined,
             },
         })),
     ]);
@@ -428,18 +451,18 @@ export async function getMarketingInsights() {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
 
     const [
-        metrics, 
-        allTime, 
-        totalCustomers, 
-        engagedCustomersRows, 
-        crmRevenueAgg, 
-        activeStudentsCount, 
-        churnedCount, 
+        metrics,
+        allTime,
+        totalCustomers,
+        engagedCustomersRows,
+        crmRevenueAgg,
+        activeStudentsCount,
+        churnedCount,
         crmOrderAgg
     ] = await Promise.all([
         prisma.adDailyMetric.aggregate({
             where: { date: { gte: thirtyDaysAgo } },
-            _sum: { spend: true, impressions: true, clicks: true, revenue: true, leads: true }
+            _sum: { spend: true, impressions: true, clicks: true, reach: true, revenue: true, leads: true }
         }),
         prisma.adDailyMetric.aggregate({
             _sum: { revenue: true, purchases: true }
@@ -489,7 +512,7 @@ export async function getMarketingInsights() {
         impressions: metrics._sum.impressions || 0,
         clicks: metrics._sum.clicks || 0,
         revenue: metrics._sum.revenue || 0,
-        reach: metrics._sum.impressions || 0,
+        reach: metrics._sum.reach || 0,
         leads: metrics._sum.leads || 0,
         allTimeRevenue: Number(allTime._sum.revenue || 0),
         allTimePurchases: Number(allTime._sum.purchases || 0),

@@ -90,16 +90,19 @@ export async function GET(request) {
             limit: '100',
         });
 
+        // Build campaign lookup map (avoid N+1 DB queries)
+        const campaignMap = await marketingRepo.getAllCampaignFBIds();
+
         for (const s of fbAdSets) {
-            const campaign = await marketingRepo.getCampaignByFBId(s.campaign_id);
-            if (!campaign) continue;
+            const campaignDbId = campaignMap.get(s.campaign_id);
+            if (!campaignDbId) continue;
 
             await marketingRepo.upsertAdSet(s.id, {
                 name: s.name,
                 status: s.status,
                 dailyBudget: s.daily_budget ? parseFloat(s.daily_budget) / 100 : undefined,
                 targeting: s.targeting || {},
-                campaignId: campaign.id,
+                campaignId: campaignDbId,
             });
         }
 
