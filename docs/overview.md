@@ -20,7 +20,7 @@ npm run dev                   # http://localhost:3000
 Login: `admin@vschool.com` / (ดูใน `.env`)
 Node.js: **v22 LTS** (ดู `.nvmrc`)
 
-**Required env vars (v0.27.0+):**
+**Required env vars (v3.1.0+):**
 ```
 UPSTASH_REDIS_REST_URL=       # Upstash Redis REST URL
 UPSTASH_REDIS_REST_TOKEN=     # Upstash Redis token
@@ -28,7 +28,16 @@ QSTASH_TOKEN=                 # Upstash QStash token
 QSTASH_CURRENT_SIGNING_KEY=   # QStash signature verify
 QSTASH_NEXT_SIGNING_KEY=      # QStash signature verify (rotation)
 NEXT_PUBLIC_APP_URL=          # https://your-app.vercel.app
+PUSHER_APP_ID=                # Pusher app ID (2132428)
+PUSHER_KEY=                   # Pusher app key
+PUSHER_SECRET=                # Pusher app secret
+PUSHER_CLUSTER=               # ap1
+NEXT_PUBLIC_PUSHER_KEY=       # same as PUSHER_KEY
+NEXT_PUBLIC_PUSHER_CLUSTER=   # same as PUSHER_CLUSTER
 ```
+
+> ⚠️ **Secrets managed via Doppler** — project `vschool-crm` / config `prd`
+> FB_ACCESS_TOKEN หมดอายุ ~60 วัน — ต้อง renew และอัปเดต Doppler + Vercel (ดู ADR-052)
 
 ---
 

@@ -1,4 +1,4 @@
-**LATEST:** CL-20260323-008 | v2.2.0 | 2026-03-23
+**LATEST:** CL-20260325-001 | v3.1.0 | 2026-03-25
 
 ---
 
@@ -6,6 +6,8 @@
 
 | ID | Name | Version | Date | Severity | Tags |
 |---|---|---|---|---|---|
+| CL-20260325-001 | Marketing Sync Infrastructure — Batch API + QStash + Pusher | v3.1.0 | 2026-03-25 | MAJOR | #marketing #sync #pusher #qstash #facebook-batch-api #metrics #demographics #doppler |
+| CL-20260324-001 | Zuri Product Pivot + Strategic Rebranding | v3.0.0 | 2026-03-24 | MAJOR | #zuri #rebrand #pivot #saas #product #strategy |
 | CL-20260323-008 | Package POS Integration + QR Attendance + POS UX | v2.2.0 | 2026-03-23 | MAJOR | #pos #package #enrollment #attendance #qr #vat #registration |
 | CL-20260323-007 | Notion DB Schema + notionRepo Full Sync (Task Type/Time/Milestones) | v2.1.0 | 2026-03-23 | MINOR | #notion #sync #task-type #schema |
 | CL-20260323-006 | Task Type System — SINGLE/RANGE/PROJECT + CODEBASE_MAP | v2.1.0 | 2026-03-23 | MINOR | #tasks #calendar #ui #codebase-map |

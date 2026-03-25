@@ -4,30 +4,39 @@ This file provides guidance to Claude when working with code in this repository.
 
 ---
 
-## Project
+## Product
 
-**V School CRM v2** — Greenfield rewrite ของระบบ CRM สำหรับ The V School (โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ)
+**Zuri** — Vertical SaaS สำหรับ culinary school + food business ในไทย
+"Your business's best friend" / "มีซูริ ไม่ต้องเป็นห่วง"
+
+> 📋 ดู brand story + positioning ที่ `docs/zuri/CONCEPT.md`
+> 📋 ดู product overview + roadmap ที่ `docs/zuri/OVERVIEW.md`
+> 📋 ดู strategic ADR ที่ `docs/adr/051-zuri-product-pivot.md`
+
+---
+
+## Client: The V School (Reference Tenant)
+
+**The V School** (โรงเรียนสอนทำอาหารญี่ปุ่น, กรุงเทพฯ) คือ **ลูกค้าคนแรก** ของ Zuri — ไม่ใช่ identity ของ product
+Codebase นี้คือ Zuri product codebase ที่ V School deploy อยู่บน Vercel + Supabase
 
 > ⚠️ นี่คือ v2 เขียนใหม่ทั้งหมด ไม่ใช่ refactor จาก `E:\data_hub`
 
 ---
 
-## Version Status (อัพเดท: 2026-03-23 | v2.1.0)
+## Version Status (อัพเดท: 2026-03-25 | v3.1.0)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
 | `v1.6.0` | Inventory Control + Procurement PO Lifecycle (ADR-048, ADR-049) | ✅ released |
 | `v1.7.0` | MCP Server — Dual Transport stdio + Streamable HTTP (ADR-050) | ✅ released |
 | `v1.8.0` | Meta Ads Domain in MCP (22 tools) + adsOptimizeRepo Bug Fix | ✅ released |
-| `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree + MCP tool | ✅ released |
-| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup (Phase 34) | ✅ released |
-| `v1.9.2` | Audit Log Full Implementation — logAction + approval workflow (Phase 34.5) | ✅ released |
-| `v1.9.3` | Ingredient Yield Percent — Kitchen Prep Waste Tracking (Phase 35) | ✅ released |
 | `v1.9.4` | Employee Card Framer Motion Animations + Overview StatCards | ✅ released |
-| `v1.9.5` | Profile Picture Upload + Date of Birth + Employee Grade (S/A/B/C/D) | ✅ released |
 | `v2.0.0` | Phase 36 RBAC Redesign — 12 new roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) | ✅ released |
 | `v2.1.0` | Task Type System — SINGLE/RANGE/PROJECT + Notion Sync + CODEBASE_MAP (Phase 37) | ✅ released |
-| `v2.2.0` | Package POS Integration + QR Attendance + POS UX (Phase 38) | ✅ released ← HEAD |
+| `v2.2.0` | Package POS Integration + QR Attendance + POS UX (Phase 38) | ✅ released |
+| `v3.0.0` | **Zuri Product Pivot** — Rebrand + Multi-tenant SaaS (ADR-051) | ✅ released |
+| `v3.1.0` | **Marketing Sync Infra** — Pusher + QStash + Batch API + Demographics (ADR-052) | ✅ released ← HEAD |
 
 > 📋 ประวัติ version เก่า (v0.9.0 – v1.5.3) ดูที่ `CHANGELOG.md`
 
@@ -81,6 +90,11 @@ This file provides guidance to Claude when working with code in this repository.
 | v1.9.2 | logAction errors ไม่ bubble up — caller ไม่รู้ว่า audit fail | Silent fail |
 | v1.9.3 | `calculateStockNeeded` include chain ต้องส่ง `ingredient.yieldPercent` มาถึง getBOM | Wrong qty |
 | v1.9.5 | `profilePicture` base64 — ถ้า photo ใหญ่กระทบ DB row size | DB size |
+| v3.1.0 | **FB_ACCESS_TOKEN หมดอายุ** — short-lived ~2ชม, long-lived ~60วัน ต้อง renew + update Vercel/Doppler | sync-hourly 500 |
+| v3.1.0 | QStash sync-hourly ต้องส่ง `X-Vercel-Protection-Bypass: j26rvrhgwLGudOOCKlQP4HFopxN8VAKZ` | 401 loop |
+| v3.1.0 | `sync-hourly/route.js` ต้อง export `POST` (ไม่ใช่ `GET`) — QStash ส่ง POST | 405 |
+| v3.1.0 | FB error 99 สำหรับ demographics/placement breakdown บน date range >~2 เดือน | backfill ไม่ได้ |
+| v3.1.0 | `pusher` + `pusher-js` ต้องอยู่ใน `package.json` — ไม่งั้น Vercel build fail | build error |
 
 ---
 
