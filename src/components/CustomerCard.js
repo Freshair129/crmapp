@@ -22,10 +22,10 @@ import {
     Phone 
 } from 'lucide-react';
 import IntelligencePanel from './IntelligencePanel';
-import { calculateTier } from '@/lib/repositories/customerRepo';
+import { calculateTier } from '@/utils/tierUtils';
 
-// UI-only tier display map — ต้องสอดคล้องกับ TIER_CONFIG ใน customerRepo
-// (ค่า threshold/hours อยู่ใน system_config.yaml ห้าม hardcode ที่นี่)
+// UI-only tier display map — ต้องสอดคล้องกับ TIER_CONFIG ใน system_config.yaml
+// (ค่า threshold/hours sync ไว้ใน src/utils/tierUtils.js)
 const TIER_UI = {
     TIER1: { color: 'bg-slate-400',  textColor: 'text-slate-100',  Icon: Award   },
     TIER2: { color: 'bg-zinc-300',   textColor: 'text-zinc-800',   Icon: Medal   },
