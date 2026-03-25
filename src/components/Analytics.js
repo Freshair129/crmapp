@@ -9,6 +9,9 @@ import {
     Brain, UserCog, Network
 } from 'lucide-react';
 
+// Revenue helper: prefer real order data, fall back to intelligence field
+const getRevenue = (c) => c._orderRevenue || c.intelligence?.metrics?.total_spend || 0;
+
 export default function Analytics({ customers, products }) {
     const [rankingPeriod, setRankingPeriod] = useState('month');
     const [activeTab, setActiveTab] = useState('market');
@@ -140,14 +143,14 @@ export default function Analytics({ customers, products }) {
     // --- Market & Sales Logic (Existing) ---
     // ABC Analysis Calculation
     const sortedCustomers = [...customers].sort((a, b) =>
-        (b.intelligence?.metrics?.total_spend || 0) - (a.intelligence?.metrics?.total_spend || 0)
+        getRevenue(b) - getRevenue(a)
     );
 
-    const totalRevenue = customers.reduce((sum, c) => sum + (c.intelligence?.metrics?.total_spend || 0), 0);
+    const totalRevenue = customers.reduce((sum, c) => sum + getRevenue(c), 0);
     // ... [Reuse ABC Logic] ...
     let cumulativeRevenue = 0;
     const abcData = sortedCustomers.map(customer => {
-        const spend = customer.intelligence?.metrics?.total_spend || 0;
+        const spend = getRevenue(customer);
         cumulativeRevenue += spend;
         const cumulativePercent = totalRevenue > 0 ? (cumulativeRevenue / totalRevenue) * 100 : 0;
         let category = 'C';
@@ -383,7 +386,7 @@ export default function Analytics({ customers, products }) {
     // --- Customer & CLV Logic (New) ---
     const clvBuckets = { '0-10K': 0, '10K-30K': 0, '30K-50K': 0, '50K-100K': 0, '100K+': 0 };
     customers.forEach(c => {
-        const spend = c.intelligence?.metrics?.total_spend || 0;
+        const spend = getRevenue(c);
         if (spend > 100000) clvBuckets['100K+']++;
         else if (spend > 50000) clvBuckets['50K-100K']++;
         else if (spend > 30000) clvBuckets['30K-50K']++;
@@ -393,7 +396,7 @@ export default function Analytics({ customers, products }) {
     const maxBucketVal = Math.max(...Object.values(clvBuckets), 1);
 
     const topCLVCustomers = [...customers]
-        .sort((a, b) => (b.intelligence?.metrics?.total_spend || 0) - (a.intelligence?.metrics?.total_spend || 0))
+        .sort((a, b) => getRevenue(b) - getRevenue(a))
         .slice(0, 10);
 
     // Channel Analysis (Mocked/Inferred)
@@ -483,7 +486,7 @@ export default function Analytics({ customers, products }) {
             const frequency = purchaseEvents.length || c.intelligence?.metrics?.total_order || 0;
 
             // Monetary: Total Spend
-            const monetary = c.intelligence?.metrics?.total_spend || 0;
+            const monetary = getRevenue(c);
 
             // Scoring (1-5 scale for better granularity)
             const rScore = recencyDays < 30 ? 5 : recencyDays < 90 ? 4 : recencyDays < 180 ? 3 : recencyDays < 365 ? 2 : 1;
@@ -538,7 +541,7 @@ export default function Analytics({ customers, products }) {
 
     const churnRiskList = rfmData
         .filter(c => c.rfm.segment === 'At Risk' || c.rfm.segment === 'Lost')
-        .sort((a, b) => (b.intelligence?.metrics?.total_spend || 0) - (a.intelligence?.metrics?.total_spend || 0));
+        .sort((a, b) => getRevenue(b) - getRevenue(a));
 
     // Real-ish Sales Tasks based on signals
     const salesTasks = [];
@@ -580,7 +583,7 @@ export default function Analytics({ customers, products }) {
 
     customers.forEach(c => {
         const channel = c.contact_info?.lead_channel || 'Organic / Other';
-        const revenue = c.intelligence?.metrics?.total_spend || 0;
+        const revenue = getRevenue(c);
 
         // Logic: New if only 1 purchase event or total_order <= 1
         const purchaseEvents = (c.timeline || []).filter(e => e.type === 'ORDER' || e.type === 'PURCHASE');
@@ -700,7 +703,7 @@ export default function Analytics({ customers, products }) {
         const crmRevenue = customers.reduce((sum, cust) => {
             const attribution = cust.intelligence?.attribution;
             if (attribution?.campaign_id === c.id || attribution?.smart_detected_ad?.campaign_name === c.name) {
-                return sum + (cust.intelligence?.metrics?.total_spend || 0);
+                return sum + getRevenue(cust);
             }
             return sum;
         }, 0);
@@ -1043,7 +1046,7 @@ export default function Analytics({ customers, products }) {
                                         {c.profile?.join_date ? new Date(c.profile.join_date).toLocaleDateString() : 'N/A'}
                                     </div>
                                     <div className="col-span-3 text-right font-black text-[#cc9d37]">
-                                        ฿{formatCurrency(c.intelligence?.metrics?.total_spend || 0)}
+                                        ฿{formatCurrency(getRevenue(c))}
                                     </div>
                                 </div>
                             ))}
@@ -1654,7 +1657,7 @@ export default function Analytics({ customers, products }) {
                                     if (!agentStats[agent]) agentStats[agent] = { name: agent, revenue: 0, leads: 0, customers: 0 };
 
                                     agentStats[agent].leads++;
-                                    const spend = c.intelligence?.metrics?.total_spend || 0;
+                                    const spend = getRevenue(c);
                                     agentStats[agent].revenue += spend;
                                     if (spend > 0) agentStats[agent].customers++;
                                 });

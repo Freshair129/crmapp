@@ -50,6 +50,39 @@ export async function GET(request) {
             take: 50
         });
 
+        // Aggregate order revenue per customer (for Analytics — avoids N+1)
+        const customerIds = customers.map(c => c.id);
+        const [orderTotals, ordersWithItems] = await Promise.all([
+            prisma.order.groupBy({
+                by: ['customerId'],
+                where: { customerId: { in: customerIds }, status: { in: ['PAID', 'Completed', 'COMPLETED'] } },
+                _sum: { paidAmount: true, totalAmount: true },
+                _count: { id: true },
+            }),
+            prisma.order.findMany({
+                where: { customerId: { in: customerIds } },
+                select: { customerId: true, paidAmount: true, totalAmount: true, items: true, status: true, date: true, orderId: true },
+                orderBy: { date: 'desc' },
+            }),
+        ]);
+
+        const revenueMap = new Map(orderTotals.map(r => [
+            r.customerId,
+            { revenue: r._sum.paidAmount || r._sum.totalAmount || 0, count: r._count.id }
+        ]));
+        const ordersByCustomer = {};
+        ordersWithItems.forEach(o => {
+            if (!ordersByCustomer[o.customerId]) ordersByCustomer[o.customerId] = [];
+            ordersByCustomer[o.customerId].push(o);
+        });
+
+        const enrich = (list) => list.map(c => ({
+            ...c,
+            _orderRevenue: revenueMap.get(c.id)?.revenue || 0,
+            _orderCount:   revenueMap.get(c.id)?.count   || 0,
+            orders: ordersByCustomer[c.id] || [],
+        }));
+
         // Fuzzy fallback: when exact returns few results, broaden and re-rank (ADR-043)
         if (fuzzy && search && customers.length < 3) {
             const broadResults = await prisma.customer.findMany({
@@ -69,10 +102,10 @@ export async function GET(request) {
                 .filter(r => !seenIds.has(r.record.id))
                 .map(r => r.record);
 
-            return NextResponse.json([...customers, ...fuzzyExtras].slice(0, 50));
+            return NextResponse.json(enrich([...customers, ...fuzzyExtras].slice(0, 50)));
         }
 
-        return NextResponse.json(customers);
+        return NextResponse.json(enrich(customers));
     } catch (error) {
         logger.error('CustomerAPI', 'GET error', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
