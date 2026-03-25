@@ -162,13 +162,16 @@ export async function GET(request) {
             // ── 1. Main metrics ───────────────────────────────────────────
             const mainRows = await fetchAllPages({ ...COMMON, fields: MAIN_FIELDS, time_range: tr });
             const CHUNK = 50;
+            let mainSkipped = 0;
             for (let i = 0; i < mainRows.length; i += CHUNK) {
-                await Promise.all(mainRows.slice(i, i + CHUNK).map(row => {
+                const settled = await Promise.allSettled(mainRows.slice(i, i + CHUNK).map(row => {
                     const r = parseMainRow(row);
                     return marketingRepo.upsertAdDailyMetric(r.adId, r.date, r);
                 }));
+                mainSkipped += settled.filter(r => r.status === 'rejected').length;
             }
-            stats.mainRows += mainRows.length;
+            stats.mainRows += mainRows.length - mainSkipped;
+            if (mainSkipped > 0) logger.warn('[Backfill]', `Main: skipped ${mainSkipped} rows (FK or missing ad)`);
             await sleep(500);
 
             // ── 2. Demographics (age × gender) ────────────────────────────
@@ -178,8 +181,9 @@ export async function GET(request) {
                 breakdowns: 'age,gender',
                 time_range: tr,
             });
+            let demoSkipped = 0;
             for (let i = 0; i < demoRows.length; i += CHUNK) {
-                await Promise.all(demoRows.slice(i, i + CHUNK).map(row => {
+                const settled = await Promise.allSettled(demoRows.slice(i, i + CHUNK).map(row => {
                     const { leads, purchases, revenue } = extractConversions(row);
                     return marketingRepo.upsertAdDailyDemographic(
                         row.ad_id, new Date(row.date_start), row.age, row.gender,
@@ -192,8 +196,10 @@ export async function GET(request) {
                         }
                     );
                 }));
+                demoSkipped += settled.filter(r => r.status === 'rejected').length;
             }
-            stats.demoRows += demoRows.length;
+            stats.demoRows += demoRows.length - demoSkipped;
+            if (demoSkipped > 0) logger.warn('[Backfill]', `Demo: skipped ${demoSkipped} rows (FK or missing ad)`);
             await sleep(500);
 
             // ── 3. Placement (platform × position) ───────────────────────
@@ -203,8 +209,9 @@ export async function GET(request) {
                 breakdowns: 'publisher_platform,platform_position',
                 time_range: tr,
             });
+            let placementSkipped = 0;
             for (let i = 0; i < placementRows.length; i += CHUNK) {
-                await Promise.all(placementRows.slice(i, i + CHUNK).map(row => {
+                const settled = await Promise.allSettled(placementRows.slice(i, i + CHUNK).map(row => {
                     const { leads, purchases, revenue } = extractConversions(row);
                     return marketingRepo.upsertAdDailyPlacement(
                         row.ad_id, new Date(row.date_start),
@@ -218,8 +225,10 @@ export async function GET(request) {
                         }
                     );
                 }));
+                placementSkipped += settled.filter(r => r.status === 'rejected').length;
             }
-            stats.placementRows += placementRows.length;
+            stats.placementRows += placementRows.length - placementSkipped;
+            if (placementSkipped > 0) logger.warn('[Backfill]', `Placement: skipped ${placementSkipped} rows (FK or missing ad)`);
 
             // 2s cooldown between windows
             if (win !== windows[windows.length - 1]) await sleep(2000);
