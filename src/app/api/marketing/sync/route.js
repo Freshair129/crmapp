@@ -127,27 +127,32 @@ export async function GET(request) {
         const adSetMap = await marketingRepo.getAllAdSetFBIds();
 
         // Build creative upsert — full-quality image → compress WebP → Supabase Storage
+        // Parallel in chunks of 10 to avoid Supabase rate limit and timeout
         const creativeMap_raw = new Map(fbAds.map(a => [a.creative?.id, a.creative]).filter(([id]) => id));
-        for (const [cid, creative] of creativeMap_raw) {
-            // Priority: full image > thumbnail
-            const imageSrc = creative?.object_story_spec?.link_data?.picture
-                || creative?.object_story_spec?.video_data?.image_url
-                || creative?.image_url
-                || creative?.thumbnail_url
-                || null;
+        const creativeEntries = [...creativeMap_raw.entries()];
+        const CREATIVE_CHUNK = 10;
+        for (let ci = 0; ci < creativeEntries.length; ci += CREATIVE_CHUNK) {
+            await Promise.allSettled(creativeEntries.slice(ci, ci + CREATIVE_CHUNK).map(async ([cid, creative]) => {
+                // Priority: full image > thumbnail
+                const imageSrc = creative?.object_story_spec?.link_data?.picture
+                    || creative?.object_story_spec?.video_data?.image_url
+                    || creative?.image_url
+                    || creative?.thumbnail_url
+                    || null;
 
-            let storageUrl = null;
-            if (imageSrc) {
-                const adId = fbAds.find(a => a.creative?.id === cid)?.id;
-                storageUrl = adId ? await uploadAdImage(imageSrc, adId, { fullQuality: true }) : null;
-            }
+                let storageUrl = null;
+                if (imageSrc) {
+                    const adId = fbAds.find(a => a.creative?.id === cid)?.id;
+                    storageUrl = adId ? await uploadAdImage(imageSrc, adId, { fullQuality: true }) : null;
+                }
 
-            await marketingRepo.upsertAdCreative(cid, {
-                body: creative?.body ?? null,
-                headline: creative?.headline ?? null,
-                callToAction: creative?.call_to_action_type ?? null,
-                imageUrl: storageUrl,
-            });
+                await marketingRepo.upsertAdCreative(cid, {
+                    body: creative?.body ?? null,
+                    headline: creative?.headline ?? null,
+                    callToAction: creative?.call_to_action_type ?? null,
+                    imageUrl: storageUrl,
+                });
+            }));
         }
         const creativeMap = await marketingRepo.getAllCreativeFBIds();
 
@@ -177,8 +182,18 @@ export async function GET(request) {
 
                     const parsed = JSON.parse(r.body);
                     const days = parsed.data || [];
-                    let spend = 0, impressions = 0, clicks = 0, revenue = 0;
+                    let spend = 0, impressions = 0, clicks = 0, reach = 0, revenue = 0;
                     const dailyRows = [];
+
+                    const isPurchase = t => [
+                        'purchase',
+                        'onsite_conversion.purchase',
+                        'omni_purchase',
+                        'onsite_app_purchase',
+                        'onsite_web_purchase',
+                        'onsite_web_app_purchase',
+                        'offsite_conversion.fb_pixel_purchase',
+                    ].includes(t);
 
                     for (const day of days) {
                         const dSpend       = parseFloat(day.spend || 0);
@@ -186,17 +201,17 @@ export async function GET(request) {
                         const dReach       = parseInt(day.reach || 0, 10);
                         const dClicks      = parseInt(day.clicks || 0, 10);
                         const dRevenue     = (day.action_values || [])
-                            .filter(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))
+                            .filter(a => isPurchase(a.action_type))
                             .reduce((s, a) => s + parseFloat(a.value || 0), 0);
                         const dPurchases   = (day.actions || [])
-                            .filter(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type))
+                            .filter(a => isPurchase(a.action_type))
                             .reduce((s, a) => s + parseInt(a.value || 0), 0);
                         const dLeads       = (day.actions || [])
                             .filter(a => a.action_type === 'lead')
                             .reduce((s, a) => s + parseInt(a.value || 0), 0);
 
                         const cpaLead     = (day.cost_per_action_type || []).find(a => a.action_type === 'lead');
-                        const cpaPurchase = (day.cost_per_action_type || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+                        const cpaPurchase = (day.cost_per_action_type || []).find(a => isPurchase(a.action_type));
                         const videoVal    = (type) => parseInt((day[type] || []).find(a => a.action_type === 'video_view')?.value || 0, 10);
 
                         spend += dSpend; impressions += dImpressions;
