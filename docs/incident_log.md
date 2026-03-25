@@ -4,6 +4,28 @@ This document records significant logic errors, system failures, and their resol
 
 ---
 
+## 📅 2026-03-26: Marketing Sync Revenue = 0 & Cascading Failures
+**Ref ID**: `INC-20260326-MKTREV`
+**Severity**: HIGH — ADS REVENUE = 0 บน dashboard + sync timeout ทุก run
+**Resolution**: `FULL_FIX` — 5 commits, 4 ไฟล์, 7 bugs
+**Full Report**: [`docs/incidents/2026-03-26-marketing-sync-revenue-zero.md`](./incidents/2026-03-26-marketing-sync-revenue-zero.md)
+
+### สรุปสั้น
+FB เปลี่ยน primary purchase action_type เป็น `omni_purchase` แต่ code check แค่ `purchase` + `onsite_conversion.purchase` → revenue = 0 ทุก row ตั้งแต่ sync แรก นอกจากนี้ยังพบ `reach` variable ไม่ถูก init (ReferenceError ทำให้ทุก insight batch fail), creative image upload sequential แทน parallel (timeout), backfill ใช้ `Promise.all` แทน `Promise.allSettled` (abort ทั้ง window เมื่อมี 1 FK error), reach metric แสดง impressions แทน reach, และ N+1 query ใน adSet sync loop
+
+### Bugs Fixed
+| Bug | ไฟล์ | ผลกระทบ |
+|-----|------|---------|
+| `isPurchase` 2 types → 7 types | sync, backfill, sync-daily, sync-hourly | revenue = 0 ตลอด |
+| `reach` ไม่ declare → ReferenceError | sync/route.js | ทุก insight batch fail |
+| Creative upload sequential | sync/route.js | sync timeout ทุกครั้ง |
+| `Promise.all` → `Promise.allSettled` | backfill/route.js | FK error abort ทั้ง window |
+| `reach` ใน `getMarketingInsights` = impressions | marketingRepo.js | reach inflate 10-20x |
+| `bulkUpsertDailyMetrics` update 8/20 fields | marketingRepo.js | extended metrics ไม่ refresh |
+| N+1 `getCampaignByFBId` per adSet | sync/route.js | sync ช้าโดยไม่จำเป็น |
+
+---
+
 ## 📅 2026-02-18: Shabu (Dinner) Campaign Misattribution
 **Ref ID**: `LOGIC-ERR-20260218-01`
 **Changelog ID**: `FIX-ATTR-001` (See `dinner_performance_report.md` update)
