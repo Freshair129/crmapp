@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import path from 'node:path'
 import { defineConfig } from 'prisma/config'
 
@@ -5,4 +6,7 @@ import { defineConfig } from 'prisma/config'
 // Driver adapter is configured in src/lib/prisma.ts (PrismaClient constructor)
 export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
+  datasource: {
+    url: process.env.DATABASE_URL
+  }
 })

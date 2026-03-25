@@ -8,6 +8,21 @@
     },
     "src/app/api/sheets/**/*.js": {
       "maxDuration": 10
+    },
+    "src/app/api/marketing/sync-hourly/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/marketing/sync-daily/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/marketing/backfill/route.js": {
+      "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/marketing/sync-daily",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

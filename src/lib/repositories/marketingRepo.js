@@ -148,11 +148,26 @@ export async function appendHourlyLedgerIfChanged(adId, date, hour, metrics) {
     if (isDifferent) {
         return prisma.adHourlyLedger.create({
             data: {
-                ...metrics,
                 adId,
                 date: normalizedDate,
                 hour,
-                roas: metrics.spend > 0 ? (metrics.revenue || 0) / metrics.spend : 0
+                spend:          metrics.spend,
+                impressions:    metrics.impressions,
+                clicks:         metrics.clicks,
+                reach:          metrics.reach          ?? 0,
+                leads:          metrics.leads          ?? 0,
+                purchases:      metrics.purchases      ?? 0,
+                revenue:        metrics.revenue        ?? 0,
+                roas:           metrics.spend > 0 ? (metrics.revenue || 0) / metrics.spend : 0,
+                cpm:            metrics.cpm            ?? null,
+                cpc:            metrics.cpc            ?? null,
+                frequency:      metrics.frequency      ?? null,
+                costPerLead:    metrics.costPerLead    ?? null,
+                costPerPurchase:metrics.costPerPurchase?? null,
+                videoP25:       metrics.videoP25       ?? null,
+                videoP50:       metrics.videoP50       ?? null,
+                videoP75:       metrics.videoP75       ?? null,
+                videoP100:      metrics.videoP100      ?? null,
             }
         });
     }
@@ -694,6 +709,44 @@ export async function getActiveAds() {
         where: { status: 'ACTIVE' },
         select: { adId: true }
     });
+}
+
+export async function upsertAdDailyDemographic(adId, date, age, gender, data) {
+    const prisma = await getPrisma();
+    const d = new Date(date); d.setUTCHours(0, 0, 0, 0);
+    return prisma.adDailyDemographic.upsert({
+        where:  { adId_date_age_gender: { adId, date: d, age, gender } },
+        update: data,
+        create: { adId, date: d, age, gender, ...data },
+    });
+}
+
+export async function upsertAdDailyPlacement(adId, date, platform, position, data) {
+    const prisma = await getPrisma();
+    const d = new Date(date); d.setUTCHours(0, 0, 0, 0);
+    return prisma.adDailyPlacement.upsert({
+        where:  { adId_date_platform_position: { adId, date: d, platform, position } },
+        update: data,
+        create: { adId, date: d, platform, position, ...data },
+    });
+}
+
+export async function getLastDailyMetricDate() {
+    const prisma = await getPrisma();
+    const row = await prisma.adDailyMetric.findFirst({
+        orderBy: { date: 'desc' },
+        select:  { date: true },
+    });
+    return row?.date ?? null;
+}
+
+export async function getActiveCampaignIds() {
+    const prisma = await getPrisma();
+    const rows = await prisma.campaign.findMany({
+        where: { status: 'ACTIVE' },
+        select: { campaignId: true },
+    });
+    return rows.map(r => r.campaignId);
 }
 
 const SYNC_STATUS_KEY = 'meta:last_sync';

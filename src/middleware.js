@@ -62,7 +62,9 @@ function hasPermission(userRole, requiredRole) {
 /** Sync routes that can be called by cron/script using CRON_SECRET header */
 const CRON_ROUTES = [
   '/api/marketing/sync-hourly',
+  '/api/marketing/sync-daily',
   '/api/marketing/sync',
+  '/api/marketing/backfill',
 ];
 
 export async function middleware(request) {
@@ -73,12 +75,13 @@ export async function middleware(request) {
   if (process.env.NODE_ENV === 'development') return NextResponse.next();
 
 
-  // CRON_SECRET bypass — allows internal scripts/schedulers to call sync routes
-  // without a user session. Header: x-cron-secret: <CRON_SECRET>
+  // CRON_SECRET bypass — x-cron-secret or Authorization: Bearer <secret>
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && CRON_ROUTES.some(r => pathname.startsWith(r))) {
-    const incoming = request.headers.get('x-cron-secret');
-    if (incoming === cronSecret) return NextResponse.next();
+    const byCronHeader = request.headers.get('x-cron-secret') === cronSecret;
+    const byBearer     = request.headers.get('authorization') === `Bearer ${cronSecret}`;
+    const byQStash     = !!request.headers.get('upstash-signature'); // QStash worker
+    if (byCronHeader || byBearer || byQStash) return NextResponse.next();
   }
 
   // Find matching rule (first match wins)

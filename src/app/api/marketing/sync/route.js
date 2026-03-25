@@ -107,7 +107,14 @@ export async function GET(request) {
             limit: '100',
         });
 
-        const insightFields = 'spend,reach,impressions,clicks,actions,action_values';
+        const insightFields = [
+            'spend', 'reach', 'impressions', 'clicks', 'actions', 'action_values',
+            'cpm', 'cpc', 'frequency',
+            'cost_per_action_type',
+            'quality_ranking', 'engagement_rate_ranking', 'conversion_rate_ranking',
+            'video_p25_watched_actions', 'video_p50_watched_actions',
+            'video_p75_watched_actions', 'video_p100_watched_actions',
+        ].join(',');
         const until = new Date().toISOString().split('T')[0];
         const BATCH_SIZE = 50;
         const BATCH_DELAY = 500; // ms between batches (reduced from 1500ms)
@@ -186,6 +193,10 @@ export async function GET(request) {
                             .filter(a => a.action_type === 'lead')
                             .reduce((s, a) => s + parseInt(a.value || 0), 0);
 
+                        const cpaLead     = (day.cost_per_action_type || []).find(a => a.action_type === 'lead');
+                        const cpaPurchase = (day.cost_per_action_type || []).find(a => ['purchase', 'onsite_conversion.purchase'].includes(a.action_type));
+                        const videoVal    = (type) => parseInt((day[type] || []).find(a => a.action_type === 'video_view')?.value || 0, 10);
+
                         spend += dSpend; impressions += dImpressions;
                         clicks += dClicks; reach += dReach; revenue += dRevenue;
 
@@ -195,6 +206,18 @@ export async function GET(request) {
                             reach: dReach,
                             revenue: dRevenue, leads: dLeads, purchases: dPurchases,
                             roas: dSpend > 0 ? dRevenue / dSpend : 0,
+                            cpm:                   day.cpm       ? parseFloat(day.cpm)       : null,
+                            cpc:                   day.cpc       ? parseFloat(day.cpc)       : null,
+                            frequency:             day.frequency ? parseFloat(day.frequency) : null,
+                            costPerLead:           cpaLead       ? parseFloat(cpaLead.value || 0)     : null,
+                            costPerPurchase:       cpaPurchase   ? parseFloat(cpaPurchase.value || 0) : null,
+                            qualityRanking:        day.quality_ranking           ?? null,
+                            engagementRateRanking: day.engagement_rate_ranking   ?? null,
+                            conversionRateRanking: day.conversion_rate_ranking   ?? null,
+                            videoP25:  videoVal('video_p25_watched_actions')  || null,
+                            videoP50:  videoVal('video_p50_watched_actions')  || null,
+                            videoP75:  videoVal('video_p75_watched_actions')  || null,
+                            videoP100: videoVal('video_p100_watched_actions') || null,
                         });
                     }
                     insightMap.set(ad.id, { spend, impressions, clicks, reach, revenue, dailyRows });

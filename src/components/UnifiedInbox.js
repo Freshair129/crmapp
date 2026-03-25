@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import PusherClient from 'pusher-js';
 import { Search, MessageCircle, Send, Facebook, MessageSquare, Phone, Mail, Tag, BookOpen, Megaphone, ExternalLink, RefreshCw, Sparkles, Copy, Check, ChevronDown, Clock, History, User } from 'lucide-react';
 
 export default function UnifiedInbox({ language = 'TH' }) {
@@ -116,6 +117,35 @@ export default function UnifiedInbox({ language = 'TH' }) {
         };
 
         registerPush();
+    }, []);
+
+    // ── Pusher real-time subscription ──────────────────────────────
+    useEffect(() => {
+        const key     = process.env.NEXT_PUBLIC_PUSHER_KEY;
+        const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+        if (!key || !cluster) return;
+
+        const pusher  = new PusherClient(key, { cluster });
+        const channel = pusher.subscribe('inbox');
+
+        channel.bind('chat-update', ({ conversationId }) => {
+            // Refresh conversation list so unreadCount + lastMessageAt update
+            fetchConversations(1, true);
+
+            // If this thread is currently open, also refresh its messages
+            if (conversationId && conversationId === conversationsRef.current.find(
+                c => c.id === selectedIdRef.current
+            )?.conversationId) {
+                fetchMessages(selectedIdRef.current, 1, true);
+            }
+        });
+
+        return () => {
+            channel.unbind_all();
+            pusher.unsubscribe('inbox');
+            pusher.disconnect();
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

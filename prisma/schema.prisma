@@ -486,10 +486,12 @@ model Ad {
   adSet        AdSet            @relation(fields: [adSetId], references: [id])
   creative     AdCreative?      @relation(fields: [creativeId], references: [id])
   experiment   Experiment?      @relation(fields: [experimentId], references: [id])
-  dailyMetrics AdDailyMetric[]
+  dailyMetrics  AdDailyMetric[]
   hourlyMetrics AdHourlyMetric[]
-  hourlyLedger AdHourlyLedger[]
-  liveStatus   AdLiveStatus?
+  hourlyLedger  AdHourlyLedger[]
+  demographics  AdDailyDemographic[]
+  placements    AdDailyPlacement[]
+  liveStatus    AdLiveStatus?
 
   @@index([experimentId])
   @@map("ads")
@@ -543,18 +545,30 @@ model Experiment {
 }
 
 model AdDailyMetric {
-  id          String   @id @default(uuid())
-  adId        String   @map("ad_id")
-  date        DateTime @db.Date
-  spend       Float
-  impressions Int
-  clicks      Int
-  reach       Int      @default(0)
-  leads       Int
-  purchases   Int
-  revenue     Float    @default(0)
-  roas        Float    @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                      String   @id @default(uuid())
+  adId                    String   @map("ad_id")
+  date                    DateTime @db.Date
+  spend                   Float
+  impressions             Int
+  clicks                  Int
+  reach                   Int      @default(0)
+  leads                   Int
+  purchases               Int
+  revenue                 Float    @default(0)
+  roas                    Float    @default(0)
+  cpm                     Float?
+  cpc                     Float?
+  frequency               Float?
+  costPerLead             Float?   @map("cost_per_lead")
+  costPerPurchase         Float?   @map("cost_per_purchase")
+  qualityRanking          String?  @map("quality_ranking")
+  engagementRateRanking   String?  @map("engagement_rate_ranking")
+  conversionRateRanking   String?  @map("conversion_rate_ranking")
+  videoP25                Int?     @map("video_p25")
+  videoP50                Int?     @map("video_p50")
+  videoP75                Int?     @map("video_p75")
+  videoP100               Int?     @map("video_p100")
+  createdAt               DateTime @default(now()) @map("created_at")
 
   ad Ad @relation(fields: [adId], references: [adId])
 
@@ -563,19 +577,31 @@ model AdDailyMetric {
 }
 
 model AdHourlyMetric {
-  id          String   @id @default(uuid())
-  adId        String   @map("ad_id")
-  date        DateTime @db.Date
-  hour        Int
-  spend       Float
-  impressions Int
-  clicks      Int
-  reach       Int      @default(0)
-  leads       Int
-  purchases   Int
-  revenue     Float    @default(0)
-  roas        Float    @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                      String   @id @default(uuid())
+  adId                    String   @map("ad_id")
+  date                    DateTime @db.Date
+  hour                    Int
+  spend                   Float
+  impressions             Int
+  clicks                  Int
+  reach                   Int      @default(0)
+  leads                   Int
+  purchases               Int
+  revenue                 Float    @default(0)
+  roas                    Float    @default(0)
+  cpm                     Float?
+  cpc                     Float?
+  frequency               Float?
+  costPerLead             Float?   @map("cost_per_lead")
+  costPerPurchase         Float?   @map("cost_per_purchase")
+  qualityRanking          String?  @map("quality_ranking")
+  engagementRateRanking   String?  @map("engagement_rate_ranking")
+  conversionRateRanking   String?  @map("conversion_rate_ranking")
+  videoP25                Int?     @map("video_p25")
+  videoP50                Int?     @map("video_p50")
+  videoP75                Int?     @map("video_p75")
+  videoP100               Int?     @map("video_p100")
+  createdAt               DateTime @default(now()) @map("created_at")
 
   ad Ad @relation(fields: [adId], references: [adId])
 
@@ -586,24 +612,73 @@ model AdHourlyMetric {
 // ADR-024 D4: Append-only hourly ledger for trend graphs. Never updated — only inserted.
 // Delta rule: only write when delta != 0.
 model AdHourlyLedger {
-  id          String   @id @default(uuid())
-  adId        String   @map("ad_id")
-  date        DateTime @db.Date
-  hour        Int
-  spend       Float
-  impressions Int
-  clicks      Int
-  reach       Int      @default(0)
-  leads       Int
-  purchases   Int
-  revenue     Float    @default(0)
-  roas        Float    @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                      String   @id @default(uuid())
+  adId                    String   @map("ad_id")
+  date                    DateTime @db.Date
+  hour                    Int
+  spend                   Float
+  impressions             Int
+  clicks                  Int
+  reach                   Int      @default(0)
+  leads                   Int
+  purchases               Int
+  revenue                 Float    @default(0)
+  roas                    Float    @default(0)
+  cpm                     Float?
+  cpc                     Float?
+  frequency               Float?
+  costPerLead             Float?   @map("cost_per_lead")
+  costPerPurchase         Float?   @map("cost_per_purchase")
+  videoP25                Int?     @map("video_p25")
+  videoP50                Int?     @map("video_p50")
+  videoP75                Int?     @map("video_p75")
+  videoP100               Int?     @map("video_p100")
+  createdAt               DateTime @default(now()) @map("created_at")
 
   ad Ad @relation(fields: [adId], references: [adId])
 
   @@index([adId, date, hour])
   @@map("ad_hourly_ledger")
+}
+
+model AdDailyDemographic {
+  id          String   @id @default(uuid())
+  adId        String   @map("ad_id")
+  date        DateTime @db.Date
+  age         String   // "18-24", "25-34", "35-44", "45-54", "55-64", "65+"
+  gender      String   // "male", "female", "unknown"
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  spend       Float    @default(0)
+  reach       Int      @default(0)
+  leads       Int      @default(0)
+  purchases   Int      @default(0)
+  revenue     Float    @default(0)
+
+  ad Ad @relation(fields: [adId], references: [adId])
+
+  @@unique([adId, date, age, gender])
+  @@map("ad_daily_demographics")
+}
+
+model AdDailyPlacement {
+  id          String   @id @default(uuid())
+  adId        String   @map("ad_id")
+  date        DateTime @db.Date
+  platform    String   // "facebook", "instagram", "audience_network", "messenger"
+  position    String   // "feed", "story", "reels", "search", "right_hand_column", etc.
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  spend       Float    @default(0)
+  reach       Int      @default(0)
+  leads       Int      @default(0)
+  purchases   Int      @default(0)
+  revenue     Float    @default(0)
+
+  ad Ad @relation(fields: [adId], references: [adId])
+
+  @@unique([adId, date, platform, position])
+  @@map("ad_daily_placements")
 }
 
 // ─────────────────────────────────────────────
@@ -865,16 +940,35 @@ model Ingredient {
   category     String                @default("OTHER")
   costPerUnit  Float?                @map("cost_per_unit")
   yieldPercent Float                 @default(100) @map("yield_percent")
+  marketUrl    String?               @map("market_url")
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
   purchaseItems    PurchaseRequestItem[]
   recipeIngredients RecipeIngredient[]
   lots              IngredientLot[]
+  marketPrices      MarketPrice[]
 
   @@index([category])
   @@index([name])
   @@map("ingredients")
+}
+
+model MarketPrice {
+  id           String     @id @default(uuid())
+  ingredientId String     @map("ingredient_id")
+  source       String     // e.g. "Makro", "Lotus"
+  price        Float
+  unit         String
+  productUrl   String?    @map("product_url")
+  scrapedAt    DateTime   @default(now()) @map("scraped_at")
+
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([ingredientId])
+  @@index([scrapedAt])
+  @@index([source])
+  @@map("market_prices")
 }
 
 model PurchaseRequest {

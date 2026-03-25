@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 import { getPrisma } from '@/lib/db';
-import { eventBus } from '@/lib/eventBus';
 import { notificationEngine } from '@/lib/notificationEngine';
-import { generateCustomerId } from '@/utils/idGenerator';
+import { generateCustomerId } from '@/lib/idGenerators';
 
 /**
  * Fire-and-forget: fetch sender name from FB Graph API and update customer record.
@@ -195,7 +194,12 @@ async function processEvent(event) {
         );
     }
 
-    // 4. Web Push → notify all staff browsers (ADR-044) — fire-and-forget
+    // 4a. Pusher → push real-time event to open inbox tabs — fire-and-forget
+    import('@/lib/pusher').then(({ triggerChatUpdate }) => {
+        triggerChatUpdate(threadId);
+    }).catch(err => logger.error('FacebookWebhook', 'pusher trigger failed', err));
+
+    // 4b. Web Push → notify all staff browsers (ADR-044) — fire-and-forget
     if (!isFromPage) {
         import('@/lib/pushNotifier').then(({ notifyInbox }) => {
             notifyInbox({
