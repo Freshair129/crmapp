@@ -14,6 +14,8 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import * as marketingRepo from '@/lib/repositories/marketingRepo';
 
+export const maxDuration = 300; // 5 minutes — FB backfill needs time for multiple windows
+
 const GRAPH_API     = 'https://graph.facebook.com/v19.0';
 const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
 const ACCESS_TOKEN  = process.env.FB_ACCESS_TOKEN;

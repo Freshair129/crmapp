@@ -4,6 +4,8 @@ import * as marketingRepo from '@/lib/repositories/marketingRepo';
 import { uploadAdImage } from '@/lib/supabaseStorage';
 import { cache as redis } from '@/lib/redis';
 
+export const maxDuration = 300; // 5 minutes — FB sync pulls all campaigns/adsets/ads
+
 const SYNC_STATUS_KEY = 'meta:last_sync';
 
 const GRAPH_API = 'https://graph.facebook.com/v19.0';
