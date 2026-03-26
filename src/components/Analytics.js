@@ -741,7 +741,9 @@ export default function Analytics({ customers, products }) {
 
     const aiSummary = {
         totalIntelligence: customers.filter(c => c.intelligence).length,
-        avgRisk: (customers.reduce((sum, c) => sum + (c.intelligence?.metrics?.churn_risk_level === 'High' ? 100 : c.intelligence?.metrics?.churn_risk_level === 'Medium' ? 50 : 0), 0) / customers.length).toFixed(0),
+        avgRisk: customers.length > 0
+            ? (customers.reduce((sum, c) => sum + (c.intelligence?.metrics?.churn_risk_level === 'High' ? 100 : c.intelligence?.metrics?.churn_risk_level === 'Medium' ? 50 : 0), 0) / customers.length).toFixed(0)
+            : '0',
         topOpportunity: "Focus on 'Returning' customer upsell for Line OA leads."
     };
 
@@ -1749,7 +1751,7 @@ export default function Analytics({ customers, products }) {
                                                         }
                                                         productAttribution[cleanName].totalUnits += 1;
                                                         // Distribute revenue evenly among items if multiple (rough estimate)
-                                                        productAttribution[cleanName].totalRevenue += (amount / items.length);
+                                                        productAttribution[cleanName].totalRevenue += items.length > 0 ? (amount / items.length) : amount;
 
                                                         if (!productAttribution[cleanName].sources[source]) {
                                                             productAttribution[cleanName].sources[source] = 0;
