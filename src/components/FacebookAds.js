@@ -117,6 +117,7 @@ export default function FacebookAds({ customers }) {
     const syncMarketingData = async () => {
         setSyncing(true);
         try {
+            // 1. Main sync: campaigns + adsets + ads + daily metrics
             const res = await fetch(`/api/marketing/sync?months=3`);
             const data = await res.json();
             if (data.success) {
@@ -125,6 +126,13 @@ export default function FacebookAds({ customers }) {
                 const dailyData = await dailyRes.json();
                 if (dailyData.success) setDaily(dailyData.data || []);
             }
+
+            // 2. Hourly sync: run in parallel for today's AdHourlyMetric
+            // (fire-and-forget — don't block main sync result)
+            fetch('/api/marketing/sync-hourly-now', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => console.log('[FacebookAds] Hourly sync:', d.success ? `${d.stats?.slotsUpdated} slots` : d.error))
+                .catch(e => console.warn('[FacebookAds] Hourly sync error:', e));
         } catch (err) {
             console.error('[FacebookAds] syncMarketingData error:', err);
         } finally {
