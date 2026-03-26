@@ -229,7 +229,7 @@ export default function Analytics({ customers, products }) {
             const mapping = adMapping.ad_mappings?.find(m => m.ad_name === adName);
             const useName = mapping?.product_name || adName;
 
-            const joinDate = new Date(cust.profile?.join_date || cust.timeline?.[0]?.date || now);
+            const joinDate = new Date(cust.createdAt || cust.profile?.join_date || cust.timeline?.[0]?.date || now);
 
             if (isWon && useName && (now - joinDate <= periodMs)) {
                 // Avoid double counting if already in orders
@@ -420,8 +420,8 @@ export default function Analytics({ customers, products }) {
     const channelTable = {};
 
     customers.forEach(c => {
-        const stage = c.profile?.lifecycle_stage || 'Unknown';
-        const channel = c.contact_info?.lead_channel || 'Organic / Other';
+        const stage = c.lifecycleStage || c.profile?.lifecycle_stage || 'Unknown';
+        const channel = c.lineId ? 'Line OA' : c.facebookId ? 'Facebook Ads' : 'Organic / Other';
 
         if (!channelTable[channel]) {
             channelTable[channel] = { leads: 0, won: 0 };
@@ -476,7 +476,7 @@ export default function Analytics({ customers, products }) {
             const purchaseEvents = (c.timeline || []).filter(e => e.type === 'ORDER' || e.type === 'PURCHASE');
             const lastPurchaseDate = purchaseEvents.length > 0
                 ? new Date(Math.max(...purchaseEvents.map(e => new Date(e.date))))
-                : new Date(c.intelligence?.metrics?.last_purchase_date || c.profile?.join_date || '2025-01-01');
+                : new Date(c.intelligence?.metrics?.last_purchase_date || c.createdAt || c.profile?.join_date || '2025-01-01');
 
             const recencyDays = Math.floor((today - lastPurchaseDate) / (1000 * 60 * 60 * 24));
 
@@ -527,7 +527,7 @@ export default function Analytics({ customers, products }) {
 
             if (daysLeft >= 0 && daysLeft <= 60) {
                 expiringCourses.push({
-                    name: `${c.profile?.first_name} ${c.profile?.last_name}`,
+                    name: `${c.nickName || c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unknown',
                     course: course.name,
                     expiryDate: expiryDate.toISOString().split('T')[0],
                     daysLeft: daysLeft,
@@ -547,7 +547,7 @@ export default function Analytics({ customers, products }) {
     churnRiskList.slice(0, 3).forEach(c => {
         salesTasks.push({
             task: `Win-back call for ${c.rfm.segment}`,
-            customer: `${c.profile?.first_name} ${c.profile?.last_name}`,
+            customer: `${c.nickName || c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unknown',
             type: 'Re-engagement',
             due: 'Today',
             staff: 'P-Nueng'
@@ -733,7 +733,7 @@ export default function Analytics({ customers, products }) {
         .slice(0, 5);
 
     const allRecommendations = customers.map(c => ({
-        name: c.profile?.nick_name || c.profile?.first_name,
+        name: c.nickName || c.firstName,
         action: c.intelligence?.next_best_action?.action_th || c.intelligence?.next_best_action?.action,
         reason: c.intelligence?.next_best_action?.reason_th || c.intelligence?.next_best_action?.reason
     })).filter(r => r.action);
@@ -1034,15 +1034,15 @@ export default function Analytics({ customers, products }) {
                                     <div className="col-span-1 text-xs font-bold text-white/50">{i + 1}</div>
                                     <div className="col-span-5 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#19273a] to-[#0c1a2f] border border-white/10 flex items-center justify-center text-xs font-bold text-[#cc9d37]">
-                                            {(c.profile?.first_name || 'C').charAt(0)}
+                                            {(c.nickName || c.firstName || 'C').charAt(0)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-bold text-white truncate">{c.profile?.first_name} {c.profile?.last_name}</p>
-                                            <p className="text-[9px] text-white/40 truncate">{c.profile?.job_title || 'Member'}</p>
+                                            <p className="text-sm font-bold text-white truncate">{c.nickName || c.firstName} {!c.nickName && c.lastName ? c.lastName : ''}</p>
+                                            <p className="text-[9px] text-white/40 truncate">{c.membershipTier || 'Member'}</p>
                                         </div>
                                     </div>
                                     <div className="col-span-3 text-right text-[10px] font-bold text-white/60">
-                                        {c.profile?.join_date ? new Date(c.profile.join_date).toLocaleDateString() : 'N/A'}
+                                        {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
                                     </div>
                                     <div className="col-span-3 text-right font-black text-[#cc9d37]">
                                         ฿{formatCurrency(getRevenue(c))}
@@ -1121,9 +1121,9 @@ export default function Analytics({ customers, products }) {
                                 {rfmSegments['Champions'].slice(0, 8).map((c, i) => (
                                     <div key={i} className="min-w-[140px] p-4 bg-gradient-to-br from-[#cc9d37]/20 to-[#0c1a2f] border border-[#cc9d37]/30 rounded-2xl flex flex-col items-center text-center">
                                         <div className="w-10 h-10 rounded-full bg-[#cc9d37] text-[#0c1a2f] flex items-center justify-center font-black text-lg mb-2 shadow-lg">
-                                            {(c.profile?.first_name || 'C').charAt(0)}
+                                            {(c.nickName || c.firstName || 'C').charAt(0)}
                                         </div>
-                                        <p className="text-xs font-bold text-white truncate w-full">{c.profile?.first_name}</p>
+                                        <p className="text-xs font-bold text-white truncate w-full">{c.nickName || c.firstName}</p>
                                         <p className="text-[10px] text-[#cc9d37] font-black">Score: 5-5-5</p>
                                     </div>
                                 ))}
@@ -1139,10 +1139,10 @@ export default function Analytics({ customers, products }) {
                     {/* Summary Cards */}
                     <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[
-                            { label: 'Total Revenue', val: totalRevenue, sub: '100%', color: 'text-white' },
+                            { label: 'Total Revenue', val: totalRevenue, sub: totalRevenue > 0 ? '100%' : '—', color: 'text-white' },
                             { label: 'COGS (Real Cost)', val: cogs, sub: totalRevenue > 0 ? `${((cogs / totalRevenue) * 100).toFixed(1)}%` : '—', color: 'text-rose-400' },
                             { label: 'Operating Expenses', val: totalOpex, sub: totalRevenue > 0 ? `${((totalOpex / totalRevenue) * 100).toFixed(1)}%` : '—', color: 'text-orange-400' },
-                            { label: 'Net Profit', val: netProfit, sub: `${profitMargin.toFixed(1)}%`, color: 'text-emerald-400', highlight: true }
+                            { label: 'Net Profit', val: netProfit, sub: totalRevenue > 0 ? `${profitMargin.toFixed(1)}%` : '—', color: 'text-emerald-400', highlight: true }
                         ].map((stat, i) => (
                             <div key={i} className={`p-6 rounded-[2rem] border border-white/10 ${stat.highlight ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-900/10 border-emerald-500/30' : 'bg-[#0c1a2f]/50'}`}>
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{stat.label}</p>
@@ -1459,7 +1459,84 @@ export default function Analytics({ customers, products }) {
                 </div>
             )}
 
-            {/* TAB 7: Event / Openhouse Analytics (New) */}
+            {/* TAB 7: V-Insight AI */}
+            {activeTab === 'vinsight' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
+                    {/* Summary Cards */}
+                    <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 rounded-[2rem] p-6">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Intelligence Profiles</p>
+                            <p className="text-4xl font-black text-white">{aiSummary.totalIntelligence}</p>
+                            <p className="text-xs text-white/40 mt-1">of {customers.length} customers have AI data</p>
+                        </div>
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 rounded-[2rem] p-6">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Avg Churn Risk Score</p>
+                            <p className={`text-4xl font-black ${Number(aiSummary.avgRisk) >= 70 ? 'text-rose-400' : Number(aiSummary.avgRisk) >= 40 ? 'text-amber-400' : 'text-emerald-400'}`}>{aiSummary.avgRisk}</p>
+                            <p className="text-xs text-white/40 mt-1">0 = Low · 50 = Medium · 100 = High</p>
+                        </div>
+                        <div className="bg-[#0c1a2f]/50 border border-[#cc9d37]/30 rounded-[2rem] p-6">
+                            <p className="text-[10px] font-black text-[#cc9d37]/60 uppercase tracking-widest mb-2">Top Opportunity</p>
+                            <p className="text-sm font-bold text-white leading-relaxed">{aiSummary.topOpportunity}</p>
+                        </div>
+                    </div>
+
+                    {/* Pain Points */}
+                    <div className="lg:col-span-6 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
+                        <h3 className="font-black text-white text-xl tracking-tight mb-6">Top Pain Points</h3>
+                        {topPainPoints.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-white/20">
+                                <p className="text-sm font-bold">No pain point data yet</p>
+                                <p className="text-xs mt-1">Requires intelligence profiles with pain_points field</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {topPainPoints.map(([point, count], i) => (
+                                    <div key={i} className="flex items-center gap-4">
+                                        <span className="text-[10px] font-black text-white/30 w-4">{i + 1}</span>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-bold text-white">{point}</span>
+                                                <span className="text-xs font-black text-[#cc9d37]">{count}x</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <div style={{ width: `${(count / (topPainPoints[0]?.[1] || 1)) * 100}%` }} className="h-full bg-[#cc9d37]/60 rounded-full transition-all duration-700"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Next Best Actions */}
+                    <div className="lg:col-span-6 bg-[#0c1a2f]/50 border border-white/10 rounded-[2.5rem] p-8">
+                        <h3 className="font-black text-white text-xl tracking-tight mb-6">Next Best Actions</h3>
+                        {allRecommendations.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-white/20">
+                                <p className="text-sm font-bold">No action recommendations yet</p>
+                                <p className="text-xs mt-1">Requires intelligence profiles with next_best_action field</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                                {allRecommendations.slice(0, 8).map((r, i) => (
+                                    <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-7 h-7 rounded-full bg-[#cc9d37]/20 border border-[#cc9d37]/30 flex items-center justify-center text-[10px] font-black text-[#cc9d37] flex-shrink-0">{r.name?.charAt(0) || 'C'}</div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-black text-white">{r.name || 'Customer'}</p>
+                                                <p className="text-xs text-[#cc9d37] font-bold mt-0.5">{r.action}</p>
+                                                {r.reason && <p className="text-[10px] text-white/40 mt-1 leading-relaxed">{r.reason}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 8: Event / Openhouse Analytics (New) */}
             {activeTab === 'event' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     {/* KPI Cards */}
@@ -1652,7 +1729,7 @@ export default function Analytics({ customers, products }) {
                             {(() => {
                                 const agentStats = {};
                                 customers.forEach(c => {
-                                    const agent = c.profile?.agent || 'Unassigned';
+                                    const agent = 'Unassigned';
                                     if (!agentStats[agent]) agentStats[agent] = { name: agent, revenue: 0, leads: 0, customers: 0 };
 
                                     agentStats[agent].leads++;
