@@ -1034,7 +1034,12 @@ export default function Analytics({ customers, products }) {
                                     <div className="col-span-1 text-xs font-bold text-white/50">{i + 1}</div>
                                     <div className="col-span-5 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#19273a] to-[#0c1a2f] border border-white/10 flex items-center justify-center text-xs font-bold text-[#cc9d37]">
-                                            {(c.nickName || c.firstName || 'C').charAt(0)}
+                                            {(() => {
+                                                const isPhonelike = v => !v || /^[0-9+\-\s()]{6,}$/.test(v.trim());
+                                                const nick = !isPhonelike(c.nickName) ? c.nickName : null;
+                                                const first = !isPhonelike(c.firstName) ? c.firstName : null;
+                                                return (nick || first || '?').charAt(0).toUpperCase();
+                                            })()}
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{c.nickName || c.firstName} {!c.nickName && c.lastName ? c.lastName : ''}</p>
@@ -1541,30 +1546,30 @@ export default function Analytics({ customers, products }) {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
                     {/* KPI Cards */}
                     <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><CalendarDays size={12} className="text-rose-500" /> Events This Month</h4>
-                            <p className="text-4xl font-black text-slate-800">{eventStats.count} Events</p>
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 p-6 rounded-3xl">
+                            <h4 className="text-xs font-bold text-white/50 mb-2 flex items-center gap-2"><CalendarDays size={12} className="text-rose-400" /> Events This Month</h4>
+                            <p className="text-4xl font-black text-white">{eventStats.count} Events</p>
                         </div>
-                        <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Users2 size={12} className="text-blue-500" /> Leads from Events</h4>
-                            <p className="text-4xl font-black text-slate-800">{eventStats.leads} People</p>
-                            <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-md">+25%</span>
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 p-6 rounded-3xl">
+                            <h4 className="text-xs font-bold text-white/50 mb-2 flex items-center gap-2"><Users2 size={12} className="text-blue-400" /> Leads from Events</h4>
+                            <p className="text-4xl font-black text-white">{eventStats.leads} People</p>
+                            <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-md">+25%</span>
                         </div>
-                        <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2"><Banknote size={12} className="text-[#cc9d37]" /> Sales from Events</h4>
-                            <p className="text-4xl font-black text-slate-800">฿{formatCurrency(eventStats.sales)}</p>
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 p-6 rounded-3xl">
+                            <h4 className="text-xs font-bold text-white/50 mb-2 flex items-center gap-2"><Banknote size={12} className="text-[#cc9d37]" /> Sales from Events</h4>
+                            <p className="text-4xl font-black text-[#cc9d37]">฿{formatCurrency(eventStats.sales)}</p>
                         </div>
                     </div>
 
                     {/* Upcoming Events Table */}
-                    <div className="lg:col-span-12 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8">
-                        <h3 className="flex items-center gap-2 font-black text-slate-800 text-xl tracking-tight mb-6">
-                            <CalendarCheck size={14} className="text-slate-400" /> Upcoming Events
+                    <div className="lg:col-span-12 bg-[#0c1a2f]/50 border border-white/10 rounded-[2rem] p-8">
+                        <h3 className="flex items-center gap-2 font-black text-white text-xl tracking-tight mb-6">
+                            <CalendarCheck size={14} className="text-white/40" /> Upcoming Events
                         </h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead>
-                                    <tr className="border-b border-slate-100 text-xs font-black text-slate-400 uppercase tracking-wider">
+                                    <tr className="border-b border-white/10 text-xs font-black text-white/40 uppercase tracking-wider">
                                         <th className="pb-4 pl-2">Event</th>
                                         <th className="pb-4">Date</th>
                                         <th className="pb-4">Location</th>
@@ -1572,22 +1577,22 @@ export default function Analytics({ customers, products }) {
                                         <th className="pb-4 text-right">Est. Leads</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-sm font-bold text-slate-700">
+                                <tbody className="text-sm font-bold text-white/80">
                                     {upcomingEvents.map((evt, i) => (
-                                        <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                        <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                             <td className="py-4 pl-2 flex items-center gap-3">
                                                 <div className={`w-2 h-2 rounded-full ${evt.dot}`}></div>
                                                 {evt.name}
                                             </td>
-                                            <td className="py-4 text-slate-500">{evt.date}</td>
-                                            <td className="py-4 text-slate-500">{evt.loc}</td>
+                                            <td className="py-4 text-white/50">{evt.date}</td>
+                                            <td className="py-4 text-white/50">{evt.loc}</td>
                                             <td className="py-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${evt.color} bg-opacity-10 bg-current`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${evt.color} bg-white/10`}>
                                                     <div className={`w-1.5 h-1.5 rounded-full bg-current`}></div>
                                                     {evt.status}
                                                 </span>
                                             </td>
-                                            <td className="py-4 text-right">{evt.leads}</td>
+                                            <td className="py-4 text-right text-white/70">{evt.leads}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -1597,13 +1602,13 @@ export default function Analytics({ customers, products }) {
 
                     {/* Past Performance */}
                     <div className="lg:col-span-12">
-                        <h3 className="flex items-center gap-2 font-black text-slate-800 text-xl tracking-tight mb-6">
-                            <BarChart size={14} className="text-green-600" /> Past Event Performance
+                        <h3 className="flex items-center gap-2 font-black text-white text-xl tracking-tight mb-6">
+                            <BarChart size={14} className="text-emerald-400" /> Past Event Performance
                         </h3>
-                        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="bg-[#0c1a2f]/50 border border-white/10 rounded-[2rem] overflow-hidden">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50">
-                                    <tr className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                                <thead className="bg-white/5">
+                                    <tr className="text-xs font-black text-white/40 uppercase tracking-wider">
                                         <th className="p-4 pl-6">Event</th>
                                         <th className="p-4">Date</th>
                                         <th className="p-4 text-right">Leads</th>
@@ -1612,17 +1617,17 @@ export default function Analytics({ customers, products }) {
                                         <th className="p-4 text-right pr-6">Sales</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-sm font-bold text-slate-700 divide-y divide-slate-100">
+                                <tbody className="text-sm font-bold text-white/80 divide-y divide-white/5">
                                     {pastEvents.map((evt, i) => (
-                                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                        <tr key={i} className="hover:bg-white/5 transition-colors">
                                             <td className="p-4 pl-6 flex items-center gap-2">
-                                                <Trees size={14} className="text-green-500" /> {evt.name}
+                                                <Trees size={14} className="text-emerald-400" /> {evt.name}
                                             </td>
-                                            <td className="p-4 text-slate-500">{evt.date}</td>
-                                            <td className="p-4 text-right">{evt.leads}</td>
-                                            <td className="p-4 text-right">{evt.reg}</td>
-                                            <td className="p-4 text-right">{evt.closed}</td>
-                                            <td className="p-4 text-right pr-6 font-black text-emerald-600">฿{formatCurrency(evt.sales)}</td>
+                                            <td className="p-4 text-white/50">{evt.date}</td>
+                                            <td className="p-4 text-right text-white/70">{evt.leads}</td>
+                                            <td className="p-4 text-right text-white/70">{evt.reg}</td>
+                                            <td className="p-4 text-right text-white/70">{evt.closed}</td>
+                                            <td className="p-4 text-right pr-6 font-black text-emerald-400">฿{formatCurrency(evt.sales)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
