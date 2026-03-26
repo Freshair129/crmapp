@@ -5,7 +5,6 @@ import AdVisualReport from './AdVisualReport';
 import MonthlyPerformance from './MonthlyPerformance';
 import DailyReport from './DailyReport';
 import WeeklyReport from './WeeklyReport';
-import HourlyReport from './HourlyReport';
 import YearlyReport from './YearlyReport';
 import {
   AlertCircle, ShieldCheck, AlertTriangle, KeyRound, Facebook,
@@ -558,12 +557,6 @@ export default function FacebookAds({ customers }) {
                         <TrendingUp className="w-4 h-4" /> Overview
                     </button>
                     <button
-                        onClick={() => setDashboardMode('hourly_report')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'hourly_report' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/40' : 'text-white/30 hover:text-white/60'}`}
-                    >
-                        <Clock className="w-4 h-4" /> Hourly
-                    </button>
-                    <button
                         onClick={() => setDashboardMode('daily_report')}
                         className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${dashboardMode === 'daily_report' ? 'bg-[#cc9d37] text-[#0c1a2f] shadow-lg shadow-[#cc9d37]/40' : 'text-white/30 hover:text-white/60'}`}
                     >
@@ -625,8 +618,6 @@ export default function FacebookAds({ customers }) {
 
                 {dashboardMode === 'yearly' ? (
                     <YearlyReport dailyData={daily} />
-                ) : dashboardMode === 'hourly_report' ? (
-                    <HourlyReport />
                 ) : dashboardMode === 'weekly_report' ? (
                     <WeeklyReport dailyData={daily} />
                 ) : dashboardMode === 'daily_report' ? (
