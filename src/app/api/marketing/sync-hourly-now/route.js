@@ -20,11 +20,16 @@ export async function POST(request) {
 
     try {
         const origin = request.nextUrl.origin;
+        const headers = {
+            'authorization': `Bearer ${process.env.CRON_SECRET}`,
+        };
+        // Include Vercel Deployment Protection bypass (same as QStash config)
+        const bypassSecret = process.env.VERCEL_BYPASS_SECRET;
+        if (bypassSecret) headers['x-vercel-protection-bypass'] = bypassSecret;
+
         const res = await fetch(`${origin}/api/marketing/sync-hourly`, {
             method: 'GET',
-            headers: {
-                'authorization': `Bearer ${process.env.CRON_SECRET}`,
-            },
+            headers,
         });
 
         const data = await res.json();

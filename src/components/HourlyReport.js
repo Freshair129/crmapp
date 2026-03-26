@@ -106,7 +106,7 @@ export default function HourlyReport() {
     }, [chartData]);
 
     // Detect if data is all zeros (no sync has run for this date)
-    const hasRealData = totals.spend > 0 || totals.clicks > 0 || totals.impressions > 0;
+    const hasRealData = totals.spend > 0 || totals.clicks > 0 || totals.conversions > 0;
 
     const MetricHeader = ({ label, description, align = 'right' }) => (
         <th className={`p-4 ${align === 'right' ? 'text-right' : 'pl-6'} relative cursor-help hover:z-50`}>
