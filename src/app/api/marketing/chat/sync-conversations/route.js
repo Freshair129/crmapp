@@ -33,10 +33,46 @@ async function graphGet(path, params = {}) {
     return res.json();
 }
 
+// Allow POST from QStash (no session — uses CRON_SECRET instead)
+export async function POST(request) {
+    const auth = request.headers.get('authorization');
+    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Re-use GET logic but inject params via URL
+    const url = new URL(request.url);
+    if (!url.searchParams.has('days'))         url.searchParams.set('days', '2');
+    if (!url.searchParams.has('fetchMessages')) url.searchParams.set('fetchMessages', '1');
+    const fakeRequest = new Request(url.toString(), { headers: request.headers });
+    return _syncHandler(fakeRequest, /* skipAuth */ true);
+}
+
 export async function GET(request) {
+    // Allow Vercel CRON or manual cron callers with CRON_SECRET
+    const auth = request.headers.get('authorization');
+    if (auth === `Bearer ${process.env.CRON_SECRET}`) {
+        const url = new URL(request.url);
+        if (!url.searchParams.has('days'))         url.searchParams.set('days', '2');
+        if (!url.searchParams.has('fetchMessages')) url.searchParams.set('fetchMessages', '1');
+        return _syncHandler(new Request(url.toString(), { headers: request.headers }), true);
+    }
+    // Otherwise require session (manual browser use)
     try {
         const session = await getSession();
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return _syncHandler(request, false);
+    } catch (error) {
+        logger.error('[ChatSync]', 'sync-conversations failed', error);
+        const isTokenExpired = error.message?.includes('190') || error.message?.toLowerCase().includes('token');
+        return NextResponse.json({
+            error: isTokenExpired ? 'FB Page Access Token หมดอายุ — ต้อง refresh token ใน .env' : error.message,
+            code: isTokenExpired ? 'TOKEN_EXPIRED' : 'INTERNAL_ERROR',
+        }, { status: isTokenExpired ? 401 : 500 });
+    }
+}
+
+async function _syncHandler(request, skipAuth) {
+    try {
 
         if (!PAGE_ID || !PAGE_TOKEN) {
             return NextResponse.json({ error: 'FB_PAGE_ID or FB_PAGE_ACCESS_TOKEN not configured' }, { status: 503 });
