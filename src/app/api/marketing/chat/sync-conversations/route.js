@@ -91,11 +91,13 @@ async function _syncHandler(request, skipAuth) {
         const prisma = await getPrisma();
         const { randomUUID } = await import('crypto');
 
-        // Single page, 15 conversations max — keeps total time < 8s on Vercel free tier
+        // With fetchMessages: 5 convs × 2 FB API calls ≈ 3-4s (fits 10s Vercel free limit)
+        // Without fetchMessages: 15 convs metadata-only ≈ 1-2s
+        const convLimit = fetchMessages ? 5 : 15;
         const convData = await graphGet(`/${PAGE_ID}/conversations`, {
             fields: 'participants,updated_time,unread_count',
             since: String(since),
-            limit: '15',
+            limit: String(convLimit),
         });
         const conversations = convData.data || [];
 
