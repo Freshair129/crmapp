@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Clock } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Clock, RefreshCw, AlertTriangle, WifiOff } from 'lucide-react';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart
 } from 'recharts';
@@ -12,53 +12,78 @@ export default function HourlyReport() {
         const d = new Date();
         return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
     };
-    const [selectedDate, setSelectedDate] = useState(getLocalDate());
-    const [hourlyData, setHourlyData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [selectedDate, setSelectedDate]   = useState(getLocalDate());
+    const [hourlyData, setHourlyData]       = useState([]);
+    const [loading, setLoading]             = useState(true);
+    const [error, setError]                 = useState(null);
+    const [syncing, setSyncing]             = useState(false);
+    const [syncResult, setSyncResult]       = useState(null); // { success, stats, error }
+    const [lastFetch, setLastFetch]         = useState(null); // timestamp of last successful data fetch
 
     const fmt = (val, decimals = 0) => (Number(val) || 0).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-    useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/marketing/hourly?date=${selectedDate}`);
-                const data = await res.json();
-                console.log(`[HourlyReport] Fetch for ${selectedDate}:`, data);
-                if (data.error) throw new Error(data.error);
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(`/api/marketing/hourly?date=${selectedDate}`);
+            const data = await res.json();
+            console.log(`[HourlyReport] Fetch for ${selectedDate}:`, data);
+            if (data.error) throw new Error(data.error);
 
-                // Ensure 24 hours are present
-                const fullDay = Array.from({ length: 24 }, (_, i) => {
-                    const hourStr = i.toString().padStart(2, '0');
-                    const existing = data.data?.find(h => h.hour === hourStr);
-                    return existing || {
-                        hour: hourStr,
-                        spend: 0,
-                        impressions: 0,
-                        clicks: 0,
-                        actions: [],
-                        action_values: []
-                    };
-                });
+            // Ensure 24 hours are present
+            const fullDay = Array.from({ length: 24 }, (_, i) => {
+                const hourStr = i.toString().padStart(2, '0');
+                const existing = data.data?.find(h => h.hour === hourStr);
+                return existing || {
+                    hour: hourStr,
+                    spend: 0,
+                    impressions: 0,
+                    clicks: 0,
+                    actions: [],
+                    action_values: []
+                };
+            });
 
-                console.log(`[HourlyReport] Processed fullDay data length: ${fullDay.length}`);
-                setHourlyData(fullDay);
-            } catch (err) {
-                console.error('[HourlyReport] Fetch Error:', err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+            console.log(`[HourlyReport] Processed fullDay data length: ${fullDay.length}`);
+            setHourlyData(fullDay);
+            setLastFetch(new Date());
+        } catch (err) {
+            console.error('[HourlyReport] Fetch Error:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-        fetchData();
     }, [selectedDate]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // ── Manual Sync ─────────────────────────────────────────────────────────────
+    const handleSyncNow = async () => {
+        setSyncing(true);
+        setSyncResult(null);
+        try {
+            const res = await fetch('/api/marketing/sync-hourly-now', { method: 'POST' });
+            const data = await res.json();
+            setSyncResult(data);
+            if (data.success) {
+                // Re-fetch data after sync
+                await fetchData();
+            }
+        } catch (err) {
+            setSyncResult({ success: false, error: err.message });
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     const chartData = useMemo(() => {
         return hourlyData.map(h => {
             const purchaseTypes = ['purchase', 'onsite_conversion.purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase'];
-            const revenue = h.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || 0;
-            const conversions = h.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || 0;
+            const revenue = h.action_values?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseFloat(a.value || 0), 0) || h.revenue || 0;
+            const conversions = h.actions?.filter(a => purchaseTypes.includes(a.action_type)).reduce((sum, a) => sum + parseInt(a.value || 0), 0) || h.purchases || 0;
             const roas = h.spend > 0 ? (revenue / h.spend) : 0;
 
             return {
@@ -79,6 +104,9 @@ export default function HourlyReport() {
             conversions: acc.conversions + curr.conversions
         }), { spend: 0, revenue: 0, clicks: 0, conversions: 0 });
     }, [chartData]);
+
+    // Detect if data is all zeros (no sync has run for this date)
+    const hasRealData = totals.spend > 0 || totals.clicks > 0 || totals.impressions > 0;
 
     const MetricHeader = ({ label, description, align = 'right' }) => (
         <th className={`p-4 ${align === 'right' ? 'text-right' : 'pl-6'} relative cursor-help hover:z-50`}>
@@ -107,23 +135,67 @@ export default function HourlyReport() {
                     <div className="text-left">
                         <div className="flex items-center gap-3">
                             <h1 className="text-4xl font-black text-white tracking-widest uppercase">Daily (Hourly) Report</h1>
-                            <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Live FB Data</span>
+                            <div className={`px-3 py-1 border rounded-full flex items-center gap-2 ${hasRealData ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${hasRealData ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${hasRealData ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                    {hasRealData ? 'Live FB Data' : 'No Sync Data'}
+                                </span>
                             </div>
                         </div>
                         <p className="text-amber-400 font-bold text-sm tracking-[0.2em]">HOURLY PERFORMANCE BI</p>
                     </div>
                 </div>
 
-                <div className="relative">
+                {/* Date picker + Sync button */}
+                <div className="flex items-center gap-4">
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="bg-[#0c1a2f] border border-white/20 rounded-xl px-4 py-2 text-white font-bold uppercase tracking-wider focus:outline-none focus:border-amber-500 transition-colors"
                     />
+                    <button
+                        onClick={handleSyncNow}
+                        disabled={syncing}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                            syncing
+                                ? 'bg-amber-500/20 text-amber-400/50 cursor-not-allowed'
+                                : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/60'
+                        }`}
+                    >
+                        <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
+                        {syncing ? 'Syncing...' : 'Sync Now'}
+                    </button>
+                    {lastFetch && (
+                        <span className="text-[10px] text-white/30 font-bold">
+                            Fetched {lastFetch.toLocaleTimeString('th-TH')}
+                        </span>
+                    )}
                 </div>
+
+                {/* Sync result banner */}
+                {syncResult && (
+                    <div className={`w-full max-w-2xl px-5 py-3 rounded-xl text-[11px] font-bold flex items-center gap-3 ${
+                        syncResult.success
+                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                    }`}>
+                        {syncResult.success ? (
+                            <>
+                                <span className="text-emerald-500">✓</span>
+                                Sync complete — {syncResult.stats?.campaigns ?? 0} campaigns · {syncResult.stats?.slotsUpdated ?? 0} slots updated
+                            </>
+                        ) : (
+                            <>
+                                <AlertTriangle size={13} />
+                                {syncResult.error || 'Sync failed'}
+                                {syncResult.error?.includes('expired') && (
+                                    <span className="ml-2 text-red-300">→ Renew FB_ACCESS_TOKEN in Vercel env vars</span>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
             {loading ? (
@@ -133,6 +205,32 @@ export default function HourlyReport() {
             ) : error ? (
                 <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-[2rem] text-center">
                     <p className="text-red-400 font-bold uppercase tracking-widest">{error}</p>
+                </div>
+            ) : !hasRealData ? (
+                /* ── Empty State ──────────────────────────────────────────────── */
+                <div className="flex flex-col items-center justify-center gap-6 py-20">
+                    <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
+                        <WifiOff size={32} className="text-white/20" />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <h3 className="text-white font-black text-lg uppercase tracking-widest">ไม่มีข้อมูลสำหรับวันนี้</h3>
+                        <p className="text-white/40 text-sm font-bold max-w-md">
+                            Hourly sync ยังไม่ได้ทำงาน หรือ FB_ACCESS_TOKEN หมดอายุ
+                        </p>
+                        <div className="text-white/25 text-[11px] font-bold space-y-1 pt-2">
+                            <p>1. กด <span className="text-amber-400">Sync Now</span> เพื่อ sync ข้อมูลชั่วโมงนี้</p>
+                            <p>2. ถ้า error ว่า "expired" → ต้อง renew FB_ACCESS_TOKEN ใน Vercel</p>
+                            <p>3. QStash จะ sync อัตโนมัติทุกชั่วโมง เมื่อ token valid</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleSyncNow}
+                        disabled={syncing}
+                        className="flex items-center gap-2 px-8 py-3 bg-amber-500 text-[#0c1a2f] rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-amber-400 transition-all disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+                        {syncing ? 'กำลัง Sync...' : 'Sync ข้อมูลตอนนี้'}
+                    </button>
                 </div>
             ) : (
                 <>
@@ -240,7 +338,7 @@ export default function HourlyReport() {
                                 </thead>
                                 <tbody className="divide-y divide-white/5 text-[11px] font-bold text-white/80">
                                     {chartData.map((h, i) => (
-                                        <tr key={i} className="hover:bg-white/5 transition-colors group">
+                                        <tr key={i} className={`hover:bg-white/5 transition-colors group ${h.spend === 0 && h.clicks === 0 ? 'opacity-30' : ''}`}>
                                             <td className="p-4 pl-8 text-white font-black">{h.hour}:00</td>
                                             <td className="p-4 text-right">฿{fmt(h.spend, 2)}</td>
                                             <td className="p-4 text-right text-white/60">{fmt(h.clicks)}</td>
