@@ -7,7 +7,7 @@ import {
     Crosshair, TrendingUp, Bell, UserCircle, Settings2,
     Timer, SlidersHorizontal, Settings, LogOut,
     ChefHat, Monitor, CalendarDays, BookOpen, Gift, BookMarked, Bot,
-    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck, QrCode,
+    PanelLeftOpen, PanelLeftClose, MousePointer2, ClipboardList, Warehouse, FileCheck, QrCode, Activity,
 } from 'lucide-react';
 import { canSeeItem } from '@/lib/sidebarProfiles';
 
@@ -53,6 +53,7 @@ const menuGroups = [
             { id: 'packages',            icon: Gift,              label: 'แพ็กเกจ' },
             { id: 'inventory-control',   icon: Warehouse,         label: 'คลังสินค้า' },
             { id: 'procurement',         icon: FileCheck,         label: 'จัดซื้อ' },
+            { id: 'market-prices',       icon: Activity,          label: 'ราคากลางจัดซื้อ' },
             { id: 'assets',              icon: Monitor,           label: 'อุปกรณ์' },
             { id: 'attendance-scanner',  icon: QrCode,            label: 'สแกนเช็คชื่อ' },
         ],
@@ -77,7 +78,7 @@ const menuGroups = [
 
 // ── Sidebar width config ──────────────────────────────────────────────────────
 const SIDEBAR_COLLAPSED_W = 72;   // px — icon-only
-const SIDEBAR_EXPANDED_W  = 220;  // px — icon + label
+const SIDEBAR_EXPANDED_W  = 240;  // px — icon + label
 
 const MODE_META = {
     expanded: { icon: PanelLeftOpen,  label: 'Expanded',       title: 'Always expanded' },
@@ -175,7 +176,7 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                                     transition: 'opacity 100ms',
                                 }}
                             >
-                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40">
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
                                     {group.label}
                                 </span>
                             </div>
@@ -222,10 +223,10 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
 
                                         {/* Label */}
                                         <span
-                                            className="text-[11px] font-semibold whitespace-nowrap overflow-hidden"
+                                            className="text-[13px] font-semibold whitespace-nowrap overflow-hidden"
                                             style={{
                                                 opacity: isOpen ? 1 : 0,
-                                                maxWidth: isOpen ? 160 : 0,
+                                                maxWidth: isOpen ? 180 : 0,
                                                 transition: 'opacity 120ms, max-width 180ms',
                                             }}
                                         >
@@ -266,15 +267,15 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                         <span className="text-white font-black text-[11px]">{(userName || 'U').charAt(0)}</span>
                     </div>
                     <span
-                        className="text-[11px] font-semibold text-white/60 whitespace-nowrap overflow-hidden flex-1"
+                        className="text-[13px] font-semibold text-white/60 whitespace-nowrap overflow-hidden flex-1"
                         style={{
                             opacity: isOpen ? 1 : 0,
-                            maxWidth: isOpen ? 120 : 0,
+                            maxWidth: isOpen ? 140 : 0,
                             transition: 'opacity 120ms, max-width 180ms',
                         }}
                     >
                         {userName}
-                        <span className="text-[9px] text-white/30 ml-1">{userRole}</span>
+                        <span className="text-[11px] text-white/30 ml-1">{userRole}</span>
                     </span>
 
                     {/* Tooltip when collapsed */}
@@ -304,10 +305,10 @@ export default function Sidebar({ activeView, onViewChange, cartCount, pendingTa
                     >
                         <LogOut size={14} className="shrink-0" />
                         <span
-                            className="text-[11px] font-semibold whitespace-nowrap overflow-hidden"
+                            className="text-[13px] font-semibold whitespace-nowrap overflow-hidden"
                             style={{
                                 opacity: isOpen ? 1 : 0,
-                                maxWidth: isOpen ? 120 : 0,
+                                maxWidth: isOpen ? 140 : 0,
                                 transition: 'opacity 120ms, max-width 180ms',
                             }}
                         >
