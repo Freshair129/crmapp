@@ -1035,9 +1035,9 @@ export default function Analytics({ customers, products }) {
                                     <div className="col-span-5 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#19273a] to-[#0c1a2f] border border-white/10 flex items-center justify-center text-xs font-bold text-[#cc9d37]">
                                             {(() => {
-                                                const isPhonelike = v => !v || /^[0-9+\-\s()]{6,}$/.test(v.trim());
-                                                const nick = !isPhonelike(c.nickName) ? c.nickName : null;
-                                                const first = !isPhonelike(c.firstName) ? c.firstName : null;
+                                                const bad = v => !v || v.trim().length <= 1 || /^[0-9+\-\s()]{4,}$/.test(v.trim());
+                                                const nick = !bad(c.nickName) ? c.nickName : null;
+                                                const first = !bad(c.firstName) ? c.firstName : null;
                                                 return (nick || first || '?').charAt(0).toUpperCase();
                                             })()}
                                         </div>
