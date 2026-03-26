@@ -499,7 +499,7 @@ export default function CampaignTracking({ customers }) {
                                                 </span>
                                             </div>
                                             <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">
-                                                ID: {campaign.id} • Started: {new Date(campaign.start_time).toLocaleDateString()}
+                                                ID: {campaign.id} • Started: {campaign.start_time && !isNaN(new Date(campaign.start_time)) ? new Date(campaign.start_time).toLocaleDateString() : 'N/A'}
                                             </p>
                                             <div className="mt-2 flex items-center gap-2">
                                                 <span className="text-[9px] px-2 py-0.5 bg-white/5 border border-white/10 text-white/60 rounded font-black uppercase tracking-widest">
@@ -811,7 +811,7 @@ export default function CampaignTracking({ customers }) {
                                                     {campaignOrders.map((order, idx) => (
                                                         <tr key={idx} className="hover:bg-white/5 transition-colors group">
                                                             <td className="py-4 px-2 text-xs font-mono text-white/40">
-                                                                {new Date(order.date).toLocaleDateString()}
+                                                                {order.date && !isNaN(new Date(order.date)) ? new Date(order.date).toLocaleDateString() : 'N/A'}
                                                             </td>
                                                             <td className="py-4 px-2">
                                                                 <p className="text-xs font-black text-white group-hover:text-[#cc9d37] transition-colors">{order.customerName}</p>
