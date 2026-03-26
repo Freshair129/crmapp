@@ -8,63 +8,38 @@ const receiver = new Receiver({
     nextSigningKey:    process.env.QSTASH_NEXT_SIGNING_KEY    || '',
 });
 
-const GRAPH_API = 'https://graph.facebook.com/v19.0';
+const GRAPH_API    = 'https://graph.facebook.com/v19.0';
 const ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN;
+const AD_ACCOUNT_ID = process.env.FB_AD_ACCOUNT_ID;
 
-const FIELDS = [
+// ── Only fields supported by hourly_stats_aggregated_by_advertiser_time_zone ──
+// Quality/video/ranking fields are NOT available at hourly granularity.
+const HOURLY_FIELDS = [
     'ad_id', 'spend', 'impressions', 'clicks', 'reach',
     'actions', 'action_values',
-    'cpm', 'cpc', 'frequency',
+    'cpm', 'cpc',
     'cost_per_action_type',
-    'quality_ranking', 'engagement_rate_ranking', 'conversion_rate_ranking',
-    'video_p25_watched_actions', 'video_p50_watched_actions',
-    'video_p75_watched_actions', 'video_p100_watched_actions',
 ].join(',');
+
 const BREAKDOWN = 'hourly_stats_aggregated_by_advertiser_time_zone';
 
-/**
- * Send a Facebook Batch API request (max 50 sub-requests per call).
- * Returns array of parsed response bodies in the same order as `requests`.
- */
-async function graphBatch(requests, retries = 3) {
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        const res = await fetch(`${GRAPH_API}/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                access_token: ACCESS_TOKEN,
-                batch: requests,
-            }),
-        });
-
-        if (res.status === 429) {
-            if (attempt === retries) throw new Error('Rate limited after retries');
-            const delay = Math.pow(2, attempt) * 1000;
-            logger.warn('[SyncHourly]', `Rate limited, retry ${attempt + 1}/${retries} in ${delay}ms`);
-            await new Promise(r => setTimeout(r, delay));
-            continue;
-        }
-
-        if (!res.ok) throw new Error(`Batch API HTTP ${res.status}`);
-
-        const results = await res.json();
-        return results.map(r => {
-            const body = JSON.parse(r.body);
-            if (body?.error) {
-                const msg = body.error.message || '';
-                if (msg.includes('code 190') || body.error.type === 'OAuthException') {
-                    throw new Error('ACCESS_TOKEN_EXPIRED');
-                }
-            }
-            return body;
-        });
-    }
+// ── Thai timezone UTC offset (+7h) ─────────────────────────────────────────
+function getTodayBangkok() {
+    const utcMs  = Date.now();
+    const bhMs   = utcMs + 7 * 3600 * 1000; // Bangkok = UTC+7
+    const d      = new Date(bhMs);
+    const yyyy   = d.getUTCFullYear();
+    const mm     = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd     = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 function parseSlot(slot) {
     const hourStr = slot[BREAKDOWN];
     if (!hourStr) return null;
+    // FB returns e.g. "0:00:00 - 1:00:00" or "00:00:00"
     const hour = parseInt(hourStr.split(':')[0], 10);
+    if (isNaN(hour) || hour < 0 || hour > 23) return null;
 
     const spend       = parseFloat(slot.spend || 0);
     const impressions = parseInt(slot.impressions || 0, 10);
@@ -72,13 +47,9 @@ function parseSlot(slot) {
     const reach       = parseInt(slot.reach || 0, 10);
 
     const isPurchase = t => [
-        'purchase',
-        'onsite_conversion.purchase',
-        'omni_purchase',
-        'onsite_app_purchase',
-        'onsite_web_purchase',
-        'onsite_web_app_purchase',
-        'offsite_conversion.fb_pixel_purchase',
+        'purchase', 'onsite_conversion.purchase', 'omni_purchase',
+        'onsite_app_purchase', 'onsite_web_purchase',
+        'onsite_web_app_purchase', 'offsite_conversion.fb_pixel_purchase',
     ].includes(t);
 
     const purchaseValue  = (slot.action_values || []).find(a => isPurchase(a.action_type));
@@ -86,8 +57,6 @@ function parseSlot(slot) {
     const leadAction     = (slot.actions || []).find(a => a.action_type === 'lead');
     const cpaLead        = (slot.cost_per_action_type || []).find(a => a.action_type === 'lead');
     const cpaPurchase    = (slot.cost_per_action_type || []).find(a => isPurchase(a.action_type));
-
-    const videoActions = (type) => parseInt((slot[type] || []).find(a => a.action_type === 'video_view')?.value || 0, 10);
 
     return {
         adId: slot.ad_id,
@@ -97,35 +66,29 @@ function parseSlot(slot) {
             impressions,
             clicks,
             reach,
-            revenue:              purchaseValue  ? parseFloat(purchaseValue.value || 0)   : 0,
-            purchases:            purchaseAction ? parseInt(purchaseAction.value || 0, 10) : 0,
-            leads:                leadAction     ? parseInt(leadAction.value || 0, 10)     : 0,
-            cpm:                  slot.cpm       ? parseFloat(slot.cpm)                   : null,
-            cpc:                  slot.cpc       ? parseFloat(slot.cpc)                   : null,
-            frequency:            slot.frequency ? parseFloat(slot.frequency)             : null,
-            costPerLead:          cpaLead        ? parseFloat(cpaLead.value || 0)         : null,
-            costPerPurchase:      cpaPurchase    ? parseFloat(cpaPurchase.value || 0)     : null,
-            qualityRanking:       slot.quality_ranking          ?? null,
-            engagementRateRanking: slot.engagement_rate_ranking ?? null,
-            conversionRateRanking: slot.conversion_rate_ranking ?? null,
-            videoP25:  videoActions('video_p25_watched_actions')  || null,
-            videoP50:  videoActions('video_p50_watched_actions')  || null,
-            videoP75:  videoActions('video_p75_watched_actions')  || null,
-            videoP100: videoActions('video_p100_watched_actions') || null,
+            revenue:         purchaseValue  ? parseFloat(purchaseValue.value  || 0)   : 0,
+            purchases:       purchaseAction ? parseInt(purchaseAction.value   || 0, 10) : 0,
+            leads:           leadAction     ? parseInt(leadAction.value       || 0, 10) : 0,
+            cpm:             slot.cpm       ? parseFloat(slot.cpm)            : null,
+            cpc:             slot.cpc       ? parseFloat(slot.cpc)            : null,
+            frequency:       null,
+            costPerLead:     cpaLead        ? parseFloat(cpaLead.value        || 0)   : null,
+            costPerPurchase: cpaPurchase    ? parseFloat(cpaPurchase.value    || 0)   : null,
+            qualityRanking:  null, engagementRateRanking: null, conversionRateRanking: null,
+            videoP25: null, videoP50: null, videoP75: null, videoP100: null,
         },
     };
 }
 
 /**
- * GET /api/marketing/sync-hourly
- * 1 Facebook Batch API call → all active campaigns → all ads inside → save to DB.
+ * POST /api/marketing/sync-hourly (QStash) or GET with CRON_SECRET
  */
 export async function POST(request) {
     return GET(request);
 }
 
 export async function GET(request) {
-    // Allow manual call with CRON_SECRET, otherwise verify QStash signature
+    // Auth: CRON_SECRET for manual/cron, otherwise QStash signature
     const authHeader = request.headers.get('authorization');
     if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
         // manual — allowed
@@ -137,56 +100,90 @@ export async function GET(request) {
     }
 
     try {
-        if (!ACCESS_TOKEN) {
+        if (!ACCESS_TOKEN || !AD_ACCOUNT_ID) {
             return NextResponse.json({ success: false, error: 'FB credentials not configured' }, { status: 503 });
         }
 
-        const today = new Date().toISOString().split('T')[0];
-        const campaignIds = await marketingRepo.getActiveCampaignIds();
+        // Use Bangkok date (UTC+7) — FB account timezone is Thailand
+        const today = getTodayBangkok();
+        const timeRange = JSON.stringify({ since: today, until: today });
 
-        if (campaignIds.length === 0) {
-            return NextResponse.json({ success: true, date: today, stats: { campaigns: 0, slotsUpdated: 0 } });
+        logger.info('[SyncHourly]', `Fetching hourly insights for ${today} (Bangkok) from ad account`);
+
+        // ── Query ad account directly (not per-campaign) ─────────────────────
+        // This avoids the per-campaign batch approach which silently returns empty
+        // when incompatible fields are mixed, and is more reliable.
+        const params = new URLSearchParams({
+            access_token: ACCESS_TOKEN,
+            level:        'ad',
+            fields:       HOURLY_FIELDS,
+            time_range:   timeRange,
+            breakdowns:   BREAKDOWN,
+            limit:        '500',
+        });
+
+        let url = `${GRAPH_API}/${AD_ACCOUNT_ID}/insights?${params}`;
+        const allSlots = [];
+        let pageCount  = 0;
+
+        // Paginate all results
+        while (url) {
+            const res  = await fetch(url);
+            const body = await res.json();
+
+            if (body?.error) {
+                const code = body.error.code;
+                const msg  = body.error.message || `FB API error ${code}`;
+                logger.error('[SyncHourly]', `FB API error: ${msg}`, body.error);
+                if (body.error.type === 'OAuthException' || code === 190) {
+                    throw new Error('ACCESS_TOKEN_EXPIRED');
+                }
+                throw new Error(msg);
+            }
+
+            const rows = body.data || [];
+            allSlots.push(...rows);
+            pageCount++;
+
+            const next = body.paging?.next;
+            url = (next && next !== url) ? next : null;
         }
 
-        logger.info('[SyncHourly]', `Batch syncing ${campaignIds.length} campaigns for ${today}`);
+        logger.info('[SyncHourly]', `Got ${allSlots.length} hourly rows across ${pageCount} page(s)`);
 
-        // Build 1 sub-request per campaign (max 50 per batch — split if needed)
-        const timeRange = encodeURIComponent(JSON.stringify({ since: today, until: today }));
-        const batchRequests = campaignIds.map(id => ({
-            method: 'GET',
-            relative_url: `${id}/insights?level=ad&fields=${FIELDS}&time_range=${timeRange}&breakdowns=${BREAKDOWN}&limit=200`,
+        if (allSlots.length === 0) {
+            logger.warn('[SyncHourly]', `No hourly data returned for ${today} — ads may not be active or spending yet`);
+            return NextResponse.json({
+                success: true,
+                date: today,
+                stats: { slotsRaw: 0, slotsUpdated: 0, ledgerEntries: 0 },
+                note: 'No hourly data from FB for this date — ads may not be active or spending today',
+                syncedAt: new Date().toISOString(),
+            });
+        }
+
+        // Parse + upsert
+        const parsed = allSlots.map(parseSlot).filter(Boolean);
+        logger.info('[SyncHourly]', `Parsed ${parsed.length} valid slots`);
+
+        const settled = await Promise.allSettled(parsed.map(async (p) => {
+            await marketingRepo.upsertAdHourlyMetric(p.adId, today, p.hour, p.metrics);
+            const entry = await marketingRepo.appendHourlyLedgerIfChanged(p.adId, today, p.hour, p.metrics);
+            return entry ? 1 : 0;
         }));
 
         let updatedCount = 0;
         let ledgerRows   = 0;
-
-        // Split into chunks of 50 (FB batch limit)
-        const CHUNK = 50;
-        for (let i = 0; i < batchRequests.length; i += CHUNK) {
-            const chunk   = batchRequests.slice(i, i + CHUNK);
-            const results = await graphBatch(chunk);
-
-            for (const result of results) {
-                const slots = (result?.data || []).map(parseSlot).filter(Boolean);
-                const settled = await Promise.allSettled(slots.map(async (parsed) => {
-                    await marketingRepo.upsertAdHourlyMetric(parsed.adId, today, parsed.hour, parsed.metrics);
-                    const entry = await marketingRepo.appendHourlyLedgerIfChanged(parsed.adId, today, parsed.hour, parsed.metrics);
-                    return entry ? 1 : 0;
-                }));
-                for (const r of settled) {
-                    if (r.status === 'fulfilled') {
-                        updatedCount++;
-                        ledgerRows += r.value;
-                    }
-                }
-            }
+        for (const r of settled) {
+            if (r.status === 'fulfilled') { updatedCount++; ledgerRows += r.value; }
+            else logger.error('[SyncHourly]', 'Upsert failed', r.reason);
         }
 
         return NextResponse.json({
             success: true,
             date: today,
             stats: {
-                campaigns:    campaignIds.length,
+                slotsRaw:     allSlots.length,
                 slotsUpdated: updatedCount,
                 ledgerEntries: ledgerRows,
             },

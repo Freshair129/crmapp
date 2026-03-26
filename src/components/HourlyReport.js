@@ -183,7 +183,10 @@ export default function HourlyReport() {
                         {syncResult.success ? (
                             <>
                                 <span className="text-emerald-500">✓</span>
-                                Sync complete — {syncResult.stats?.campaigns ?? 0} campaigns · {syncResult.stats?.slotsUpdated ?? 0} slots updated
+                                {syncResult.stats?.slotsUpdated > 0
+                                    ? `Sync complete — ${syncResult.stats.slotsUpdated} slots updated (${syncResult.stats.slotsRaw ?? 0} raw rows from FB)`
+                                    : (syncResult.note || 'Sync complete — no hourly data from FB today (ads may not be active/spending)')
+                                }
                             </>
                         ) : (
                             <>
