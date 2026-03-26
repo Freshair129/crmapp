@@ -9,8 +9,7 @@ import {
     Brain, UserCog, Network
 } from 'lucide-react';
 
-// Revenue helper: prefer real order data, fall back to intelligence field
-const getRevenue = (c) => c._orderRevenue || c.intelligence?.metrics?.total_spend || 0;
+import { getRevenue, sumRevenue, safePct, perItemRevenue, avgChurnRisk } from '@/lib/revenueHelpers';
 
 export default function Analytics({ customers, products }) {
     const [rankingPeriod, setRankingPeriod] = useState('month');
@@ -146,7 +145,7 @@ export default function Analytics({ customers, products }) {
         getRevenue(b) - getRevenue(a)
     );
 
-    const totalRevenue = customers.reduce((sum, c) => sum + getRevenue(c), 0);
+    const totalRevenue = sumRevenue(customers);
     // ... [Reuse ABC Logic] ...
     let cumulativeRevenue = 0;
     const abcData = sortedCustomers.map(customer => {
@@ -741,9 +740,7 @@ export default function Analytics({ customers, products }) {
 
     const aiSummary = {
         totalIntelligence: customers.filter(c => c.intelligence).length,
-        avgRisk: customers.length > 0
-            ? (customers.reduce((sum, c) => sum + (c.intelligence?.metrics?.churn_risk_level === 'High' ? 100 : c.intelligence?.metrics?.churn_risk_level === 'Medium' ? 50 : 0), 0) / customers.length).toFixed(0)
-            : '0',
+        avgRisk: avgChurnRisk(customers),
         topOpportunity: "Focus on 'Returning' customer upsell for Line OA leads."
     };
 
@@ -1751,7 +1748,7 @@ export default function Analytics({ customers, products }) {
                                                         }
                                                         productAttribution[cleanName].totalUnits += 1;
                                                         // Distribute revenue evenly among items if multiple (rough estimate)
-                                                        productAttribution[cleanName].totalRevenue += items.length > 0 ? (amount / items.length) : amount;
+                                                        productAttribution[cleanName].totalRevenue += perItemRevenue(amount, items);
 
                                                         if (!productAttribution[cleanName].sources[source]) {
                                                             productAttribution[cleanName].sources[source] = 0;
