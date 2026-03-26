@@ -29,7 +29,7 @@
     },
     {
       "path": "/api/marketing/chat/sync-conversations",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 1 * * *"
     }
   ]
 }
