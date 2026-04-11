@@ -37,18 +37,23 @@ export const authOptions = {
                 }
 
                 try {
+                    console.error('[AUTH_DEBUG] Step 1: Getting prisma client');
                     const prisma = await getPrisma();
+                    console.error('[AUTH_DEBUG] Step 2: Querying employee by email:', credentials.email);
                     // Support login by email OR by employeeId (e.g. TVS-EMP-MKT-001)
                     let employee = await prisma.employee.findUnique({
                         where: { email: credentials.email }
                     });
+                    console.error('[AUTH_DEBUG] Step 3: findUnique result:', employee ? `Found: id=${employee.id}, status=${employee.status}, role=${employee.role}` : 'NOT FOUND');
                     if (!employee) {
                         employee = await prisma.employee.findUnique({
                             where: { employeeId: credentials.email }
                         });
+                        console.error('[AUTH_DEBUG] Step 3b: findUnique by employeeId:', employee ? `Found` : 'NOT FOUND');
                     }
 
                     if (!employee || employee.status !== "ACTIVE") {
+                        console.error('[AUTH_DEBUG] FAIL: not found or inactive. employee=', JSON.stringify(employee ? {id: employee.id, status: employee.status} : null));
                         logger.warn('NEXTAUTH', 'Auth failed: User not found or inactive', { email: credentials.email });
                         logAction({
                             actorEmail: credentials.email,
@@ -59,7 +64,9 @@ export const authOptions = {
                     }
 
                     // Validate role is in VALID_ROLES (Phase 29 — ADR-045)
+                    console.error('[AUTH_DEBUG] Step 4: checking role:', employee.role, 'isValid:', isValidRole(employee.role));
                     if (!isValidRole(employee.role)) {
+                        console.error('[AUTH_DEBUG] FAIL: invalid role:', employee.role);
                         logger.warn('NEXTAUTH', 'Auth failed: Invalid role', { email: credentials.email, role: employee.role });
                         logAction({
                             actorId:    employee.id,
@@ -70,9 +77,12 @@ export const authOptions = {
                         return null;
                     }
 
+                    console.error('[AUTH_DEBUG] Step 5: comparing password, hash starts with:', employee.passwordHash?.substring(0, 7));
                     const isValid = await bcrypt.compare(credentials.password, employee.passwordHash);
+                    console.error('[AUTH_DEBUG] Step 6: bcrypt result:', isValid);
 
                     if (!isValid) {
+                        console.error('[AUTH_DEBUG] FAIL: password mismatch');
                         logger.warn('NEXTAUTH', 'Auth failed: Invalid password', { email: credentials.email });
                         logAction({
                             actorId:    employee.id,
