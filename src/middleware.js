@@ -70,9 +70,8 @@ const CRON_ROUTES = [
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Development Bypass (Production Hardening — Phase 14) 
-  // Restore for local development convenience if needed
-  if (process.env.NODE_ENV === 'development') return NextResponse.next();
+  // Auth bypass — login system removed, all routes public
+  return NextResponse.next();
 
 
   // CRON_SECRET bypass — x-cron-secret or Authorization: Bearer <secret>

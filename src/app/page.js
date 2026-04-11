@@ -68,32 +68,26 @@ export default function Home() {
         document.documentElement.dataset.theme = theme;
     }, [theme]);
 
+    const defaultUser = {
+        id: '558c1392-8862-4480-9b09-4cafeaa2de15',
+        employeeId: 'TVS-EMP-0002',
+        firstName: 'พรพล',
+        lastName: 'ธนสุวรรณธาร',
+        nickName: 'บอส',
+        name: 'พรพล ธนสุวรรณธาร',
+        role: 'DEV',
+        roles: ['DEV'],
+        email: 'suanranger129@gmail.com',
+    };
+
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
             setCurrentUser(session.user);
-        } else if (status === "unauthenticated") {
-            if (process.env.NODE_ENV === 'development') {
-                setCurrentUser({
-                    id: 'dev-user',
-                    firstName: 'Dev',
-                    lastName: 'User',
-                    role: 'DEVELOPER',
-                    email: 'dev@vschool.com'
-                });
-            } else {
-                setCurrentUser(null);
-            }
-        } else if (status === "loading" && process.env.NODE_ENV === 'development') {
-            // Predictively set for dev to avoid flicker
-            setCurrentUser({
-                id: 'dev-user',
-                firstName: 'Dev',
-                lastName: 'User',
-                role: 'DEVELOPER',
-                email: 'dev@vschool.com'
-            });
+        } else if (status === "unauthenticated" || status === "loading") {
+            // Auth system removed — default to owner user
+            setCurrentUser(defaultUser);
         }
-        setAuthInited(status !== "loading" || process.env.NODE_ENV === 'development');
+        setAuthInited(true);
     }, [session, status]);
 
     const handleLogout = () => {
@@ -227,12 +221,7 @@ export default function Home() {
         );
     }
 
-    // Guard: Protected View
-    if (process.env.NODE_ENV !== 'development') {
-        if (status === "unauthenticated" || (!currentUser && status === "authenticated")) {
-            return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
-        }
-    }
+    // Guard: Protected View — removed, auth system disabled
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#0c1a2f] text-white">
