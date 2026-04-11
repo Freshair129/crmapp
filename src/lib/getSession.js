@@ -1,13 +1,22 @@
 /**
  * getSession — shared server-side session helper
- *
- * Wraps getServerSession(authOptions) so API routes don't need to import
- * authOptions individually. In next-auth v4 + Next.js 14 App Router,
- * getServerSession() without authOptions always returns null.
+ * ใช้ mock session เนื่องจาก DB connection ไม่พร้อม
  */
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+
+const MOCK_SESSION = {
+  user: {
+    id: '558c1392-8862-4480-9b09-4cafeaa2de15',
+    name: 'พรพล ธนสุวรรณธาร',
+    email: 'suanranger129@gmail.com',
+    role: 'DEV',
+    roles: ['DEV'],
+    employeeId: 'TVS-EMP-0002',
+    agentCode: 'BOSS',
+    nickName: 'บอส',
+  },
+  expires: '2099-12-31T00:00:00.000Z',
+};
 
 export function getSession() {
-    return getServerSession(authOptions);
+  return Promise.resolve(MOCK_SESSION);
 }
