@@ -36,9 +36,38 @@ const MODEL_DATA = {
   auditLog: mockData.auditLogs,
   advance: mockData.advances,
   purchaseRequest: mockData.purchaseOrdersV2,
+  // Ad / Marketing models
   ad: [],
   adSet: [],
   adAccount: [],
+  adCreative: [],
+  adHourlyMetric: [],
+  adHourlyLedger: [],
+  // AI models
+  aIAssistLog: [],
+  aIConfig: mockData.aiConfigs,
+  conversationIntelligence: [],
+  // Course models
+  courseEquipment: [],
+  courseMenu: [],
+  enrollmentItem: [],
+  // Procurement sub-models
+  creditNote: [],
+  goodsReceivedNote: [],
+  gRNItem: [],
+  pOAcceptance: [],
+  pOApproval: [],
+  pOIssue: [],
+  pOItem: [],
+  pOReturn: [],
+  pOTracking: [],
+  // Messaging
+  message: [],
+  // Kitchen/Recipe sub-models
+  recipeEquipment: [],
+  stockDeductionLog: [],
+  // Finance
+  transaction: [],
   knowledgeFile: mockData.knowledgeFiles,
   pushSubscription: mockData.pushSubscriptions,
   adReviewResult: mockData.adReviewResults,
