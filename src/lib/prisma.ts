@@ -4,12 +4,13 @@ import pg from 'pg'
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
-/** Strip Prisma-specific query params (pgbouncer, connection_limit) that pg.Pool doesn't understand */
+/** Strip Prisma-specific query params that pg.Pool doesn't understand */
 function cleanDbUrl(url: string): string {
   try {
     const parsed = new URL(url)
     parsed.searchParams.delete('pgbouncer')
     parsed.searchParams.delete('connection_limit')
+    parsed.searchParams.delete('sslmode')
     return parsed.toString()
   } catch {
     return url
@@ -21,11 +22,12 @@ export function getInternalPrisma(): PrismaClient {
 
   const pool = new pg.Pool({
     connectionString: cleanDbUrl(process.env.DATABASE_URL || ''),
-    max: 2,
-    idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 10000,
+    max: 1,                        // 1 connection per Lambda instance
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 15000,
     ssl: { rejectUnauthorized: false },
   })
+
   const adapter = new PrismaPg(pool)
 
   const client = new PrismaClient({
@@ -33,9 +35,8 @@ export function getInternalPrisma(): PrismaClient {
     log: ['warn', 'error'],
   })
 
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = client
-  }
+  // Always cache globally — prevents creating multiple pools per Lambda invocation
+  globalForPrisma.prisma = client
 
   return client;
 }
