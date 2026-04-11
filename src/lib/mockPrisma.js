@@ -35,6 +35,7 @@ const MODEL_DATA = {
   notificationRule: mockData.notificationRules,
   auditLog: mockData.auditLogs,
   advance: mockData.advances,
+  purchaseRequest: mockData.purchaseOrdersV2,
   knowledgeFile: mockData.knowledgeFiles,
   pushSubscription: mockData.pushSubscriptions,
   adReviewResult: mockData.adReviewResults,
