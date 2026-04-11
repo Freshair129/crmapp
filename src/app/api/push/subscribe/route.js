@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
-import { getPrisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 export async function POST(req) {

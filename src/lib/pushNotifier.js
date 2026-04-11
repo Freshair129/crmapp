@@ -6,7 +6,7 @@
  */
 
 import webpush from 'web-push';
-import { getPrisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 webpush.setVapidDetails(

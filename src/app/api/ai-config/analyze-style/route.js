@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getPrisma } from '@/lib/prisma';
+import { getPrisma } from '@/lib/db';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
