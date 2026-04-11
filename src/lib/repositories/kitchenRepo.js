@@ -32,14 +32,15 @@ export async function getAllIngredients(opts = {}) {
     }
 }
 
-export async function upsertIngredient({ ingredientId, name, unit, currentStock, minStock, category, costPerUnit, yieldPercent }) {
+export async function upsertIngredient({ ingredientId, name, unit, currentStock, minStock, category, costPerUnit, yieldPercent, marketUrl }) {
     try {
         const prisma = await getPrisma();
         return prisma.ingredient.upsert({
             where: { ingredientId },
             update: {
                 name, unit, currentStock, minStock, category, costPerUnit,
-                ...(yieldPercent !== undefined ? { yieldPercent } : {})
+                ...(yieldPercent !== undefined ? { yieldPercent } : {}),
+                ...(marketUrl !== undefined ? { marketUrl } : {})
             },
             create: {
                 ingredientId, name, unit,
@@ -47,7 +48,8 @@ export async function upsertIngredient({ ingredientId, name, unit, currentStock,
                 minStock: minStock ?? 0,
                 category: category ?? 'OTHER',
                 costPerUnit,
-                yieldPercent: yieldPercent ?? 100
+                yieldPercent: yieldPercent ?? 100,
+                ...(marketUrl !== undefined ? { marketUrl } : {})
             }
         });
     } catch (error) {

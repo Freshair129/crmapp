@@ -1,4 +1,4 @@
-# GEMINI.md — V School CRM v2 Sub-agent (CLI)
+# GEMINI.md — Zuri Sub-agent (CLI)
 
 > [!IMPORTANT]
 > ไฟล์นี้สำหรับ **Gemini CLI Sub-agent** (Worker) เท่านั้น
@@ -8,30 +8,26 @@ Lead Architect คือ Claude — คุณรับ function signature แล
 
 ---
 
-## 🏷️ Version Status (อ่านก่อนเริ่มงานทุกครั้ง)
+## Product Context
+
+**Zuri** — Vertical SaaS สำหรับ culinary school + food business ในไทย
+"Your business's best friend" | ADR-051 | `docs/zuri/CONCEPT.md`
+
+**V School** คือลูกค้าคนแรก (reference tenant) — ไม่ใช่ identity ของ product
+
+---
+
+## Version Status (อ่านก่อนเริ่มงานทุกครั้ง)
 
 | Version | Milestone | สถานะ |
 |---|---|---|
-| `v0.9.0` – `v0.16.0` | Auth → Recipe/Package | ✅ released |
-| `v0.18.0` | Production Hardening & API Optimization | ✅ released |
-| `v0.19.0` | Schema Hardening | ✅ released |
-| `v0.20.0` | Lot ID + Class ID (Stock Batches + Cohorts) | ✅ released |
-| `v0.21.0` | Bug Audit Fix + Repository Layer Refactor | ✅ released |
-| `v0.22.0` | FEFO Deduction Refinement | ✅ released |
-| `v0.23.0` | Repository Layer Full Compliance (Phase 22) | ✅ released |
-| `v0.24.0` | Comprehensive Unit Test Expansion — 50+ cases | ✅ released |
-| `v0.25.0` | Production Hardening Complete — RBAC + Security + Build | ✅ released |
-| `v0.26.0` | Chat-First Revenue Attribution — Slip OCR + REQ-07 | ✅ released |
-| `v0.27.0` | Upstash Migration — QStash + Upstash Redis, zero local infra | ✅ released |
-| `v1.0.0` – `v1.8.0` | Production Ready → MCP Server → Meta Ads MCP | ✅ released |
-| `v1.9.0` | NotebookLM Chat Intelligence — Daily Summary + Knowledge Tree | ✅ released |
-| `v1.9.1` | Multi-Role RBAC + OWNER role + Employee DB Cleanup + hiredAt | ✅ released ← HEAD |
-
-**branch `master`** = งานประจำวัน · **branch `stable`** = ชี้ที่ v0.12.0
-Phase 34 Multi-Role RBAC + hiredAt = ✅ DONE
+| `v0.9.0` – `v1.9.5` | Auth → RBAC → MCP → Employee Enhancements | ✅ released |
+| `v2.0.0` | RBAC Redesign — 12 Roles + permissionMatrix | ✅ released |
+| `v2.1.0` | Task Type System + Notion Sync + CODEBASE_MAP | ✅ released |
+| `v2.2.0` | Package POS + QR Attendance + Schedule Overhaul | ✅ released |
+| `v3.0.0` | **Zuri Product Pivot** — Rebrand + Multi-tenant SaaS | ✅ released ← HEAD |
 
 > ⚠️ **ถ้า task ที่รับมา ≠ version HEAD ใน CHANGELOG.md → หยุดและแจ้ง Claude ก่อนเสมอ**
-> อย่า implement งานที่อาจซ้ำ/outdated โดยไม่ยืนยัน
 
 ---
 
@@ -48,14 +44,13 @@ Phase 34 Multi-Role RBAC + hiredAt = ✅ DONE
 
 ---
 
-## Project Context
+## Tech Stack
 
-**V School CRM v2** — ระบบ CRM สำหรับโรงเรียนสอนทำอาหารญี่ปุ่น (The V School, กรุงเทพฯ)
-Greenfield rewrite — สะอาด, ไม่ carry tech debt จากของเดิม
+**Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Upstash Redis + QStash · Gemini AI · TailwindCSS · Node.js v22 LTS**
 
-**Stack:** Next.js 14 App Router · Prisma · PostgreSQL (Supabase) · Upstash Redis + Upstash QStash · Gemini AI · TailwindCSS · Node.js v22 LTS
-
-> ⚠️ **ADR-040 (v0.27.0):** ioredis/BullMQ ถูกแทนด้วย @upstash/redis + @upstash/qstash แล้ว — ห้าม import bullmq หรือ ioredis อีกต่อไป
+> ⚠️ **ADR-040:** ioredis/BullMQ ถูกแทนด้วย @upstash/redis + @upstash/qstash — ห้าม import bullmq หรือ ioredis
+> ⚠️ **RBAC v2.0.0:** 12 roles (DEV/TEC/MGR/MKT/HR/PUR/PD/ADM/ACC/SLS/AGT/STF) — ไม่ใช่ 8 roles เดิม
+> ⚠️ **Customer model:** ไม่มี field `channel` — ใช้ `conversation.channel` แทนเสมอ
 
 ---
 
@@ -64,6 +59,7 @@ Greenfield rewrite — สะอาด, ไม่ carry tech debt จากข�
 ```
 system_requirements.yaml → WHAT to build
 id_standards.yaml        → HOW to name everything
+system_config.yaml       → config values (roles, tiers, VAT, thresholds) — ห้าม hardcode
 ```
 
 ---
@@ -79,25 +75,21 @@ id_standards.yaml        → HOW to name everything
 
 ---
 
-## ID Formats (ใช้ตามนี้เสมอ)
+## ID Formats
 
 ```
-Customer ID : TVS-CUS-[CH]-[YY]-[XXXX]      e.g. TVS-CUS-FB-26-0123
-Member ID   : MEM-[YY][AGENT][INTENT]-[NO]  e.g. MEM-26BKKP-0001
-Agent Code  : AGT-[TYPE]-[YEAR]-[SERIAL]    e.g. AGT-H-26-003
+Customer ID : TVS-CUS-[CH]-[YY]-[XXXX]     e.g. TVS-CUS-FB-26-0123
+Employee ID : TVS-[TYPE]-[DEPT]-[NNN]       e.g. TVS-PD-KIT-001
 Task ID     : TSK-[YYYYMMDD]-[SERIAL]       e.g. TSK-20260308-001
-Conv ID     : t_{15_digit_uid}              e.g. t_10163799966326505
-Message ID  : mid.$c... หรือ m_...
-Trace ID    : SYNC-[TYPE]-[YYYYMMDD]-[RND]  e.g. SYNC-ADS-20260308-A92B
+Conv ID     : t_{15_digit_uid}
 ```
 
 ---
 
 ## Code Patterns ที่ต้องใช้
 
-### API Route Pattern (Next.js 14 App Router)
+### API Route Pattern
 ```js
-import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/db';
 
@@ -107,7 +99,7 @@ export async function GET(request) {
         // ... logic
         return NextResponse.json(result);
     } catch (error) {
-        logger.error('[ModuleName]', 'GET error', error);
+        console.error('[ModuleName] GET error', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
@@ -120,181 +112,61 @@ const prisma = await getPrisma();
 // Identity upserts → ต้องใน prisma.$transaction
 ```
 
+### Repository Pattern (บังคับ)
+```js
+// ✅ ถูก — ผ่าน repository เสมอ
+import { getCustomer } from '@/lib/repositories/customerRepo';
+
+// ❌ ผิด — ห้ามเรียก getPrisma() โดยตรงจาก API route หรือ Component
+```
+
 ### Error Handling (ห้าม catch เงียบ)
 ```js
 try { ... } catch (error) {
-  logger.error('[ModuleName]', 'action failed', error);
+  console.error('[ModuleName] action failed', error);
   return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
 }
 ```
 
-### NFR
-- Webhook ตอบ < 200ms
-- BullMQ retry ≥ 5, exponential backoff
-- Identity upsert ต้องใน `prisma.$transaction`
+---
+
+## NFR (ห้ามละเมิด)
+
+- Webhook ตอบ < 200ms (NFR1)
+- Identity upsert ต้องใน `prisma.$transaction` (NFR5)
+- QStash retry ≥ 5, exponential backoff (NFR3)
+- ห้าม readFileSync/writeFileSync → ใช้ fs.promises
 
 ---
 
-## Architecture Phases
+## Key Repositories (src/lib/repositories/)
 
 ```
-Phase 13-16: [DONE]    NotificationRules → Asset/PR/Kitchen → Recipe/Package
-Phase 18:    [DONE]    Production Hardening & API Optimization
-Phase 19:    [DONE]    Schema Hardening
-Phase 20:    [DONE]    Lot ID + Class ID (IngredientLot + CourseSchedule.classId)
-Phase 20.5:  [DONE]    Bug Audit & Fix (6 bugs — crash/wrong data/stub)
-Phase 21:    [DONE]    FEFO Deduction in completeSessionWithStockDeduction
-Phase 22:    [DONE]    Repository Layer Full Compliance (Marketing/Inbox)
-Phase 14b:   [DONE]    Production Hardening — RBAC + Security + Build (v0.24.0–v0.25.0)
-Phase 26:    [DONE]    Chat-First Revenue Attribution — Slip OCR + REQ-07 (v0.26.0)
-Phase 27:    [DONE]    Upstash Infrastructure Migration — zero local infra (v0.27.0)
-Phase 28-33: [DONE]    v1.0.0–v1.9.0 Production + MCP + NotebookLM Intelligence
-Phase 34:    [DONE]    Multi-Role RBAC + OWNER + hiredAt field (v1.9.1)
-Phase 35:    [NEXT]    Visual Calendar + Class Attendance (v2.0.0)
-```
-
-## 📋 Changelog System (รู้ไว้ — ไม่ต้อง implement)
-
-CHANGELOG ใหม่ใช้ **Sliding Window**:
-- `CHANGELOG.md` = LATEST pointer + Index table (older) + 5 full entries ล่าสุด
-- `changelog/CL-[YYYYMMDD]-[NNN].md` = full detail แยกต่างหาก (root-level dev tooling)
-
-**Gemini ไม่ต้องอัปเดต changelog** — Claude เป็นคนทำ
-แต่ถ้า task ที่รับมาขัดแย้งกับ version ใน CHANGELOG → แจ้ง Claude ก่อน
-
----
-
-## Phase 11 — COMPLETED ✅
-
-| Task | Status | Notes |
-|---|---|---|
-| B1 `api/products` POST/PUT/DELETE | ✅ DONE | soft-delete via isActive=false |
-| B2 `api/analytics/executive` GET | ✅ DONE | แยก adsRevenue / storeRevenue ด้วย conversationId |
-| A1 AuditHistory | ✅ DONE | ต่อ GET /api/orders |
-| A2 InventoryManager | ✅ DONE | ต่อ CRUD /api/products |
-| A3 PremiumPOS | ✅ DONE | ต่อ /api/products + customer lookup + POST /api/orders |
-| A4 ExecutiveAnalytics | ✅ DONE | แสดง Total / Ads / Store Revenue + % change |
-
-### Revenue Classification Logic (สำคัญ)
-- Order มี `conversationId` → **Ads Revenue** (ออนไลน์/Facebook)
-- Order ไม่มี `conversationId` → **Store Revenue** (Walk-in/หน้าร้าน)
-
----
-
-## Phase 12 — DONE ✅ (tagged v0.13.0, 2026-03-13)
-
-### v0.12.0 — เสร็จแล้วทั้งหมด ✅ (tagged 2026-03-13)
-- `Sidebar.js` — icon-only `w-20`, Lucide React, tooltip on hover (ADR-031)
-- `TopBar.js` — Global Search, Language, Theme toggle (Lucide icons ครบ)
-- `ExecutiveAnalytics.js` — Recharts AreaChart + BarChart + **Lucide icons ครบ** (ADR-032 A1)
-- `Dashboard.js` — Framer Motion AnimatedNumber (ADR-032 A2)
-- `EmployeeManagement.js` — stacked card deck UI + swipe gesture
-- Node.js ยกระดับจาก 20 → 22 LTS, Dockerfile อัพเดทครบ 4 stages
-
-### v0.13.0 — Unified Inbox ✅ RELEASED
-
-| ไฟล์ | สถานะ | หมายเหตุ |
-|---|---|---|
-| `src/components/UnifiedInbox.js` | ✅ done | FB+LINE inbox, pagination, reply bar, right customer card panel |
-| `GET /api/inbox/conversations` | ✅ done | enriched: originId, membershipTier, intelligence |
-| `GET+POST /api/inbox/conversations/[id]/messages` | ✅ done | paginated GET + POST reply |
-| `src/lib/redis.js` | ✅ done | Redis singleton + getOrSet (ADR-034) |
-| `src/components/NotificationCenter.js` | ✅ done | Sheets sync + alert rules |
-
-**Bug ที่แก้แล้ว (สำคัญ — อย่าทำซ้ำ):**
-> `Customer` model **ไม่มี field `channel`** — ถ้า query `customer: { select: { channel: true } }` จะ throw Prisma error
-> ให้ใช้ `conversation.channel` แทนเสมอ
-
----
-
-## DB Schema — Phase 11 Key Models
-
-```prisma
-model Product {
-  id          String   @id @default(uuid())
-  productId   String   @unique @map("product_id")   // e.g. TVS-PKG01-BUFFET-30H
-  name        String
-  description String?
-  price       Float
-  image       String?
-  category    String   @default("course")
-  duration    Int?
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-}
-
-model Order {
-  id          String   @id @default(uuid())
-  orderId     String   @unique @map("order_id")      // crypto.randomUUID()
-  customerId  String   @map("customer_id")
-  date        DateTime
-  status      String   @default("PENDING")            // PENDING | CLOSED | CANCELLED
-  totalAmount Float    @map("total_amount")
-  paidAmount  Float    @default(0) @map("paid_amount")
-  items       Json     @default("[]")                 // [{productId,name,price,qty}]
-  customer    Customer @relation(...)
-}
-
-model Customer {
-  id             String   @id @default(uuid())
-  customerId     String   @unique @map("customer_id")  // TVS-CUS-[CH]-[YY]-[XXXX]
-  firstName      String?  @map("first_name")
-  lastName       String?  @map("last_name")
-  facebookId     String?  @unique @map("facebook_id")
-  facebookName   String?  @map("facebook_name")
-  lineId         String?  @map("line_id")
-  phonePrimary   String?  @map("phone_primary")       // E.164
-  membershipTier String   @default("MEMBER") @map("membership_tier")
-  // ⚠️ ไม่มี field `channel` — channel อยู่ใน Conversation ไม่ใช่ Customer
-}
+customerRepo.js       — Customer CRUD + identity resolution
+paymentRepo.js        — Slip OCR + transaction
+kitchenRepo.js        — Stock + lot management (FEFO)
+scheduleRepo.js       — Course schedule + status
+marketingRepo.js      — Meta Ads sync + ROAS
+notionRepo.js         — Task push/pull Notion sync
+procurementRepo.js    — PO lifecycle
 ```
 
 ---
 
-## Directory (src/)
+## Known Gotchas (อย่าทำซ้ำ)
 
-```
-app/api/
-  products/route.js            GET ✅  POST ✅
-  products/[id]/route.js       PUT ✅  DELETE ✅ (soft)
-  orders/route.js              GET ✅  POST ✅
-  orders/[id]/route.js         GET ✅
-  analytics/executive/route.js GET ✅  (adsRevenue + storeRevenue)
-  customers/route.js           GET ✅ (?search=phone supported)
-  inbox/conversations/route.js              ✅ done (v0.13.0)
-  inbox/conversations/[id]/messages/route.js ✅ done (v0.13.0)
-  notifications/rules/route.js     GET ✅  POST ✅ (v0.14.0)
-  notifications/rules/[id]/route.js DELETE ✅     (v0.14.0)
-components/
-  Sidebar.js                   ✅ icon-only w-20, Lucide (v0.12.0)
-  TopBar.js                    ✅ Search + Theme + Lang toggle (v0.12.0)
-  EmployeeManagement.js        ✅ stacked card deck + swipe (v0.12.0)
-  AuditHistory.js              ✅ connected
-  InventoryManager.js          ✅ connected
-  PremiumPOS.js                ✅ connected
-  ExecutiveAnalytics.js        ✅ Lucide icons + Recharts (v0.12.0 + fix)
-  UnifiedInbox.js              ✅ done (v0.13.0)
-lib/
-  db/index.js                  getPrisma() singleton
-  logger.js                    logger.error/info/warn
-  notificationEngine.js        ✅ evaluateRules() → QStash publishJSON (v0.27.0)
-  redis.js                     ✅ Upstash Redis REST client (v0.27.0) — แทน ioredis
-  slipParser.js                ✅ Gemini Vision OCR — parseSlip() (v0.26.0)
-  repositories/
-    paymentRepo.js             ✅ createPendingFromSlip, verifyPayment, getMonthlyRevenue (v0.26.0)
-    kitchenRepo.js             ✅ + lot management (v0.20.0)
-    scheduleRepo.js            ✅ + FEFO deduction (v0.22.0)
-app/api/workers/
-  notification/route.js        ✅ QStash serverless worker — แทน notificationWorker.mjs (v0.27.0)
-app/api/payments/
-  pending/route.js             ✅ GET pending slips (v0.26.0)
-  verify/[id]/route.js         ✅ PATCH verify slip (v0.26.0)
-app/api/kitchen/
-  lots/route.js                ✅ GET+POST IngredientLot (v0.20.0)
-  lots/[id]/route.js           ✅ GET+PATCH lot status (v0.20.0)
+| Gotcha | ผลกระทบ |
+|---|---|
+| `Customer` ไม่มี field `channel` | Query crash — ใช้ `conversation.channel` |
+| FB Webhook race: `findFirst`→`create` ไม่ atomic | Duplicate conv — ต้อง try-catch P2002 |
+| `IngredientLot.remainingQty` ≠ `Ingredient.currentStock` | Stock drift — ต้องอัปเดตพร้อมกัน |
+| Timezone: `new Date("...Z")` UTC vs local | ใช้ `parseLocalDate()` ใน DragScheduleBuilder |
+| milestones Notion push plain text | pull กลับเป็น null — known limitation |
+| RBAC: ห้ามใช้ role codes เก่า (DEVELOPER/MANAGER) | ใช้ DEV/MGR เท่านั้น |
 
-❌ DELETED (v0.27.0 — ห้ามใช้):
-  src/workers/notificationWorker.mjs  (ลบแล้ว — แทนด้วย /api/workers/notification)
-  src/lib/queue.js                    (ลบแล้ว — ไม่มี BullMQ อีกต่อไป)
-```
+---
+
+## Changelog (รู้ไว้ — ไม่ต้อง implement)
+
+Gemini ไม่ต้องอัปเดต changelog — Claude เป็นคนทำ
+ถ้า task ขัดแย้งกับ version ใน CHANGELOG → แจ้ง Claude ก่อน

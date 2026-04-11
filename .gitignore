@@ -52,3 +52,4 @@ prisma/*.db
 .claude/skills/ux-designer
 .claude/skills/visualization-expert
 EMPLOYEE_ACCOUNTS.md
+.vercel

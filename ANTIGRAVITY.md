@@ -1,103 +1,131 @@
-# ANTIGRAVITY.md — V School CRM v2 Senior Agent
+# ANTIGRAVITY.md — Zuri Senior Agent
 
-คุณคือ **Senior Agent** (Antigravity) ประจำโปรเจค V School CRM v2
+คุณคือ **Senior Agent** (Antigravity) ประจำโปรเจค Zuri
 คุณทำงานร่วมกับ Lead Architect (Claude) และดูแลทีม Sub-agent (Gemini CLI)
 
 ---
 
-## 🚀 Project Overview
+## Product Overview
 
-**V School CRM v2** — ระบบ CRM สำหรับโรงเรียนสอนทำอาหารญี่ปุ่น (The V School, กรุงเทพฯ)
-Greenfield rewrite — เน้นความสะอาด, Scalability และ AI Integration
+**Zuri** — Vertical SaaS สำหรับ culinary school + food business ในไทย
+"Your business's best friend" / "มีซูริ ไม่ต้องเป็นห่วง"
 
-**Version Status (2026-03-21):** `v1.4.0` (RBAC Redesign + Ads Optimize) ✅ ← HEAD | `v1.5.0` (POS Receipt & Printer) 🔲
+**V School** = ลูกค้าคนแรก (reference tenant) — ไม่ใช่ identity ของ product
+ดู brand story: `docs/zuri/CONCEPT.md` | Product overview: `docs/zuri/OVERVIEW.md`
+
+**Version HEAD:** `v3.0.0` (Zuri Product Pivot — ADR-051) ✅
 
 ---
 
-## 📚 Source of Truth
+## Source of Truth
 
 | File | Purpose |
 |---|---|
-| `system_requirements.yaml` | **Functional & NFR Spec** — รายละเอียดสิ่งที่ต้องสร้าง |
-| `id_standards.yaml` | **Naming & ID Standards** — กฎการตั้งชื่อและ Format ID ทุกชุด |
-| `architect_plan.md` | **Roadmap** — แผนการดำเนินการ 7 phases |
+| `system_requirements.yaml` | **Functional & NFR Spec** |
+| `id_standards.yaml` | **Naming & ID Standards** |
+| `system_config.yaml` | **Config values** (roles, tiers, VAT — ห้าม hardcode) |
+| `CODEBASE_MAP.yaml` | **Domain → Files → Functions** cold-start map |
+| `docs/zuri/CONCEPT.md` | **Brand & Positioning** |
+| `docs/zuri/OVERVIEW.md` | **Product Roadmap** |
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 14 App Router
 - **Database**: PostgreSQL (Supabase) + Prisma ORM
-- **Cache**: Upstash Redis REST (ADR-034, ADR-040) — แทน ioredis local
-- **Queue**: Upstash QStash HTTP (ADR-040) — แทน BullMQ local worker
-- **AI**: Google Gemini Pro (via Antigravity & Sub-agents)
+- **Cache**: Upstash Redis REST (ADR-040)
+- **Queue**: Upstash QStash HTTP (ADR-040)
+- **AI**: Google Gemini 2.0 Flash + Claude API + MCP Server (ADR-050)
 - **Styling**: TailwindCSS + Framer Motion
-- **Icons**: Lucide React (ADR-031)
+- **Icons**: Lucide React
+- **Auth**: NextAuth.js CredentialsOnly (ADR-035)
+- **Push**: Web Push VAPID (ADR-044)
 
 ---
 
-## 🏛️ Key ADRs (Architecture Decisions)
+## Version History (สรุป)
 
-- **ADR-025**: Identity Resolution (E.164, Merge logic)
-- **ADR-030**: Revenue Split (conversationId → Ads/Store)
-- **ADR-033**: Unified Inbox (FB + LINE integration)
-- **ADR-034**: Redis Caching Layer (Singleton + getOrSet pattern)
-- **ADR-038**: Recipe + Package + Stock Deduction (atomic $transaction)
-- **ADR-039**: Chat-First Revenue Attribution (Slip OCR, Gemini Vision, firstTouchAdId)
-- **ADR-040**: Upstash Infrastructure Migration (zero local infra)
-- **ADR-043**: Equipment Domain POS (hand/material/specs/shipping fields)
-- **ADR-044**: Web Push Inbox Real-time (VAPID, Service Worker, ลบ SSE+polling)
-- **ADR-045**: RBAC Redesign (8 roles, permissionMatrix.js, Ads Optimize write)
-- **ADR-046**: POS Receipt & Printer Integration (planned — v1.5.0)
+| Version | Milestone | สถานะ |
+|---|---|---|
+| `v0.9.0`–`v1.9.5` | Auth → Kitchen → MCP → Employee | ✅ done |
+| `v2.0.0` | RBAC Redesign — 12 Roles (ADR-045) | ✅ done |
+| `v2.1.0` | Task Type System + Notion Sync | ✅ done |
+| `v2.2.0` | Package POS + QR Attendance + Schedule Overhaul | ✅ done |
+| `v3.0.0` | **Zuri Pivot** — Multi-tenant SaaS (ADR-051) | ✅ done ← HEAD |
+| `v3.1.0` | Visual Calendar + Attendance (Phase 38 planned) | 🔲 next |
 
 ---
 
-## 📏 Standards & Constraints
+## Key ADRs
 
-### Naming Rules
-- **DB Columns / @map**: `snake_case` (e.g., `customer_id`)
-- **JS/TS Variables**: `camelCase` (e.g., `customerId`)
-- **React Components**: `PascalCase` (e.g., `CustomerCard`)
-- **Env Vars**: `SCREAMING_SNAKE`
+| ADR | Decision |
+|---|---|
+| ADR-025 | Identity Resolution |
+| ADR-028 | Facebook Messaging Integration |
+| ADR-030 | Revenue Split (Ads/Store) |
+| ADR-033 | Unified Inbox (FB + LINE) |
+| ADR-034 | Redis Caching Layer |
+| ADR-040 | Upstash Migration (zero local infra) |
+| ADR-044 | Web Push Real-time |
+| ADR-045 | RBAC v2.0 — 12 Roles |
+| ADR-048 | Inventory Control |
+| ADR-049 | Procurement PO Lifecycle |
+| ADR-050 | MCP Server Dual Transport |
+| **ADR-051** | **Zuri Product Pivot** ← NEW |
 
-### ID Formats
-- Customer: `TVS-CUS-[CH]-[YY]-[XXXX]`
-- Task: `TSK-[YYYYMMDD]-[SERIAL]`
-- Conversation: `t_{15_digit_uid}`
-
-### Non-Functional Requirements (NFR)
-- **NFR1**: Webhook response < 200ms
-- **NFR5**: Identity upserts must be within `prisma.$transaction`
-- **Error Handling**: ห้าม catch เงียบ, ต้อง Log ผ่าน `src/lib/logger.js`
 ---
 
-## 📁 Docs Structure
+## Standards
+
+### Naming
+- DB columns: `snake_case` | JS variables: `camelCase` | Components: `PascalCase`
+- ห้าม hardcode ค่าจาก `system_config.yaml` — import จาก `@/lib/systemConfig`
+
+### NFR (ห้ามละเมิด)
+- NFR1: Webhook < 200ms
+- NFR2: Dashboard API < 500ms
+- NFR3: QStash retry ≥ 5
+- NFR5: Identity upsert ใน `prisma.$transaction`
+
+### Architecture Rules
+- ทุก DB access ผ่าน `src/lib/repositories/` เท่านั้น
+- ห้าม `catch(e) {}` เงียบ — log ทุกครั้ง `console.error('[Module]', error)`
+- ห้าม `readFileSync/writeFileSync` → ใช้ `fs.promises`
+
+---
+
+## Docs Structure
 
 ```
 .
-├── system_requirements.yaml   ← spec หลัก
-├── id_standards.yaml          ← naming หลัก
-├── CLAUDE.md                  ← Lead guidance
-├── ANTIGRAVITY.md             ← Senior Agent (YOU) context
-├── GEMINI.md                  ← Sub-agent (Worker) context
-├── CHANGELOG.md               ← Version history
-├── architect_plan.md          ← Roadmap
-├── prisma/schema.prisma       ← Database schema
+├── CLAUDE.md              ← Lead Architect guidance (YOU อ่านสำหรับ context)
+├── ANTIGRAVITY.md         ← Senior Agent (YOU)
+├── GEMINI.md              ← Sub-agent Worker
+├── CHANGELOG.md           ← Version index
+├── CODEBASE_MAP.yaml      ← Domain cold-start map
+├── system_requirements.yaml
+├── id_standards.yaml
+├── system_config.yaml
+├── prisma/schema.prisma
 └── docs/
-    ├── adr/                   ← Architecture Decision Records
-    └── architecture/          ← Arc42 + Diagrams
+    ├── adr/               ← ADR-024 to ADR-051
+    ├── zuri/              ← Zuri product docs (CONCEPT, OVERVIEW, adr/)
+    └── architecture/
 ```
+
 ---
 
-## 🤝 Bi-directional Sync (Claude ↔ Antigravity)
+## Bi-directional Sync Protocol (Claude ↔ Antigravity)
 
-### เมื่อเริ่ม session (ก่อนทำอะไรทั้งนั้น)
-1. **อ่าน `MEMORY.md`** → ดู entry ล่าสุด → เข้าใจว่า Claude ทำอะไรไป
-2. ถ้ามี Breaking Changes → review ก่อนเริ่มงาน
-3. ถ้ามี "ต้อง review" → ตอบกลับใน entry ใหม่
+### เมื่อเริ่ม session
+1. อ่าน `MEMORY.md` → เข้าใจว่า Claude ทำอะไรไป
+2. อ่าน `GOAL.md` → ดู Active Phase + Known Issues
+3. อ่าน `CHANGELOG.md` → LATEST pointer
+4. ถ้ามี Breaking Changes → review ก่อนเริ่ม
 
-### เมื่อจบ session (ก่อนออก)
-เพิ่ม entry ใหม่ที่ **ด้านบน** ของ MEMORY.md Handover Log:
+### เมื่อจบ session
+เพิ่ม entry ใหม่ที่ **ด้านบน** ของ MEMORY.md:
 
 ```
 ### [YYYY-MM-DD HH:MM] Antigravity — สรุปสั้น
@@ -108,110 +136,69 @@ Greenfield rewrite — เน้นความสะอาด, Scalability แ�
 - **ทำต่อ**: (next step)
 ```
 
-จากนั้นอัปเดตเพิ่มเติม:
-1. **`CHANGELOG.md`** — Feature/Fix ที่สำคัญ (ดูรูปแบบ Changelog System ด้านล่าง)
-2. **`GOAL.md`** — tick task / อัปเดตสถานะ Phase
-3. **`MEMORY.md`** → Architectural Soft Knowledge (Known Gaps)
-
-**เป้าหมาย**: Claude อ่าน MEMORY.md จบใน 1 นาทีแล้วเข้าใจทุกอย่างที่เปลี่ยน
+แล้วอัปเดต: `CHANGELOG.md` + `GOAL.md`
 
 ---
 
-## 📋 Changelog System (Sliding Window — v2)
+## Changelog System
 
-**โครงสร้าง:**
 ```
-CHANGELOG.md                          ← index + 5 full entries ล่าสุด
-changelog/CL-[YYYYMMDD]-[NNN].md ← full detail แยกต่างหาก (immutable)
+CHANGELOG.md                      ← LATEST pointer + Index table
+changelog/CL-[YYYYMMDD]-[NNN].md  ← full detail (immutable)
 ```
 
-**CHANGELOG.md มีสองส่วน:**
-1. **LATEST pointer** บนสุด → `LATEST: CL-YYYYMMDD-NNN | vX.Y.Z | date`
-2. **Index table** (older entries): `ID | Name | Version | Date | Severity | Tags` — summary only
-3. **Recent section** (5 entries ล่าสุด): full content inline
-
-**Severity levels:** `PATCH` | `MINOR` | `MAJOR` | `HOTFIX`
-
-**เมื่อต้อง update changelog** (หลัง commit):
-1. สร้าง `changelog/CL-[YYYYMMDD]-[NNN].md` ใหม่ (full detail)
-2. เพิ่ม full entry ด้านบนของ Recent section ใน `CHANGELOG.md`
-3. ถ้า Recent มีเกิน 5 → ย้าย entry เก่าสุดไปเป็น row ใน Index table
-4. อัปเดต LATEST pointer
+**เมื่อ update:**
+1. สร้าง `changelog/CL-[YYYYMMDD]-[NNN].md`
+2. เพิ่มใน Index table ของ `CHANGELOG.md`
+3. อัปเดต LATEST pointer
 
 ---
 
-## ⚠️ Sanity Check ก่อน Implement (บังคับ)
+## Sanity Check ก่อน Implement (บังคับ)
 
-**ถ้า version ใน CHANGELOG.md ≠ task ที่ได้รับ → STOP**
-
-ตัวอย่างสัญญาณที่ต้องหยุด:
-- Task บอกให้ implement Phase 17 แต่ CHANGELOG แสดงว่า Phase 17 done แล้ว
-- Task อ้างถึง model หรือ function ที่ changelog บอกว่าถูก remove
-- Version ปัจจุบันใน CHANGELOG ≠ version ใน task description
-
-**วิธีตอบสนอง:**
-```
-ตั้งสมมติฐาน: "CHANGELOG ล่าสุดคือ [vX.Y.Z / CL-ID] แต่ task นี้ดูเหมือน [phase/version อื่น]"
-แจ้ง Claude: "confirm ก่อน — งานนี้ซ้ำ / outdated / หรือต่อจาก version ล่าสุด?"
-ห้าม implement จนกว่า Claude จะยืนยัน
-```
-
-**ไม่ต้องหยุดถ้า:** task เป็น Phase ใหม่ถัดจาก HEAD ชัดเจน และ Claude เป็นคนสั่งโดยตรง
+**ถ้า version ใน CHANGELOG ≠ task ที่รับมา → STOP แจ้ง Claude**
 
 ---
 
-## 🤖 Role & Hierarchy
+## Role Hierarchy
 
-1. **Claude (Lead Architect)**: High-level decisions & Approval
-2. **Antigravity (Senior Agent - YOU)**: Planning, Execution, Verification & Management
-3. **Gemini CLI (Sub-agent)**: Task-specific implementation (Worker)
-
----
-
-## ⚠️ Context Limit Rule (บังคับ — ละเมิดไม่ได้)
-
-> **Root cause ของ bugs ส่วนใหญ่**: context บวม → system prompt ถูก compress → ADR rules หาย → code ผิด
-
-**กฎ:**
-1. **ทุก 3–4 tasks → บังคับ `/checkpoint`** (commit + จบ session เสมอ)
-2. **ห้ามทำงานต่อเนื่องเกิน 1 phase ในหนึ่ง session** — เปิด session ใหม่ = context สด = rules ครบ
-3. **ก่อนเขียน "DONE" ใน MEMORY.md** → ต้องรัน verify checklist ก่อน:
-   - `grep -r "fas fa-\|far fa-" src/components/` → ต้องไม่มีผล
-   - ทุก route ที่ใช้ `prisma` → ต้องมี `const prisma = await getPrisma();`
-   - `cache.set(...)` → TTL ต้องไม่เป็น `0`
-4. **ห้าม claim phase DONE** โดยไม่มี Claude verify ก่อน — บันทึกว่า "ต้อง review" ใน MEMORY.md
+1. **Claude (Lead Architect)** — Architecture decisions, ADR approval
+2. **Antigravity (Senior Agent — YOU)** — Planning, execution, verification
+3. **Gemini CLI (Sub-agent)** — Boilerplate, helpers, unit tests
 
 ---
 
-## 📝 Operating Procedures
+## Context Limit Rule
 
-- **Step 1: Planning**: วิเคราะห์งานและ Update `task.md` พร้อม `implementation_plan.md`
-- **Step 2: Execution**: เขียนโค้ดตาม ADR และ Standards (ห้ามขัดแย้งกับ `id_standards.yaml`)
-- **Step 3: Verification**: รัน verify checklist (ดู Context Limit Rule ด้านบน) ก่อน commit
-- **Step 4: Update**: อัปเดต `MEMORY.md`, `GOAL.md` และ `CHANGELOG.md` — mark เป็น "ต้อง review" เสมอ
-
----
-
-## 🗺️ Domain Routing (โหลด context ก่อนเริ่มงาน)
-
-เมื่อได้รับ task ให้ตรวจว่าเกี่ยวกับ domain ไหน แล้วอ่าน context ที่เกี่ยวข้อง:
-
-| Task เกี่ยวกับ | อ่านก่อน | ADR | Key Files |
-|---|---|---|---|
-| Ad sync, ROAS, campaign, Meta API | `.claude/skills/domain-marketing.md` | ADR-024 | `marketingRepo.js`, `sync-meta-ads.mjs` |
-| Chat, webhook, inbox, messaging | `.claude/skills/domain-inbox.md` | ADR-028, 033 | `UnifiedInbox.js`, `webhooks/` |
-| Customer, order, identity, revenue | `.claude/skills/domain-customer.md` | ADR-025, 030 | `customerRepo.js`, `identityService.js` |
-| DB, Redis, auth, deploy, cron | `.claude/skills/domain-infra.md` | ADR-026, 034 | `prisma.ts`, `redis.js`, `middleware.js` |
-
-**ข้าม domain**: ถ้า task ข้าม 2+ domains → อ่าน skill ทั้งสองก่อน ออกแบบ interface ระหว่าง domain
+1. ทุก 3–4 tasks → บังคับ `/checkpoint`
+2. ห้ามทำงานเกิน 1 phase ต่อ session
+3. ก่อน DONE → รัน verify checklist:
+   - ไม่มี `fas fa-` / `far fa-` icons
+   - ทุก route มี `const prisma = await getPrisma()`
+   - ไม่มี `cache.set(..., 0)` TTL เป็น 0
+4. ห้าม claim phase DONE โดยไม่มี Claude verify
 
 ---
 
-## ⚠️ Conflict Resolution
+## Operating Procedures
 
-| ระดับ | ทำได้เอง? | หมายเหตุ |
+1. **Planning** — วิเคราะห์งาน, อ่าน CODEBASE_MAP.yaml หา domain
+2. **Execution** — implement ตาม ADR + Standards
+3. **Verification** — รัน verify checklist ก่อน commit
+4. **Update** — MEMORY.md + GOAL.md + CHANGELOG.md → mark "ต้อง review"
+
+---
+
+## Domain Routing
+
+| Task เกี่ยวกับ | ADR | Key Files |
 |---|---|---|
-| **Naming/Style** | ✅ แก้เองได้ | ยึด `id_standards.yaml` |
-| **Implementation** | ✅ ตัดสินใจเองได้ | แต่ต้องบันทึกเหตุผลใน MEMORY.md |
-| **Architecture** (เพิ่ม model, เปลี่ยน schema) | ⚠️ ทำได้ แต่ Claude ต้อง review | Claude จะเขียน ADR retroactive |
-| **Breaking Change** (เปลี่ยน API contract) | ❌ ต้องรอ Boss อนุมัติ | ห้ามทำเอง |
+| Ad sync, ROAS | ADR-024 | `marketingRepo.js` |
+| Chat, webhook, inbox | ADR-028, 033 | `UnifiedInbox.js`, `webhooks/` |
+| Customer, order | ADR-025, 030 | `customerRepo.js`, `paymentRepo.js` |
+| Task, Notion | ADR-051 | `TaskPanel.js`, `notionRepo.js` |
+| DB, Redis, auth | ADR-026, 034, 040 | `db.ts`, `redis.js` |
+| Kitchen, stock | ADR-038 | `kitchenRepo.js` |
+| Procurement, PO | ADR-049 | `procurementRepo.js` |
+| MCP tools | ADR-050 | `vschool-mcp-server.js` |
+| **Zuri branding** | **ADR-051** | `docs/zuri/` |

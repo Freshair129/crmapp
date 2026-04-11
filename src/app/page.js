@@ -45,6 +45,7 @@ import CoursePage from "@/components/CoursePage";
 import TaskPanel from "@/components/TaskPanel";
 import InventoryControlPanel from "@/components/InventoryControlPanel";
 import ProcurementPanel from "@/components/ProcurementPanel";
+import ProcurementMarketPrice from "@/components/ProcurementMarketPrice";
 import AttendanceScanner from "@/components/AttendanceScanner";
 
 const pageVariants = {
@@ -393,6 +394,10 @@ export default function Home() {
 
                         {activeView === "procurement" && wrap("procurement",
                             <ProcurementPanel />
+                        )}
+
+                        {activeView === "market-prices" && wrap("market-prices",
+                            <ProcurementMarketPrice language={language} />
                         )}
 
                         {activeView === "assets" && wrap("assets",

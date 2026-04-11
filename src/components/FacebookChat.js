@@ -28,59 +28,30 @@ export default function FacebookChat({ onViewCustomer, initialCustomerId, curren
     const messagesContainerRef = useRef(null);
     const initialSelectionRef = useRef(false);
 
-    // Persistent Real-time SSE Connection
+    // Pusher real-time connection
     const selectedConvRef = useRef(selectedConv);
     useEffect(() => { selectedConvRef.current = selectedConv; }, [selectedConv]);
 
     useEffect(() => {
-        let eventSource;
-        let retryCount = 0;
-        let reconnectTimeout;
-
-        const connect = () => {
-            console.log('[Chat] Establishing Real-time connection...');
-            eventSource = new EventSource('/api/events/stream');
-
-            eventSource.onmessage = (event) => {
-                try {
-                    const payload = JSON.parse(event.data);
-                    if (payload.type === 'connected') {
-                        console.log('[Chat] SSE Connected:', payload.timestamp);
-                        retryCount = 0; // Reset retry count on successful connection
-                        return;
-                    }
-
-                    console.log('[Chat] Real-time event received:', payload);
-                    if (payload.channel === 'chat-updates') {
-                        fetchConversations();
-                        const current = selectedConvRef.current;
-                        if (current && (current.id === payload.data.conversationId || current.id === `t_${payload.data.conversationId}`)) {
-                            console.log('[Chat] Refreshing active messages...');
-                            fetchMessages(current.id);
-                        }
-                    }
-                } catch (e) { /* Heartbeats or malformed data */ }
-            };
-
-            eventSource.onerror = (err) => {
-                console.warn('[Chat] SSE Connection lost. Retrying...');
-                eventSource.close();
-
-                // Exponential backoff: 1s, 2s, 4s, 8s, up to 30s
-                const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
-                retryCount++;
-                reconnectTimeout = setTimeout(connect, delay);
-            };
-        };
-
-        connect();
+        let channel;
+        import('pusher-js').then(({ default: PusherClient }) => {
+            const pusher = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+            });
+            channel = pusher.subscribe('inbox');
+            channel.bind('chat-update', (data) => {
+                fetchConversations();
+                const current = selectedConvRef.current;
+                if (current && current.id === data.conversationId) {
+                    fetchMessages(current.id);
+                }
+            });
+        }).catch(err => console.error('[Chat] Pusher init failed', err));
 
         return () => {
-            console.log('[Chat] Terminating Real-time connection');
-            if (eventSource) eventSource.close();
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            if (channel) channel.unbind_all();
         };
-    }, []); // Only once on mount
+    }, []);
 
     // Initial load: catalog & employees
     useEffect(() => {

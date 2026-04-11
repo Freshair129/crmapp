@@ -23,7 +23,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
     currentStock: 0,
     minStock: 0,
     costPerUnit: '',
-    yieldPercent: 100
+    yieldPercent: 100,
+    marketUrl: ''
   });
 
   const [activeTab, setActiveTab] = useState('ingredients');
@@ -221,7 +222,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           currentStock: parseFloat(addForm.currentStock) || 0,
           minStock: parseFloat(addForm.minStock) || 0,
           costPerUnit: addForm.costPerUnit ? parseFloat(addForm.costPerUnit) : undefined,
-          yieldPercent: parseFloat(addForm.yieldPercent) || 100
+          yieldPercent: parseFloat(addForm.yieldPercent) || 100,
+          marketUrl: addForm.marketUrl || undefined
         })
       });
 
@@ -237,7 +239,8 @@ export default function KitchenStockPanel({ language = 'TH' }) {
           currentStock: 0,
           minStock: 0,
           costPerUnit: '',
-          yieldPercent: 100
+          yieldPercent: 100,
+          marketUrl: ''
         });
       }
     } catch (err) {
@@ -696,6 +699,17 @@ export default function KitchenStockPanel({ language = 'TH' }) {
                   </div>
                   <p className="text-[9px] text-white/20 mt-1">เช่น ปลา 80% = เสียไข่ 20%</p>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Market URL (Makro/Lotus)</label>
+                <input
+                  type="url"
+                  placeholder="https://www.makro.pro/p/..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-[#cc9d37]/50 placeholder:text-white/20"
+                  value={addForm.marketUrl}
+                  onChange={e => setAddForm({...addForm, marketUrl: e.target.value})}
+                />
               </div>
 
               <button
