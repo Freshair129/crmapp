@@ -143,6 +143,19 @@ function checkWhere(item, where) {
   return true;
 }
 
+// Apply include: add empty arrays/null for any relation field not already present
+function applyInclude(item, include) {
+  if (!include || typeof include !== 'object') return item;
+  const result = { ...item };
+  for (const key of Object.keys(include)) {
+    if (result[key] === undefined) {
+      // Default: relation fields are arrays (hasMany) or null (hasOne)
+      result[key] = [];
+    }
+  }
+  return result;
+}
+
 // Apply orderBy
 function applyOrderBy(items, orderBy) {
   if (!orderBy) return items;
@@ -172,6 +185,7 @@ function makeModel(name, baseData) {
       result = applyOrderBy(result, orderBy);
       if (skip) result = result.slice(skip);
       if (take) result = result.slice(0, take);
+      if (include) result = result.map(item => applyInclude(item, include));
       if (select) result = result.map(item => applySelect(item, select));
       return result;
     },
@@ -179,8 +193,9 @@ function makeModel(name, baseData) {
     findFirst: async ({ where, select, orderBy, include } = {}) => {
       let result = applyWhere(getData(), where);
       result = applyOrderBy(result, orderBy);
-      const item = result[0] || null;
+      let item = result[0] || null;
       if (!item) return null;
+      if (include) item = applyInclude(item, include);
       return select ? applySelect(item, select) : item;
     },
 
@@ -197,6 +212,7 @@ function makeModel(name, baseData) {
         break;
       }
       if (!item) return null;
+      if (include) item = applyInclude(item, include);
       return select ? applySelect(item, select) : item;
     },
 
